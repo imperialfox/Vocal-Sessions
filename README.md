@@ -2,9 +2,9 @@
 
 A mobile-first companion for structured vocal practice, styled like a native iOS app. It's a single HTML file with no install, no backend and no account. It's designed to live on your iPhone Home Screen.
 
-![Version 3.2](https://img.shields.io/badge/version-3.2-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue)
+![Version 3.3](https://img.shields.io/badge/version-3.3-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue)
 
-**Current version: 3.2 · 14 Oct 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
+**Current version: 3.3 · 14 Oct 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
 
 ---
 
@@ -35,6 +35,7 @@ There's also **Song practice**, for when you just want to sing a song and record
 - This month's minutes against 280, and the suggested rotation exercise (the one that's gone longest since you last did it)
 - Start, resume or discard a session
 - A Song practice card with its own weekly stats
+- Pull down to refresh. This also checks for a newer version of the app and loads it.
 
 **History**
 - A **Sessions | Song practice** switch
@@ -43,6 +44,7 @@ There's also **Song practice**, for when you just want to sing a song and record
   - Copy it for Toggl again
   - **Edit** the date, minutes, levels, notes and how it went. Totals, streak and last-done dates update to match.
   - Delete it
+- Pull down to refresh
 - Swipe left to delete. Deleting asks first, takes its minutes off the month, and updates last-done dates.
 
 **Exercises**
@@ -92,6 +94,21 @@ Paste into Toggl's description field; the `#` triggers tag autocomplete.
 
 ---
 
+## iPhone, iPad and Mac
+
+The layout follows the device, like a native Apple app:
+
+| Screen | Layout |
+|---|---|
+| iPhone | A floating tab bar at the bottom |
+| iPhone on its side | A compact tab bar, with Today in two columns |
+| iPad, or a narrower Mac window | Tabs at the top, a dashboard on Today, and split views for History and Exercises |
+| Mac, or iPad in landscape | A sidebar |
+
+Sheets open as centred cards on bigger screens. With a mouse or trackpad, rows highlight on hover, and Cmd (or Ctrl) + 1 to 4 switches sections.
+
+---
+
 ## On iPhone
 
 1. Open the GitHub Pages URL in **Safari**
@@ -103,6 +120,10 @@ iOS sets a Home Screen app's icon when you add it. To pick up a new icon:
 3. Import the backup
 
 Removing a Home Screen app deletes its data, so always export first.
+
+**On iPad:** the same steps in Safari.
+
+**On a Mac:** in Safari, choose File → Add to Dock. Each device keeps its own data, so use Export and Import backup to move your progress between them.
 
 ---
 

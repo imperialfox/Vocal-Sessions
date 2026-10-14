@@ -9,6 +9,26 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.3 · 14 Oct 2026
+
+**Pull to refresh**
+- On Today and History, pull down from the top to refresh, like a native iOS app.
+- The page follows your finger and the spinner fills in as you pull. Let go past the point where it's full to refresh, or earlier to cancel.
+- Refreshing re-reads your saved data, updates the date and week, and checks GitHub for a newer version of the app. If there is one, it loads it straight away, so you no longer need to close and reopen the app after an update.
+
+**Works on any screen**
+- **iPhone on its side:** a compact tab bar with icons beside their labels. Today splits into two columns, and sheets stay a comfortable width.
+- **iPad, or a narrower Mac window:**
+  - Tabs move to a floating bar at the top, as on iPadOS.
+  - Today becomes a two-column dashboard of cards.
+  - History and Exercises become split views: pick on the left, see the details on the right.
+  - Sheets open as centred cards.
+  - Settings and the session steps stay at a readable width.
+- **Mac, or iPad in landscape:** a sidebar with Today, History, Exercises and Settings.
+- Turning your phone or resizing a window switches the layout straight away.
+- With a mouse or trackpad, rows highlight when you hover over them.
+- On a keyboard, Cmd (or Ctrl) + 1 to 4 switches between sections.
+
 ## 3.2 · 14 Oct 2026
 
 **How did it go?**

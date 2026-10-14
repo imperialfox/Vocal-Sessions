@@ -239,6 +239,70 @@ button.pill{cursor:pointer;font-variant-numeric:tabular-nums}
 .splits div{display:flex;justify-content:space-between;padding:11px 14px;font-size:15px;font-variant-numeric:tabular-nums;position:relative}
 .splits div+div::before{content:"";position:absolute;top:0;left:14px;right:0;border-top:.5px solid var(--sep)}
 .splits .cur{color:var(--accent);font-weight:600}.splits .todo{color:var(--fg3)}
+/* 3.3 pull to refresh */
+#ptr{position:fixed;left:0;right:0;top:calc(env(safe-area-inset-top,0px) + 10px);height:44px;display:grid;place-items:center;pointer-events:none;z-index:14}
+.spin{position:relative;width:28px;height:28px;opacity:0;transition:opacity .2s}
+.spin i{position:absolute;left:12.5px;top:2px;width:3px;height:7.5px;border-radius:2px;background:var(--fg2);transform-origin:1.5px 12px;opacity:0;transition:opacity .08s}
+#ptr.go .spin{animation:turn .8s steps(8) infinite}
+@keyframes turn{to{transform:rotate(360deg)}}
+main.ptr-snap{transition:transform .42s cubic-bezier(.25,.8,.3,1)}
+
+/* 3.3 responsive: .land = iPhone on its side, .reg = iPad / Mac window, .wide = sidebar */
+.side-nav{display:none}
+.row.sel,.sw .fg>.row.sel{background:var(--hl)}
+/* iPhone landscape */
+body.land .wrap{max-width:860px}
+body.land .tabbar button{flex-direction:row;width:auto;max-width:none;height:40px;padding:0 14px;font-size:13px;gap:6px}
+body.land .tabbar button svg{width:20px;height:20px}
+body.land .dash{display:grid;grid-template-columns:1fr 1fr;gap:8px 28px;align-items:start}
+body.land .d-side .week{margin-top:8px}
+body.land .scrim{align-items:flex-end}
+body.land .sheet{max-width:560px;max-height:94vh}
+body.land.sheet-open .wrap{transform:none;border-radius:0}
+/* iPad and Mac */
+body.reg .wrap{max-width:1040px}
+body.reg main.tabv{padding-bottom:48px}
+body.reg main.narrow{max-width:640px;margin:0 auto}
+body.reg .bar.tabsmode{background:transparent;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
+body.reg .bar.tabsmode::before,body.reg .bar.tabsmode::after{display:none}
+.bar .mt.tabs{overflow:visible;opacity:1;display:flex;justify-content:center}
+.toptabs{position:relative;display:inline-flex;gap:2px;padding:4px;border-radius:999px}
+.toptabs button{height:36px;padding:0 16px;border-radius:999px;font-size:15px;font-weight:500;color:var(--fg);transition:background .2s}
+.toptabs button.on{background:var(--fill);color:var(--accent);font-weight:600}
+body.reg #ptr{top:calc(env(safe-area-inset-top,0px) + 60px)}
+body.reg .dash{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:start;margin-top:8px}
+body.reg .d-hero,body.reg .d-week{background:var(--surface);border-radius:26px;padding:22px 22px 24px}
+body.reg .d-hero .arch{margin-top:0}
+body.reg .d-week .week{margin-top:4px}
+body.reg .d-side .grp:first-of-type{margin-top:20px!important}
+.split{display:grid;grid-template-columns:minmax(300px,380px) minmax(0,1fr);gap:28px;align-items:start}
+.pane{position:sticky;top:calc(64px + env(safe-area-inset-top,0px));max-height:calc(100vh - 80px - env(safe-area-inset-top,0px));overflow-y:auto;padding:4px 2px 32px;overscroll-behavior:contain}
+.pane h1{font-size:28px}
+.pane .ph{font-size:24px;font-weight:700;margin:6px 4px 14px}
+.sl .seg.wide{margin-top:0!important}
+body.reg .scrim{align-items:center}
+body.reg .sheet{max-width:540px;margin:24px;max-height:min(86vh,900px);border-radius:28px;animation:pop .42s cubic-bezier(.28,1.25,.45,1)}
+body.reg .grab{display:none}
+body.reg .sheet h2:first-of-type{margin-top:6px}
+body.reg.sheet-open .wrap{transform:none;border-radius:0}
+@keyframes pop{from{transform:scale(.93);opacity:0}}
+/* sidebar (Mac, iPad landscape) */
+body.wide{padding-left:calc(278px + env(safe-area-inset-left,0px));padding-right:max(28px,env(safe-area-inset-right,0px))}
+body.wide .wrap{max-width:1080px}
+body.wide .dock{left:268px}
+body.wide #ptr{left:268px}
+body.wide .side-nav{display:flex;flex-direction:column;gap:2px;position:fixed;z-index:25;left:calc(10px + env(safe-area-inset-left,0px));top:calc(10px + env(safe-area-inset-top,0px));bottom:10px;width:250px;padding:16px 10px;border-radius:26px}
+.sbt{font-size:13px;font-weight:600;color:var(--fg2);padding:4px 12px 12px;letter-spacing:.01em}
+.sbi{display:flex;align-items:center;gap:10px;height:40px;padding:0 12px;border-radius:12px;font-size:15px;font-weight:500;color:var(--fg);width:100%;text-align:left;transition:background .15s}
+.sbi svg{width:20px;height:20px;color:var(--accent)}
+.sbi.on{background:var(--fill);font-weight:600}
+/* pointer devices: hover like macOS */
+@media (hover:hover) and (pointer:fine){
+  button.row:hover,a.row:hover{background:color-mix(in srgb,var(--surface) 94%,var(--fg))}
+  button.row.sel:hover{background:var(--hl)}
+  .sbi:not(.on):hover,.toptabs button:not(.on):hover{background:color-mix(in srgb,transparent 92%,var(--fg))}
+  .chip:hover{filter:brightness(.96)}
+}
 @keyframes up{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
 @keyframes fade{from{opacity:0}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
@@ -246,6 +310,8 @@ button.pill{cursor:pointer;font-variant-numeric:tabular-nums}
 </head>
 <body>
 <div class="edge" aria-hidden="true"></div>
+<nav class="side-nav glass" id="side" aria-label="Sections"></nav>
+<div id="ptr" aria-hidden="true"><div class="spin" id="spin"></div></div>
 <div class="wrap">
   <header class="bar glass" id="bar">
     <span class="side" id="barL"></span>
@@ -260,7 +326,7 @@ button.pill{cursor:pointer;font-variant-numeric:tabular-nums}
 
 <script>
 /* ===== Config ===== */
-const APP_VERSION='3.2', RELEASE_DATE='14 Oct 2026';
+const APP_VERSION='3.3', RELEASE_DATE='14 Oct 2026';
 const REPO='https://github.com/imperialfox/Vocal-Sessions';
 const VIDEO='https://youtu.be/rG-o10NggDI';
 const TARGET=280, WEEK_TARGET=70;
@@ -464,6 +530,11 @@ const ICON={
   circleOn:'<svg class="i" viewBox="0 0 24 24" style="width:24px;height:24px"><circle cx="12" cy="12" r="10" fill="currentColor" stroke="none"/><path d="M7.5 12.2l3 3 6-6.4" stroke="#fff"/></svg>'
 };
 const chev='<span class="mut" aria-hidden="true" style="font-size:20px">›</span>';
+/* Layout: phone (compact), phone on its side (land), iPad or Mac window (reg), wide enough for a sidebar (wide) */
+const MQ={reg:matchMedia('(min-width:700px) and (min-height:501px)'),wide:matchMedia('(min-width:1100px) and (min-height:501px)'),land:matchMedia('(orientation:landscape) and (max-height:500px)')};
+const split=()=>MQ.reg.matches;
+function layout(){const b=document.body.classList;b.toggle('reg',MQ.reg.matches);b.toggle('wide',MQ.wide.matches);b.toggle('land',MQ.land.matches&&!MQ.reg.matches);}
+const TABS=()=>[['today','Today',ICON.mic],['history','History',ICON.clock],['exercises','Exercises',ICON.list],['settings','Settings',ICON.gear]];
 const seg=(a,key,v)=>'<div class="seg" role="group"><span class="knob" aria-hidden="true"></span>'+[1,2,3].map(n=>'<button data-a="'+a+'" data-k="'+esc(key)+'" data-v="'+n+'" class="'+(v===n?'on':'')+'" aria-pressed="'+(v===n)+'" aria-label="Level '+n+'">'+n+'</button>').join('')+'</div>';
 const segF=(a,key,v)=>'<div class="seg" role="group"><span class="knob" aria-hidden="true"></span>'+[0,1,2,3].map(n=>'<button data-a="'+a+'" data-k="'+esc(key)+'" data-v="'+n+'" class="'+(n?'':'sk ')+(v===n?'on':'')+'" aria-pressed="'+(v===n)+'" aria-label="'+(n?'Level '+n:'Skip')+'">'+(n||'Skip')+'</button>').join('')+'</div>';
 const songTile='<span class="tile" style="background:var(--coral)">'+GL('<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>')+'</span>';
@@ -499,51 +570,57 @@ function scrToday(){
   const sw2=songWeek(),songLive=isSong();
   return '<button class="dateline" data-a="openCal">'+dl+'</button><div class="titlerow"><h1><button class="tbtn" data-a="openCal">Today</button></h1><button class="calbtn" data-a="openCal" aria-label="Open practice calendar">'+ICON.down+'</button></div>'+
   backupNudge()+
-  '<div class="arch"><svg viewBox="0 0 300 165" role="img" aria-label="'+Math.round(w.mins)+' of '+WEEK_TARGET+' minutes this week"><path d="M24 150 A126 126 0 0 1 276 150" fill="none" stroke="var(--fill)" stroke-width="16" stroke-linecap="round"/>'+
+  '<div class="dash"><div class="d-hero"><div class="arch"><svg viewBox="0 0 300 165" role="img" aria-label="'+Math.round(w.mins)+' of '+WEEK_TARGET+' minutes this week"><path d="M24 150 A126 126 0 0 1 276 150" fill="none" stroke="var(--fill)" stroke-width="16" stroke-linecap="round"/>'+
   (p>0?'<path d="M24 150 A126 126 0 0 1 276 150" pathLength="100" stroke-dasharray="'+p+' 100" fill="none" stroke="'+(p>=100?'var(--good)':'var(--accent)')+'" stroke-width="16" stroke-linecap="round"/>':'')+
   '</svg><div class="c"><small>This week</small><b>'+Math.round(w.mins)+'</b><small>of your '+WEEK_TARGET+'-minute goal</small></div></div>'+
-  '<div style="margin-top:20px">'+(X&&!songLive?'<button class="cta ink" data-a="resume">Resume session</button><button class="ghost" data-a="sheet" data-v="discard">Discard session</button>':'<button class="cta ink" data-a="start">Start session</button>')+'</div>'+
+  '<div style="margin-top:20px">'+(X&&!songLive?'<button class="cta ink" data-a="resume">Resume session</button><button class="ghost" data-a="sheet" data-v="discard">Discard session</button>':'<button class="cta ink" data-a="start">Start session</button>')+'</div></div><div class="d-side"><div class="d-week">'+
   '<div class="week" role="list" aria-label="This week">'+days+'</div>'+
-  '<div class="streak">'+st+'<small>'+sub+'</small></div>'+
+  '<div class="streak">'+st+'<small>'+sub+'</small></div></div>'+
   '<div class="grp" style="margin-top:22px"><div class="row" style="display:block;padding:14px 16px"><div style="display:flex;justify-content:space-between;gap:8px"><span>This month</span><span class="mut">'+Math.round(mm)+' of '+TARGET+' min</span></div><div class="track"><i class="'+(mp>=100?'full':'')+'" style="width:'+mp+'%"></i></div></div>'+
   '<button class="row" data-a="openEx" data-k="'+s.id+'">'+tile(s)+'<span class="lbl">Suggested rotation<small>'+esc(s.name)+' · '+lastDone(s.id)+'</small></span>'+chev+'</button></div>'+
   '<div class="hdr">Just singing</div><div class="grp tiled"><button class="row" data-a="songStart">'+songTile+'<span class="lbl">Song practice<small>'+(songLive?'In progress · tap to carry on':'Record a take and note how it went')+'</small>'+
   (sw2.n&&!songLive?'<small class="co">This week · '+sw2.n+' session'+(sw2.n>1?'s':'')+' · '+hm(sw2.m)+'</small>':'')+'</span>'+chev+'</button></div>'+
-  '<p class="foot">Song practice has its own stats. It never counts towards your weekly goal, streak or monthly minutes.</p>';
+  '<p class="foot">Song practice has its own stats. It never counts towards your weekly goal, streak or monthly minutes.</p></div></div>';
 }
+function histSel(songs){const arr=songs?D.songSessions:D.sessions;let x=U.sel&&arr.find(s=>s.id===U.sel);
+  if(!x&&arr.length)x=arr.slice().sort((a,b)=>new Date(b.date)-new Date(a.date))[0];return x||null;}
 function scrHistory(){
-  const songs=U.histTab==='songs';
-  let h='<h1>History</h1><div class="seg wide" role="tablist" style="margin:2px 0 4px"><span class="knob" aria-hidden="true"></span><button role="tab" data-a="histTab" data-v="sessions" class="'+(songs?'':'on')+'" aria-selected="'+!songs+'">Sessions</button><button role="tab" data-a="histTab" data-v="songs" class="'+(songs?'on':'')+'" aria-selected="'+songs+'">Song practice</button></div>';
-  return h+(songs?songHistory():sessionHistory());
+  const songs=U.histTab==='songs',sp=split(),sel=sp?histSel(songs):null,sid=sel?sel.id:null;
+  const segH='<div class="seg wide" role="tablist" style="margin:2px 0 4px"><span class="knob" aria-hidden="true"></span><button role="tab" data-a="histTab" data-v="sessions" class="'+(songs?'':'on')+'" aria-selected="'+!songs+'">Sessions</button><button role="tab" data-a="histTab" data-v="songs" class="'+(songs?'on':'')+'" aria-selected="'+songs+'">Song practice</button></div>';
+  const list=songs?songHistory(sid):sessionHistory(sid);
+  if(!sp)return '<h1>History</h1>'+segH+list;
+  return '<h1>History</h1><div class="split"><div class="sl">'+segH+list+'</div><div class="pane">'+(sel?(songs?songSessionBody(sel,'pane'):sessionBody(sel,'pane')):'<div class="grp" style="margin-top:6px"><div class="empty">Select something on the left to see it here.</div></div>')+'</div></div>';
 }
-function sessionHistory(){
+function sessionHistory(selId){
   const ss=D.sessions.slice().reverse();
   if(!ss.length)return '<div class="grp" style="margin-top:12px"><div class="empty">Your finished sessions will appear here, with levels, notes and how they went.</div></div>';
   let h='',cur='';
   ss.forEach(s=>{const k=monthKey(new Date(s.date));if(k!==cur){if(cur)h+='</div>';cur=k;const lab=new Date(s.date).toLocaleDateString('en-GB',{month:'long',year:'numeric'});h+='<div class="hdr">'+lab+' · <span style="text-transform:none">'+hm(D.months[k]||0)+'</span></div><div class="grp">';}
     const rots=Object.keys(s.rot||{}).map(id=>(exById(id)||{name:(s.rotNames||{})[id]||'Exercise'}).name);const how=howStr(s);
-    h+=sw('<button class="row" data-a="sheet" data-v="session" data-k="'+s.id+'"><span class="lbl">'+dayLabel(s.date)+'<small>'+esc(rots.length?rots.join(', '):'Foundation only')+'</small>'+(how?'<small class="acc">'+esc(how)+'</small>':'')+'</span><span class="mut">'+hm(s.mins)+'</span>'+chev+'</button>','delSession',s.id);});
+    h+=sw('<button class="row'+(s.id===selId?' sel':'')+'" data-a="sheet" data-v="session" data-k="'+s.id+'"><span class="lbl">'+dayLabel(s.date)+'<small>'+esc(rots.length?rots.join(', '):'Foundation only')+'</small>'+(how?'<small class="acc">'+esc(how)+'</small>':'')+'</span><span class="mut">'+hm(s.mins)+'</span>'+chev+'</button>','delSession',s.id);});
   return h+'</div><p class="foot">Swipe left on a session to delete it. Open one to edit it.</p>';
 }
-function songHistory(){
+function songHistory(selId){
   const ss=D.songSessions.slice().sort((a,b)=>new Date(b.date)-new Date(a.date));
   if(!ss.length)return '<div class="grp" style="margin-top:12px"><div class="empty">Song practice you save appears here. It’s kept apart from your focused sessions.</div></div>';
   const sums={};ss.forEach(s=>{const k=monthKey(new Date(s.date));sums[k]=(sums[k]||0)+s.mins;});
   let h='',cur='';
   ss.forEach(s=>{const k=monthKey(new Date(s.date));if(k!==cur){if(cur)h+='</div>';cur=k;const lab=new Date(s.date).toLocaleDateString('en-GB',{month:'long',year:'numeric'});h+='<div class="hdr">'+lab+' · <span style="text-transform:none">'+hm(sums[k])+'</span></div><div class="grp">';}
     const n=(s.takes||[]).length,how=howStr(s);
-    h+=sw('<button class="row" data-a="sheet" data-v="songSession" data-k="'+s.id+'"><span class="lbl">'+dayLabel(s.date)+'<small>'+esc(s.songName||'Song practice')+(n?' · '+n+' take'+(n>1?'s':''):'')+'</small>'+(how?'<small class="acc">'+esc(how)+'</small>':'')+'</span><span class="mut">'+hm(s.mins)+'</span>'+chev+'</button>','delSongSess',s.id);});
+    h+=sw('<button class="row'+(s.id===selId?' sel':'')+'" data-a="sheet" data-v="songSession" data-k="'+s.id+'"><span class="lbl">'+dayLabel(s.date)+'<small>'+esc(s.songName||'Song practice')+(n?' · '+n+' take'+(n>1?'s':''):'')+'</small>'+(how?'<small class="acc">'+esc(how)+'</small>':'')+'</span><span class="mut">'+hm(s.mins)+'</span>'+chev+'</button>','delSongSess',s.id);});
   return h+'</div><p class="foot">Swipe left to delete. Song practice never counts towards your goal or streak.</p>';
 }
 function scrExercises(){
-  const row=e=>'<button class="row" data-a="openEx" data-k="'+e.id+'">'+tile(e)+'<span class="lbl">'+esc(e.name)+'<small>'+esc(e.focus)+' · '+lastDone(e.id)+'</small></span>'+chev+'</button>';
-  return '<h1>Exercises</h1>'+
+  const sp=split();if(sp&&!exById(U.exId))U.exId=FOUND[0].id;
+  const row=e=>'<button class="row'+(sp&&e.id===U.exId?' sel':'')+'" data-a="openEx" data-k="'+e.id+'">'+tile(e)+'<span class="lbl">'+esc(e.name)+'<small>'+esc(e.focus)+' · '+lastDone(e.id)+'</small></span>'+chev+'</button>';
+  const list=
   '<div class="grp" style="margin-top:8px"><a class="row acc" href="'+VIDEO+'" target="_blank" rel="noopener"><span class="lbl">Coach video<small>Opens in YouTube</small></span>'+ICON.video+'</a></div>'+
   '<div class="hdr">Foundation</div><div class="grp tiled">'+FOUND.map(row).join('')+'</div>'+
   '<div class="hdr">Rotation</div><div class="grp tiled">'+ROT.map(row).join('')+'</div>'+
   '<div class="hdr">Your exercises</div><div class="grp tiled">'+D.custom.map(e=>sw(row(e),'delEx',e.id)).join('')+'<button class="row acc" data-a="sheet" data-v="addEx"><span class="lbl">Add exercise</span>'+ICON.plus+'</button></div>'+
   '<div class="hdr">Songs</div><div class="grp">'+D.songs.map(s=>sw('<div class="row"><span class="lbl">'+esc(s.name)+'<small>'+TAKES.filter(t=>t.songId===s.id).length+' saved take(s)</small></span><button class="ibtn dng" data-a="sheet" data-v="delSong" data-k="'+s.id+'" aria-label="Remove '+esc(s.name)+'">'+ICON.trash+'</button></div>','delSong',s.id)).join('')+'<button class="row acc" data-a="sheet" data-v="addSong"><span class="lbl">Add song</span>'+ICON.plus+'</button></div>'+
   (D.custom.length||D.songs.length?'<p class="foot">Swipe left on your own exercises and songs to delete them.</p>':'');
+  return '<h1>Exercises</h1>'+(sp?'<div class="split"><div class="sl">'+list+'</div><div class="pane">'+scrEx()+'</div></div>':list);
 }
 function exHistory(id){return D.sessions.filter(s=>(s.f&&s.f[id])||(s.rot&&s.rot[id])).map(s=>({s,lv:(s.f&&s.f[id])||s.rot[id]}));}
 function scrEx(){
@@ -635,20 +712,25 @@ function scrSong(){
 const VIEWS={found:['Foundation','1 of 3',null],rot:['Rotation','2 of 3','found'],app:['Application','3 of 3','rot'],song:['Song practice','',null]};
 function pillText(){const st=VIEWS[U.view]&&VIEWS[U.view][1];return (X&&X.paused?'❚❚ ':'')+(st?st+' · ':'')+clk(elapsedSec());}
 function renderBar(){
-  const bar=$('bar');
+  const bar=$('bar');bar.classList.remove('tabsmode');$('barT').classList.remove('tabs');
   if(U.view==='ex'){const e=exById(U.exId);$('barT').textContent=e?e.name:'';bar.classList.remove('always');
     $('barL').innerHTML='<button class="circ glass" data-a="exBack" aria-label="Back">'+ICON.back+'</button>';$('barR').innerHTML='';}
   else if(U.view){const v=VIEWS[U.view];$('barT').textContent=v[0];
     $('barL').innerHTML='<button class="circ glass" data-a="'+(v[2]?'view':'exit')+'" data-v="'+(v[2]||'')+'" aria-label="Back">'+ICON.back+'</button>';
     $('barR').innerHTML=(U.view==='song'?'':'<a class="circ glass" href="'+VIDEO+'" target="_blank" rel="noopener" aria-label="Open coach video">'+ICON.video+'</a>')+
       '<button class="pill glass'+(X&&X.paused?' paused':'')+'" id="timer" data-a="clock" aria-label="Session time. Tap for the clock">'+pillText()+'</button>';}
+  else if(MQ.reg.matches&&!MQ.wide.matches){bar.classList.add('tabsmode');$('barT').classList.add('tabs');
+    $('barT').innerHTML='<nav class="toptabs glass" aria-label="Tabs">'+TABS().map(t=>'<button class="'+(U.tab===t[0]?'on':'')+'" data-a="tab" data-v="'+t[0]+'" aria-current="'+(U.tab===t[0]?'page':'false')+'">'+t[1]+'</button>').join('')+'</nav>';$('barL').innerHTML='';$('barR').innerHTML='';return;}
   else{$('barT').textContent={today:'Today',history:'History',exercises:'Exercises',settings:'Settings'}[U.tab];$('barL').innerHTML='';$('barR').innerHTML='';}
 }
+function renderSide(){const el=$('side');if(!MQ.wide.matches){el.innerHTML='';return;}
+  el.innerHTML='<div class="sbt">Vocal Sessions</div>'+TABS().map(t=>'<button class="sbi'+(U.tab===t[0]?' on':'')+'" data-a="tab" data-v="'+t[0]+'" aria-current="'+(U.tab===t[0]?'page':'false')+'">'+t[2]+'<span>'+t[1]+'</span></button>').join('');}
 function renderDock(){
   if(U.sheet){$('dock').innerHTML='';return;}
   if(U.view&&U.view!=='ex'){const n=Object.keys(X.rot).length;
     const lab={found:'Log foundation',rot:n?'Log '+n+' exercise'+(n>1?'s':''):'Pick an exercise',app:'Finish session',song:'Save song practice'}[U.view];
     $('dock').innerHTML='<button class="cta glass tinted" data-a="cta">'+lab+'</button>';return;}
+  if(MQ.reg.matches){$('dock').innerHTML='';return;}
   const t=(id,lab,ic)=>'<button class="'+(U.tab===id?'on':'')+'" data-a="tab" data-v="'+id+'" aria-current="'+(U.tab===id?'page':'false')+'">'+ic+lab+'</button>';
   $('dock').innerHTML='<nav class="tabbar glass'+(tabMin?' min':'')+'" aria-label="Tabs">'+t('today','Today',ICON.mic)+t('history','History',ICON.clock)+t('exercises','Exercises',ICON.list)+t('settings','Settings',ICON.gear)+'</nav>';
 }
@@ -742,7 +824,9 @@ function calendarSheet(){
   b+='<div class="grp" style="margin-top:12px"><div class="row"><span class="lbl">This month</span><span class="mut">'+n+' session'+(n===1?'':'s')+' · '+hm(D.months[mk]||0)+'</span></div>'+(sn?'<div class="row"><span class="lbl">Song practice</span><span class="mut">'+sn+' · '+hm(sm)+'</span></div>':'')+'</div><button class="ghost" data-a="close">Done</button>';
   return sheetWrap('Practice calendar',b);
 }
-function sessionSheet(ss,done){
+function sessionSheet(ss,done){return sheetWrap(done?'Session complete':dayLabel(ss.date),sessionBody(ss,done?'done':'sheet'));}
+function sessionBody(ss,mode){
+  const done=mode==='done',pane=mode==='pane';
   const rots=Object.keys(ss.rot||{}),xn=ss.xn||{};
   const exRow=(name,id,val)=>{const n=noteStr(xn[id]);return '<div class="row"><span class="lbl">'+esc(name)+(n?'<small class="acc">'+esc(n)+'</small>':'')+'</span><span class="mut">'+val+'</span></div>';};
   let b='<div class="grp"><div class="row"><span class="lbl">Total time</span><span class="mut">'+hm(ss.mins)+'</span></div>'+howRow(ss)+'</div>'+
@@ -750,19 +834,21 @@ function sessionSheet(ss,done){
   '<div class="hdr">Foundation</div><div class="grp">'+FOUND.map(e=>{const f=ss.f||{};return exRow(e.name,e.id,f[e.id]?'Level '+f[e.id]:(e.id in f?'Skipped':'–'));}).join('')+(ss.fNote?'<div class="row"><span class="lbl mut">'+esc(ss.fNote)+'</span></div>':'')+'</div>';
   if(rots.length)b+='<div class="hdr">Rotation</div><div class="grp">'+rots.map(id=>exRow((exById(id)||{name:(ss.rotNames||{})[id]||'Exercise'}).name,id,'Level '+ss.rot[id])).join('')+(ss.rNote?'<div class="row"><span class="lbl mut">'+esc(ss.rNote)+'</span></div>':'')+'</div>';
   if(ss.songName||Object.keys(ss.rate||{}).length)b+='<div class="hdr">Application</div><div class="grp">'+(ss.songName?'<div class="row"><span class="lbl">'+esc(ss.songName)+'</span>'+((ss.takes||[]).length?'<span class="mut">'+ss.takes.length+' take'+(ss.takes.length>1?'s':'')+'</span>':'')+'</div>':'')+['Pitch','Tone','Ease'].filter(x=>(ss.rate||{})[x]).map(x=>'<div class="row"><span class="lbl">'+x+'</span><span class="mut">'+ss.rate[x]+' of 3</span></div>').join('')+'</div>';
-  b+=(done?'':'<div style="margin-top:16px"><button class="cta" data-a="copy" data-k="'+ss.id+'">Copy for Toggl</button></div>')+'<button class="ghost" data-a="editSess" data-k="'+ss.id+'">Edit session</button><button class="ghost" data-a="close">'+(done?'Done':'Close')+'</button>';
+  b+=(done?'':'<div style="margin-top:16px"><button class="cta" data-a="copy" data-k="'+ss.id+'">Copy for Toggl</button></div>')+'<button class="ghost" data-a="editSess" data-k="'+ss.id+'">Edit session</button>'+(pane?'':'<button class="ghost" data-a="close">'+(done?'Done':'Close')+'</button>');
   if(!done)b+='<button class="ghost" data-a="sheet" data-v="delSession" data-k="'+ss.id+'" style="color:var(--danger)">Delete session</button>';
-  return sheetWrap(done?'Session complete':dayLabel(ss.date),b);
+  return pane?'<h2 class="ph">'+dayLabel(ss.date)+'</h2>'+b:b;
 }
-function songSessionSheet(ss,done){
+function songSessionSheet(ss,done){return sheetWrap(done?'Song practice saved':dayLabel(ss.date)+' · Song practice',songSessionBody(ss,done?'done':'sheet'));}
+function songSessionBody(ss,mode){
+  const done=mode==='done',pane=mode==='pane';
   const tk=TAKES.filter(t=>(ss.takes||[]).includes(t.id));
   let b='<div class="grp"><div class="row"><span class="lbl">Time</span><span class="mut">'+hm(ss.mins)+'</span></div><div class="row"><span class="lbl">Song</span><span class="mut">'+esc(ss.songName||'–')+'</span></div>'+howRow(ss)+'</div>';
   if(tk.length)b+='<div class="hdr">Takes</div><div class="grp">'+tk.map(t=>{const n=noteStr(t.note);return '<div class="row"><button class="ibtn acc" data-a="playTake" data-k="'+t.id+'" aria-label="Play take">'+(playingId===t.id?ICON.pause:ICON.play)+'</button><span class="lbl">'+timeOf(t.created)+' · '+mmss(t.len)+(n?'<small class="acc">'+esc(n)+'</small>':'')+'</span></div>';}).join('')+'</div>';
   else if((ss.takes||[]).length)b+='<p class="foot">This practice’s takes are no longer on this phone.</p>';
   b+='<p class="foot">Toggl tag #song-practice. Kept out of your focused goal and streak.</p><div style="margin-top:12px"><button class="cta" data-a="copy" data-k="'+ss.id+'">Copy for Toggl</button></div>'+
-  '<button class="ghost" data-a="editSess" data-k="'+ss.id+'">Edit</button><button class="ghost" data-a="close">'+(done?'Done':'Close')+'</button>'+
+  '<button class="ghost" data-a="editSess" data-k="'+ss.id+'">Edit</button>'+(pane?'':'<button class="ghost" data-a="close">'+(done?'Done':'Close')+'</button>')+
   (done?'':'<button class="ghost" data-a="sheet" data-v="delSongSess" data-k="'+ss.id+'" style="color:var(--danger)">Delete</button>');
-  return sheetWrap(done?'Song practice saved':dayLabel(ss.date)+' · Song practice',b);
+  return pane?'<h2 class="ph">'+dayLabel(ss.date)+' · Song practice</h2>'+b:b;
 }
 function editSheet(){
   const song=E.kind==='song';
@@ -785,7 +871,8 @@ function render(keepScroll){
   closeSwipes();
   const v=U.view;
   $('app').innerHTML=v==='ex'?scrEx():v?({found:scrFound,rot:scrRot,app:scrApp,song:scrSong})[v]():({today:scrToday,history:scrHistory,exercises:scrExercises,settings:scrSettings})[U.tab]();
-  renderBar();renderDock();renderSheet();
+  $('app').className=(v?'flow':'tabv')+(v&&v!=='ex'||(!v&&U.tab==='settings')||(v==='ex'&&!split())?' narrow':'');
+  renderBar();renderDock();renderSide();renderSheet();
   if(keepScroll)window.scrollTo(0,y);
   placeKnobs();
 }
@@ -1001,7 +1088,7 @@ document.addEventListener('click',e=>{
   const a=el.dataset.a,v=el.dataset.v,k=el.dataset.k;
   const here=()=>U.sheet?{sheet:U.sheet,sd:U.sd}:null;
   switch(a){
-    case 'tab':if(tabMin){tabMin=false;$('dock').querySelector('.tabbar').classList.remove('min');break;}go(()=>{U.tab=v;U.view=null;});break;
+    case 'tab':U.clock=false;if(tabMin&&!MQ.reg.matches){tabMin=false;$('dock').querySelector('.tabbar').classList.remove('min');break;}go(()=>{U.tab=v;U.view=null;});break;
     case 'openCal':U.calMonth=new Date(new Date().getFullYear(),new Date().getMonth(),1);U.calDay=null;U.sheet='calendar';U.sd={};rerender();break;
     case 'calMove':{const m=U.calMonth;U.calMonth=new Date(m.getFullYear(),m.getMonth()+(+v),1);U.calDay=null;rerender();break;}
     case 'calDay':U.calDay=U.calDay===+v?null:+v;rerender();break;
@@ -1012,7 +1099,7 @@ document.addEventListener('click',e=>{
     case 'discardYes':if(rec)stopRec();stopPlayback();X=null;saveDraft();U.clock=false;U.sheet=null;if(U.view)go(()=>{U.view=null;U.tab='today';});else rerender();break;
     case 'exit':U.clock=false;go(()=>{U.view=null;U.tab='today';});break;
     case 'view':go(()=>{U.view=v;});break;
-    case 'openEx':go(()=>{U.prevTab=U.tab;U.view='ex';U.exId=k;U.exTab='summary';});break;
+    case 'openEx':if(split()){const was=U.tab;U.exId=k;U.exTab='summary';if(was!=='exercises')go(()=>{U.tab='exercises';U.view=null;});else rerender();break;}go(()=>{U.prevTab=U.tab;U.view='ex';U.exId=k;U.exTab='summary';});break;
     case 'exBack':go(()=>{U.view=null;U.tab=U.prevTab||'exercises';});break;
     case 'exTab':segPick(el);U.exTab=v;setTimeout(rerender,180);break;
     case 'histTab':segPick(el);U.histTab=v;setTimeout(rerender,180);break;
@@ -1056,7 +1143,7 @@ document.addEventListener('click',e=>{
     case 'editSess':{const ss=findSess(k);if(!ss)break;E=JSON.parse(JSON.stringify(ss));E.kind=ss.kind||'focused';E.dateStr=isoDay(new Date(ss.date));E.how=E.how||[];E.howNote=E.howNote||'';E.xn=E.xn||{};
       const r=here();U.noteOpen=null;U.sheet='edit';U.sd={k,ret:r};rerender();break;}
     case 'saveEdit':if(E){applyEdit();toast('Changes saved');}closeSheet();break;
-    case 'sheet':U.sheet=v;U.sd={k};rerender();break;
+    case 'sheet':if((v==='session'||v==='songSession')&&split()&&!U.view&&U.tab==='history'&&!U.sheet){U.sel=k;rerender();break;}U.sheet=v;U.sd={k};rerender();break;
     case 'close':closeSheet();break;
     case 'focus':document.querySelectorAll('#focusChips .chip').forEach(c=>c.classList.toggle('on',c===el));break;
     case 'saveEx':{const n=($('exName').value||'').trim(),err=$('exErr');
@@ -1091,17 +1178,49 @@ document.addEventListener('input',e=>{const t=e.target,id=t.id,v=t.value;
   else if(id==='edDate'&&E)E.dateStr=v;
   else if(id==='edMins'&&E)E.mins=v;});
 document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(U.sheet)closeSheet();else if(U.clock){U.clock=false;rerender();}});
+/* ===== Pull to refresh (Today and History) =====
+   Pull down at the top: the page follows your finger with resistance and the spinner's spokes appear.
+   Past the threshold, let go: it holds, re-reads your data and checks GitHub for a newer version
+   (loading it if there is one), then eases back. */
+const PTR={y:null,x:0,on:false,d:0,busy:false,lock:null},PT_TRIG=56,PT_HOLD=56;
+(()=>{const sp=$('spin');for(let i=0;i<8;i++){const e=document.createElement('i');e.style.transform='rotate('+(i*45)+'deg)';sp.appendChild(e);}})();
+function ptrOK(){return !U.view&&!U.sheet&&!U.clock&&(U.tab==='today'||U.tab==='history')&&window.scrollY<=0&&!PTR.busy;}
+function ptrPaint(d,armed){const a=$('app');a.style.transform=d?'translateY('+d+'px)':'';const sp=$('spin');sp.style.opacity=d>8?1:0;
+  const p=Math.min(1,d/PT_TRIG);[...sp.children].forEach((s,i)=>{s.style.opacity=PTR.busy?(1-i*0.11):(p*8>i?(armed?1-i*0.09:0.75):0);});}
+document.addEventListener('touchstart',e=>{PTR.y=null;if(e.touches.length!==1||!ptrOK())return;PTR.y=e.touches[0].clientY;PTR.x=e.touches[0].clientX;PTR.on=false;PTR.lock=null;PTR.d=0;$('app').classList.remove('ptr-snap');},{passive:true});
+document.addEventListener('touchmove',e=>{if(PTR.y===null||e.touches.length!==1)return;const t=e.touches[0],dy=t.clientY-PTR.y,dx=t.clientX-PTR.x;
+  if(PTR.lock===null){if(dy<=0||Math.abs(dx)>Math.abs(dy)){if(Math.abs(dx)>6||dy<-6)PTR.lock='no';return;}if(dy>6)PTR.lock='pull';}
+  if(PTR.lock==='no')return;if(window.scrollY>0){PTR.y=null;return;}
+  if(e.cancelable)e.preventDefault();if(PTR.lock!=='pull')return;
+  PTR.on=true;PTR.d=Math.max(0,170*(1-1/(Math.max(0,dy)/360+1)));ptrPaint(PTR.d,PTR.d>=PT_TRIG);},{passive:false});
+function ptrEnd(){if(PTR.y===null)return;PTR.y=null;if(!PTR.on)return;PTR.on=false;const a=$('app');a.classList.add('ptr-snap');
+  if(PTR.d<PT_TRIG){ptrPaint(0);return;}
+  PTR.busy=true;$('ptr').classList.add('go');ptrPaint(PT_HOLD,true);
+  refreshApp().then(r=>{if(r==='reload')return;$('ptr').classList.remove('go');PTR.busy=false;ptrPaint(0);setTimeout(()=>a.classList.remove('ptr-snap'),450);});}
+document.addEventListener('touchend',ptrEnd);document.addEventListener('touchcancel',ptrEnd);
+async function refreshApp(){
+  const t0=Date.now();let newer=null;
+  D=load();migrate();X=loadDraft();normX();await refreshTakes();
+  try{const r=await fetch(location.href.split('#')[0],{cache:'reload'});const m=(await r.text()).match(/APP_VERSION='([\d.]+)'/);if(m&&m[1]!==APP_VERSION)newer=m[1];}catch(e){}
+  await new Promise(r=>setTimeout(r,Math.max(0,700-(Date.now()-t0))));
+  if(newer){toast('Updating to '+newer+'…');setTimeout(()=>location.reload(),800);return 'reload';}
+  render(true);return 'ok';
+}
+/* layout changes (rotating, resizing a window) */
+Object.values(MQ).forEach(m=>{const f=()=>{layout();if(split()&&U.view==='ex'){U.tab='exercises';U.view=null;}tabMin=false;render(true);};if(m.addEventListener)m.addEventListener('change',f);else if(m.addListener)m.addListener(f);});
+/* keyboard: Cmd/Ctrl + 1–4 switch sections */
+document.addEventListener('keydown',e=>{if(!(e.metaKey||e.ctrlKey)||U.sheet||!/^[1-4]$/.test(e.key))return;e.preventDefault();const t=TABS()[+e.key-1][0];U.clock=false;go(()=>{U.tab=t;U.view=null;});});
 // live session clock
 setInterval(()=>{if(!X||!U.view||U.view==='ex')return;const t=$('timer');if(t)t.textContent=pillText();const bc=$('bigClock');if(bc)bc.textContent=clk(elapsedSec());const cs=$('curSplit');if(cs)cs.textContent=clk(elapsedSec()-(+cs.dataset.base||0));},1000);
 let lastY=0,tabMin=false;
 window.addEventListener('scroll',()=>{closeSwipes();const y=window.scrollY;const sc=y>36;$('bar').classList.toggle('scrolled',sc);document.body.classList.toggle('scrolled',sc);
   const tb=$('dock').querySelector('.tabbar');
-  if(tb&&!U.sheet){if(y>lastY+6&&y>120)tabMin=true;else if(y<lastY-6||y<60)tabMin=false;tb.classList.toggle('min',tabMin);}
+  if(tb&&!U.sheet&&!document.body.classList.contains('land')){if(y>lastY+6&&y>120)tabMin=true;else if(y<lastY-6||y<60)tabMin=false;tb.classList.toggle('min',tabMin);}
   lastY=y;},{passive:true});
 // iOS pauses the mic when you leave the app, so stop and save the take, then say so on return
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(rec){bgSaved=true;stopRec();}}else if(bgSaved){bgSaved=false;setTimeout(()=>toast('Your take was saved when you left the app'),500);}});
 
-render();
+layout();render();
 refreshTakes().then(rerender);
 </script>
 </body>
