@@ -9,6 +9,22 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.3.2 · 14 Oct 2026
+
+Fixes from a full audit: about 9,000 random taps across every screen and screen size, plus targeted tests and a code review.
+
+- A damaged backup file no longer breaks the app. It's checked first, and all recordings are read before anything on your phone is replaced.
+- Damaged saved data, or a full storage space when the app opens, no longer stops it starting.
+- Leaving the Application or Song practice screen mid-recording now stops and saves the take, instead of recording in the background.
+- On iPad and Mac, scrolling back up in the History or Exercises detail pane no longer triggers pull to refresh.
+- Pull to refresh only ever updates to a newer version, never an older cached one.
+- Edit and the long-session check refuse minutes that don't make sense (0, negative, or over 600) instead of quietly saving 1 minute.
+- If a sheet has nothing to show (for example, notes for a take that was removed), it closes instead of hiding the tab bar.
+- The page no longer nudges sideways when a segmented control bounces near the edge of the screen.
+- The tab bar no longer stays shrunk when you're back at the top of a page after finishing.
+- Coming back to the app refreshes the date and week, so Today is right the next morning.
+- History stays in date order even if older data was saved out of order.
+
 ## 3.3.1 · 14 Oct 2026
 
 - Every sheet (session details, calendar, edit and others) has a close button (✕) at the top right, as in iOS 27. It stays in place while you scroll, so you can always get out.

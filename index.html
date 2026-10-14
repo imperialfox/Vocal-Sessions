@@ -40,7 +40,7 @@
   --coral:#ff6961;--warnbg:#3a2a12;--warnfg:#ffcf86;--pause:#ff9f0a}}
 
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;touch-action:manipulation;-webkit-text-size-adjust:100%}
+html,body{margin:0;touch-action:manipulation;-webkit-text-size-adjust:100%;overflow-x:clip}
 body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:17px;line-height:1.3;-webkit-font-smoothing:antialiased;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-top:env(safe-area-inset-top,0px)}
 button,input,textarea{font:inherit;color:inherit}
@@ -339,7 +339,7 @@ body.reg .shead{border-radius:28px 28px 0 0}
 
 <script>
 /* ===== Config ===== */
-const APP_VERSION='3.3.1', RELEASE_DATE='14 Oct 2026';
+const APP_VERSION='3.3.2', RELEASE_DATE='14 Oct 2026';
 const REPO='https://github.com/imperialfox/Vocal-Sessions';
 const VIDEO='https://youtu.be/rG-o10NggDI';
 const TARGET=280, WEEK_TARGET=70;
@@ -441,9 +441,23 @@ flex:{n:12,what:'Scale patterns built on the pentatonic scale, on <i>woo</i>, <i
 
 /* ===== Storage ===== */
 const KEY='vocalTracker', DRAFT='vocalDraft';
-function load(){try{return JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){return {}}}
+function load(){try{return cleanData(JSON.parse(localStorage.getItem(KEY)||'{}'))||{}}catch(e){return {}}}
+// keep only well-formed data, so a damaged file or storage can't break the app
+function cleanData(d){
+  if(!d||typeof d!=='object'||Array.isArray(d))return null;
+  const arr=x=>Array.isArray(x)?x:[],obj=x=>x&&typeof x==='object'&&!Array.isArray(x)?x:{};
+  const okS=x=>x&&typeof x==='object'&&typeof x.id==='string'&&!isNaN(new Date(x.date))&&+x.mins>0&&isFinite(+x.mins);
+  const fixS=x=>Object.assign(x,{mins:Math.round(+x.mins),f:obj(x.f),rot:obj(x.rot),xn:obj(x.xn),rate:obj(x.rate),takes:arr(x.takes),how:arr(x.how).filter(w=>typeof w==='string'),howNote:typeof x.howNote==='string'?x.howNote:''});
+  const out=Object.assign({},d,{sessions:arr(d.sessions).filter(okS).map(fixS),songSessions:arr(d.songSessions).filter(okS).map(fixS),
+    songs:arr(d.songs).filter(x=>x&&x.id&&typeof x.name==='string'),custom:arr(d.custom).filter(x=>x&&x.id&&typeof x.name==='string'),
+    months:obj(d.months),ex:obj(d.ex),words:obj(d.words)});
+  for(const k in out.months)if(!(+out.months[k]>=0)||!isFinite(+out.months[k]))delete out.months[k];else out.months[k]=+out.months[k];
+  for(const k in out.ex){const e=out.ex[k];if(!e||typeof e!=='object'){delete out.ex[k];continue;}e.n=Math.max(0,Math.round(+e.n)||0);if(e.last&&isNaN(new Date(e.last)))e.last=null;}
+  for(const k in out.words)if(!Array.isArray(out.words[k]))delete out.words[k];
+  return out;
+}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(D))}catch(e){toast('Couldn’t save. Storage may be full.')}}
-function loadDraft(){try{return JSON.parse(localStorage.getItem(DRAFT)||'null')}catch(e){return null}}
+function loadDraft(){try{const o=JSON.parse(localStorage.getItem(DRAFT)||'null');return o&&typeof o==='object'&&+o.start>0?o:null}catch(e){return null}}
 function saveDraft(){try{X?localStorage.setItem(DRAFT,JSON.stringify(X)):localStorage.removeItem(DRAFT)}catch(e){}}
 let D=load();
 function migrate(){
@@ -605,7 +619,7 @@ function scrHistory(){
   return '<h1>History</h1><div class="split"><div class="sl">'+segH+list+'</div><div class="pane">'+(sel?(songs?songSessionBody(sel,'pane'):sessionBody(sel,'pane')):'<div class="grp" style="margin-top:6px"><div class="empty">Select something on the left to see it here.</div></div>')+'</div></div>';
 }
 function sessionHistory(selId){
-  const ss=D.sessions.slice().reverse();
+  const ss=D.sessions.slice().sort((a,b)=>new Date(b.date)-new Date(a.date));
   if(!ss.length)return '<div class="grp" style="margin-top:12px"><div class="empty">Your finished sessions will appear here, with levels, notes and how they went.</div></div>';
   let h='',cur='';
   ss.forEach(s=>{const k=monthKey(new Date(s.date));if(k!==cur){if(cur)h+='</div>';cur=k;const lab=new Date(s.date).toLocaleDateString('en-GB',{month:'long',year:'numeric'});h+='<div class="hdr">'+lab+' · <span style="text-transform:none">'+hm(D.months[k]||0)+'</span></div><div class="grp">';}
@@ -744,6 +758,7 @@ function renderDock(){
     const lab={found:'Log foundation',rot:n?'Log '+n+' exercise'+(n>1?'s':''):'Pick an exercise',app:'Finish session',song:'Save song practice'}[U.view];
     $('dock').innerHTML='<button class="cta glass tinted" data-a="cta">'+lab+'</button>';return;}
   if(MQ.reg.matches){$('dock').innerHTML='';return;}
+  if(window.scrollY<60)tabMin=false; // never leave it shrunk at the top of a page
   const t=(id,lab,ic)=>'<button class="'+(U.tab===id?'on':'')+'" data-a="tab" data-v="'+id+'" aria-current="'+(U.tab===id?'page':'false')+'">'+ic+lab+'</button>';
   $('dock').innerHTML='<nav class="tabbar glass'+(tabMin?' min':'')+'" aria-label="Tabs">'+t('today','Today',ICON.mic)+t('history','History',ICON.clock)+t('exercises','Exercises',ICON.list)+t('settings','Settings',ICON.gear)+'</nav>';
 }
@@ -791,6 +806,7 @@ function renderSheet(){
   else if(s==='calendar')h=calendarSheet();
   else if(s==='session'||s==='done'){const ss=D.sessions.find(x=>x.id===k);if(ss)h=sessionSheet(ss,s==='done');}
   else if(s==='songSession'||s==='songDone'){const ss=D.songSessions.find(x=>x.id===k);if(ss)h=songSessionSheet(ss,s==='songDone');}
+  if(s&&!h){U.sheet=null;U.sd={};}
   if(!h&&U.clock&&X&&U.view&&U.view!=='ex')h=clockHTML();
   const key=h?(U.sheet?U.sheet+'|'+(k||''):'clock'):'';
   const prev=$('layer').querySelector('.sheet'),st=prev?prev.scrollTop:0,same=!!key&&key===lastLayerKey;lastLayerKey=key;
@@ -886,13 +902,13 @@ function render(keepScroll){
   const v=U.view;
   $('app').innerHTML=v==='ex'?scrEx():v?({found:scrFound,rot:scrRot,app:scrApp,song:scrSong})[v]():({today:scrToday,history:scrHistory,exercises:scrExercises,settings:scrSettings})[U.tab]();
   $('app').className=(v?'flow':'tabv')+(v&&v!=='ex'||(!v&&U.tab==='settings')||(v==='ex'&&!split())?' narrow':'');
-  renderBar();renderDock();renderSide();renderSheet();
+  renderBar();renderSheet();renderDock();renderSide();
   if(keepScroll)window.scrollTo(0,y);
   placeKnobs();
 }
 const rerender=()=>render(true);
-function go(fn){fn();window.scrollTo(0,0);render();}
-let toastT=null;
+function go(fn){const was=U.view;fn();if(rec&&U.view!==was){stopRec();toast('Recording stopped and saved');}window.scrollTo(0,0);render();}
+var toastT=null;
 function toast(t){clearTimeout(toastT);const o=document.querySelector('.toast');if(o)o.remove();const el=document.createElement('div');el.className='toast glass';el.setAttribute('role','status');el.textContent=t;document.body.appendChild(el);toastT=setTimeout(()=>el.remove(),1900);}
 
 /* ===== Sliding knobs ===== */
@@ -1049,6 +1065,8 @@ function readImport(file){
   const r=new FileReader();
   r.onload=()=>{let p;try{p=JSON.parse(r.result);}catch(e){p=null;}
     if(!p||p.app!=='vocal-sessions'||!p.data){toast('That file isn’t a Vocal Sessions backup');return;}
+    const d=cleanData(p.data);if(!d||(p.takes&&!Array.isArray(p.takes))){toast('That backup file looks damaged');return;}
+    p.data=d;p.takes=(p.takes||[]).filter(t=>t&&t.id&&typeof t.data==='string');
     pendingImport=p;U.sheet='importConfirm';rerender();};
   r.onerror=()=>toast('Couldn’t read that file');
   r.readAsText(file);
@@ -1058,9 +1076,11 @@ async function restoreImport(){
   U.sheet='importing';rerender();
   try{
     stopPlayback();if(rec)stopRec();
+    // decode every recording first, so a bad file can't leave you with half your data
+    const ready=(p.takes||[]).map(t=>{const c=Object.assign({},t);c.blob=dataURLToBlob(t.data);delete c.data;return c;});
     await clearTakes();
-    for(const t of (p.takes||[])){const c=Object.assign({},t);c.blob=dataURLToBlob(t.data);delete c.data;await putTake(c);}
-    D=p.data;migrate();D.lastBackup=p.exportedAt;save();
+    for(const c of ready)await putTake(c);
+    D=cleanData(p.data)||{};migrate();D.lastBackup=p.exportedAt||new Date().toISOString();save();
     X=p.draft||null;normX();saveDraft();
     await refreshTakes();pendingImport=null;
     U=freshU();window.scrollTo(0,0);render();toast('Backup restored');
@@ -1136,7 +1156,7 @@ document.addEventListener('click',e=>{
       else if(U.view==='song'){if(!X.song)return toast('Pick a song first');if(rec)return toast('Stop recording first');stopPlayback();startFinish();}
       break;
     case 'confirmF':X.fEnd=Date.now();X.fE=elapsedSec();saveDraft();U.sheet=null;go(()=>{U.view='rot';});break;
-    case 'longOk':{const m=Math.round(+(($('longMins')||{}).value)||0);const max=Math.round(elapsedSec()/60);X.minsOverride=m>0?Math.min(m,max):null;saveDraft();U.sheet='how';rerender();break;}
+    case 'longOk':{const m=Math.round(+(($('longMins')||{}).value)||0);const max=Math.round(elapsedSec()/60);if(!(m>=1))return toast('Enter the minutes you practised');X.minsOverride=Math.min(m,max);saveDraft();U.sheet='how';rerender();break;}
     case 'longAll':X.minsOverride=null;saveDraft();U.sheet='how';rerender();break;
     case 'saveHow':finishSession();break;
     case 'skipHow':X.how=[];X.howNote='';finishSession();break;
@@ -1156,7 +1176,7 @@ document.addEventListener('click',e=>{
     case 'openNote':U.noteOpen=k;rerender();setTimeout(()=>{const t=$(k);if(t){t.focus();t.scrollIntoView({block:'center',behavior:'smooth'});}},80);break;
     case 'editSess':{const ss=findSess(k);if(!ss)break;E=JSON.parse(JSON.stringify(ss));E.kind=ss.kind||'focused';E.dateStr=isoDay(new Date(ss.date));E.how=E.how||[];E.howNote=E.howNote||'';E.xn=E.xn||{};
       const r=here();U.noteOpen=null;U.sheet='edit';U.sd={k,ret:r};rerender();break;}
-    case 'saveEdit':if(E){applyEdit();toast('Changes saved');}closeSheet();break;
+    case 'saveEdit':if(E){const m=+E.mins;if(!(m>=1&&m<=600)){toast('Enter minutes between 1 and 600');break;}applyEdit();toast('Changes saved');}closeSheet();break;
     case 'sheet':if((v==='session'||v==='songSession')&&split()&&!U.view&&U.tab==='history'&&!U.sheet){U.sel=k;rerender();break;}U.sheet=v;U.sd={k};rerender();break;
     case 'close':closeSheet();break;
     case 'focus':document.querySelectorAll('#focusChips .chip').forEach(c=>c.classList.toggle('on',c===el));break;
@@ -1201,7 +1221,7 @@ const PTR={y:null,x:0,on:false,d:0,busy:false,lock:null},PT_TRIG=56,PT_HOLD=56;
 function ptrOK(){return !U.view&&!U.sheet&&!U.clock&&(U.tab==='today'||U.tab==='history')&&window.scrollY<=0&&!PTR.busy;}
 function ptrPaint(d,armed){const a=$('app');a.style.transform=d?'translateY('+d+'px)':'';const sp=$('spin');sp.style.opacity=d>8?1:0;
   const p=Math.min(1,d/PT_TRIG);[...sp.children].forEach((s,i)=>{s.style.opacity=PTR.busy?(1-i*0.11):(p*8>i?(armed?1-i*0.09:0.75):0);});}
-document.addEventListener('touchstart',e=>{PTR.y=null;if(e.touches.length!==1||!ptrOK())return;PTR.y=e.touches[0].clientY;PTR.x=e.touches[0].clientX;PTR.on=false;PTR.lock=null;PTR.d=0;$('app').classList.remove('ptr-snap');},{passive:true});
+document.addEventListener('touchstart',e=>{PTR.y=null;if(e.touches.length!==1||!ptrOK())return;for(let n=e.target;n&&n!==document.body;n=n.parentElement)if(n.scrollTop>0)return;PTR.y=e.touches[0].clientY;PTR.x=e.touches[0].clientX;PTR.on=false;PTR.lock=null;PTR.d=0;$('app').classList.remove('ptr-snap');},{passive:true});
 document.addEventListener('touchmove',e=>{if(PTR.y===null||e.touches.length!==1)return;const t=e.touches[0],dy=t.clientY-PTR.y,dx=t.clientX-PTR.x;
   if(PTR.lock===null){if(dy<=0||Math.abs(dx)>Math.abs(dy)){if(Math.abs(dx)>6||dy<-6)PTR.lock='no';return;}if(dy>6)PTR.lock='pull';}
   if(PTR.lock==='no')return;if(window.scrollY>0){PTR.y=null;return;}
@@ -1212,10 +1232,11 @@ function ptrEnd(){if(PTR.y===null)return;PTR.y=null;if(!PTR.on)return;PTR.on=fal
   PTR.busy=true;$('ptr').classList.add('go');ptrPaint(PT_HOLD,true);
   refreshApp().then(r=>{if(r==='reload')return;$('ptr').classList.remove('go');PTR.busy=false;ptrPaint(0);setTimeout(()=>a.classList.remove('ptr-snap'),450);});}
 document.addEventListener('touchend',ptrEnd);document.addEventListener('touchcancel',ptrEnd);
+const cmpVer=(a,b)=>{const x=a.split('.').map(Number),y=b.split('.').map(Number);for(let i=0;i<3;i++){const d=(x[i]||0)-(y[i]||0);if(d)return d;}return 0;};
 async function refreshApp(){
   const t0=Date.now();let newer=null;
   D=load();migrate();X=loadDraft();normX();await refreshTakes();
-  try{const r=await fetch(location.href.split('#')[0],{cache:'reload'});const m=(await r.text()).match(/APP_VERSION='([\d.]+)'/);if(m&&m[1]!==APP_VERSION)newer=m[1];}catch(e){}
+  try{const r=await fetch(location.href.split('#')[0],{cache:'reload'});const m=(await r.text()).match(/APP_VERSION='([\d.]+)'/);if(m&&cmpVer(m[1],APP_VERSION)>0)newer=m[1];}catch(e){}
   await new Promise(r=>setTimeout(r,Math.max(0,700-(Date.now()-t0))));
   if(newer){toast('Updating to '+newer+'…');setTimeout(()=>location.reload(),800);return 'reload';}
   render(true);return 'ok';
@@ -1241,7 +1262,7 @@ window.addEventListener('scroll',()=>{closeSwipes();const y=window.scrollY;const
   if(tb&&!U.sheet&&!document.body.classList.contains('land')){if(y>lastY+6&&y>120)tabMin=true;else if(y<lastY-6||y<60)tabMin=false;tb.classList.toggle('min',tabMin);}
   lastY=y;},{passive:true});
 // iOS pauses the mic when you leave the app, so stop and save the take, then say so on return
-document.addEventListener('visibilitychange',()=>{if(document.hidden){if(rec){bgSaved=true;stopRec();}}else if(bgSaved){bgSaved=false;setTimeout(()=>toast('Your take was saved when you left the app'),500);}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){if(rec){bgSaved=true;stopRec();}}else{if(!U.sheet&&!rec)render(true);if(bgSaved){bgSaved=false;setTimeout(()=>toast('Your take was saved when you left the app'),500);}}});
 
 layout();render();
 refreshTakes().then(rerender);
