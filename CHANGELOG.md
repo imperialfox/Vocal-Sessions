@@ -9,6 +9,11 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.4.1 · 14 Oct 2026
+
+- The launch screen no longer flashes white before the icon appears. The right background colour is set on the very first frame, and the icon is built into the page so it appears at the same moment.
+- The icon no longer jumps a few pixels as the app opens. It's centred on the full screen height, so it doesn't move when iOS adjusts the layout at launch, and it lines up exactly with the iOS launch image.
+
 ## 3.4 · 14 Oct 2026
 
 **Launch screen**
