@@ -1,152 +1,117 @@
-# 🎤 Vocal Session Tracker
+# Vocal Sessions
 
-A lightweight, mobile-first session companion for structured vocal practice. Built as a single HTML file — no install, no backend, no account required. Designed to live on your iPhone Home Screen.
+A mobile-first companion for structured vocal practice, styled like a native iOS app. It's a single HTML file with no install, no backend and no account. It's designed to live on your iPhone Home Screen.
 
-![License: MIT](https://img.shields.io/badge/license-MIT-orange) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue)
+![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue)
 
------
+---
 
 ## What it does
 
-Guides you through a three-block vocal practice session and generates ready-to-paste [Toggl Track](https://toggl.com/track/) entries so your time is logged accurately with zero friction.
+It guides you through a three-step practice session, keeps a history of your sessions, and produces ready-to-paste [Toggl Track](https://toggl.com/track/) entries with `#tags` inline.
 
-**The session structure:**
+| Step | What | Time |
+|---|---|---|
+| Foundation | 4 core SOVT exercises, all required | ~25 min |
+| Rotation | One or more exercises from a pool of 8, plus any you add | ~15 min |
+| Application | Sing a real song or section, record a take, rate it | ~5–10 min |
 
-|Block      |What                                       |Time     |
-|-----------|-------------------------------------------|---------|
-|Foundation |4 core SOVT exercises, all required        |~25 min  |
-|Rotation   |1 exercise from a pool of 8 (+ any you add)|~15 min  |
-|Application|Sing a real phrase or song                 |~5–10 min|
-
-At the end of each session the app generates pre-formatted Toggl descriptions with `#tag` syntax inline — one paste and your tags are applied automatically.
-
------
+---
 
 ## Features
 
-- **Level tracking per exercise** — each exercise has 3 levels. Tap to expand and mark how far you got (1, 2, or 3). Partial sessions are recorded honestly.
-- **Confirm before logging** — a review sheet slides up before each block is committed, so you can go back and correct levels.
-- **Smart rotation suggest** — tracks which exercises you’ve done least often and highlights the most neglected one each session.
-- **Add your own exercises** — tap “+ Add exercise for today” in the rotation block to add a custom exercise for that session. Custom exercises persist across sessions.
-- **Monthly progress bar** — shows minutes logged vs the 280 min/month target (70 min/week).
-- **Streak counter** — tracks consecutive practice days.
-- **Toggl-ready copy** — each block generates a single-line description with `#hashtag` tags. “Copy All” bundles all three entries for one paste.
-- **localStorage only** — all data stays on your device. Nothing is sent anywhere.
-- **Works offline** — once loaded, no internet connection required.
+**Today tab**
+- Streak, minutes this month, and progress towards a 280 min/month target
+- The least-practised rotation exercise, suggested automatically
+- An unfinished session can be resumed or discarded
+- Settings: recordings storage, reset this month, reset all data
 
------
+**Session**
+- **Levels:** each exercise has 3 levels, set with a 1 · 2 · 3 picker, so partial sessions are recorded honestly
+- **Coach video:** tapping an exercise opens the coach video in YouTube at that exercise's timestamp
+- **Multi-select rotation:** pick as many exercises as you like, each with its own level
+- **Notes:** one per step, from presets or your own words
+- **Application:**
+  - Choose a song from your library
+  - Record takes and play them back
+  - Rate pitch, tone and ease from 1 to 3
 
-## How to use
+**Recordings**
+- Mono, compressed audio (about 0.5 MB a minute), up to 2 minutes per take
+- Keeps the last 3 takes per song, plus any you star
+- Share saves a take to Files or iCloud Drive, named by song and date
+- Takes are stored on the phone only
 
-### In the browser
+**History tab**
+- Every finished session, grouped by month, with levels, notes, song and ratings
+- Copy any past session for Toggl again
 
-Open `index.html` directly in any modern browser. No server needed.
+**Exercises tab**
+- Every exercise, with how often and when you last did it
+- Add or remove your own exercises (with an optional video timestamp) and songs
 
-### On iPhone Home Screen (recommended)
+**Toggl copy:** one tap copies a line per block, for example:
 
-1. Host the file (see [Hosting](#hosting) below)
-1. Open the URL in **Safari**
-1. Tap the Share icon → **Add to Home Screen**
-1. Name it and tap Add
+```
+Foundation: Vocal slides L3, Humming L3, Lip bubbling L3, Singing through a straw L2 #foundation #cord-closure
+Vertical mouth L2/3 #rotation #resonance
+Application: Versace on the Floor · bridge — pitch 2, tone 3, ease 2 #application
+```
 
-It will open full screen like a native app, with no browser chrome.
+Paste into Toggl's description field; the `#` triggers tag autocomplete.
 
------
+---
+
+## On iPhone
+
+1. Open the GitHub Pages URL in **Safari**
+2. Tap Share → **Add to Home Screen** → Add
+
+It opens full screen like an app. iOS may ask for microphone access each time you record, which is an Apple limit on Home Screen web apps.
+
+---
 
 ## Hosting
 
-The simplest free option is GitHub Pages:
+GitHub Pages: **Settings → Pages → Deploy from branch → `main` → `/ (root)`**. Changes go live about a minute after each push.
 
-1. Fork or clone this repo
-1. Go to **Settings → Pages**
-1. Set Source to `Deploy from branch` → `main` → `/ (root)`
-1. Save — your app will be live at `https://yourusername.github.io/vocal-session`
-
-Alternatively, drag and drop `index.html` onto [Netlify Drop](https://app.netlify.com/drop) for an instant public URL with no account needed.
-
------
-
-## The exercise system
-
-### Foundation block (every session, all 4 required)
-
-|Exercise               |Focus       |
-|-----------------------|------------|
-|Vocal Slides           |Agility     |
-|Humming                |Cord closure|
-|Lip Bubbling           |Cord closure|
-|Singing Through a Straw|Cord closure|
-
-### Rotation pool (pick 1 per session)
-
-|Exercise                  |Focus    |
-|--------------------------|---------|
-|Falsetto Voice            |Register |
-|Upper to Lower Voice      |Register |
-|Singing on the Rung       |Resonance|
-|Squeaky Hinge             |Register |
-|Half Squeaky / Half Normal|Blend    |
-|Vertical Mouth            |Resonance|
-|Nasal Exercise            |Resonance|
-|Vocal Flexibility         |Agility  |
-
-Exercise durations are based on a real vocal coach video series. Levels 1–2–3 represent thirds of the full exercise duration.
-
-### Toggl tag system
-
-Each session generates entries tagged with two tags:
-
-**Block type:** `#foundation` `#rotation` `#application` `#review`
-
-**Focus area:** `#cord-closure` `#register` `#resonance` `#agility` `#blend`
-
-Paste a description like `Foundation: Vocal Slides L3, Humming L2... #foundation #cord-closure` directly into the Toggl description field — the `#` triggers tag autocomplete.
-
------
+---
 
 ## Adapting it for yourself
 
-The exercise lists, note presets, and monthly target are all defined at the top of the `<script>` block and straightforward to edit:
+Everything to edit sits at the top of the `<script>` block:
 
 ```js
-// Change the monthly target (in minutes)
-const TARGET_MIN_MONTH = 280;
-
-// Edit or add foundation exercises
-const FOUNDATION = [
-  { name: 'Vocal Slides', focus: 'agility', dur: 435 },
-  // ...
-];
-
-// Edit or add rotation exercises
-const ROTATION = [
-  { name: 'Falsetto Voice', focus: 'register', dur: 315 },
-  // ...
-];
+const VIDEO = 'https://youtu.be/…';  // your coach video
+const TARGET = 280;                    // monthly target in minutes
+const FOUND = [ { id: 'slides', name: 'Vocal slides', focus: 'agility', ts: 0 }, … ];
+const ROT   = [ { id: 'falsetto', name: 'Falsetto voice', focus: 'register', ts: 1170 }, … ];
 ```
 
-`dur` is the exercise duration in seconds, used internally for level-time calculations. You can set it to `0` if you don’t need that.
+`ts` is the exercise's start time in the video, in seconds.
 
------
+If the video is private, the YouTube buttons only work for the owner, signed in to YouTube.
 
-## Data & privacy
+---
 
-All data is stored in `localStorage` on your device only. There is no server, no analytics, no tracking, no cookies. Clearing your browser storage or using a private window will reset the app.
+## Data and privacy
 
------
+- Session data is stored in `localStorage` and recordings in IndexedDB, both on your device only.
+- There's no server, analytics or tracking.
+- Deleting the Home Screen app or clearing Safari's website data erases everything, so save takes you want to keep to iCloud Drive.
+
+---
 
 ## Stack
 
-- Vanilla HTML, CSS, JavaScript — no frameworks, no build step
-- [Barlow / Barlow Condensed](https://fonts.google.com/specimen/Barlow) via Google Fonts
-- localStorage for persistence
+Vanilla HTML, CSS and JavaScript, with no frameworks or build step. It uses the iOS system font and a CSS imitation of Liquid Glass (blur and translucency).
 
------
+---
 
 ## License
 
-MIT — do whatever you want with it.
+MIT
 
------
+---
 
 *Built by [ivanc.digital](https://ivanc.digital)*
