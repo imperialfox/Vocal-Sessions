@@ -23,6 +23,7 @@
   --glass-lo:rgba(0,0,0,0.06);--glass-glow:rgba(255,255,255,0.45);--rim1:rgba(255,255,255,0.95);--rim2:rgba(255,255,255,0.55);--spec:rgba(255,255,255,0.55);
   --tint:rgba(0,122,255,0.82);--hl:rgba(0,122,255,0.14);
   --glass-shadow:rgba(20,20,40,0.15);--scrim:rgba(0,0,0,0.22);
+  --coral:#f0524a;--warnbg:#fff4e5;--warnfg:#9a5b00;--pause:#ff9f0a;
   --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",system-ui,sans-serif;
   color-scheme:light;
 }
@@ -35,7 +36,8 @@
   --glass-edge:rgba(0,0,0,0.6);--glass-hi:rgba(255,255,255,0.2);
   --glass-lo:rgba(0,0,0,0.35);--glass-glow:rgba(255,255,255,0.08);--rim1:rgba(255,255,255,0.42);--rim2:rgba(255,255,255,0.14);--spec:rgba(255,255,255,0.16);
   --tint:rgba(10,132,255,0.78);--hl:rgba(10,132,255,0.24);
-  --glass-shadow:rgba(0,0,0,0.55);--scrim:rgba(0,0,0,0.5);color-scheme:dark}}
+  --glass-shadow:rgba(0,0,0,0.55);--scrim:rgba(0,0,0,0.5);color-scheme:dark;
+  --coral:#ff6961;--warnbg:#3a2a12;--warnfg:#ffcf86;--pause:#ff9f0a}}
 
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;touch-action:manipulation;-webkit-text-size-adjust:100%}
@@ -188,6 +190,55 @@ textarea.field{resize:none;min-height:84px;line-height:1.35}
 .ibtn{width:40px;height:44px;display:grid;place-items:center;border-radius:50%;flex-shrink:0}
 .ibtn svg{width:20px;height:20px}
 .star.on{color:var(--star)}.star.on svg{fill:currentColor}
+/* 3.2 */
+.tbtn{font:inherit;color:inherit;letter-spacing:inherit}
+.dateline{display:inline-block}
+.nudge{display:flex;align-items:center;gap:10px;width:100%;background:var(--warnbg);color:var(--warnfg);border-radius:16px;padding:12px 14px;font-size:15px;margin:12px 0 0;text-align:left;transition:transform .5s cubic-bezier(.3,1.7,.45,1)}
+.nudge:active{transform:scale(.97);transition-duration:.12s}
+.nudge b{font-weight:600}.nudge svg{width:20px;height:20px}
+.lbl small.co{color:var(--coral)}.lbl small.acc{color:var(--accent)}
+.seg button.sk{padding:0 9px}.seg button.sk.on{color:var(--fg2)}
+.nbtn{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:var(--fg3);flex-shrink:0}
+.nbtn.has{color:var(--accent)}.nbtn svg{width:20px;height:20px}
+.notetxt{font-size:13px;color:var(--accent);padding:0 16px 12px 62px;margin-top:-4px;background:var(--surface);line-height:1.35}
+.tk{flex:1;min-width:0;text-align:left;padding:4px 0}
+.addnote{display:flex;align-items:center;gap:10px;width:100%;margin-top:14px;padding:14px 16px;border-radius:16px;background:var(--surface);color:var(--accent);font-size:16px}
+.addnote svg{width:20px;height:20px}
+.notebox{margin-top:14px;animation:grow .3s ease}
+@keyframes grow{from{opacity:0;transform:translateY(-6px)}}
+.chip.add{color:var(--accent);background:transparent;box-shadow:inset 0 0 0 1px var(--sep)}
+.shtop{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.shbtn{position:relative;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;color:var(--fg);transition:transform .5s cubic-bezier(.3,1.7,.45,1)}
+.shbtn:active{transform:scale(.93);transition-duration:.12s}
+.shbtn.ok{background:var(--fg);color:var(--bg)}
+.sheet h2.c{text-align:center;margin-bottom:4px}
+.field.dt{width:auto;min-height:38px;max-width:170px;padding:6px 12px;background:var(--fill);text-align:right;font-size:16px}
+.field.num{width:90px}
+.still{animation:none!important}
+.cal button{position:relative}
+.cal button.s::after{content:"";position:absolute;bottom:3px;left:50%;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:var(--coral)}
+button.pill{cursor:pointer;font-variant-numeric:tabular-nums}
+.pill.paused{color:var(--pause)}
+.clockscrim{position:fixed;inset:0;z-index:44;background:rgba(0,0,0,.12);animation:fade .2s;transition:opacity .25s}
+.clock{position:fixed;z-index:45;top:calc(6px + env(safe-area-inset-top,0px));right:max(12px,env(safe-area-inset-right,0px));width:min(360px,calc(100vw - 24px));border-radius:34px;padding:16px 18px 18px;
+  background:var(--glass-strong);transform-origin:calc(100% - 50px) 28px;animation:clockIn .55s cubic-bezier(.28,1.3,.45,1)}
+.clock.out{animation:clockOut .28s cubic-bezier(.4,0,.6,1) forwards}
+@keyframes clockIn{from{transform:scale(.32,.14);opacity:.2;border-radius:999px}}
+@keyframes clockOut{to{transform:scale(.32,.14);opacity:0;border-radius:999px}}
+.clock .ctop{display:flex;justify-content:space-between;font-size:13px;color:var(--fg2);font-weight:600;text-transform:uppercase;letter-spacing:.03em}
+.clock .big{font-size:68px;font-weight:300;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.05;margin:6px 0 2px;text-align:center}
+.clock .big.paused{color:var(--pause)}
+.clock .csub{text-align:center;font-size:14px;color:var(--fg2);min-height:18px}
+.cbtns{display:flex;justify-content:space-between;margin:16px 4px 14px}
+.cbtn{width:76px;height:76px;border-radius:50%;display:grid;place-items:center;font-size:15px;font-weight:500;box-shadow:0 0 0 3px var(--bg),0 0 0 4.5px currentColor;transition:transform .5s cubic-bezier(.3,1.7,.45,1)}
+.cbtn:active{transform:scale(.92);transition-duration:.12s}
+.cbtn.hide{background:rgba(118,118,128,.24);color:var(--fg)}
+.cbtn.pause{background:rgba(255,159,10,.2);color:var(--pause)}
+.cbtn.resume{background:rgba(52,199,89,.2);color:var(--good)}
+.splits{border-radius:18px;background:var(--surface);overflow:hidden}
+.splits div{display:flex;justify-content:space-between;padding:11px 14px;font-size:15px;font-variant-numeric:tabular-nums;position:relative}
+.splits div+div::before{content:"";position:absolute;top:0;left:14px;right:0;border-top:.5px solid var(--sep)}
+.splits .cur{color:var(--accent);font-weight:600}.splits .todo{color:var(--fg3)}
 @keyframes up{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
 @keyframes fade{from{opacity:0}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
@@ -209,7 +260,7 @@ textarea.field{resize:none;min-height:84px;line-height:1.35}
 
 <script>
 /* ===== Config ===== */
-const APP_VERSION='3.1', RELEASE_DATE='14 Oct 2026';
+const APP_VERSION='3.2', RELEASE_DATE='14 Oct 2026';
 const REPO='https://github.com/imperialfox/Vocal-Sessions';
 const VIDEO='https://youtu.be/rG-o10NggDI';
 const TARGET=280, WEEK_TARGET=70;
@@ -230,7 +281,23 @@ const ROT=[
   {id:'flex',name:'Vocal flexibility',focus:'agility'}];
 const OLD_ROT_IDS=['falsetto','upperlower','rung','hinge','half','vertical','nasal','flex'];
 const FOCI=['cord-closure','register','resonance','agility','blend'];
-const NOTE_PRESETS=['Felt good placement','Tight today','Clear tone','Cracking on passaggio','Flat pitch','Register blend improving','Needed more warm-up'];
+const LONG_MINS=90; // ask "how long did you actually practise?" past this
+const HOW_WORDS=['Free','Warm','In control','Clear tone','Good placement','Bit tight','Breath ran short','Strained','Cracked on passaggio','Voice tired'];
+const TAKE_WORDS=['Nailed it','Good tone','Better than last time','Flat on the high note','Breathy','Rushed the run','Cracked'];
+const EX_WORDS={
+  slides:['Smooth glide','Gaps in the middle','Light and easy','Pushed at the top'],
+  humming:['Buzz in the mask','Sound fell back','Relaxed lips','Felt forward'],
+  lip:['Even trill','Lips kept stopping','Jaw relaxed','Same effort top to bottom'],
+  straw:['Steady bubbles','Air kept stopping','Soothing','Easy climb'],
+  falsetto:['Light and free','Too breathy','Jaw stayed loose','Wobbly'],
+  upperlower:['No bump','Clunk into chest','Smooth way down','Lost volume'],
+  rung:['Jaw open','Through the passaggio','Got heavy','Forward ng'],
+  hinge:['Found the mix','Thinned out nicely','Squeak kept dropping','Effortless top notes'],
+  half:['Good blend','Too squeaky','Too heavy','Felt like real singing'],
+  vertical:['Tall vowel','Spread on high notes','Warm tone','Freer throat'],
+  nasal:['Low notes clear','Forward placement','Too nasal','Easy into the mix'],
+  flex:['Clean runs','Pitch slipped','Ready to speed up','Tripped on the run']};
+const EX_WORDS_DEFAULT=['Felt good','Tight today','Clear tone','Needed more warm-up'];
 const MAX_TAKE=120, KEEP_TAKES=3;
 
 /* One glyph per exercise; tile colour = focus area */
@@ -309,9 +376,15 @@ function migrate(){
     D.custom=custom;D.v2=true;
   }
   D.ex=D.ex||{};D.custom=D.custom||[];D.songs=D.songs||[];D.sessions=D.sessions||[];D.months=D.months||{};
+  D.songSessions=D.songSessions||[];D.words=D.words||{};
 }
 migrate();save();
 let X=loadDraft();
+// bring older drafts up to date (3.2 adds Skip, per-exercise notes, how it went, pause and song practice)
+function normX(){if(!X)return;X.kind=X.kind||'focused';X.f=X.f||{};X.rot=X.rot||{};X.xn=X.xn||{};X.rate=X.rate||{};X.takes=X.takes||[];
+  X.how=X.how||[];X.howNote=X.howNote||'';X.pausedTotal=X.pausedTotal||0;
+  if(X.fEnd&&X.fE==null)X.fE=(X.fEnd-X.start)/1000;if(X.rEnd&&X.rE==null)X.rE=(X.rEnd-X.start)/1000;}
+normX();
 
 /* ===== Recordings (IndexedDB) ===== */
 let dbp=null;
@@ -342,7 +415,21 @@ function startOfDay(d){const x=new Date(d);x.setHours(0,0,0,0);return x;}
 function weekStart(d){const x=startOfDay(d);x.setDate(x.getDate()-((x.getDay()+6)%7));return x;}
 function relDay(iso){const days=Math.round((startOfDay(new Date())-startOfDay(iso))/864e5);if(days<=0)return 'today';if(days===1)return 'yesterday';if(days<7)return days+' days ago';return shortDate(iso);}
 function lastDone(id){const e=D.ex[id];if(e&&e.last)return 'last done '+relDay(e.last);if(e&&e.n)return 'last done before '+UPDATE_DAY;return 'Not done yet';}
-function suggested(){const r=allRot();let best=r[0],min=Infinity;r.forEach(e=>{const n=(D.ex[e.id]||{}).n||0;if(n<min){min=n;best=e;}});return best;}
+// longest since last done: never done first, then practice from before dates were saved (fewest first), then the oldest date
+function suggested(){const r=allRot();const score=e=>{const x=D.ex[e.id];if(!x||(!x.n&&!x.last))return -2e13;if(!x.last)return -1e13+(x.n||0);return new Date(x.last).getTime();};
+  return r.map((e,i)=>({e,i,s:score(e)})).sort((a,b)=>a.s-b.s||a.i-b.i)[0].e;}
+const isSong=()=>!!X&&X.kind==='song';
+function elapsedSec(){if(!X)return 0;const now=X.paused?X.pausedAt:Date.now();return Math.max(0,(now-X.start-(X.pausedTotal||0))/1000);}
+const finalMins=()=>X&&X.minsOverride?X.minsOverride:Math.max(1,Math.round(elapsedSec()/60));
+const clk=s=>{s=Math.max(0,Math.floor(s));const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=String(s%60).padStart(2,'0');return h?h+':'+String(m).padStart(2,'0')+':'+x:m+':'+x;};
+const noteStr=n=>!n?'':typeof n==='string'?n:((n.w||[]).join(', ')+(n.t?((n.w||[]).length?' — ':'')+n.t:''));
+const howStr=ss=>(ss.how||[]).join(', ')+(ss.howNote?((ss.how||[]).length?' — ':'')+ss.howNote:'');
+const exIds=ss=>FOUND.filter(e=>(ss.f||{})[e.id]).map(e=>e.id).concat(Object.keys(ss.rot||{}).filter(id=>ss.rot[id]));
+const wordList=(key,base)=>base.concat((D.words[key]||[]).filter(w=>!base.includes(w)));
+const findSess=id=>D.sessions.find(x=>x.id===id)||D.songSessions.find(x=>x.id===id);
+const isoDay=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+function lastFor(id){let m=null;D.sessions.forEach(s=>{if((s.f&&s.f[id])||(s.rot&&s.rot[id])){const t=sessEnd(s);if(!m||new Date(t)>new Date(m))m=t;}});return m;}
+function songWeek(){const ws=weekStart(new Date());const l=D.songSessions.filter(s=>new Date(s.date)>=ws);return {n:l.length,m:l.reduce((a,s)=>a+s.mins,0)};}
 function minsIn(from,to){return D.sessions.filter(s=>{const t=new Date(s.date);return t>=from&&t<to;}).reduce((a,s)=>a+s.mins,0);}
 function weekInfo(){
   const ws=weekStart(new Date()),we=new Date(ws);we.setDate(we.getDate()+7);
@@ -368,6 +455,9 @@ const ICON={
   star:'<svg class="i" viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg>',
   share:'<svg class="i" viewBox="0 0 24 24"><path d="M12 15V3M8 7l4-4 4 4M6 11H5v10h14V11h-1"/></svg>',
   trash:'<svg class="i" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>',
+  x:'<svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  pen:'<svg class="i" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>',
+  save:'<svg class="i" viewBox="0 0 24 24"><path d="M12 3v12M8 11l4 4 4-4M5 21h14"/></svg>',
   check:'<svg class="i" viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M5 12l5 5 9-10"/></svg>',
   plus:'<svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
   circle:'<svg class="i" viewBox="0 0 24 24" style="width:24px;height:24px"><circle cx="12" cy="12" r="9.5"/></svg>',
@@ -375,14 +465,27 @@ const ICON={
 };
 const chev='<span class="mut" aria-hidden="true" style="font-size:20px">›</span>';
 const seg=(a,key,v)=>'<div class="seg" role="group"><span class="knob" aria-hidden="true"></span>'+[1,2,3].map(n=>'<button data-a="'+a+'" data-k="'+esc(key)+'" data-v="'+n+'" class="'+(v===n?'on':'')+'" aria-pressed="'+(v===n)+'" aria-label="Level '+n+'">'+n+'</button>').join('')+'</div>';
+const segF=(a,key,v)=>'<div class="seg" role="group"><span class="knob" aria-hidden="true"></span>'+[0,1,2,3].map(n=>'<button data-a="'+a+'" data-k="'+esc(key)+'" data-v="'+n+'" class="'+(n?'':'sk ')+(v===n?'on':'')+'" aria-pressed="'+(v===n)+'" aria-label="'+(n?'Level '+n:'Skip')+'">'+(n||'Skip')+'</button>').join('')+'</div>';
+const songTile='<span class="tile" style="background:var(--coral)">'+GL('<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>')+'</span>';
+const chipsHTML=(list,sel,key)=>'<div class="chips">'+list.map(w=>'<button class="chip'+(sel.includes(w)?' on':'')+'" data-a="wTog" data-v="'+esc(w)+'" aria-pressed="'+sel.includes(w)+'">'+esc(w)+'</button>').join('')+'<button class="chip add" data-a="addWord" data-k="'+esc(key)+'">+ Your own</button></div>';
+function noteBlock(id,val,ph){if(U.noteOpen!==id&&!val)return '<button class="addnote" data-a="openNote" data-k="'+id+'">'+ICON.pen+'<span>Add a note</span></button>';
+  return '<div class="notebox"><textarea class="field" id="'+id+'" maxlength="200" placeholder="'+esc(ph)+'" aria-label="Note">'+esc(val||'')+'</textarea></div>';}
 // swipe-to-delete row wrapper
 const sw=(inner,sheet,k)=>'<div class="sw" data-sw="1"><button class="swdel" data-a="sheet" data-v="'+sheet+'" data-k="'+esc(k)+'" tabindex="-1">Delete</button><div class="fg">'+inner+'</div></div>';
 
 /* ===== UI state ===== */
-let U={tab:'today',view:null,exId:null,exTab:'summary',sheet:null,sd:{},prevView:null,calMonth:null,calDay:null};
+const freshU=()=>({tab:'today',view:null,exId:null,exTab:'summary',sheet:null,sd:{},histTab:'sessions',clock:false,noteOpen:null,calMonth:null,calDay:null});
+let U=freshU();
+let E=null, bgSaved=false, lastLayerKey='';
 let rec=null, player=null, playingId=null, pendingImport=null, pendingExport=null;
 
 /* ===== Screens ===== */
+function backupNudge(){
+  if(!D.sessions.length&&!D.songSessions.length)return '';
+  const lb=D.lastBackup,age=lb?Math.floor((Date.now()-new Date(lb))/864e5):null;
+  if(lb&&age<=14)return '';
+  return '<button class="nudge" data-a="exportPrep">'+ICON.save+'<span style="flex:1"><b>'+(lb?'Last backup '+age+' days ago.':'Not backed up yet.')+'</b> Back up now</span>'+ICON.fwd+'</button>';
+}
 function scrToday(){
   const w=weekInfo(),p=Math.min(100,Math.round(w.mins/WEEK_TARGET*100)),mm=monthMins(),mp=Math.min(100,Math.round(mm/TARGET*100)),s=suggested();
   const today=startOfDay(new Date()).getTime();
@@ -393,25 +496,44 @@ function scrToday(){
   else if(w.streak>0){st=w.streak+'-week streak';sub=left+' min to go this week';}
   else{st='Start a new streak';sub=left+' min this week starts one';}
   const dl=new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
-  return '<div class="dateline">'+dl+'</div><div class="titlerow"><h1>Today</h1><button class="calbtn" data-a="openCal" aria-label="Open practice calendar">'+ICON.down+'</button></div>'+
+  const sw2=songWeek(),songLive=isSong();
+  return '<button class="dateline" data-a="openCal">'+dl+'</button><div class="titlerow"><h1><button class="tbtn" data-a="openCal">Today</button></h1><button class="calbtn" data-a="openCal" aria-label="Open practice calendar">'+ICON.down+'</button></div>'+
+  backupNudge()+
   '<div class="arch"><svg viewBox="0 0 300 165" role="img" aria-label="'+Math.round(w.mins)+' of '+WEEK_TARGET+' minutes this week"><path d="M24 150 A126 126 0 0 1 276 150" fill="none" stroke="var(--fill)" stroke-width="16" stroke-linecap="round"/>'+
   (p>0?'<path d="M24 150 A126 126 0 0 1 276 150" pathLength="100" stroke-dasharray="'+p+' 100" fill="none" stroke="'+(p>=100?'var(--good)':'var(--accent)')+'" stroke-width="16" stroke-linecap="round"/>':'')+
   '</svg><div class="c"><small>This week</small><b>'+Math.round(w.mins)+'</b><small>of your '+WEEK_TARGET+'-minute goal</small></div></div>'+
-  '<div style="margin-top:20px">'+(X?'<button class="cta ink" data-a="resume">Resume session</button><button class="ghost" data-a="sheet" data-v="discard">Discard session</button>':'<button class="cta ink" data-a="start">Start session</button>')+'</div>'+
+  '<div style="margin-top:20px">'+(X&&!songLive?'<button class="cta ink" data-a="resume">Resume session</button><button class="ghost" data-a="sheet" data-v="discard">Discard session</button>':'<button class="cta ink" data-a="start">Start session</button>')+'</div>'+
   '<div class="week" role="list" aria-label="This week">'+days+'</div>'+
   '<div class="streak">'+st+'<small>'+sub+'</small></div>'+
   '<div class="grp" style="margin-top:22px"><div class="row" style="display:block;padding:14px 16px"><div style="display:flex;justify-content:space-between;gap:8px"><span>This month</span><span class="mut">'+Math.round(mm)+' of '+TARGET+' min</span></div><div class="track"><i class="'+(mp>=100?'full':'')+'" style="width:'+mp+'%"></i></div></div>'+
-  '<button class="row" data-a="openEx" data-k="'+s.id+'">'+tile(s)+'<span class="lbl">Suggested rotation<small>'+esc(s.name)+' · '+lastDone(s.id)+'</small></span>'+chev+'</button></div>';
+  '<button class="row" data-a="openEx" data-k="'+s.id+'">'+tile(s)+'<span class="lbl">Suggested rotation<small>'+esc(s.name)+' · '+lastDone(s.id)+'</small></span>'+chev+'</button></div>'+
+  '<div class="hdr">Just singing</div><div class="grp tiled"><button class="row" data-a="songStart">'+songTile+'<span class="lbl">Song practice<small>'+(songLive?'In progress · tap to carry on':'Record a take and note how it went')+'</small>'+
+  (sw2.n&&!songLive?'<small class="co">This week · '+sw2.n+' session'+(sw2.n>1?'s':'')+' · '+hm(sw2.m)+'</small>':'')+'</span>'+chev+'</button></div>'+
+  '<p class="foot">Song practice has its own stats. It never counts towards your weekly goal, streak or monthly minutes.</p>';
 }
 function scrHistory(){
+  const songs=U.histTab==='songs';
+  let h='<h1>History</h1><div class="seg wide" role="tablist" style="margin:2px 0 4px"><span class="knob" aria-hidden="true"></span><button role="tab" data-a="histTab" data-v="sessions" class="'+(songs?'':'on')+'" aria-selected="'+!songs+'">Sessions</button><button role="tab" data-a="histTab" data-v="songs" class="'+(songs?'on':'')+'" aria-selected="'+songs+'">Song practice</button></div>';
+  return h+(songs?songHistory():sessionHistory());
+}
+function sessionHistory(){
   const ss=D.sessions.slice().reverse();
-  let h='<h1>History</h1>';
-  if(!ss.length)return h+'<div class="grp" style="margin-top:8px"><div class="empty">Your finished sessions will appear here, with levels, songs and ratings.</div></div>';
-  let cur='';
+  if(!ss.length)return '<div class="grp" style="margin-top:12px"><div class="empty">Your finished sessions will appear here, with levels, notes and how they went.</div></div>';
+  let h='',cur='';
   ss.forEach(s=>{const k=monthKey(new Date(s.date));if(k!==cur){if(cur)h+='</div>';cur=k;const lab=new Date(s.date).toLocaleDateString('en-GB',{month:'long',year:'numeric'});h+='<div class="hdr">'+lab+' · <span style="text-transform:none">'+hm(D.months[k]||0)+'</span></div><div class="grp">';}
-    const rots=Object.keys(s.rot||{}).map(id=>(exById(id)||{name:(s.rotNames||{})[id]||'Exercise'}).name);
-    h+=sw('<button class="row" data-a="sheet" data-v="session" data-k="'+s.id+'"><span class="lbl">'+dayLabel(s.date)+'<small>'+esc(rots.length?rots.join(', '):'Foundation only')+'</small></span><span class="mut">'+hm(s.mins)+'</span>'+chev+'</button>','delSession',s.id);});
-  return h+'</div><p class="foot">Swipe left on a session to delete it.</p>';
+    const rots=Object.keys(s.rot||{}).map(id=>(exById(id)||{name:(s.rotNames||{})[id]||'Exercise'}).name);const how=howStr(s);
+    h+=sw('<button class="row" data-a="sheet" data-v="session" data-k="'+s.id+'"><span class="lbl">'+dayLabel(s.date)+'<small>'+esc(rots.length?rots.join(', '):'Foundation only')+'</small>'+(how?'<small class="acc">'+esc(how)+'</small>':'')+'</span><span class="mut">'+hm(s.mins)+'</span>'+chev+'</button>','delSession',s.id);});
+  return h+'</div><p class="foot">Swipe left on a session to delete it. Open one to edit it.</p>';
+}
+function songHistory(){
+  const ss=D.songSessions.slice().sort((a,b)=>new Date(b.date)-new Date(a.date));
+  if(!ss.length)return '<div class="grp" style="margin-top:12px"><div class="empty">Song practice you save appears here. It’s kept apart from your focused sessions.</div></div>';
+  const sums={};ss.forEach(s=>{const k=monthKey(new Date(s.date));sums[k]=(sums[k]||0)+s.mins;});
+  let h='',cur='';
+  ss.forEach(s=>{const k=monthKey(new Date(s.date));if(k!==cur){if(cur)h+='</div>';cur=k;const lab=new Date(s.date).toLocaleDateString('en-GB',{month:'long',year:'numeric'});h+='<div class="hdr">'+lab+' · <span style="text-transform:none">'+hm(sums[k])+'</span></div><div class="grp">';}
+    const n=(s.takes||[]).length,how=howStr(s);
+    h+=sw('<button class="row" data-a="sheet" data-v="songSession" data-k="'+s.id+'"><span class="lbl">'+dayLabel(s.date)+'<small>'+esc(s.songName||'Song practice')+(n?' · '+n+' take'+(n>1?'s':''):'')+'</small>'+(how?'<small class="acc">'+esc(how)+'</small>':'')+'</span><span class="mut">'+hm(s.mins)+'</span>'+chev+'</button>','delSongSess',s.id);});
+  return h+'</div><p class="foot">Swipe left to delete. Song practice never counts towards your goal or streak.</p>';
 }
 function scrExercises(){
   const row=e=>'<button class="row" data-a="openEx" data-k="'+e.id+'">'+tile(e)+'<span class="lbl">'+esc(e.name)+'<small>'+esc(e.focus)+' · '+lastDone(e.id)+'</small></span>'+chev+'</button>';
@@ -453,7 +575,7 @@ function scrEx(){
       svg+='</svg>';
       const lastLv=pts[n-1].lv;
       h+='<div class="hdr">Level · <span style="text-transform:none">latest L'+lastLv+'</span></div><div class="grp"><div class="chart">'+svg+'</div></div>'+
-      '<div class="hdr">Sessions</div><div class="grp">'+hist.slice().reverse().map(p=>'<button class="row" data-a="sheet" data-v="session" data-k="'+p.s.id+'"><span class="lbl">'+dayLabel(p.s.date)+'</span><span class="mut">Level '+p.lv+'</span>'+chev+'</button>').join('')+'</div>';
+      '<div class="hdr">Sessions</div><div class="grp">'+hist.slice().reverse().map(p=>'<button class="row" data-a="sheet" data-v="session" data-k="'+p.s.id+'"><span class="lbl">'+dayLabel(p.s.date)+(noteStr((p.s.xn||{})[e.id])?'<small class="acc">'+esc(noteStr(p.s.xn[e.id]))+'</small>':'')+'</span><span class="mut">Level '+p.lv+'</span>'+chev+'</button>').join('')+'</div>';
     }
   }
   return h;
@@ -475,56 +597,85 @@ function scrSettings(){
   '<div class="hdr">About</div><div class="grp"><a class="row" href="'+REPO+'" target="_blank" rel="noopener"><span class="lbl acc">View on GitHub<small>imperialfox/Vocal-Sessions</small></span>'+ICON.gh+'</a></div>'+
   '<p class="foot" style="text-align:center;margin-top:18px">Vocal Sessions '+APP_VERSION+' · '+RELEASE_DATE+'</p>';
 }
+// one exercise with its level picker and notes pencil (used in Foundation, Rotation and Edit)
+function exBlock(e,a,v,skip,T,src){const n=noteStr((T.xn||{})[e.id]);
+  return '<div><div class="row">'+tile(e)+'<span class="lbl">'+esc(e.name)+'</span><button class="nbtn'+(n?' has':'')+'" data-a="exNote" data-k="'+e.id+'" data-src="'+(src||'')+'" aria-label="Notes for '+esc(e.name)+'">'+ICON.pen+'</button></div>'+
+  '<div class="sub" style="justify-content:flex-end">'+(skip?segF(a,e.id,v):seg(a,e.id,v))+'</div>'+(n?'<div class="notetxt">'+esc(n)+'</div>':'')+'</div>';}
 function scrFound(){
-  return '<h1>Foundation</h1><p class="note">Set how many levels you got through.</p><div class="grp">'+
-  FOUND.map(e=>'<div class="row"><span class="lbl">'+esc(e.name)+'</span>'+seg('flv',e.id,X.f[e.id])+'</div>').join('')+'</div>'+
-  '<div class="grp" style="margin-top:14px"><button class="row" data-a="sheet" data-v="note" data-k="fNote"><span class="lbl '+(X.fNote?'':'mut')+'">'+esc(X.fNote||'Add a note')+'</span>'+chev+'</button></div>';
+  return '<h1>Foundation</h1><p class="note">Set how many levels you got through, or Skip. Tap the pencil for quick notes.</p><div class="grp tiled">'+
+  FOUND.map(e=>exBlock(e,'flv',X.f[e.id],true,X)).join('')+'</div>'+
+  '<p class="foot">Tap the time at the top to see the full clock or pause it. With YouTube Premium, the coach video keeps playing in picture-in-picture while you use this app.</p>';
 }
-function rotRow(e,sug){const on=e.id in X.rot;
-  return '<button class="row" data-a="tog" data-k="'+e.id+'" aria-pressed="'+on+'">'+tile(e)+'<span class="lbl">'+esc(e.name)+'<small>'+(sug?'Least practised · ':'')+lastDone(e.id)+'</small></span><span class="'+(on?'acc':'mut')+'" aria-hidden="true">'+(on?ICON.circleOn:ICON.circle)+'</span></button>'+
-  (on?'<div class="sub" style="padding-left:62px"><span class="tag">'+esc(e.focus)+'</span>'+seg('rlv',e.id,X.rot[e.id])+'</div>':'');}
+function rotRow(e,sug){const on=e.id in X.rot,n=noteStr(X.xn[e.id]);
+  return '<button class="row" data-a="tog" data-k="'+e.id+'" aria-pressed="'+on+'">'+tile(e)+'<span class="lbl">'+esc(e.name)+'<small>'+(sug?'Longest since last done · ':'')+lastDone(e.id)+'</small></span><span class="'+(on?'acc':'mut')+'" aria-hidden="true">'+(on?ICON.circleOn:ICON.circle)+'</span></button>'+
+  (on?'<div class="sub" style="padding-left:62px"><span class="tag" style="flex:1">'+esc(e.focus)+'</span><button class="nbtn'+(n?' has':'')+'" data-a="exNote" data-k="'+e.id+'" aria-label="Notes for '+esc(e.name)+'">'+ICON.pen+'</button>'+seg('rlv',e.id,X.rot[e.id])+'</div>'+(n?'<div class="notetxt">'+esc(n)+'</div>':''):'');}
 function scrRot(){const s=suggested();const rest=allRot().filter(e=>e.id!==s.id);
   return '<h1>Rotation</h1><p class="note">Pick as many as you like. Each one gets its own level.</p><div class="hdr">Suggested</div><div class="grp tiled">'+rotRow(s,true)+'</div>'+
-  '<div class="hdr">More exercises</div><div class="grp tiled">'+rest.map(e=>rotRow(e)).join('')+'<button class="row acc" data-a="sheet" data-v="addEx"><span class="lbl">Add exercise</span>'+ICON.plus+'</button></div>'+
-  '<div class="grp" style="margin-top:14px"><button class="row" data-a="sheet" data-v="note" data-k="rNote"><span class="lbl '+(X.rNote?'':'mut')+'">'+esc(X.rNote||'Add a note')+'</span>'+chev+'</button></div>';}
+  '<div class="hdr">More exercises</div><div class="grp tiled">'+rest.map(e=>rotRow(e)).join('')+'<button class="row acc" data-a="sheet" data-v="addEx"><span class="lbl">Add exercise</span>'+ICON.plus+'</button></div>';}
+function songPicker(){const sid=X.song;
+  return '<div class="hdr">Song</div><div class="grp">'+D.songs.map(s=>'<button class="row" data-a="song" data-k="'+s.id+'"><span class="lbl">'+esc(s.name)+'</span>'+(sid===s.id?'<span class="acc">'+ICON.check+'</span>':'')+'</button>').join('')+
+  '<button class="row acc" data-a="sheet" data-v="addSong"><span class="lbl">Add song</span>'+ICON.plus+'</button></div>';}
+function takeRows(sid){const tk=TAKES.filter(t=>t.songId===sid);
+  return '<div class="hdr">Takes</div><div class="grp"><button class="row recbtn'+(rec?' on':'')+'" data-a="rec"><span class="dot" aria-hidden="true"></span><span id="recLbl">'+(rec?'Stop · '+mmss(rec.t)+' of '+mmss(MAX_TAKE):'Record a take')+'</span></button>'+
+  tk.map(t=>{const n=noteStr(t.note);return sw('<div class="row"><button class="ibtn acc" data-a="playTake" data-k="'+t.id+'" aria-label="Play take">'+(playingId===t.id?ICON.pause:ICON.play)+'</button><button class="lbl tk" data-a="takeNote" data-k="'+t.id+'" aria-label="Notes for this take">'+shortDate(t.created)+' · '+mmss(t.len)+'<small class="'+(n?'acc':'')+'">'+(n?esc(n):'Add a note')+'</small></button><button class="ibtn star'+(t.star?' on':'')+'" data-a="star" data-k="'+t.id+'" aria-label="'+(t.star?'Unstar':'Star')+' take" style="'+(t.star?'':'color:var(--fg3)')+'">'+ICON.star+'</button><button class="ibtn acc" data-a="shareTake" data-k="'+t.id+'" aria-label="Save or share take">'+ICON.share+'</button><button class="ibtn dng" data-a="sheet" data-v="delTake" data-k="'+t.id+'" aria-label="Delete take">'+ICON.trash+'</button></div>','delTake',t.id);}).join('')+
+  '</div><p class="foot">Tap a take to add notes. Keeps the last '+KEEP_TAKES+' takes per song, plus any you star. If you leave the app while recording, the take stops and is saved.</p>';}
 function scrApp(){
-  const sid=X.song;
-  let h='<h1>Application</h1><p class="note">Sing a real song or section and record a take to listen back.</p><div class="hdr">Song</div><div class="grp">'+
-  D.songs.map(s=>'<button class="row" data-a="song" data-k="'+s.id+'"><span class="lbl">'+esc(s.name)+'</span>'+(sid===s.id?'<span class="acc">'+ICON.check+'</span>':'')+'</button>').join('')+
-  '<button class="row acc" data-a="sheet" data-v="addSong"><span class="lbl">Add song</span>'+ICON.plus+'</button></div>';
-  if(sid){const tk=TAKES.filter(t=>t.songId===sid);
-    h+='<div class="hdr">Takes</div><div class="grp"><button class="row recbtn'+(rec?' on':'')+'" data-a="rec"><span class="dot" aria-hidden="true"></span><span id="recLbl">'+(rec?'Stop · '+mmss(rec.t)+' of '+mmss(MAX_TAKE):'Record a take')+'</span></button>'+
-    tk.map(t=>sw('<div class="row"><button class="ibtn acc" data-a="playTake" data-k="'+t.id+'" aria-label="Play take">'+(playingId===t.id?ICON.pause:ICON.play)+'</button><span class="lbl">'+shortDate(t.created)+'<small>'+mmss(t.len)+' · '+(t.size/1048576).toFixed(1)+' MB</small></span><button class="ibtn star'+(t.star?' on':'')+'" data-a="star" data-k="'+t.id+'" aria-label="'+(t.star?'Unstar':'Star')+' take" style="'+(t.star?'':'color:var(--fg3)')+'">'+ICON.star+'</button><button class="ibtn acc" data-a="shareTake" data-k="'+t.id+'" aria-label="Save or share take">'+ICON.share+'</button><button class="ibtn dng" data-a="sheet" data-v="delTake" data-k="'+t.id+'" aria-label="Delete take">'+ICON.trash+'</button></div>','delTake',t.id)).join('')+
-    '</div><p class="foot">Keeps the last '+KEEP_TAKES+' takes per song, plus any you star. Share saves a copy to Files or iCloud Drive.</p>';}
-  h+='<div class="hdr">How did it go?</div><div class="grp">'+['Pitch','Tone','Ease'].map(k=>'<div class="row"><span class="lbl">'+k+'</span>'+seg('rate',k,X.rate[k])+'</div>').join('')+'</div>';
+  let h='<h1>Application</h1><p class="note">Sing a real song or section and record a take to listen back.</p>'+songPicker();
+  if(X.song)h+=takeRows(X.song);
+  h+='<div class="hdr">Rate the song</div><div class="grp">'+['Pitch','Tone','Ease'].map(k=>'<div class="row"><span class="lbl">'+k+'</span>'+seg('rate',k,X.rate[k])+'</div>').join('')+'</div>';
   return h;
+}
+function scrSong(){
+  let h='<h1>Song practice</h1><p class="note">Just singing. Record takes and note how they went. This never counts towards your focused goal or streak.</p>'+songPicker();
+  if(X.song)h+=takeRows(X.song);
+  return h+'<button class="ghost" data-a="sheet" data-v="discard" style="color:var(--danger);margin-top:14px">Discard song practice</button>';
 }
 
 /* ===== Chrome ===== */
-const VIEWS={found:['Foundation','1 of 3',null],rot:['Rotation','2 of 3','found'],app:['Application','3 of 3','rot']};
+const VIEWS={found:['Foundation','1 of 3',null],rot:['Rotation','2 of 3','found'],app:['Application','3 of 3','rot'],song:['Song practice','',null]};
+function pillText(){const st=VIEWS[U.view]&&VIEWS[U.view][1];return (X&&X.paused?'❚❚ ':'')+(st?st+' · ':'')+clk(elapsedSec());}
 function renderBar(){
   const bar=$('bar');
   if(U.view==='ex'){const e=exById(U.exId);$('barT').textContent=e?e.name:'';bar.classList.remove('always');
     $('barL').innerHTML='<button class="circ glass" data-a="exBack" aria-label="Back">'+ICON.back+'</button>';$('barR').innerHTML='';}
   else if(U.view){const v=VIEWS[U.view];$('barT').textContent=v[0];
     $('barL').innerHTML='<button class="circ glass" data-a="'+(v[2]?'view':'exit')+'" data-v="'+(v[2]||'')+'" aria-label="Back">'+ICON.back+'</button>';
-    $('barR').innerHTML='<a class="circ glass" href="'+VIDEO+'" target="_blank" rel="noopener" aria-label="Open coach video">'+ICON.video+'</a><span class="pill glass">'+v[1]+'</span>';}
+    $('barR').innerHTML=(U.view==='song'?'':'<a class="circ glass" href="'+VIDEO+'" target="_blank" rel="noopener" aria-label="Open coach video">'+ICON.video+'</a>')+
+      '<button class="pill glass'+(X&&X.paused?' paused':'')+'" id="timer" data-a="clock" aria-label="Session time. Tap for the clock">'+pillText()+'</button>';}
   else{$('barT').textContent={today:'Today',history:'History',exercises:'Exercises',settings:'Settings'}[U.tab];$('barL').innerHTML='';$('barR').innerHTML='';}
 }
 function renderDock(){
   if(U.sheet){$('dock').innerHTML='';return;}
   if(U.view&&U.view!=='ex'){const n=Object.keys(X.rot).length;
-    const lab={found:'Log foundation',rot:n?'Log '+n+' exercise'+(n>1?'s':''):'Pick an exercise',app:'Finish session'}[U.view];
+    const lab={found:'Log foundation',rot:n?'Log '+n+' exercise'+(n>1?'s':''):'Pick an exercise',app:'Finish session',song:'Save song practice'}[U.view];
     $('dock').innerHTML='<button class="cta glass tinted" data-a="cta">'+lab+'</button>';return;}
   const t=(id,lab,ic)=>'<button class="'+(U.tab===id?'on':'')+'" data-a="tab" data-v="'+id+'" aria-current="'+(U.tab===id?'page':'false')+'">'+ic+lab+'</button>';
   $('dock').innerHTML='<nav class="tabbar glass'+(tabMin?' min':'')+'" aria-label="Tabs">'+t('today','Today',ICON.mic)+t('history','History',ICON.clock)+t('exercises','Exercises',ICON.list)+t('settings','Settings',ICON.gear)+'</nav>';
 }
 function sheetWrap(title,body,label){return '<div class="scrim" data-a="close"><div class="sheet glass" role="dialog" aria-modal="true" aria-label="'+esc(label||title)+'"><div class="grab"></div><h2>'+title+'</h2>'+body+'</div></div>';}
 const confirmSheet=(title,text,btn,action,k,cancel)=>sheetWrap(title,'<p class="note">'+text+'</p><button class="cta red" data-a="'+action+'" data-k="'+esc(k||'')+'">'+btn+'</button><button class="ghost" data-a="close">'+(cancel||'Cancel')+'</button>');
+const noteTarget=()=>U.sd&&U.sd.src==='edit'?E:X;
+function selArr(){const s=U.sheet;
+  if(s==='how')return X&&X.how;if(s==='edit')return E&&E.how;
+  if(s==='exNote'){const T=noteTarget();return T&&T.xn&&T.xn[U.sd.k]&&T.xn[U.sd.k].w;}
+  if(s==='takeNote'){const t=TAKES.find(x=>x.id===U.sd.k);return t&&t.note&&t.note.w;}
+  return null;}
+function howRow(ss){const w=(ss.how||[]).join(', ');if(!w&&!ss.howNote)return '';
+  return '<div class="row"><span class="lbl">How it went'+(w?'<small class="acc">'+esc(w)+'</small>':'')+(ss.howNote?'<small>'+esc(ss.howNote)+'</small>':'')+'</span></div>';}
 function renderSheet(){
   const s=U.sheet,k=U.sd.k;let h='';
-  if(s==='confirmF')h=sheetWrap('Confirm foundation','<div class="grp">'+FOUND.map(e=>'<div class="row"><span class="lbl">'+esc(e.name)+'</span><span class="mut">Level '+X.f[e.id]+'</span></div>').join('')+'</div><div style="margin-top:14px"><button class="cta" data-a="confirmF">Log foundation</button></div><button class="ghost" data-a="close">Edit</button>');
-  else if(s==='note'){const cur=X[k]||'';h=sheetWrap('Add a note','<div class="chips">'+NOTE_PRESETS.map(p=>'<button class="chip'+(cur===p?' on':'')+'" data-a="preset" data-v="'+esc(p)+'">'+esc(p)+'</button>').join('')+'</div><div class="hdr">Or write your own</div><textarea class="field" id="noteIn" maxlength="140" placeholder="Felt easier on the high notes">'+esc(cur)+'</textarea><div style="margin-top:14px"><button class="cta" data-a="saveNote">Save note</button></div>'+(cur?'<button class="ghost" data-a="clearNote" style="color:var(--danger)">Remove note</button>':'<button class="ghost" data-a="close">Cancel</button>'));}
+  if(s==='confirmF')h=sheetWrap('Confirm foundation','<div class="grp">'+FOUND.map(e=>'<div class="row"><span class="lbl">'+esc(e.name)+'</span><span class="mut">'+(X.f[e.id]?'Level '+X.f[e.id]:'Skipped')+'</span></div>').join('')+'</div><div style="margin-top:14px"><button class="cta" data-a="confirmF">Log foundation</button></div><button class="ghost" data-a="close">Edit</button>');
+  else if(s==='how'&&X){
+    h='<div class="scrim" data-a="close"><div class="sheet glass" role="dialog" aria-modal="true" aria-label="How did it go?"><div class="shtop"><button class="shbtn glass" data-a="skipHow" aria-label="Skip and save">'+ICON.x+'</button><span class="mut" style="font-size:13px">'+(isSong()?'Song practice':'Session')+' · '+hm(finalMins())+'</span><button class="shbtn ok" data-a="saveHow" aria-label="Save">'+ICON.check+'</button></div>'+
+    '<h2 class="c">How did it go?</h2><p class="note" style="text-align:center">Tap any that fit. It’s all optional.</p>'+chipsHTML(wordList('how',HOW_WORDS),X.how,'how')+noteBlock('howNote',X.howNote,'Anything else about today')+'</div></div>';}
+  else if(s==='long'&&X){const m=Math.round(elapsedSec()/60);
+    h=sheetWrap('How long did you practise?','<p class="note">This '+(isSong()?'song practice':'session')+' has been running for '+hm(m)+'. If you stopped and forgot to finish, enter the minutes you actually practised.</p><input class="field" id="longMins" type="number" inputmode="numeric" min="1" max="'+m+'" value="'+m+'" aria-label="Minutes practised"><div style="margin-top:14px"><button class="cta" data-a="longOk">Continue</button></div><button class="ghost" data-a="longAll">I practised the whole time</button>');}
+  else if(s==='exNote'){const T=noteTarget();if(T){const e=exById(k)||{name:((T.rotNames||{})[k])||'Exercise'};T.xn=T.xn||{};if(!T.xn[k]||typeof T.xn[k]!=='object')T.xn[k]={w:[],t:T.xn[k]||''};const n=T.xn[k];
+    h=sheetWrap(esc(e.name),'<p class="note">Tap words that describe how it went. These are just for this exercise.</p>'+chipsHTML(wordList('x_'+k,EX_WORDS[k]||EX_WORDS_DEFAULT),n.w,'x_'+k)+noteBlock('xnText',n.t,'More detail on '+e.name.toLowerCase())+'<div style="margin-top:14px"><button class="cta" data-a="close">Done</button></div>'+(n.w.length||n.t?'<button class="ghost" data-a="xnClear" style="color:var(--danger)">Clear notes</button>':''),'Notes for '+e.name);}}
+  else if(s==='takeNote'){const t=TAKES.find(x=>x.id===k);if(t){if(!t.note||typeof t.note!=='object')t.note={w:[],t:''};
+    h=sheetWrap('Take · '+shortDate(t.created)+' · '+mmss(t.len),'<p class="note">Tap words that describe this take.</p>'+chipsHTML(wordList('take',TAKE_WORDS),t.note.w,'take')+noteBlock('tnText',t.note.t,'More detail on this take')+'<div style="margin-top:14px"><button class="cta" data-a="close">Done</button></div>','Notes for this take');}}
+  else if(s==='addWord')h=sheetWrap('Your own words','<p class="note">It’s saved as a chip for next time.</p><input class="field" id="wordIn" maxlength="30" placeholder="Felt it in my chest" autocomplete="off"><div style="margin-top:14px"><button class="cta" data-a="saveWord">Add</button></div><button class="ghost" data-a="close">Cancel</button>');
+  else if(s==='edit'&&E)h=editSheet();
   else if(s==='addEx')h=sheetWrap('Add exercise','<input class="field" id="exName" maxlength="40" placeholder="Siren on ng" autocomplete="off"><div class="err" id="exErr" hidden></div><div class="hdr">Focus</div><div class="chips" id="focusChips">'+FOCI.map((f,i)=>'<button class="chip'+(i===0?' on':'')+'" data-a="focus" data-v="'+f+'">'+f+'</button>').join('')+'</div><div class="hdr">What it is (optional)</div><textarea class="field" id="exWhat" maxlength="400" placeholder="Slide up and down on ng, keeping it light"></textarea><div style="margin-top:14px"><button class="cta" data-a="saveEx">Add exercise</button></div><button class="ghost" data-a="close">Cancel</button>');
   else if(s==='editWhat'){const e=exById(k)||{};h=sheetWrap('Description','<textarea class="field" id="whatIn" maxlength="400" placeholder="What the exercise is and how to do it">'+esc(e.what||'')+'</textarea><div style="margin-top:14px"><button class="cta" data-a="saveWhat" data-k="'+esc(k)+'">Save</button></div><button class="ghost" data-a="close">Cancel</button>');}
   else if(s==='addSong')h=sheetWrap('Add song','<input class="field" id="songIn" maxlength="60" placeholder="Versace on the Floor · bridge" autocomplete="off"><div class="err" id="songErr" hidden></div><p class="note" style="margin-top:8px">Include the section you’re working on, so takes stay grouped.</p><div style="margin-top:8px"><button class="cta" data-a="saveSong">Add song</button></div><button class="ghost" data-a="close">Cancel</button>');
@@ -532,51 +683,100 @@ function renderSheet(){
   else if(s==='delSong'){const so=D.songs.find(x=>x.id===k);h=confirmSheet('Delete song?',esc(so?so.name:'')+' and its saved takes will be deleted from this phone.','Delete song','delSong',k);}
   else if(s==='delTake'){const t=TAKES.find(x=>x.id===k);h=confirmSheet('Delete take?','This '+(t?mmss(t.len)+' ':'')+'recording will be deleted from this phone. Copies you saved to Files stay.','Delete take','delTake',k);}
   else if(s==='delSession'){const ss=D.sessions.find(x=>x.id===k);h=confirmSheet('Delete session?',(ss?dayLabel(ss.date)+' ('+hm(ss.mins)+')':'This session')+' will be removed. Its minutes come off that month and its exercises’ last-done dates are updated.','Delete session','delSession',k);}
+  else if(s==='delSongSess'){const ss=D.songSessions.find(x=>x.id===k);h=confirmSheet('Delete song practice?',(ss?dayLabel(ss.date)+' ('+hm(ss.mins)+')':'This song practice')+' will be removed from your history. Its recordings stay.','Delete','delSongSess',k);}
   else if(s==='storage'){const size=TAKES.reduce((a,t)=>a+t.size,0);h=sheetWrap('Recordings','<div class="grp"><div class="row"><span class="lbl">Saved takes</span><span class="mut">'+TAKES.length+'</span></div><div class="row"><span class="lbl">Space used</span><span class="mut">'+(size/1048576).toFixed(1)+' MB</span></div><div class="row"><span class="lbl">Starred</span><span class="mut">'+TAKES.filter(t=>t.star).length+'</span></div></div><p class="note" style="margin-top:10px">Recordings live on this phone and in your backups. Use Share on a take to save it to iCloud Drive on its own.</p><button class="cta red" data-a="sheet" data-v="clearRec">Delete all recordings</button><button class="ghost" data-a="close">Done</button>');}
   else if(s==='clearRec')h=confirmSheet('Delete all recordings?','Every saved take on this phone will be deleted. This can’t be undone.','Delete all recordings','clearRec');
   else if(s==='resetMonth')h=confirmSheet('Reset this month?','This month’s minutes go back to zero. Sessions and recordings stay.','Reset minutes','resetMonth');
-  else if(s==='resetAll')h=sheetWrap('Reset all data?','<p class="note">Deletes your history, minutes, streak, custom exercises, songs and recordings on this phone. This can’t be undone.</p><button class="cta" data-a="exportPrep" style="margin-bottom:10px">Export a backup first</button><button class="cta red" data-a="resetAll">Delete everything</button><button class="ghost" data-a="close">Cancel</button>');
-  else if(s==='discard')h=confirmSheet('Discard session?','Levels and notes from this session won’t be saved. Recordings stay.','Discard','discardYes','','Keep session');
-  else if(s==='exportReady'&&pendingExport)h=sheetWrap('Backup ready','<div class="grp"><div class="row"><span class="lbl">Sessions</span><span class="mut">'+pendingExport.sessions+'</span></div><div class="row"><span class="lbl">Recordings</span><span class="mut">'+pendingExport.takes+'</span></div><div class="row"><span class="lbl">File size</span><span class="mut">'+(pendingExport.file.size/1048576).toFixed(1)+' MB</span></div></div><p class="note" style="margin-top:10px">Choose Save to Files, then iCloud Drive, so it survives if the app is removed.</p><button class="cta" data-a="exportSave">Save backup</button><button class="ghost" data-a="close">Cancel</button>');
+  else if(s==='resetAll')h=sheetWrap('Reset all data?','<p class="note">Deletes your history, minutes, streak, custom exercises, songs, song practice and recordings on this phone. This can’t be undone.</p><button class="cta" data-a="exportPrep" style="margin-bottom:10px">Export a backup first</button><button class="cta red" data-a="resetAll">Delete everything</button><button class="ghost" data-a="close">Cancel</button>');
+  else if(s==='discard')h=isSong()?confirmSheet('Discard song practice?','This practice won’t be saved. Recordings stay.','Discard','discardYes','','Keep going'):confirmSheet('Discard session?','Levels and notes from this session won’t be saved. Recordings stay.','Discard','discardYes','','Keep session');
+  else if(s==='exportReady'&&pendingExport)h=sheetWrap('Backup ready','<div class="grp"><div class="row"><span class="lbl">Sessions</span><span class="mut">'+pendingExport.sessions+'</span></div><div class="row"><span class="lbl">Song practice</span><span class="mut">'+pendingExport.songs+'</span></div><div class="row"><span class="lbl">Recordings</span><span class="mut">'+pendingExport.takes+'</span></div><div class="row"><span class="lbl">File size</span><span class="mut">'+(pendingExport.file.size/1048576).toFixed(1)+' MB</span></div></div><p class="note" style="margin-top:10px">Choose Save to Files, then iCloud Drive, so it survives if the app is removed.</p><button class="cta" data-a="exportSave">Save backup</button><button class="ghost" data-a="close">Cancel</button>');
   else if(s==='exporting')h=sheetWrap('Preparing backup','<p class="note">Gathering your sessions and recordings…</p>');
-  else if(s==='importConfirm'&&pendingImport){const p=pendingImport,d=p.data||{};h=sheetWrap('Restore this backup?','<div class="grp"><div class="row"><span class="lbl">Backed up</span><span class="mut">'+shortDate(p.exportedAt)+' at '+timeOf(p.exportedAt)+'</span></div><div class="row"><span class="lbl">Sessions</span><span class="mut">'+(d.sessions||[]).length+'</span></div><div class="row"><span class="lbl">Songs</span><span class="mut">'+(d.songs||[]).length+'</span></div><div class="row"><span class="lbl">Recordings</span><span class="mut">'+(p.takes||[]).length+'</span></div></div><p class="note" style="margin-top:10px">Everything currently on this phone will be replaced with this backup.</p><button class="cta red" data-a="importYes">Replace and restore</button><button class="ghost" data-a="close">Cancel</button>');}
+  else if(s==='importConfirm'&&pendingImport){const p=pendingImport,d=p.data||{};h=sheetWrap('Restore this backup?','<div class="grp"><div class="row"><span class="lbl">Backed up</span><span class="mut">'+shortDate(p.exportedAt)+' at '+timeOf(p.exportedAt)+'</span></div><div class="row"><span class="lbl">Sessions</span><span class="mut">'+(d.sessions||[]).length+'</span></div><div class="row"><span class="lbl">Song practice</span><span class="mut">'+(d.songSessions||[]).length+'</span></div><div class="row"><span class="lbl">Songs</span><span class="mut">'+(d.songs||[]).length+'</span></div><div class="row"><span class="lbl">Recordings</span><span class="mut">'+(p.takes||[]).length+'</span></div></div><p class="note" style="margin-top:10px">Everything currently on this phone will be replaced with this backup.</p><button class="cta red" data-a="importYes">Replace and restore</button><button class="ghost" data-a="close">Cancel</button>');}
   else if(s==='importing')h=sheetWrap('Restoring backup','<p class="note">Restoring your sessions and recordings…</p>');
   else if(s==='calendar')h=calendarSheet();
   else if(s==='session'||s==='done'){const ss=D.sessions.find(x=>x.id===k);if(ss)h=sessionSheet(ss,s==='done');}
+  else if(s==='songSession'||s==='songDone'){const ss=D.songSessions.find(x=>x.id===k);if(ss)h=songSessionSheet(ss,s==='songDone');}
+  if(!h&&U.clock&&X&&U.view&&U.view!=='ex')h=clockHTML();
+  const key=h?(U.sheet?U.sheet+'|'+(k||''):'clock'):'';
+  const prev=$('layer').querySelector('.sheet'),st=prev?prev.scrollTop:0,same=!!key&&key===lastLayerKey;lastLayerKey=key;
   $('layer').innerHTML=h;
-  if(h&&!document.body.classList.contains('sheet-open'))$('app').parentNode.style.transformOrigin='50% '+(window.scrollY+120)+'px';
-  document.body.classList.toggle('sheet-open',!!h);
+  if(same){$('layer').querySelectorAll('.scrim,.sheet,.clock,.clockscrim').forEach(x=>x.classList.add('still'));const ns=$('layer').querySelector('.sheet');if(ns)ns.scrollTop=st;}
+  const open=!!h&&!!U.sheet;
+  if(open&&!document.body.classList.contains('sheet-open'))$('app').parentNode.style.transformOrigin='50% '+(window.scrollY+120)+'px';
+  document.body.classList.toggle('sheet-open',open);
   if(h)placeKnobs($('layer'));
   if(s==='addEx')setTimeout(()=>{const i=$('exName');if(i)i.focus();},250);
   if(s==='addSong')setTimeout(()=>{const i=$('songIn');if(i)i.focus();},250);
+}
+function clockHTML(){
+  const e=elapsedSec(),song=isSong(),v=U.view,fE=X.fE||0,rE=X.rE||0;
+  const steps=song?[['Song practice',e,'cur',0]]:[
+    ['Foundation',v==='found'?e:fE,v==='found'?'cur':'',0],
+    ['Rotation',v==='rot'?e-fE:(v==='app'?rE-fE:null),v==='rot'?'cur':(v==='app'?'':'todo'),fE],
+    ['Application',v==='app'?e-rE:null,v==='app'?'cur':'todo',rE]];
+  return '<div class="clockscrim" data-a="clockClose"></div><div class="clock glass" role="dialog" aria-label="Session clock"><div class="ctop"><span>'+(song?'Song practice':'Session')+'</span><span>'+(VIEWS[v][1]?'Step '+VIEWS[v][1]:'')+'</span></div>'+
+  '<div class="big'+(X.paused?' paused':'')+'" id="bigClock">'+clk(e)+'</div><div class="csub">'+(X.paused?'Paused. Paused time isn’t counted.':'Started at '+timeOf(X.start))+'</div>'+
+  '<div class="cbtns"><button class="cbtn hide" data-a="clockClose">Hide</button><button class="cbtn '+(X.paused?'resume':'pause')+'" data-a="pauseToggle">'+(X.paused?'Resume':'Pause')+'</button></div>'+
+  '<div class="splits">'+steps.map(x=>'<div class="'+x[2]+'"><span>'+x[0]+'</span><span'+(x[2]==='cur'?' id="curSplit" data-base="'+x[3]+'"':'')+'>'+(x[1]===null?'–':clk(x[1]))+'</span></div>').join('')+'</div></div>';
 }
 function calendarSheet(){
   const m=U.calMonth||new Date(new Date().getFullYear(),new Date().getMonth(),1);
   const y=m.getFullYear(),mo=m.getMonth();
   const first=new Date(y,mo,1),days=new Date(y,mo+1,0).getDate(),lead=(first.getDay()+6)%7;
-  const byDay={};D.sessions.forEach(s=>{const d=new Date(s.date);if(d.getFullYear()===y&&d.getMonth()===mo)(byDay[d.getDate()]=byDay[d.getDate()]||[]).push(s);});
+  const byDay={},songDay={};
+  D.sessions.forEach(s=>{const d=new Date(s.date);if(d.getFullYear()===y&&d.getMonth()===mo)(byDay[d.getDate()]=byDay[d.getDate()]||[]).push(s);});
+  D.songSessions.forEach(s=>{const d=new Date(s.date);if(d.getFullYear()===y&&d.getMonth()===mo)(songDay[d.getDate()]=songDay[d.getDate()]||[]).push(s);});
   const now=new Date(),isThisMonth=now.getFullYear()===y&&now.getMonth()===mo;
   let g=['M','T','W','T','F','S','S'].map(l=>'<span class="h">'+l+'</span>').join('');
   for(let i=0;i<lead;i++)g+='<span></span>';
-  for(let d=1;d<=days;d++){const has=!!byDay[d];const cls=(has?'p ':'')+(isThisMonth&&d===now.getDate()?'t ':'')+(U.calDay===d?'sel':'');
-    g+=has?'<button class="'+cls+'" data-a="calDay" data-v="'+d+'" aria-label="'+d+' '+m.toLocaleDateString('en-GB',{month:'long'})+', '+byDay[d].length+' session'+(byDay[d].length>1?'s':'')+'">'+d+'</button>':'<button class="'+cls+'" disabled aria-label="'+d+'">'+d+'</button>';}
-  const mk=y+'-'+String(mo+1).padStart(2,'0');const n=Object.values(byDay).reduce((a,x)=>a+x.length,0);
+  for(let d=1;d<=days;d++){const has=!!byDay[d],hs=!!songDay[d];const cls=(has?'p ':'')+(hs?'s ':'')+(isThisMonth&&d===now.getDate()?'t ':'')+(U.calDay===d?'sel':'');
+    const parts=[];if(has)parts.push(byDay[d].length+' session'+(byDay[d].length>1?'s':''));if(hs)parts.push('song practice');
+    g+=(has||hs)?'<button class="'+cls+'" data-a="calDay" data-v="'+d+'" aria-label="'+d+' '+m.toLocaleDateString('en-GB',{month:'long'})+', '+parts.join(' and ')+'">'+d+'</button>':'<button class="'+cls+'" disabled aria-label="'+d+'">'+d+'</button>';}
+  const mk=y+'-'+String(mo+1).padStart(2,'0');const n=Object.values(byDay).reduce((a,x)=>a+x.length,0),sn=Object.values(songDay).reduce((a,x)=>a+x.length,0),sm=Object.values(songDay).reduce((a,x)=>a+x.reduce((b,s)=>b+s.mins,0),0);
   let b='<div class="calhead"><button class="circ" data-a="calMove" data-v="-1" aria-label="Previous month">'+ICON.back+'</button><b>'+m.toLocaleDateString('en-GB',{month:'long',year:'numeric'})+'</b><button class="circ" data-a="calMove" data-v="1" aria-label="Next month">'+ICON.fwd+'</button></div><div class="cal">'+g+'</div>';
-  if(U.calDay&&byDay[U.calDay]){b+='<div class="hdr">'+new Date(y,mo,U.calDay).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'})+'</div><div class="grp">'+byDay[U.calDay].map(s=>{const r=Object.keys(s.rot||{}).map(id=>(exById(id)||{name:(s.rotNames||{})[id]||'Exercise'}).name);return '<button class="row" data-a="calSession" data-k="'+s.id+'"><span class="lbl">'+timeOf(s.date)+'<small>'+esc(r.length?r.join(', '):'Foundation only')+'</small></span><span class="mut">'+hm(s.mins)+'</span>'+chev+'</button>';}).join('')+'</div>';}
-  else b+='<p class="foot">'+(n?'Tap a highlighted day to see its session.':'No sessions this month.')+'</p>';
-  b+='<div class="grp" style="margin-top:12px"><div class="row"><span class="lbl">This month</span><span class="mut">'+n+' session'+(n===1?'':'s')+' · '+hm(D.months[mk]||0)+'</span></div></div><button class="ghost" data-a="close">Done</button>';
+  const sel=U.calDay&&((byDay[U.calDay]||[]).length||(songDay[U.calDay]||[]).length);
+  if(sel){b+='<div class="hdr">'+new Date(y,mo,U.calDay).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'})+'</div><div class="grp">'+
+    (byDay[U.calDay]||[]).map(s=>{const r=Object.keys(s.rot||{}).map(id=>(exById(id)||{name:(s.rotNames||{})[id]||'Exercise'}).name);return '<button class="row" data-a="calSession" data-k="'+s.id+'"><span class="lbl">'+timeOf(s.date)+'<small>'+esc(r.length?r.join(', '):'Foundation only')+'</small></span><span class="mut">'+hm(s.mins)+'</span>'+chev+'</button>';}).join('')+
+    (songDay[U.calDay]||[]).map(s=>'<button class="row" data-a="calSession" data-k="'+s.id+'"><span class="lbl">'+timeOf(s.date)+' · Song practice<small class="co">'+esc(s.songName||'')+'</small></span><span class="mut">'+hm(s.mins)+'</span>'+chev+'</button>').join('')+'</div>';}
+  else b+='<p class="foot">'+(n||sn?'Blue days are focused sessions; a coral dot is song practice. Tap a day to see it.':'Nothing logged this month.')+'</p>';
+  b+='<div class="grp" style="margin-top:12px"><div class="row"><span class="lbl">This month</span><span class="mut">'+n+' session'+(n===1?'':'s')+' · '+hm(D.months[mk]||0)+'</span></div>'+(sn?'<div class="row"><span class="lbl">Song practice</span><span class="mut">'+sn+' · '+hm(sm)+'</span></div>':'')+'</div><button class="ghost" data-a="close">Done</button>';
   return sheetWrap('Practice calendar',b);
 }
 function sessionSheet(ss,done){
-  const rots=Object.keys(ss.rot||{});
-  let b='<div class="grp"><div class="row"><span class="lbl">Total time</span><span class="mut">'+hm(ss.mins)+'</span></div></div>'+
+  const rots=Object.keys(ss.rot||{}),xn=ss.xn||{};
+  const exRow=(name,id,val)=>{const n=noteStr(xn[id]);return '<div class="row"><span class="lbl">'+esc(name)+(n?'<small class="acc">'+esc(n)+'</small>':'')+'</span><span class="mut">'+val+'</span></div>';};
+  let b='<div class="grp"><div class="row"><span class="lbl">Total time</span><span class="mut">'+hm(ss.mins)+'</span></div>'+howRow(ss)+'</div>'+
   (done?'<div style="margin-top:12px"><button class="cta" data-a="copy" data-k="'+ss.id+'">Copy for Toggl</button></div>':'')+
-  '<div class="hdr">Foundation</div><div class="grp">'+FOUND.map(e=>'<div class="row"><span class="lbl">'+esc(e.name)+'</span><span class="mut">Level '+((ss.f||{})[e.id]||'–')+'</span></div>').join('')+(ss.fNote?'<div class="row"><span class="lbl mut">'+esc(ss.fNote)+'</span></div>':'')+'</div>';
-  if(rots.length)b+='<div class="hdr">Rotation</div><div class="grp">'+rots.map(id=>'<div class="row"><span class="lbl">'+esc((exById(id)||{name:(ss.rotNames||{})[id]||'Exercise'}).name)+'</span><span class="mut">Level '+ss.rot[id]+'</span></div>').join('')+(ss.rNote?'<div class="row"><span class="lbl mut">'+esc(ss.rNote)+'</span></div>':'')+'</div>';
-  if(ss.songName||Object.keys(ss.rate||{}).length)b+='<div class="hdr">Application</div><div class="grp">'+(ss.songName?'<div class="row"><span class="lbl">'+esc(ss.songName)+'</span></div>':'')+['Pitch','Tone','Ease'].filter(x=>(ss.rate||{})[x]).map(x=>'<div class="row"><span class="lbl">'+x+'</span><span class="mut">'+ss.rate[x]+' of 3</span></div>').join('')+'</div>';
-  b+=(done?'':'<div style="margin-top:16px"><button class="cta" data-a="copy" data-k="'+ss.id+'">Copy for Toggl</button></div>')+'<button class="ghost" data-a="close">'+(done?'Done':'Close')+'</button>';
+  '<div class="hdr">Foundation</div><div class="grp">'+FOUND.map(e=>{const f=ss.f||{};return exRow(e.name,e.id,f[e.id]?'Level '+f[e.id]:(e.id in f?'Skipped':'–'));}).join('')+(ss.fNote?'<div class="row"><span class="lbl mut">'+esc(ss.fNote)+'</span></div>':'')+'</div>';
+  if(rots.length)b+='<div class="hdr">Rotation</div><div class="grp">'+rots.map(id=>exRow((exById(id)||{name:(ss.rotNames||{})[id]||'Exercise'}).name,id,'Level '+ss.rot[id])).join('')+(ss.rNote?'<div class="row"><span class="lbl mut">'+esc(ss.rNote)+'</span></div>':'')+'</div>';
+  if(ss.songName||Object.keys(ss.rate||{}).length)b+='<div class="hdr">Application</div><div class="grp">'+(ss.songName?'<div class="row"><span class="lbl">'+esc(ss.songName)+'</span>'+((ss.takes||[]).length?'<span class="mut">'+ss.takes.length+' take'+(ss.takes.length>1?'s':'')+'</span>':'')+'</div>':'')+['Pitch','Tone','Ease'].filter(x=>(ss.rate||{})[x]).map(x=>'<div class="row"><span class="lbl">'+x+'</span><span class="mut">'+ss.rate[x]+' of 3</span></div>').join('')+'</div>';
+  b+=(done?'':'<div style="margin-top:16px"><button class="cta" data-a="copy" data-k="'+ss.id+'">Copy for Toggl</button></div>')+'<button class="ghost" data-a="editSess" data-k="'+ss.id+'">Edit session</button><button class="ghost" data-a="close">'+(done?'Done':'Close')+'</button>';
   if(!done)b+='<button class="ghost" data-a="sheet" data-v="delSession" data-k="'+ss.id+'" style="color:var(--danger)">Delete session</button>';
   return sheetWrap(done?'Session complete':dayLabel(ss.date),b);
+}
+function songSessionSheet(ss,done){
+  const tk=TAKES.filter(t=>(ss.takes||[]).includes(t.id));
+  let b='<div class="grp"><div class="row"><span class="lbl">Time</span><span class="mut">'+hm(ss.mins)+'</span></div><div class="row"><span class="lbl">Song</span><span class="mut">'+esc(ss.songName||'–')+'</span></div>'+howRow(ss)+'</div>';
+  if(tk.length)b+='<div class="hdr">Takes</div><div class="grp">'+tk.map(t=>{const n=noteStr(t.note);return '<div class="row"><button class="ibtn acc" data-a="playTake" data-k="'+t.id+'" aria-label="Play take">'+(playingId===t.id?ICON.pause:ICON.play)+'</button><span class="lbl">'+timeOf(t.created)+' · '+mmss(t.len)+(n?'<small class="acc">'+esc(n)+'</small>':'')+'</span></div>';}).join('')+'</div>';
+  else if((ss.takes||[]).length)b+='<p class="foot">This practice’s takes are no longer on this phone.</p>';
+  b+='<p class="foot">Toggl tag #song-practice. Kept out of your focused goal and streak.</p><div style="margin-top:12px"><button class="cta" data-a="copy" data-k="'+ss.id+'">Copy for Toggl</button></div>'+
+  '<button class="ghost" data-a="editSess" data-k="'+ss.id+'">Edit</button><button class="ghost" data-a="close">'+(done?'Done':'Close')+'</button>'+
+  (done?'':'<button class="ghost" data-a="sheet" data-v="delSongSess" data-k="'+ss.id+'" style="color:var(--danger)">Delete</button>');
+  return sheetWrap(done?'Song practice saved':dayLabel(ss.date)+' · Song practice',b);
+}
+function editSheet(){
+  const song=E.kind==='song';
+  let b='<div class="grp"><div class="row"><span class="lbl">Date</span><input class="field dt" type="date" id="edDate" value="'+esc(E.dateStr)+'" max="'+isoDay(new Date())+'" aria-label="Date"></div>'+
+  '<div class="row"><span class="lbl">Minutes</span><input class="field dt num" type="number" inputmode="numeric" id="edMins" min="1" max="600" value="'+esc(E.mins)+'" aria-label="Minutes"></div></div>';
+  if(!song){
+    b+='<div class="hdr">Foundation</div><div class="grp tiled">'+FOUND.map(e=>exBlock(e,'eflv',(E.f||{})[e.id],true,E,'edit')).join('')+'</div>';
+    const rk=Object.keys(E.rot||{});
+    if(rk.length)b+='<div class="hdr">Rotation</div><div class="grp tiled">'+rk.map(id=>exBlock(exById(id)||{id,name:(E.rotNames||{})[id]||'Exercise',focus:'custom'},'erlv',E.rot[id],false,E,'edit')).join('')+'</div>';
+    if(E.songName)b+='<div class="hdr">Application · '+esc(E.songName)+'</div><div class="grp">'+['Pitch','Tone','Ease'].map(x=>'<div class="row"><span class="lbl">'+x+'</span>'+seg('erate',x,(E.rate||{})[x])+'</div>').join('')+'</div>';
+  }
+  b+='<div class="hdr">How it went</div>'+chipsHTML(wordList('how',HOW_WORDS),E.how,'how')+noteBlock('edHowNote',E.howNote,'Anything else about this '+(song?'practice':'session'));
+  b+='<p class="foot">Changing the minutes or date updates your monthly totals, streak and last-done dates.</p><div style="margin-top:14px"><button class="cta" data-a="saveEdit">Save changes</button></div><button class="ghost" data-a="close">Cancel</button>';
+  return sheetWrap('Edit '+(song?'song practice':'session'),b);
 }
 
 /* ===== Render ===== */
@@ -584,7 +784,7 @@ function render(keepScroll){
   const y=window.scrollY;
   closeSwipes();
   const v=U.view;
-  $('app').innerHTML=v==='ex'?scrEx():v?({found:scrFound,rot:scrRot,app:scrApp})[v]():({today:scrToday,history:scrHistory,exercises:scrExercises,settings:scrSettings})[U.tab]();
+  $('app').innerHTML=v==='ex'?scrEx():v?({found:scrFound,rot:scrRot,app:scrApp,song:scrSong})[v]():({today:scrToday,history:scrHistory,exercises:scrExercises,settings:scrSettings})[U.tab]();
   renderBar();renderDock();renderSheet();
   if(keepScroll)window.scrollTo(0,y);
   placeKnobs();
@@ -605,34 +805,70 @@ function segPick(el){const sg=el.closest('.seg');sg.querySelectorAll('button').f
 window.addEventListener('resize',()=>placeKnobs());
 
 /* ===== Session logic ===== */
-function newSession(){X={start:Date.now(),f:{},fNote:'',fEnd:null,rot:{},rNote:'',rEnd:null,song:null,rate:{},takes:[]};saveDraft();}
+function newSession(){X={kind:'focused',start:Date.now(),f:{},xn:{},fEnd:null,rot:{},rEnd:null,song:null,rate:{},takes:[],how:[],howNote:'',pausedTotal:0};saveDraft();}
+function newSong(){const last=D.songSessions.length?D.songSessions[D.songSessions.length-1].songId:null;
+  X={kind:'song',start:Date.now(),f:{},xn:{},rot:{},song:D.songs.some(s=>s.id===last)?last:null,rate:{},takes:[],how:[],howNote:'',pausedTotal:0};saveDraft();}
 function togglLines(ss){
-  const L=[];
-  L.push('Foundation: '+FOUND.map(e=>e.name+' L'+((ss.f||{})[e.id]||0)).join(', ')+(ss.fNote?' — '+ss.fNote:'')+' #foundation #cord-closure');
-  Object.keys(ss.rot||{}).forEach(id=>{const e=exById(id)||{name:(ss.rotNames||{})[id]||'Exercise',focus:'custom'};L.push(e.name+' L'+ss.rot[id]+'/3'+(ss.rNote?' — '+ss.rNote:'')+' #rotation #'+e.focus);});
+  const how=howStr(ss);
+  if(ss.kind==='song'){const n=(ss.takes||[]).length;return 'Song practice'+(ss.songName?': '+ss.songName:'')+(n?', '+n+' take'+(n>1?'s':''):'')+(how?' — '+how:'')+' #song-practice';}
+  const L=[],xn=ss.xn||{};
+  L.push('Foundation: '+FOUND.map(e=>{const lv=(ss.f||{})[e.id],n=noteStr(xn[e.id]);return e.name+(lv?' L'+lv:' skipped')+(n?' ('+n+')':'');}).join(', ')+(ss.fNote?' — '+ss.fNote:'')+' #foundation #cord-closure');
+  Object.keys(ss.rot||{}).forEach(id=>{const e=exById(id)||{name:(ss.rotNames||{})[id]||'Exercise',focus:'custom'};const n=noteStr(xn[id]);L.push(e.name+' L'+ss.rot[id]+'/3'+(n?' — '+n:'')+(ss.rNote?' — '+ss.rNote:'')+' #rotation #'+e.focus);});
   const r=ss.rate||{};const rt=['Pitch','Tone','Ease'].filter(x=>r[x]).map(x=>x.toLowerCase()+' '+r[x]).join(', ');
   L.push('Application'+(ss.songName?': '+ss.songName:'')+(rt?' — '+rt:'')+' #application');
+  if(how)L.push('How it went: '+how);
   return L.join('\n');
 }
+// Finish: long-session check (over 90 min), then "How did it go?", then save
+function startFinish(){U.clock=false;U.noteOpen=null;X.minsOverride=null;U.sheet=elapsedSec()>LONG_MINS*60?'long':'how';U.sd={};saveDraft();rerender();}
 function finishSession(){
-  const end=Date.now(),mins=Math.max(1,Math.round((end-X.start)/60000));
+  const end=Date.now(),mins=finalMins();
   const song=D.songs.find(s=>s.id===X.song);
+  const base={id:'s'+end.toString(36),date:new Date(X.start).toISOString(),end:new Date(end).toISOString(),mins,how:(X.how||[]).slice(),howNote:(X.howNote||'').trim(),songName:song?song.name:'',takes:X.takes||[]};
+  if(X.kind==='song'){
+    const ss=Object.assign(base,{kind:'song',songId:X.song});D.songSessions.push(ss);save();X=null;saveDraft();
+    U.view=null;U.tab='today';U.clock=false;U.noteOpen=null;U.sheet='songDone';U.sd={k:ss.id};window.scrollTo(0,0);render();return;}
   const rotNames={};Object.keys(X.rot).forEach(id=>{const e=exById(id);if(e)rotNames[id]=e.name;});
-  const ss={id:'s'+end.toString(36),date:new Date(X.start).toISOString(),end:new Date(end).toISOString(),mins,f:X.f,fNote:X.fNote,rot:X.rot,rNote:X.rNote,rotNames,songName:song?song.name:'',rate:X.rate,takes:X.takes};
+  const ss=Object.assign(base,{f:X.f,fNote:X.fNote||'',rot:X.rot,rNote:X.rNote||'',rotNames,xn:X.xn||{},rate:X.rate});
   D.sessions.push(ss);
   const k=monthKey(new Date(X.start));D.months[k]=(D.months[k]||0)+mins;
-  FOUND.map(e=>e.id).concat(Object.keys(X.rot)).forEach(id=>{D.ex[id]=D.ex[id]||{n:0,last:null};D.ex[id].n++;D.ex[id].last=ss.end;});
+  exIds(ss).forEach(id=>{D.ex[id]=D.ex[id]||{n:0,last:null};D.ex[id].n++;D.ex[id].last=ss.end;});
   save();X=null;saveDraft();
-  U.view=null;U.tab='today';U.sheet='done';U.sd={k:ss.id};window.scrollTo(0,0);render();
+  U.view=null;U.tab='today';U.clock=false;U.noteOpen=null;U.sheet='done';U.sd={k:ss.id};window.scrollTo(0,0);render();
 }
 function deleteSession(id){
   const ss=D.sessions.find(x=>x.id===id);if(!ss)return;
   D.sessions=D.sessions.filter(x=>x!==ss);
   const mk=monthKey(new Date(ss.date));D.months[mk]=Math.max(0,(D.months[mk]||0)-ss.mins);
-  Object.keys(ss.f||{}).concat(Object.keys(ss.rot||{})).forEach(ex=>{const e=D.ex[ex];if(!e)return;e.n=Math.max(0,e.n-1);
-    const rest=D.sessions.filter(s=>(s.f&&s.f[ex])||(s.rot&&s.rot[ex]));
-    e.last=rest.length?sessEnd(rest[rest.length-1]):null;});
+  exIds(ss).forEach(ex=>{const e=D.ex[ex];if(!e)return;e.n=Math.max(0,e.n-1);e.last=lastFor(ex);});
   save();
+}
+// Save an edited session: recompute monthly minutes, exercise counts and last-done dates
+function applyEdit(){
+  const song=E.kind==='song',arr=song?D.songSessions:D.sessions,ss=arr.find(x=>x.id===E.id);if(!ss)return;
+  const oldIds=song?[]:exIds(ss),oldMonth=monthKey(new Date(ss.date)),oldMins=ss.mins;
+  const od=new Date(ss.date),nd=new Date(od);
+  if(/^\d{4}-\d{2}-\d{2}$/.test(E.dateStr||'')){const p=E.dateStr.split('-').map(Number);nd.setFullYear(p[0],p[1]-1,p[2]);}
+  const shift=nd-od,mins=Math.max(1,Math.min(600,Math.round(+E.mins)||ss.mins));
+  ss.date=nd.toISOString();if(ss.end)ss.end=new Date(new Date(ss.end).getTime()+shift).toISOString();
+  ss.mins=mins;ss.how=(E.how||[]).slice();ss.howNote=(E.howNote||'').trim();
+  if(!song){ss.f=E.f;ss.rot=E.rot;ss.xn=E.xn||{};ss.rate=E.rate||{};}
+  arr.sort((a,b)=>new Date(a.date)-new Date(b.date));
+  if(!song){
+    D.months[oldMonth]=Math.max(0,(D.months[oldMonth]||0)-oldMins);const nk=monthKey(nd);D.months[nk]=(D.months[nk]||0)+mins;
+    const newIds=exIds(ss);
+    new Set(oldIds.concat(newIds)).forEach(id=>{const e=D.ex[id]=D.ex[id]||{n:0,last:null};e.n=Math.max(0,(e.n||0)+(newIds.includes(id)?1:0)-(oldIds.includes(id)?1:0));e.last=lastFor(id);});
+  }
+  save();
+}
+function closeSheet(){
+  const s=U.sheet;
+  if(s==='exNote'){const T=noteTarget(),n=T&&T.xn&&T.xn[U.sd.k];if(n&&typeof n==='object'){n.t=(n.t||'').trim();if(!n.w.length&&!n.t)delete T.xn[U.sd.k];}if(T&&T===X)saveDraft();}
+  if(s==='takeNote'){const t=TAKES.find(x=>x.id===U.sd.k);if(t&&t.note){t.note.t=(t.note.t||'').trim();putTake(t).catch(()=>toast('Couldn’t save the note'));}}
+  if(s==='edit')E=null;
+  const r=U.sd&&U.sd.ret;
+  if(typeof r==='string'){U.sheet=r;U.sd={};}else if(r&&r.sheet){U.sheet=r.sheet;U.sd=r.sd||{};}else U.sheet=null;
+  U.noteOpen=null;pendingImport=null;rerender();
 }
 
 /* ===== Recording ===== */
@@ -697,7 +933,7 @@ async function prepareExport(){
     const now=new Date();
     const payload={app:'vocal-sessions',format:1,appVersion:APP_VERSION,exportedAt:now.toISOString(),data:D,draft:X,takes:out};
     const file=new File([JSON.stringify(payload)],'Vocal Sessions backup – '+fileDate(now)+'.json',{type:'application/json'});
-    pendingExport={file,at:payload.exportedAt,sessions:D.sessions.length,takes:out.length};
+    pendingExport={file,at:payload.exportedAt,sessions:D.sessions.length,songs:D.songSessions.length,takes:out.length};
     U.sheet='exportReady';
   }catch(e){U.sheet=null;toast('Couldn’t create the backup. Try again.');}
   rerender();
@@ -724,9 +960,9 @@ async function restoreImport(){
     await clearTakes();
     for(const t of (p.takes||[])){const c=Object.assign({},t);c.blob=dataURLToBlob(t.data);delete c.data;await putTake(c);}
     D=p.data;migrate();D.lastBackup=p.exportedAt;save();
-    X=p.draft||null;saveDraft();
+    X=p.draft||null;normX();saveDraft();
     await refreshTakes();pendingImport=null;
-    U={tab:'today',view:null,exId:null,exTab:'summary',sheet:null,sd:{}};window.scrollTo(0,0);render();toast('Backup restored');
+    U=freshU();window.scrollTo(0,0);render();toast('Backup restored');
   }catch(e){U.sheet=null;rerender();toast('Couldn’t restore that backup');}
 }
 
@@ -763,23 +999,29 @@ document.addEventListener('click',e=>{
   if(!el)return;
   if(el.classList.contains('scrim')&&e.target!==el)return;
   const a=el.dataset.a,v=el.dataset.v,k=el.dataset.k;
+  const here=()=>U.sheet?{sheet:U.sheet,sd:U.sd}:null;
   switch(a){
     case 'tab':if(tabMin){tabMin=false;$('dock').querySelector('.tabbar').classList.remove('min');break;}go(()=>{U.tab=v;U.view=null;});break;
     case 'openCal':U.calMonth=new Date(new Date().getFullYear(),new Date().getMonth(),1);U.calDay=null;U.sheet='calendar';U.sd={};rerender();break;
     case 'calMove':{const m=U.calMonth;U.calMonth=new Date(m.getFullYear(),m.getMonth()+(+v),1);U.calDay=null;rerender();break;}
     case 'calDay':U.calDay=U.calDay===+v?null:+v;rerender();break;
-    case 'calSession':U.sheet='session';U.sd={k,ret:'calendar'};rerender();break;
-    case 'start':newSession();go(()=>{U.view='found';});break;
-    case 'resume':go(()=>{U.view=X.fEnd?(X.rEnd?'app':'rot'):'found';});break;
-    case 'discardYes':if(rec)stopRec();X=null;saveDraft();U.sheet=null;rerender();break;
-    case 'exit':go(()=>{U.view=null;U.tab='today';});break;
+    case 'calSession':U.sheet=D.songSessions.some(x=>x.id===k)?'songSession':'session';U.sd={k,ret:'calendar'};rerender();break;
+    case 'start':if(X)return toast(isSong()?'Save or discard your song practice first':'Finish or discard your session first');newSession();go(()=>{U.view='found';});break;
+    case 'songStart':if(X&&!isSong())return toast('Finish or discard your session first');if(!X)newSong();go(()=>{U.view='song';});break;
+    case 'resume':go(()=>{U.view=isSong()?'song':X.fEnd?(X.rEnd?'app':'rot'):'found';});break;
+    case 'discardYes':if(rec)stopRec();stopPlayback();X=null;saveDraft();U.clock=false;U.sheet=null;if(U.view)go(()=>{U.view=null;U.tab='today';});else rerender();break;
+    case 'exit':U.clock=false;go(()=>{U.view=null;U.tab='today';});break;
     case 'view':go(()=>{U.view=v;});break;
     case 'openEx':go(()=>{U.prevTab=U.tab;U.view='ex';U.exId=k;U.exTab='summary';});break;
     case 'exBack':go(()=>{U.view=null;U.tab=U.prevTab||'exercises';});break;
     case 'exTab':segPick(el);U.exTab=v;setTimeout(rerender,180);break;
+    case 'histTab':segPick(el);U.histTab=v;setTimeout(rerender,180);break;
     case 'flv':X.f[k]=+v;saveDraft();segPick(el);break;
     case 'rlv':X.rot[k]=+v;saveDraft();segPick(el);break;
     case 'rate':X.rate[k]=+v;saveDraft();segPick(el);break;
+    case 'eflv':if(E){E.f=E.f||{};E.f[k]=+v;segPick(el);}break;
+    case 'erlv':if(E){E.rot[k]=+v;segPick(el);}break;
+    case 'erate':if(E){E.rate=E.rate||{};E.rate[k]=+v;segPick(el);}break;
     case 'tog':if(k in X.rot)delete X.rot[k];else X.rot[k]=0;saveDraft();rerender();break;
     case 'song':if(rec)return toast('Stop recording first');stopPlayback();X.song=k;saveDraft();rerender();break;
     case 'rec':rec?stopRec():startRec();break;
@@ -787,16 +1029,35 @@ document.addEventListener('click',e=>{
     case 'shareTake':shareTake(k);break;
     case 'star':(async()=>{const t=TAKES.find(x=>x.id===k);if(!t)return;t.star=!t.star;await putTake(t);if(!t.star)await prune(t.songId);await refreshTakes();rerender();})();break;
     case 'cta':
-      if(U.view==='found'){if(FOUND.some(x=>!X.f[x.id]))return toast('Set a level for each exercise');U.sheet='confirmF';rerender();}
-      else if(U.view==='rot'){const ks=Object.keys(X.rot);if(!ks.length)return toast('Pick at least one exercise');if(ks.some(i=>!X.rot[i]))return toast('Set a level for each exercise you picked');X.rEnd=Date.now();saveDraft();go(()=>{U.view='app';});}
-      else if(U.view==='app'){if(rec)return toast('Stop recording first');stopPlayback();finishSession();}
+      if(U.view==='found'){if(FOUND.some(x=>!(x.id in X.f)))return toast('Set a level or Skip for each exercise');U.sheet='confirmF';rerender();}
+      else if(U.view==='rot'){const ks=Object.keys(X.rot);if(!ks.length)return toast('Pick at least one exercise');if(ks.some(i=>!X.rot[i]))return toast('Set a level for each exercise you picked');X.rEnd=Date.now();X.rE=elapsedSec();saveDraft();go(()=>{U.view='app';});}
+      else if(U.view==='app'){if(rec)return toast('Stop recording first');stopPlayback();startFinish();}
+      else if(U.view==='song'){if(!X.song)return toast('Pick a song first');if(rec)return toast('Stop recording first');stopPlayback();startFinish();}
       break;
-    case 'confirmF':X.fEnd=Date.now();saveDraft();U.sheet=null;go(()=>{U.view='rot';});break;
+    case 'confirmF':X.fEnd=Date.now();X.fE=elapsedSec();saveDraft();U.sheet=null;go(()=>{U.view='rot';});break;
+    case 'longOk':{const m=Math.round(+(($('longMins')||{}).value)||0);const max=Math.round(elapsedSec()/60);X.minsOverride=m>0?Math.min(m,max):null;saveDraft();U.sheet='how';rerender();break;}
+    case 'longAll':X.minsOverride=null;saveDraft();U.sheet='how';rerender();break;
+    case 'saveHow':finishSession();break;
+    case 'skipHow':X.how=[];X.howNote='';finishSession();break;
+    case 'clock':if(!X)break;U.clock=true;rerender();break;
+    case 'clockClose':{const c=document.querySelector('.clock');if(c){c.classList.remove('still');c.classList.add('out');const sc=document.querySelector('.clockscrim');if(sc)sc.style.opacity=0;}setTimeout(()=>{U.clock=false;rerender();},260);break;}
+    case 'pauseToggle':if(!X)break;if(X.paused){X.pausedTotal=(X.pausedTotal||0)+(Date.now()-X.pausedAt);X.paused=false;}else{X.paused=true;X.pausedAt=Date.now();}saveDraft();rerender();break;
+    case 'exNote':U.noteOpen=null;{const r=here();U.sheet='exNote';U.sd={k,src:el.dataset.src||'',ret:r};}rerender();break;
+    case 'takeNote':U.noteOpen=null;{const r=here();U.sheet='takeNote';U.sd={k,ret:r};}rerender();break;
+    case 'xnClear':{const T=noteTarget();if(T&&T.xn)delete T.xn[U.sd.k];if(T===X)saveDraft();closeSheet();break;}
+    case 'wTog':{const arr=selArr();if(!arr)break;const i=arr.indexOf(v);if(i<0)arr.push(v);else arr.splice(i,1);el.classList.toggle('on',i<0);el.setAttribute('aria-pressed',i<0);if(U.sheet==='how'||(U.sheet==='exNote'&&noteTarget()===X))saveDraft();break;}
+    case 'addWord':{const r=here();U.sheet='addWord';U.sd={key:k,ret:r};rerender();setTimeout(()=>{const i=$('wordIn');if(i)i.focus();},250);break;}
+    case 'saveWord':{const w=(($('wordIn')||{}).value||'').trim().replace(/\s+/g,' ');const key=U.sd.key,r=U.sd.ret;
+      if(w){D.words[key]=D.words[key]||[];if(!D.words[key].includes(w))D.words[key].push(w);save();}
+      if(r){U.sheet=r.sheet;U.sd=r.sd||{};}else U.sheet=null;
+      if(w){const arr=selArr();if(arr&&!arr.includes(w))arr.push(w);if(U.sheet==='how'||(U.sheet==='exNote'&&noteTarget()===X))saveDraft();toast('Saved for next time');}
+      rerender();break;}
+    case 'openNote':U.noteOpen=k;rerender();setTimeout(()=>{const t=$(k);if(t){t.focus();t.scrollIntoView({block:'center',behavior:'smooth'});}},80);break;
+    case 'editSess':{const ss=findSess(k);if(!ss)break;E=JSON.parse(JSON.stringify(ss));E.kind=ss.kind||'focused';E.dateStr=isoDay(new Date(ss.date));E.how=E.how||[];E.howNote=E.howNote||'';E.xn=E.xn||{};
+      const r=here();U.noteOpen=null;U.sheet='edit';U.sd={k,ret:r};rerender();break;}
+    case 'saveEdit':if(E){applyEdit();toast('Changes saved');}closeSheet();break;
     case 'sheet':U.sheet=v;U.sd={k};rerender();break;
-    case 'close':if(U.sd&&U.sd.ret){U.sheet=U.sd.ret;U.sd={};}else U.sheet=null;pendingImport=null;rerender();break;
-    case 'preset':{const i=$('noteIn');if(i)i.value=v;document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.dataset.v===v));break;}
-    case 'saveNote':{const i=$('noteIn');X[U.sd.k]=(i?i.value:'').trim();saveDraft();U.sheet=null;rerender();break;}
-    case 'clearNote':X[U.sd.k]='';saveDraft();U.sheet=null;rerender();break;
+    case 'close':closeSheet();break;
     case 'focus':document.querySelectorAll('#focusChips .chip').forEach(c=>c.classList.toggle('on',c===el));break;
     case 'saveEx':{const n=($('exName').value||'').trim(),err=$('exErr');
       if(!n){err.textContent='Enter a name';err.hidden=false;return;}
@@ -806,28 +1067,39 @@ document.addEventListener('click',e=>{
       U.sheet=null;rerender();toast('Exercise added');break;}
     case 'saveWhat':{const e=D.custom.find(x=>x.id===k);if(e){e.what=($('whatIn').value||'').trim();save();}U.sheet=null;rerender();break;}
     case 'saveSong':{const n=($('songIn').value||'').trim(),err=$('songErr');if(!n){err.textContent='Enter a song name';err.hidden=false;return;}
-      const id='g_'+Date.now().toString(36);D.songs.push({id,name:n});save();if(X&&U.view==='app'){X.song=id;saveDraft();}U.sheet=null;rerender();toast('Song added');break;}
+      const id='g_'+Date.now().toString(36);D.songs.push({id,name:n});save();if(X&&(U.view==='app'||U.view==='song')){X.song=id;saveDraft();}U.sheet=null;rerender();toast('Song added');break;}
     case 'delEx':D.custom=D.custom.filter(x=>x.id!==k);save();if(X&&k in X.rot){delete X.rot[k];saveDraft();}if(U.view==='ex'&&U.exId===k){U.view=null;}U.sheet=null;rerender();toast('Exercise deleted');break;
     case 'delSong':(async()=>{D.songs=D.songs.filter(x=>x.id!==k);save();for(const t of TAKES.filter(t=>t.songId===k))await delTake(t.id);if(X&&X.song===k){X.song=null;saveDraft();}await refreshTakes();U.sheet=null;rerender();toast('Song deleted');})();break;
     case 'delTake':(async()=>{if(playingId===k)stopPlayback();await delTake(k);await refreshTakes();U.sheet=null;rerender();toast('Take deleted');})();break;
     case 'delSession':deleteSession(k);U.sheet=null;rerender();toast('Session deleted');break;
+    case 'delSongSess':D.songSessions=D.songSessions.filter(x=>x.id!==k);save();U.sheet=null;rerender();toast('Song practice deleted');break;
     case 'clearRec':(async()=>{stopPlayback();await clearTakes();await refreshTakes();U.sheet=null;rerender();toast('Recordings deleted');})();break;
     case 'resetMonth':D.months[monthKey()]=0;save();U.sheet=null;rerender();toast('This month reset');break;
-    case 'resetAll':(async()=>{stopPlayback();await clearTakes();D={v2:true};migrate();save();X=null;saveDraft();await refreshTakes();U={tab:'today',view:null,exId:null,exTab:'summary',sheet:null,sd:{}};render();toast('All data deleted');})();break;
-    case 'copy':{const ss=D.sessions.find(x=>x.id===k);if(ss)copyText(togglLines(ss));break;}
+    case 'resetAll':(async()=>{stopPlayback();await clearTakes();D={v2:true};migrate();save();X=null;saveDraft();await refreshTakes();U=freshU();render();toast('All data deleted');})();break;
+    case 'copy':{const ss=findSess(k);if(ss)copyText(togglLines(ss));break;}
     case 'exportPrep':prepareExport();break;
     case 'exportSave':saveExport();break;
     case 'importPick':$('importIn').click();break;
     case 'importYes':restoreImport();break;
   }
 });
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&U.sheet){U.sheet=null;rerender();}});
+document.addEventListener('input',e=>{const t=e.target,id=t.id,v=t.value;
+  if(id==='howNote'&&X){X.howNote=v;saveDraft();}
+  else if(id==='xnText'){const T=noteTarget();if(T&&T.xn&&T.xn[U.sd.k]){T.xn[U.sd.k].t=v;if(T===X)saveDraft();}}
+  else if(id==='tnText'){const tk=TAKES.find(x=>x.id===U.sd.k);if(tk&&tk.note)tk.note.t=v;}
+  else if(id==='edHowNote'&&E)E.howNote=v;
+  else if(id==='edDate'&&E)E.dateStr=v;
+  else if(id==='edMins'&&E)E.mins=v;});
+document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(U.sheet)closeSheet();else if(U.clock){U.clock=false;rerender();}});
+// live session clock
+setInterval(()=>{if(!X||!U.view||U.view==='ex')return;const t=$('timer');if(t)t.textContent=pillText();const bc=$('bigClock');if(bc)bc.textContent=clk(elapsedSec());const cs=$('curSplit');if(cs)cs.textContent=clk(elapsedSec()-(+cs.dataset.base||0));},1000);
 let lastY=0,tabMin=false;
 window.addEventListener('scroll',()=>{closeSwipes();const y=window.scrollY;const sc=y>36;$('bar').classList.toggle('scrolled',sc);document.body.classList.toggle('scrolled',sc);
   const tb=$('dock').querySelector('.tabbar');
   if(tb&&!U.sheet){if(y>lastY+6&&y>120)tabMin=true;else if(y<lastY-6||y<60)tabMin=false;tb.classList.toggle('min',tabMin);}
   lastY=y;},{passive:true});
-document.addEventListener('visibilitychange',()=>{if(document.hidden&&rec)stopRec();});
+// iOS pauses the mic when you leave the app, so stop and save the take, then say so on return
+document.addEventListener('visibilitychange',()=>{if(document.hidden){if(rec){bgSaved=true;stopRec();}}else if(bgSaved){bgSaved=false;setTimeout(()=>toast('Your take was saved when you left the app'),500);}});
 
 render();
 refreshTakes().then(rerender);

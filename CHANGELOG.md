@@ -9,6 +9,52 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.2 · 14 Oct 2026
+
+**How did it go?**
+- Finishing a session or song practice opens a short "How did it go?" sheet.
+  - Tap any words that fit, such as In control, Bit tight or Breath ran short.
+  - Add your own words with "+ Your own". They're saved as chips for next time.
+  - "Add a note" opens a text box only when you tap it.
+  - Everything is optional, and ✕ skips it.
+- How it went shows on the summary, in History, and in Toggl as a "How it went:" line.
+
+**Notes on each exercise**
+- A pencil on every Foundation and Rotation exercise opens quick words written for that exercise (for example "Buzz in the mask" for Humming), plus your own words and an optional note.
+- These replace the old general note presets.
+- Notes show on the summary, in Toggl next to the exercise, and on the exercise's History tab.
+
+**Skip**
+- Foundation levels are now Skip · 1 · 2 · 3.
+- Skipped exercises don't count as done, and Toggl says "skipped".
+
+**Song practice**
+- A new Song practice card on Today for when you just want to sing a song, record takes and see how it went.
+- It has its own stats and never counts towards your weekly goal, streak, monthly minutes, last-done dates or suggestions.
+- History has a Sessions | Song practice switch, and song practice shows as a coral dot on the calendar.
+- In Toggl it's tagged `#song-practice`. The Application step in a full session stays `#application`.
+
+**Notes on takes**
+- Tap a take to add quick words (like "Flat on the high note") and a note. This works in song practice and Application.
+- Take notes are included in backups.
+
+**Session clock**
+- The top bar shows a live timer, such as "1 of 3 · 12:40".
+- Tap it to open a larger clock with Pause, Resume and a time for each step. Paused time isn't counted.
+- If a session has been running for over 90 minutes when you finish, the app asks how long you actually practised.
+
+**Edit finished sessions**
+- Open any session or song practice and tap Edit to change the date, minutes, levels, notes and how it went.
+- Monthly minutes, your streak, last-done dates and the exercise charts update to match.
+
+**Also new**
+- Suggested rotation now picks the exercise that's gone longest since you last did it. Exercises you've never done come first.
+- A backup reminder appears on Today if you've never backed up, or if it's been more than two weeks.
+- Tap the date or the "Today" title to open the calendar, as well as the arrow.
+- If you leave the app while recording, the take is stopped and saved, and the app tells you when you come back.
+- A tip about watching the coach video in picture-in-picture with YouTube Premium.
+- Sheets no longer replay their slide-up animation when you tap something inside them.
+
 ## 3.1 · 14 Oct 2026
 
 **Liquid Glass upgrades** (a CSS imitation; the real material is only available to native apps)
