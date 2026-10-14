@@ -9,15 +9,16 @@
 <meta name="apple-mobile-web-app-title" content="Vocal">
 <meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
-<link rel="apple-touch-icon" href="icon.png">
-<link rel="icon" href="icon.png">
+<link rel="apple-touch-icon" href="icon.png?v=3">
+<link rel="icon" href="icon.png?v=3">
 <title>Vocal Sessions</title>
 <style>
 :root{
   --bg:#f2f2f7;--surface:#ffffff;--fg:#000000;--fg2:#6c6c72;--fg3:#a3a3a8;
   --sep:rgba(60,60,67,0.16);--fill:rgba(118,118,128,0.12);
-  --accent:#007aff;--on-accent:#ffffff;--danger:#ff3b30;--star:#ff9f0a;--rec:#ff3b30;
-  --glass:rgba(250,250,252,0.62);--glass-strong:rgba(250,250,252,0.82);
+  --accent:#007aff;--on-accent:#ffffff;--danger:#ff3b30;--star:#ff9f0a;--rec:#ff3b30;--good:#34c759;
+  --done:#8e8e93;--on-done:#ffffff;
+  --glass:rgba(250,250,252,0.62);--glass-strong:rgba(250,250,252,0.86);
   --glass-edge:rgba(0,0,0,0.09);--glass-hi:rgba(255,255,255,0.95);
   --glass-shadow:rgba(20,20,40,0.14);--scrim:rgba(0,0,0,0.22);
   --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",system-ui,sans-serif;
@@ -26,8 +27,9 @@
 @media (prefers-color-scheme:dark){:root{
   --bg:#000000;--surface:#1c1c1e;--fg:#ffffff;--fg2:#98989f;--fg3:#5c5c61;
   --sep:rgba(84,84,88,0.5);--fill:rgba(118,118,128,0.24);
-  --accent:#0a84ff;--danger:#ff453a;--star:#ffb340;--rec:#ff453a;
-  --glass:rgba(40,40,44,0.58);--glass-strong:rgba(44,44,48,0.82);
+  --accent:#0a84ff;--danger:#ff453a;--star:#ffb340;--rec:#ff453a;--good:#30d158;
+  --done:#636366;--on-done:#ffffff;
+  --glass:rgba(40,40,44,0.58);--glass-strong:rgba(44,44,48,0.86);
   --glass-edge:rgba(0,0,0,0.6);--glass-hi:rgba(255,255,255,0.2);
   --glass-shadow:rgba(0,0,0,0.5);--scrim:rgba(0,0,0,0.5);color-scheme:dark}}
 
@@ -46,78 +48,99 @@ svg.i{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke
   box-shadow:inset 0 1px 0 var(--glass-hi),inset 0 0 0 0.5px var(--glass-edge),0 8px 28px var(--glass-shadow)}
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.glass{background:var(--surface)}}
 
-.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;height:56px;display:flex;align-items:center;justify-content:space-between;margin:0 -8px;padding:0 8px;border-radius:0 0 22px 22px;transition:background .25s,box-shadow .25s}
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;height:56px;display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 -8px;padding:0 8px;border-radius:0 0 22px 22px;transition:background .25s,box-shadow .25s}
 .bar:not(.scrolled){background:transparent;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
-.bar .mt{font-size:17px;font-weight:600;opacity:0;transition:opacity .2s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:60%}
-.bar.scrolled .mt{opacity:1}
-.side{width:88px;display:flex}.side.r{justify-content:flex-end}
-.circ{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;color:var(--fg)}
+.bar .mt{flex:1;min-width:0;text-align:center;font-size:17px;font-weight:600;opacity:0;transition:opacity .2s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar.scrolled .mt,.bar.always .mt{opacity:1}
+.side{min-width:44px;display:flex;gap:6px;align-items:center}.side.r{justify-content:flex-end}
+.circ{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;color:var(--fg);flex-shrink:0}
 .pill{font-size:13px;font-weight:600;color:var(--fg2);padding:9px 12px;border-radius:999px;white-space:nowrap}
 
 h1{font-size:34px;font-weight:700;letter-spacing:0.01em;margin:0 4px 6px}
 .note{font-size:13px;color:var(--fg2);margin:0 4px 14px;line-height:1.4}
+.foot{font-size:13px;color:var(--fg2);margin:7px 16px 0;line-height:1.4}
+.foot.warn{color:var(--danger)}
 .hdr{font-size:13px;color:var(--fg2);margin:22px 16px 7px;text-transform:uppercase;letter-spacing:0.03em}
 .grp{background:var(--surface);border-radius:20px;overflow:hidden}
-.row{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:50px;padding:6px 16px;position:relative;width:100%}
-.grp>*+*::before{content:"";position:absolute;top:0;left:16px;right:0;border-top:0.5px solid var(--sep)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:50px;padding:6px 16px;position:relative;width:100%;background:var(--surface)}
+.grp>*{position:relative}
+.grp>*+*::before{content:"";position:absolute;top:0;left:16px;right:0;border-top:0.5px solid var(--sep);z-index:2}
 .grp>.sub::before{display:none}
 .lbl{flex:1;min-width:0}
 .lbl small{display:block;font-size:13px;color:var(--fg2);margin-top:2px}
 .mut{color:var(--fg2)}.acc{color:var(--accent)}.dng{color:var(--danger)}
-.sub{display:flex;justify-content:space-between;align-items:center;padding:0 16px 12px;gap:10px;position:relative}
+.sub{display:flex;justify-content:space-between;align-items:center;padding:0 16px 12px;gap:10px;background:var(--surface)}
 .tag{font-size:13px;color:var(--fg2)}
-.yt{display:inline-flex;align-items:center;gap:4px;color:var(--accent);font-size:13px;min-height:44px}
-.yt svg{width:14px;height:14px;fill:currentColor;stroke:none}
-a.exname{display:flex;flex-direction:column;justify-content:center;min-height:44px}
-a.exname span{display:inline-flex;align-items:center;gap:6px}
-a.exname svg{width:12px;height:12px;fill:var(--accent);stroke:none;flex-shrink:0}
 
 .seg{display:inline-flex;background:var(--fill);border-radius:999px;padding:3px;gap:2px;flex-shrink:0}
 .seg button{min-width:44px;height:34px;border-radius:999px;font-size:15px;font-weight:500;color:var(--fg2);text-align:center;transition:background .15s,color .15s}
 .seg button.on{color:var(--fg);background:var(--surface);box-shadow:inset 0 1px 0 var(--glass-hi),0 2px 8px var(--glass-shadow),inset 0 0 0 0.5px var(--glass-edge)}
+.seg.wide{display:flex;width:100%}.seg.wide button{flex:1}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
 .chip{height:36px;padding:0 14px;border-radius:999px;background:var(--fill);font-size:15px;color:var(--fg)}
 .chip.on{background:var(--accent);color:var(--on-accent)}
 
-.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.stat{background:var(--surface);border-radius:20px;padding:14px 16px}
-.stat small{display:block;font-size:13px;color:var(--fg2)}
-.stat b{display:block;font-size:28px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:2px}
+.arch{position:relative;max-width:300px;margin:6px auto 0}
+.arch svg{display:block;width:100%;height:auto}
+.arch .c{position:absolute;left:0;right:0;bottom:6px;text-align:center}
+.arch .c small{display:block;font-size:15px;color:var(--fg2)}
+.arch .c b{display:block;font-size:56px;font-weight:700;line-height:1.05;font-variant-numeric:tabular-nums;letter-spacing:-0.02em}
+.week{display:flex;justify-content:space-between;max-width:330px;margin:20px auto 10px}
+.week span{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-size:15px;font-weight:600;color:var(--fg3);border:1.5px solid var(--sep)}
+.week span.done{background:var(--done);border-color:var(--done);color:var(--on-done)}
+.week span.today{border-color:var(--fg);color:var(--fg)}
+.week span.today.done{border-color:var(--done)}
+.streak{text-align:center;font-size:17px;margin:4px 0 0}
+.streak small{display:block;font-size:15px;color:var(--fg2);margin-top:3px}
 .track{height:6px;border-radius:3px;background:var(--fill);overflow:hidden;margin-top:8px}
 .track i{display:block;height:100%;background:var(--accent);border-radius:3px}
-.track i.full{background:#34c759}
+.track i.full{background:var(--good)}
 
 .cta{display:block;height:54px;border-radius:999px;font-size:17px;font-weight:600;color:var(--on-accent);background:var(--accent);text-align:center;width:100%;
   box-shadow:inset 0 1px 0 rgba(255,255,255,0.45),inset 0 0 0 0.5px rgba(0,0,0,0.12),0 8px 24px var(--glass-shadow)}
-.cta.sec{background:var(--surface);color:var(--accent);box-shadow:none}
+.cta.ink{background:var(--fg);color:var(--bg);box-shadow:0 8px 24px var(--glass-shadow)}
+.cta.red{background:var(--danger)}
 .cta:active,.circ:active,.row:active,.chip:active,.tabbar button:active{transform:scale(0.98)}
 .ghost{display:block;width:100%;text-align:center;height:48px;color:var(--accent);font-weight:500;margin-top:4px}
 
 main{padding-bottom:calc(130px + env(safe-area-inset-bottom,0px))}
 .dock{position:fixed;left:0;right:0;bottom:0;z-index:30;padding:0 max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));pointer-events:none}
 .dock .in{max-width:430px;margin:0 auto;pointer-events:auto}
-.tabbar{display:flex;gap:2px;padding:5px;border-radius:999px;max-width:320px;margin:0 auto}
+.tabbar{display:flex;gap:2px;padding:5px;border-radius:999px;max-width:380px;margin:0 auto}
 .tabbar button{flex:1;height:54px;border-radius:999px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--fg);gap:3px;text-align:center}
 .tabbar button.on{color:var(--accent);background:var(--fill)}
+
+.sw{overflow:hidden;background:var(--danger)}
+.sw .fg{position:relative;z-index:1;transition:transform .22s ease;background:var(--surface)}
+.sw.dragging .fg{transition:none}
+.sw .swdel{position:absolute;right:0;top:0;bottom:0;width:88px;color:#fff;font-weight:600;font-size:15px;text-align:center}
+
+.ex-h{display:flex;flex-wrap:wrap;gap:8px;margin:2px 4px 14px}
+.badge{font-size:13px;font-weight:500;padding:5px 10px;border-radius:999px;background:var(--fill);color:var(--fg2)}
+.prose{padding:14px 16px;font-size:16px;line-height:1.45}
+.prose ul{margin:0;padding-left:18px}.prose li+li{margin-top:10px}
+.prose b{font-weight:600}
+.chart{padding:12px 12px 8px}
+.chart svg{display:block;width:100%;height:auto}
 
 .scrim{position:fixed;inset:0;z-index:40;background:var(--scrim);display:flex;align-items:flex-end;justify-content:center;animation:fade .2s}
 .sheet{width:100%;max-width:440px;max-height:88vh;overflow-y:auto;margin:0 8px calc(8px + env(safe-area-inset-bottom,0px));border-radius:34px;padding:10px 16px 16px;background:var(--glass-strong);animation:up .28s cubic-bezier(.2,.9,.3,1.1)}
 .grab{width:36px;height:5px;border-radius:3px;background:var(--fg3);margin:0 auto 14px}
 .sheet h2{font-size:22px;font-weight:700;margin:0 4px 12px}
-.sheet .grp{background:var(--surface)}
+.sheet .grp,.sheet .row{background:var(--surface)}
 .sheet .hdr{margin-top:16px}
 .field{width:100%;min-height:48px;border-radius:14px;background:var(--surface);border:0;padding:12px 14px;outline:none}
 textarea.field{resize:none;min-height:84px;line-height:1.35}
 .err{font-size:13px;color:var(--danger);margin:6px 4px 0}
 .toast{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:60;border-radius:999px;padding:10px 18px;font-size:15px;font-weight:500;white-space:nowrap;max-width:calc(100vw - 32px);overflow:hidden;text-overflow:ellipsis}
-.empty{padding:22px 16px;text-align:center;color:var(--fg2);font-size:15px;line-height:1.4}
+.empty{padding:22px 16px;text-align:center;color:var(--fg2);font-size:15px;line-height:1.4;background:var(--surface)}
 .recbtn{justify-content:center;gap:10px;color:var(--fg)}
 .dot{width:14px;height:14px;border-radius:50%;background:var(--rec);display:inline-block;transition:border-radius .2s}
 .recbtn.on .dot{border-radius:3px}
 .recbtn.on{color:var(--rec);font-variant-numeric:tabular-nums}
-.ibtn{width:44px;height:44px;display:grid;place-items:center;border-radius:50%;flex-shrink:0}
+.ibtn{width:40px;height:44px;display:grid;place-items:center;border-radius:50%;flex-shrink:0}
 .ibtn svg{width:20px;height:20px}
-.star svg{fill:none}.star.on{color:var(--star)}.star.on svg{fill:currentColor}
+.star.on{color:var(--star)}.star.on svg{fill:currentColor}
 @keyframes up{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
 @keyframes fade{from{opacity:0}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
@@ -134,53 +157,98 @@ textarea.field{resize:none;min-height:84px;line-height:1.35}
 </div>
 <div class="dock"><div class="in" id="dock"></div></div>
 <div id="layer"></div>
+<input type="file" id="importIn" accept=".json,application/json" hidden>
 
 <script>
 /* ===== Config ===== */
+const APP_VERSION='3.0';
 const VIDEO='https://youtu.be/rG-o10NggDI';
-const TARGET=280;
+const TARGET=280, WEEK_TARGET=70;
+const UPDATE_DAY='14 Oct'; // counts saved before this date have no dates
 const FOUND=[
-  {id:'slides',name:'Vocal slides',focus:'agility',ts:0},
-  {id:'humming',name:'Humming',focus:'cord-closure',ts:435},
-  {id:'lip',name:'Lip bubbling',focus:'cord-closure',ts:790},
-  {id:'straw',name:'Singing through a straw',focus:'cord-closure',ts:1605}];
+  {id:'slides',name:'Vocal slides',focus:'agility'},
+  {id:'humming',name:'Humming',focus:'cord-closure'},
+  {id:'lip',name:'Lip bubbling',focus:'cord-closure'},
+  {id:'straw',name:'Singing through a straw',focus:'cord-closure'}];
 const ROT=[
-  {id:'falsetto',name:'Falsetto voice',focus:'register',ts:1170},
-  {id:'upperlower',name:'Upper to lower voice',focus:'register',ts:1485},
-  {id:'rung',name:'Singing on the rung',focus:'resonance',ts:1960},
-  {id:'hinge',name:'Squeaky hinge',focus:'register',ts:2480},
-  {id:'half',name:'Half squeaky / half normal',focus:'blend',ts:2917},
-  {id:'vertical',name:'Vertical mouth',focus:'resonance',ts:3410},
-  {id:'nasal',name:'Nasal exercise',focus:'resonance',ts:3870},
-  {id:'flex',name:'Vocal flexibility',focus:'agility',ts:4260}];
+  {id:'falsetto',name:'Falsetto voice',focus:'register'},
+  {id:'upperlower',name:'Upper to lower voice',focus:'register'},
+  {id:'rung',name:'Singing on the rung',focus:'resonance'},
+  {id:'hinge',name:'Squeaky hinge',focus:'register'},
+  {id:'half',name:'Half squeaky / half normal',focus:'blend'},
+  {id:'vertical',name:'Vertical mouth',focus:'resonance'},
+  {id:'nasal',name:'Nasal exercise',focus:'resonance'},
+  {id:'flex',name:'Vocal flexibility',focus:'agility'}];
 const OLD_ROT_IDS=['falsetto','upperlower','rung','hinge','half','vertical','nasal','flex'];
 const FOCI=['cord-closure','register','resonance','agility','blend'];
 const NOTE_PRESETS=['Felt good placement','Tight today','Clear tone','Cracking on passaggio','Flat pitch','Register blend improving','Needed more warm-up'];
 const MAX_TAKE=120, KEEP_TAKES=3;
 
-/* ===== Storage (localStorage, same key as v1 so old data carries over) ===== */
+/* Exercise write-ups, from the "Vocal exercises descriptions" doc */
+const DESC={
+slides:{n:1,what:'Light, quiet glides from low to high and back on <i>hee, hoo, hoe, hah, hay</i>, keeping the buzz on the roof of your mouth. Short slides first, then medium, then your full range, bending forward on the top notes. Levels 2–3 add a bounce on the high notes.',
+ why:'It’s the vocal equivalent of stretching before a workout. Sliding through every pitch with no gaps starts blending chest and head voice, and keeping it light teaches the voice to thin out as it rises instead of pushing.',
+ song:[['Scoops and glides into notes','R&amp;B singers constantly slide into a note rather than hitting it dead-on. Bruno Mars’s slides up into falsetto on <i>Leave the Door Open</i> are that siren in miniature.'],['Wide-range songs','Do them before any song that runs from a low verse to a high chorus. Singers say slides right before a show make it feel like their range is opening.']]},
+humming:{n:2,what:'Humming short melodic patterns with lips only lightly touching, quiet and relaxed, feeling a buzz around your nose and cheekbones (the “mask”).',
+ why:'It’s the easiest way to find forward placement: the sound sits up front rather than falling into the back of the throat. That forward buzz keeps notes clear, in tune and easier to reach higher.',
+ song:[['The first note','Soft openings like the first verse of John Legend’s <i>All of Me</i> need that placement from note one, or the whole verse sounds muffled.'],['Quiet, close-to-the-mic moments','Intimate R&amp;B verses (Daniel Caesar’s <i>Best Part</i>) are sung softly but still need to cut through. Humming trains “quiet but present”.']]},
+lip:{n:3,what:'Blowing through loose lips to make a motorboat <i>brrr</i> while singing patterns through your whole range. If your lips won’t flutter, press your cheeks in and forward with your fingertips.',
+ why:'It keeps lips, face and jaw relaxed from bottom to top, and it balances breath: too much air and the neck tenses, too little and the trill stops. The aim is to pass through chest, mix and head voice with no change in effort.',
+ song:[['Running a whole song on a trill','Try your hardest song on lip trills first, then sing the words. It keeps your breathing going through the tricky parts.'],['Pre-show nerves','A go-to before going on stage for many singers. It also forces deeper breaths without you noticing.']]},
+falsetto:{n:4,what:'Flowing, wave-like patterns in falsetto on <i>hoo</i>, <i>hee</i>, then <i>woh/wah</i>, at whatever volume feels comfortable. Teeth at least half an inch apart so the jaw doesn’t clamp.',
+ why:'Falsetto is the light, breathy voice that’s disconnected from chest voice. This makes it comfortable and controllable, so it becomes a colour you choose rather than something you fall into.',
+ song:[['Whole songs in falsetto','Curtis Mayfield’s <i>Superfly</i> is sung almost entirely in falsetto. MJ’s <i>Don’t Stop ’Til You Get Enough</i> is the same idea at dance tempo.'],['Soft R&amp;B texture','Daniel Caesar’s <i>Get You</i> lives in a light, airy upper voice. That relaxed falsetto is what this builds.'],['Hooks and ad-libs','Bruno Mars uses falsetto for the sweet, high moments in <i>Leave the Door Open</i> and <i>Versace on the Floor</i>.']]},
+upperlower:{n:5,what:'Patterns that start high and descend on <i>woh</i> / <i>woo</i>, <i>we</i>, then <i>wah/way</i>, sung slowly and quietly, in “slow motion”, so you pass from head voice down into chest with no bump. Can also be done on lip trills or through a straw.',
+ why:'Most people practise going up; this trains the way down. The goal is no audible change in tone as you cross between registers in either direction.',
+ song:[['Coming down from a peak','After a high falsetto ad-lib, R&amp;B singers often slide straight back into the chest-voice melody. A clunk there sounds like two different singers.'],['Songs that sit between voices','Melodies that keep crossing between head and chest sound disjointed until the registers blend.']]},
+straw:{n:6,what:'Humming and singing patterns through a straw into water, which adds slight resistance. Start with a wide straw and little water; it should feel soothing, never like work.',
+ why:'It’s a semi-occluded (SOVT) exercise: the partial blockage creates back-pressure that lets your vocal folds vibrate with less effort. The bubbles show you instantly if your air stops flowing, which builds steady breath support.',
+ song:[['Mapping a hard song safely','Sing the chorus of <i>When I Was Your Man</i> through the straw to learn the climb without straining, then sing it normally.'],['Recovery after a long day','Voice therapists use straw work for rehab. Use it when your voice feels tired from talking at work before you sing anything.']]},
+rung:{n:7,what:'Singing patterns on the word <i>rung</i>, jaw dropped open vertically as far as is comfortable, tongue tip resting behind the lower front teeth. Light and moderately quiet, never heavy.',
+ why:'The <i>ng</i> keeps the sound forward while the open jaw breaks the habit of a clamped or spread mouth. Kept light, it’s one of the best blenders for the tricky middle (mixed) voice.',
+ song:[['Tenor choruses in the passaggio','A lot of Bruno Mars’s choruses sit right in the tenor middle zone, where voices crack or get shouty. <i>Rung</i> trains you to sail through it with an open jaw.'],['Big ballad climbs','OPM power ballads like Side A’s <i>Forevermore</i> climb into a high chorus. The open, relaxed jaw stops the top notes getting pinched.']]},
+hinge:{n:8,what:'Gliding on a creaky, squeaky-hinge sound (often on <i>hmmm</i>), imagining the sound in the centre of your head. Aim high even on the low note, and let the sound get thinner and narrower as you go up.',
+ why:'One of the best exercises for finding the mixed voice. With good placement and support it feels effortless right up to your top notes, and it can even soothe a hoarse voice.',
+ song:[['Songs with a big range','When a song spans low verses to a high chorus, the squeaky door bridges that gap.'],['High mix instead of falsetto','When an R&amp;B chorus needs power up high (think <i>When I Was Your Man</i>), you want a strong mix, not a flip into breathy falsetto. This is where that mix starts.']]},
+half:{n:9,what:'Part two of the squeaky door. You keep some of the squeak while blending in your normal singing tone, on <i>wah</i>, then <i>bow</i>, then <i>way/wah</i>, with the jaw dropped open.',
+ why:'It’s the bridge from an odd exercise sound to your real singing voice. You keep the easy, forward placement of the squeak but with a tone you’d actually use on stage.',
+ song:[['Practising the hard line','Sing whichever chorus line you keep cracking on half squeaky, half normal, then switch to full voice.'],['Keeping a climax easy','When a song builds to its last big chorus, this blend lets you add power without the throat taking over.']]},
+vertical:{n:10,what:'Patterns on <i>mum</i>, then <i>lum</i>, then <i>yum</i>, keeping the mouth in a relaxed vertical oval rather than a wide smile.',
+ why:'A spread, smiley mouth tightens the neck and makes high notes harder over time. The vertical shape gives a warmer tone and a freer throat; many singers find it brings a new sense of freedom.',
+ song:[['Emotional high notes','The peak lines of a heartbreak ballad like <i>When I Was Your Man</i> are where singers grimace and spread. A vertical mouth keeps the tone warm instead of thin.'],['Smiling vs singing','Even on a happy last note, keeping the mouth tall in your mix keeps the tone full. The vertical <i>yum</i> is a favourite warm-up for exactly that.']]},
+nasal:{n:11,what:'Deliberately nasal patterns on <i>may</i>, <i>me</i>, then <i>nay-yay</i>. The goal isn’t a nasal tone; it’s to lock in a forward placement.',
+ why:'It strengthens low notes, which go muffled and muddy when the sound drops into the back of the throat. It also gives you another smooth route into the mixed middle range.',
+ song:[['Low verses that need to carry','<i>Mee</i> and <i>may</i> bring muffled low notes forward, so a soft, low verse (like those in Daniel Caesar’s <i>Best Part</i>) stays clear instead of disappearing.'],['Bright, forward R&amp;B and pop tone','Healthy “twang” comes from this placement. It’s why upbeat Bruno Mars tracks like <i>24K Magic</i> sound bright and cut through a busy mix.']]},
+flex:{n:12,what:'Scale patterns built on the pentatonic scale, on <i>woo</i>, <i>woh/wah</i>, then <i>he</i>. Learn them slowly and cleanly, then sing them a cappella, then speed them up.',
+ why:'The pentatonic scale is the template most R&amp;B and gospel runs are built on. Drilling it builds agility and pitch accuracy at speed, but only if each tempo is clean before you go faster.',
+ song:[['Runs and riffs','The melismas in R&amp;B ballads (Boyz II Men, Luther Vandross) are largely pentatonic shapes strung together.'],['Riffs that mean something','A riff should “say” something even without words. Once the shapes are automatic, you can focus on the feeling rather than the notes.'],['Your ad-libs','The final choruses of songs like <i>Leave the Door Open</i> are where runs go over the backing vocals.']]}
+};
+
+/* ===== Storage ===== */
 const KEY='vocalTracker', DRAFT='vocalDraft';
 function load(){try{return JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){return {}}}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(D))}catch(e){toast('Couldn’t save. Storage may be full.')}}
 function loadDraft(){try{return JSON.parse(localStorage.getItem(DRAFT)||'null')}catch(e){return null}}
 function saveDraft(){try{X?localStorage.setItem(DRAFT,JSON.stringify(X)):localStorage.removeItem(DRAFT)}catch(e){}}
 let D=load();
-(function migrate(){
-  if(D.v2)return;
-  D.ex=D.ex||{};
-  const custom=(D.customRotations||[]).map((c,i)=>({id:'c'+i+'_'+Date.now().toString(36),name:c.name,focus:c.focus||'custom',ts:null}));
-  const hist=D.rotationHistory||{};
-  Object.keys(hist).forEach(k=>{const i=+k;const id=i<8?OLD_ROT_IDS[i]:(custom[i-8]||{}).id;if(id)D.ex[id]={n:(hist[k]||0),last:null};});
-  D.custom=custom;D.songs=D.songs||[];D.sessions=D.sessions||[];D.months=D.months||{};
-  D.v2=true;save();
-})();
-let X=loadDraft(); // in-progress session
+function migrate(){
+  if(!D.v2){
+    D.ex=D.ex||{};
+    const custom=(D.customRotations||[]).map((c,i)=>({id:'c'+i+'_'+Date.now().toString(36),name:c.name,focus:c.focus||'custom'}));
+    const hist=D.rotationHistory||{};
+    Object.keys(hist).forEach(k=>{const i=+k;const id=i<8?OLD_ROT_IDS[i]:(custom[i-8]||{}).id;if(id)D.ex[id]={n:(hist[k]||0),last:null};});
+    D.custom=custom;D.v2=true;
+  }
+  D.ex=D.ex||{};D.custom=D.custom||[];D.songs=D.songs||[];D.sessions=D.sessions||[];D.months=D.months||{};
+}
+migrate();save();
+let X=loadDraft();
 
 /* ===== Recordings (IndexedDB) ===== */
 let dbp=null;
 function db(){if(dbp)return dbp;dbp=new Promise((res,rej)=>{if(!window.indexedDB)return rej(new Error('no idb'));const r=indexedDB.open('vocalTakes',1);r.onupgradeneeded=()=>r.result.createObjectStore('takes',{keyPath:'id'});r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});return dbp;}
-async function tx(mode,fn){const d=await db();return new Promise((res,rej)=>{const t=d.transaction('takes',mode);const s=t.objectStore('takes');const out=fn(s);t.oncomplete=()=>res(out&&out.result!==undefined?out.result:out);t.onerror=()=>rej(t.error);});}
-const allTakes=()=>tx('readonly',s=>s.getAll()).catch(()=>[]);
+async function tx(mode,fn){const d=await db();return new Promise((res,rej)=>{const t=d.transaction('takes',mode);const out=fn(t.objectStore('takes'));t.oncomplete=()=>res(out&&out.result!==undefined?out.result:undefined);t.onerror=()=>rej(t.error);});}
+const allTakes=()=>tx('readonly',s=>s.getAll()).then(r=>r||[]).catch(()=>[]);
 const putTake=t=>tx('readwrite',s=>s.put(t));
 const delTake=id=>tx('readwrite',s=>s.delete(id));
 const clearTakes=()=>tx('readwrite',s=>s.clear()).catch(()=>{});
@@ -190,131 +258,216 @@ async function refreshTakes(){TAKES=(await allTakes()).sort((a,b)=>a.created-b.c
 /* ===== Helpers ===== */
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const mmss=s=>{s=Math.max(0,Math.round(s));const h=Math.floor(s/3600),m=Math.floor(s%3600/60),x=String(s%60).padStart(2,'0');return h?h+':'+String(m).padStart(2,'0')+':'+x:m+':'+x;};
+const mmss=s=>{s=Math.max(0,Math.round(s));const m=Math.floor(s/60),x=String(s%60).padStart(2,'0');return m+':'+x;};
 const hm=m=>{m=Math.round(m);return m>=60?Math.floor(m/60)+'h '+(m%60)+'m':m+'m';};
 const monthKey=(d=new Date())=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
-const monthMins=()=>(D.months||{})[monthKey()]||0;
+const monthMins=()=>D.months[monthKey()]||0;
 const dayLabel=iso=>new Date(iso).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'});
+const shortDate=d=>new Date(d).toLocaleDateString('en-GB',{day:'numeric',month:'short'});
 const fileDate=d=>d.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'});
-const ytUrl=ts=>VIDEO+(ts?'?t='+ts:'');
-const allRot=()=>ROT.concat((D.custom||[]).map(c=>Object.assign({custom:true},c)));
+const timeOf=d=>new Date(d).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+const allRot=()=>ROT.concat(D.custom.map(c=>Object.assign({custom:true},c)));
 const exById=id=>FOUND.concat(allRot()).find(e=>e.id===id);
-const parseTs=v=>{v=(v||'').trim();if(!v)return null;const m=v.match(/^(?:(\d+):)?(\d{1,2}):(\d{2})$/);if(!m)return NaN;return (+(m[1]||0))*3600+(+m[2])*60+(+m[3]);};
-const streakNow=()=>{const t=new Date().toDateString(),y=new Date(Date.now()-864e5).toDateString();return (D.lastDate===t||D.lastDate===y)?(D.streak||0):0;};
+const sessEnd=s=>s.end||s.date;
+function startOfDay(d){const x=new Date(d);x.setHours(0,0,0,0);return x;}
+function weekStart(d){const x=startOfDay(d);x.setDate(x.getDate()-((x.getDay()+6)%7));return x;}
+function relDay(iso){const days=Math.round((startOfDay(new Date())-startOfDay(iso))/864e5);if(days<=0)return 'today';if(days===1)return 'yesterday';if(days<7)return days+' days ago';return shortDate(iso);}
+function lastDone(id){const e=D.ex[id];if(e&&e.last)return 'last done '+relDay(e.last);if(e&&e.n)return 'last done before '+UPDATE_DAY;return 'Not done yet';}
 function suggested(){const r=allRot();let best=r[0],min=Infinity;r.forEach(e=>{const n=(D.ex[e.id]||{}).n||0;if(n<min){min=n;best=e;}});return best;}
+function minsIn(from,to){return D.sessions.filter(s=>{const t=new Date(s.date);return t>=from&&t<to;}).reduce((a,s)=>a+s.mins,0);}
+function weekInfo(){
+  const ws=weekStart(new Date()),we=new Date(ws);we.setDate(we.getDate()+7);
+  const mins=minsIn(ws,we);
+  let streak=0;const w=new Date(ws);
+  for(let i=0;i<520;i++){const a=new Date(w);a.setDate(a.getDate()-7);if(minsIn(a,w)>=WEEK_TARGET){streak++;w.setDate(w.getDate()-7);}else break;}
+  if(mins>=WEEK_TARGET)streak++;
+  const days=new Set(D.sessions.map(s=>startOfDay(s.date).getTime()));
+  return {ws,mins,streak,days};
+}
 const ICON={
   mic:'<svg class="i" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>',
   clock:'<svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
   list:'<svg class="i" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"/></svg>',
+  gear:'<svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
   back:'<svg class="i" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>',
   play:'<svg class="i" viewBox="0 0 24 24"><path d="M7 5v14l12-7z" fill="currentColor" stroke="none"/></svg>',
   pause:'<svg class="i" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></svg>',
+  video:'<svg class="i" viewBox="0 0 24 24"><rect x="2.5" y="5.5" width="19" height="13" rx="4"/><path d="M10 9.5v5l4.5-2.5z" fill="currentColor" stroke="none"/></svg>',
   star:'<svg class="i" viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg>',
   share:'<svg class="i" viewBox="0 0 24 24"><path d="M12 15V3M8 7l4-4 4 4M6 11H5v10h14V11h-1"/></svg>',
   trash:'<svg class="i" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></svg>',
   check:'<svg class="i" viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M5 12l5 5 9-10"/></svg>',
-  yt:'<svg viewBox="0 0 24 24"><path d="M7 5v14l12-7z"/></svg>',
   plus:'<svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
   circle:'<svg class="i" viewBox="0 0 24 24" style="width:24px;height:24px"><circle cx="12" cy="12" r="9.5"/></svg>',
   circleOn:'<svg class="i" viewBox="0 0 24 24" style="width:24px;height:24px"><circle cx="12" cy="12" r="10" fill="currentColor" stroke="none"/><path d="M7.5 12.2l3 3 6-6.4" stroke="#fff"/></svg>'
 };
 const chev='<span class="mut" aria-hidden="true" style="font-size:20px">›</span>';
 const seg=(a,key,v)=>'<div class="seg" role="group">'+[1,2,3].map(n=>'<button data-a="'+a+'" data-k="'+esc(key)+'" data-v="'+n+'" class="'+(v===n?'on':'')+'" aria-pressed="'+(v===n)+'" aria-label="Level '+n+'">'+n+'</button>').join('')+'</div>';
-const ytLink=(ts,label)=>ts==null?'':'<a class="yt" href="'+ytUrl(ts)+'" target="_blank" rel="noopener">'+ICON.yt+(label||'Watch')+'</a>';
-const exName=e=>e.ts==null?'<span class="lbl">'+esc(e.name)+'</span>':'<a class="lbl exname" href="'+ytUrl(e.ts)+'" target="_blank" rel="noopener" aria-label="'+esc(e.name)+', open coach video at '+mmss(e.ts)+'"><span>'+esc(e.name)+ICON.yt+'</span></a>';
+// swipe-to-delete row wrapper
+const sw=(inner,sheet,k)=>'<div class="sw" data-sw="1"><button class="swdel" data-a="sheet" data-v="'+sheet+'" data-k="'+esc(k)+'" tabindex="-1">Delete</button><div class="fg">'+inner+'</div></div>';
 
 /* ===== UI state ===== */
-let U={tab:'today',view:null,sheet:null,sd:{}};
-let rec=null; // {mr,stream,chunks,t,timer,songId}
-let player=null,playingId=null;
+let U={tab:'today',view:null,exId:null,exTab:'summary',sheet:null,sd:{},prevView:null};
+let rec=null, player=null, playingId=null, pendingImport=null, pendingExport=null;
 
 /* ===== Screens ===== */
 function scrToday(){
-  const mm=monthMins(),p=Math.min(100,Math.round(mm/TARGET*100)),s=suggested(),st=streakNow();
+  const w=weekInfo(),p=Math.min(100,Math.round(w.mins/WEEK_TARGET*100)),mm=monthMins(),mp=Math.min(100,Math.round(mm/TARGET*100)),s=suggested();
+  const today=startOfDay(new Date()).getTime();
+  const days=['M','T','W','T','F','S','S'].map((l,i)=>{const d=new Date(w.ws);d.setDate(d.getDate()+i);const t=d.getTime();const cls=(w.days.has(t)?'done ':'')+(t===today?'today':'');return '<span class="'+cls+'" aria-label="'+d.toLocaleDateString('en-GB',{weekday:'long'})+(w.days.has(t)?', practised':'')+'">'+l+'</span>';}).join('');
+  const left=Math.max(0,WEEK_TARGET-Math.round(w.mins));
+  let st,sub;
+  if(w.mins>=WEEK_TARGET){st=w.streak+'-week streak';sub='This week done';}
+  else if(w.streak>0){st=w.streak+'-week streak';sub=left+' min to go this week';}
+  else{st='Start a new streak';sub=left+' min this week starts one';}
   return '<h1>Today</h1>'+
-  '<div class="stats" style="margin-top:8px"><div class="stat"><small>Streak</small><b>'+st+' day'+(st===1?'':'s')+'</b></div><div class="stat"><small>This month</small><b>'+hm(mm)+'</b></div></div>'+
-  '<div class="grp" style="margin-top:10px"><div class="row" style="display:block;padding:14px 16px"><div style="display:flex;justify-content:space-between;gap:8px"><span>Monthly target</span><span class="mut">'+Math.round(mm)+' of '+TARGET+' min</span></div><div class="track"><i class="'+(p>=100?'full':'')+'" style="width:'+p+'%"></i></div></div></div>'+
-  '<div style="margin-top:16px">'+(X?'<button class="cta" data-a="resume">Resume session</button><button class="ghost" data-a="discard">Discard session</button>':'<button class="cta" data-a="start">Start session</button>')+'</div>'+
-  '<div class="hdr">Suggested rotation</div><div class="grp"><div class="row">'+exName(s)+'<span class="tag">'+esc(s.focus)+'</span></div></div>'+
-  '<div class="hdr">Settings</div><div class="grp">'+
-    '<button class="row" data-a="sheet" data-v="storage"><span class="lbl">Recordings</span><span class="mut" id="storeSize">…</span>'+chev+'</button>'+
-    '<button class="row" data-a="sheet" data-v="resetMonth"><span class="lbl dng">Reset this month’s minutes</span></button>'+
-    '<button class="row" data-a="sheet" data-v="resetAll"><span class="lbl dng">Reset all data</span></button></div>';
+  '<div class="arch"><svg viewBox="0 0 300 165" role="img" aria-label="'+Math.round(w.mins)+' of '+WEEK_TARGET+' minutes this week"><path d="M24 150 A126 126 0 0 1 276 150" fill="none" stroke="var(--fill)" stroke-width="16" stroke-linecap="round"/>'+
+  (p>0?'<path d="M24 150 A126 126 0 0 1 276 150" pathLength="100" stroke-dasharray="'+p+' 100" fill="none" stroke="'+(p>=100?'var(--good)':'var(--accent)')+'" stroke-width="16" stroke-linecap="round"/>':'')+
+  '</svg><div class="c"><small>This week</small><b>'+Math.round(w.mins)+'</b><small>of your '+WEEK_TARGET+'-minute goal</small></div></div>'+
+  '<div style="margin-top:20px">'+(X?'<button class="cta ink" data-a="resume">Resume session</button><button class="ghost" data-a="sheet" data-v="discard">Discard session</button>':'<button class="cta ink" data-a="start">Start session</button>')+'</div>'+
+  '<div class="week" role="list" aria-label="This week">'+days+'</div>'+
+  '<div class="streak">'+st+'<small>'+sub+'</small></div>'+
+  '<div class="grp" style="margin-top:22px"><div class="row" style="display:block;padding:14px 16px"><div style="display:flex;justify-content:space-between;gap:8px"><span>This month</span><span class="mut">'+Math.round(mm)+' of '+TARGET+' min</span></div><div class="track"><i class="'+(mp>=100?'full':'')+'" style="width:'+mp+'%"></i></div></div>'+
+  '<button class="row" data-a="openEx" data-k="'+s.id+'"><span class="lbl">Suggested rotation<small>'+esc(s.name)+' · '+lastDone(s.id)+'</small></span>'+chev+'</button></div>';
 }
 function scrHistory(){
-  const ss=(D.sessions||[]).slice().reverse();
+  const ss=D.sessions.slice().reverse();
   let h='<h1>History</h1>';
   if(!ss.length)return h+'<div class="grp" style="margin-top:8px"><div class="empty">Your finished sessions will appear here, with levels, songs and ratings.</div></div>';
   let cur='';
-  ss.forEach(s=>{const k=monthKey(new Date(s.date));if(k!==cur){if(cur)h+='</div>';cur=k;const lab=new Date(s.date).toLocaleDateString('en-GB',{month:'long',year:'numeric'});h+='<div class="hdr">'+lab+' · <span style="text-transform:none">'+hm((D.months||{})[k]||0)+'</span></div><div class="grp">';}
-    const rots=Object.keys(s.rot||{}).map(id=>(exById(id)||{name:s.rotNames&&s.rotNames[id]||'Exercise'}).name);
-    h+='<button class="row" data-a="sheet" data-v="session" data-k="'+s.id+'"><span class="lbl">'+dayLabel(s.date)+'<small>'+esc(rots.length?rots.join(', '):'Foundation only')+'</small></span><span class="mut">'+hm(s.mins)+'</span>'+chev+'</button>';});
-  return h+'</div>';
+  ss.forEach(s=>{const k=monthKey(new Date(s.date));if(k!==cur){if(cur)h+='</div>';cur=k;const lab=new Date(s.date).toLocaleDateString('en-GB',{month:'long',year:'numeric'});h+='<div class="hdr">'+lab+' · <span style="text-transform:none">'+hm(D.months[k]||0)+'</span></div><div class="grp">';}
+    const rots=Object.keys(s.rot||{}).map(id=>(exById(id)||{name:(s.rotNames||{})[id]||'Exercise'}).name);
+    h+=sw('<button class="row" data-a="sheet" data-v="session" data-k="'+s.id+'"><span class="lbl">'+dayLabel(s.date)+'<small>'+esc(rots.length?rots.join(', '):'Foundation only')+'</small></span><span class="mut">'+hm(s.mins)+'</span>'+chev+'</button>','delSession',s.id);});
+  return h+'</div><p class="foot">Swipe left on a session to delete it.</p>';
 }
 function scrExercises(){
-  const stat=id=>{const e=D.ex[id];if(!e||!e.n)return 'Not done yet';return 'Done '+e.n+'×'+(e.last?' · last '+new Date(e.last).toLocaleDateString('en-GB',{day:'numeric',month:'short'}):'');};
-  const row=(e,del)=>'<div class="row"><span class="lbl">'+esc(e.name)+'<small>'+esc(e.focus)+' · '+stat(e.id)+'</small></span>'+ytLink(e.ts)+(del?'<button class="ibtn dng" data-a="sheet" data-v="delEx" data-k="'+e.id+'" aria-label="Remove '+esc(e.name)+'">'+ICON.trash+'</button>':'')+'</div>';
-  return '<h1>Exercises</h1><p class="note">Watch opens your coach video in YouTube at that exercise.</p>'+
-  '<div class="hdr">Foundation</div><div class="grp">'+FOUND.map(e=>row(e)).join('')+'</div>'+
-  '<div class="hdr">Rotation</div><div class="grp">'+ROT.map(e=>row(e)).join('')+'</div>'+
-  '<div class="hdr">Your exercises</div><div class="grp">'+(D.custom||[]).map(e=>row(e,true)).join('')+'<button class="row acc" data-a="sheet" data-v="addEx"><span class="lbl">Add exercise</span>'+ICON.plus+'</button></div>'+
-  '<div class="hdr">Songs</div><div class="grp">'+(D.songs||[]).map(s=>'<div class="row"><span class="lbl">'+esc(s.name)+'<small>'+TAKES.filter(t=>t.songId===s.id).length+' saved take(s)</small></span><button class="ibtn dng" data-a="sheet" data-v="delSong" data-k="'+s.id+'" aria-label="Remove '+esc(s.name)+'">'+ICON.trash+'</button></div>').join('')+'<button class="row acc" data-a="sheet" data-v="addSong"><span class="lbl">Add song</span>'+ICON.plus+'</button></div>';
+  const row=e=>'<button class="row" data-a="openEx" data-k="'+e.id+'"><span class="lbl">'+esc(e.name)+'<small>'+esc(e.focus)+' · '+lastDone(e.id)+'</small></span>'+chev+'</button>';
+  return '<h1>Exercises</h1>'+
+  '<div class="grp" style="margin-top:8px"><a class="row acc" href="'+VIDEO+'" target="_blank" rel="noopener"><span class="lbl">Coach video<small>Opens in YouTube</small></span>'+ICON.video+'</a></div>'+
+  '<div class="hdr">Foundation</div><div class="grp">'+FOUND.map(row).join('')+'</div>'+
+  '<div class="hdr">Rotation</div><div class="grp">'+ROT.map(row).join('')+'</div>'+
+  '<div class="hdr">Your exercises</div><div class="grp">'+D.custom.map(e=>sw(row(e),'delEx',e.id)).join('')+'<button class="row acc" data-a="sheet" data-v="addEx"><span class="lbl">Add exercise</span>'+ICON.plus+'</button></div>'+
+  '<div class="hdr">Songs</div><div class="grp">'+D.songs.map(s=>sw('<div class="row"><span class="lbl">'+esc(s.name)+'<small>'+TAKES.filter(t=>t.songId===s.id).length+' saved take(s)</small></span><button class="ibtn dng" data-a="sheet" data-v="delSong" data-k="'+s.id+'" aria-label="Remove '+esc(s.name)+'">'+ICON.trash+'</button></div>','delSong',s.id)).join('')+'<button class="row acc" data-a="sheet" data-v="addSong"><span class="lbl">Add song</span>'+ICON.plus+'</button></div>'+
+  (D.custom.length||D.songs.length?'<p class="foot">Swipe left on your own exercises and songs to delete them.</p>':'');
+}
+function exHistory(id){return D.sessions.filter(s=>(s.f&&s.f[id])||(s.rot&&s.rot[id])).map(s=>({s,lv:(s.f&&s.f[id])||s.rot[id]}));}
+function scrEx(){
+  const e=exById(U.exId);if(!e)return '<div class="grp"><div class="empty">This exercise was removed.</div></div>';
+  const d=DESC[e.id];const isF=FOUND.some(x=>x.id===e.id);
+  let h='<h1>'+esc(e.name)+'</h1><div class="ex-h"><span class="badge">'+(isF?'Foundation':'Rotation')+'</span><span class="badge">'+esc(e.focus)+'</span>'+(d?'<span class="badge">Exercise '+d.n+'</span>':'')+'</div>'+
+  '<div class="seg wide" role="tablist" style="margin-bottom:6px"><button role="tab" data-a="exTab" data-v="summary" class="'+(U.exTab==='summary'?'on':'')+'" aria-selected="'+(U.exTab==='summary')+'">Summary</button><button role="tab" data-a="exTab" data-v="history" class="'+(U.exTab==='history'?'on':'')+'" aria-selected="'+(U.exTab==='history')+'">History</button></div>';
+  if(U.exTab==='summary'){
+    h+='<div class="hdr">Last done</div><div class="grp"><div class="row"><span class="lbl">'+(lastDone(e.id).replace(/^last done /,'').replace(/^Not done yet$/,'Not done yet'))+'</span></div></div>';
+    if(d){
+      h+='<div class="hdr">What it is</div><div class="grp"><div class="prose">'+d.what+'</div></div>'+
+      '<div class="hdr">Why it helps</div><div class="grp"><div class="prose">'+d.why+'</div></div>'+
+      '<div class="hdr">In a song</div><div class="grp"><div class="prose"><ul>'+d.song.map(x=>'<li><b>'+x[0]+'.</b> '+x[1]+'</li>').join('')+'</ul></div></div>';
+    }else{
+      h+='<div class="hdr">What it is</div><div class="grp"><div class="prose'+(e.what?'':' mut')+'">'+(e.what?esc(e.what):'No description yet.')+'</div><button class="row acc" data-a="sheet" data-v="editWhat" data-k="'+e.id+'"><span class="lbl">'+(e.what?'Edit description':'Add a description')+'</span></button></div>';
+    }
+  }else{
+    const hist=exHistory(e.id);
+    if(!hist.length){h+='<div class="grp" style="margin-top:14px"><div class="empty">No sessions with this exercise yet.'+((D.ex[e.id]||{}).n?' Practice from before '+UPDATE_DAY+' wasn’t saved session by session, so it can’t be shown here.':'')+'</div></div>';}
+    else{
+      const pts=hist.slice(-20);const W=320,H=150,L=34,R=12,T=14,B=26;const n=pts.length;
+      const xs=i=>n===1?(L+(W-L-R)/2):L+i*(W-L-R)/(n-1);const ys=v=>T+(3-v)*(H-T-B)/2;
+      let svg='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Level over the last '+n+' sessions">';
+      [1,2,3].forEach(v=>{svg+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+ys(v)+'" y2="'+ys(v)+'" stroke="var(--sep)"/><text x="'+(L-10)+'" y="'+(ys(v)+4)+'" text-anchor="end" font-size="12" fill="var(--fg2)">L'+v+'</text>';});
+      if(n>1)svg+='<polyline points="'+pts.map((p,i)=>xs(i)+','+ys(p.lv)).join(' ')+'" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round"/>';
+      pts.forEach((p,i)=>{svg+='<circle cx="'+xs(i)+'" cy="'+ys(p.lv)+'" r="'+(i===n-1?5.5:4)+'" fill="var(--accent)"/>';});
+      svg+='<text x="'+xs(0)+'" y="'+(H-6)+'" text-anchor="'+(n===1?'middle':'start')+'" font-size="12" fill="var(--fg2)">'+shortDate(pts[0].s.date)+'</text>';
+      if(n>1)svg+='<text x="'+xs(n-1)+'" y="'+(H-6)+'" text-anchor="end" font-size="12" fill="var(--fg2)">'+shortDate(pts[n-1].s.date)+'</text>';
+      svg+='</svg>';
+      const lastLv=pts[n-1].lv;
+      h+='<div class="hdr">Level · <span style="text-transform:none">latest L'+lastLv+'</span></div><div class="grp"><div class="chart">'+svg+'</div></div>'+
+      '<div class="hdr">Sessions</div><div class="grp">'+hist.slice().reverse().map(p=>'<button class="row" data-a="sheet" data-v="session" data-k="'+p.s.id+'"><span class="lbl">'+dayLabel(p.s.date)+'</span><span class="mut">Level '+p.lv+'</span>'+chev+'</button>').join('')+'</div>';
+    }
+  }
+  return h;
+}
+function scrSettings(){
+  const lb=D.lastBackup;const age=lb?(Date.now()-new Date(lb))/864e5:Infinity;
+  const lbText=lb?'Last backed up '+shortDate(lb)+' at '+timeOf(lb):'Never backed up';
+  const size=TAKES.reduce((a,t)=>a+t.size,0);
+  return '<h1>Settings</h1>'+
+  '<div class="hdr">Backup</div><div class="grp">'+
+   '<button class="row" data-a="exportPrep"><span class="lbl acc">Export backup</span>'+ICON.share+'</button>'+
+   '<button class="row" data-a="importPick"><span class="lbl acc">Import backup</span>'+chev+'</button></div>'+
+  '<p class="foot'+(age>14?' warn':'')+'">'+lbText+(age>14&&lb?'. It’s been over two weeks.':'')+'</p>'+
+  '<p class="foot">A backup holds everything: sessions, minutes, exercises, songs and recordings. Save it to iCloud Drive, then import it after re-adding the app or switching phones.</p>'+
+  '<div class="hdr">Recordings</div><div class="grp"><button class="row" data-a="sheet" data-v="storage"><span class="lbl">Recordings</span><span class="mut">'+TAKES.length+' · '+(size/1048576).toFixed(1)+' MB</span>'+chev+'</button></div>'+
+  '<div class="hdr">Reset</div><div class="grp">'+
+   '<button class="row" data-a="sheet" data-v="resetMonth"><span class="lbl dng">Reset this month’s minutes</span></button>'+
+   '<button class="row" data-a="sheet" data-v="resetAll"><span class="lbl dng">Reset all data</span></button></div>'+
+  '<p class="foot">Vocal Sessions '+APP_VERSION+'</p>';
 }
 function scrFound(){
-  return '<h1>Foundation</h1><p class="note">Set how many levels you got through. Tap a name to open the video there.</p><div class="grp">'+
-  FOUND.map(e=>'<div class="row">'+exName(e)+seg('flv',e.id,X.f[e.id])+'</div>').join('')+'</div>'+
+  return '<h1>Foundation</h1><p class="note">Set how many levels you got through.</p><div class="grp">'+
+  FOUND.map(e=>'<div class="row"><span class="lbl">'+esc(e.name)+'</span>'+seg('flv',e.id,X.f[e.id])+'</div>').join('')+'</div>'+
   '<div class="grp" style="margin-top:14px"><button class="row" data-a="sheet" data-v="note" data-k="fNote"><span class="lbl '+(X.fNote?'':'mut')+'">'+esc(X.fNote||'Add a note')+'</span>'+chev+'</button></div>';
 }
 function rotRow(e,sug){const on=e.id in X.rot;
-  return '<button class="row" data-a="tog" data-k="'+e.id+'" aria-pressed="'+on+'"><span class="lbl">'+esc(e.name)+(sug?'<small>Least practised</small>':'')+'</span><span class="'+(on?'acc':'mut')+'" aria-hidden="true">'+(on?ICON.circleOn:ICON.circle)+'</span></button>'+
-  (on?'<div class="sub"><span class="tag">'+esc(e.focus)+(e.ts!=null?' · ':'')+ytLink(e.ts)+'</span>'+seg('rlv',e.id,X.rot[e.id])+'</div>':'');}
+  return '<button class="row" data-a="tog" data-k="'+e.id+'" aria-pressed="'+on+'"><span class="lbl">'+esc(e.name)+'<small>'+(sug?'Least practised · ':'')+lastDone(e.id)+'</small></span><span class="'+(on?'acc':'mut')+'" aria-hidden="true">'+(on?ICON.circleOn:ICON.circle)+'</span></button>'+
+  (on?'<div class="sub"><span class="tag">'+esc(e.focus)+'</span>'+seg('rlv',e.id,X.rot[e.id])+'</div>':'');}
 function scrRot(){const s=suggested();const rest=allRot().filter(e=>e.id!==s.id);
   return '<h1>Rotation</h1><p class="note">Pick as many as you like. Each one gets its own level.</p><div class="hdr">Suggested</div><div class="grp">'+rotRow(s,true)+'</div>'+
   '<div class="hdr">More exercises</div><div class="grp">'+rest.map(e=>rotRow(e)).join('')+'<button class="row acc" data-a="sheet" data-v="addEx"><span class="lbl">Add exercise</span>'+ICON.plus+'</button></div>'+
   '<div class="grp" style="margin-top:14px"><button class="row" data-a="sheet" data-v="note" data-k="rNote"><span class="lbl '+(X.rNote?'':'mut')+'">'+esc(X.rNote||'Add a note')+'</span>'+chev+'</button></div>';}
 function scrApp(){
-  const songs=D.songs||[];const sid=X.song;
+  const sid=X.song;
   let h='<h1>Application</h1><p class="note">Sing a real song or section and record a take to listen back.</p><div class="hdr">Song</div><div class="grp">'+
-  songs.map(s=>'<button class="row" data-a="song" data-k="'+s.id+'"><span class="lbl">'+esc(s.name)+'</span>'+(sid===s.id?'<span class="acc">'+ICON.check+'</span>':'')+'</button>').join('')+
+  D.songs.map(s=>'<button class="row" data-a="song" data-k="'+s.id+'"><span class="lbl">'+esc(s.name)+'</span>'+(sid===s.id?'<span class="acc">'+ICON.check+'</span>':'')+'</button>').join('')+
   '<button class="row acc" data-a="sheet" data-v="addSong"><span class="lbl">Add song</span>'+ICON.plus+'</button></div>';
   if(sid){const tk=TAKES.filter(t=>t.songId===sid);
     h+='<div class="hdr">Takes</div><div class="grp"><button class="row recbtn'+(rec?' on':'')+'" data-a="rec"><span class="dot" aria-hidden="true"></span><span id="recLbl">'+(rec?'Stop · '+mmss(rec.t)+' of '+mmss(MAX_TAKE):'Record a take')+'</span></button>'+
-    tk.map((t,i)=>'<div class="row"><button class="ibtn acc" data-a="playTake" data-k="'+t.id+'" aria-label="Play take">'+(playingId===t.id?ICON.pause:ICON.play)+'</button><span class="lbl">Take · '+new Date(t.created).toLocaleDateString('en-GB',{day:'numeric',month:'short'})+'<small>'+mmss(t.len)+' · '+(t.size/1048576).toFixed(1)+' MB</small></span><button class="ibtn star'+(t.star?' on':'')+'" data-a="star" data-k="'+t.id+'" aria-label="'+(t.star?'Unstar':'Star')+' take" style="color:'+(t.star?'':'var(--fg3)')+'">'+ICON.star+'</button><button class="ibtn acc" data-a="shareTake" data-k="'+t.id+'" aria-label="Save or share take">'+ICON.share+'</button></div>').join('')+
-    '</div><p class="note" style="margin-top:8px">Keeps the last '+KEEP_TAKES+' takes per song, plus any you star. Share saves a copy to Files or iCloud Drive.</p>';}
+    tk.map(t=>sw('<div class="row"><button class="ibtn acc" data-a="playTake" data-k="'+t.id+'" aria-label="Play take">'+(playingId===t.id?ICON.pause:ICON.play)+'</button><span class="lbl">'+shortDate(t.created)+'<small>'+mmss(t.len)+' · '+(t.size/1048576).toFixed(1)+' MB</small></span><button class="ibtn star'+(t.star?' on':'')+'" data-a="star" data-k="'+t.id+'" aria-label="'+(t.star?'Unstar':'Star')+' take" style="'+(t.star?'':'color:var(--fg3)')+'">'+ICON.star+'</button><button class="ibtn acc" data-a="shareTake" data-k="'+t.id+'" aria-label="Save or share take">'+ICON.share+'</button><button class="ibtn dng" data-a="sheet" data-v="delTake" data-k="'+t.id+'" aria-label="Delete take">'+ICON.trash+'</button></div>','delTake',t.id)).join('')+
+    '</div><p class="foot">Keeps the last '+KEEP_TAKES+' takes per song, plus any you star. Share saves a copy to Files or iCloud Drive.</p>';}
   h+='<div class="hdr">How did it go?</div><div class="grp">'+['Pitch','Tone','Ease'].map(k=>'<div class="row"><span class="lbl">'+k+'</span>'+seg('rate',k,X.rate[k])+'</div>').join('')+'</div>';
   return h;
 }
 
-/* ===== Chrome: bar, dock, sheets ===== */
+/* ===== Chrome ===== */
 const VIEWS={found:['Foundation','1 of 3',null],rot:['Rotation','2 of 3','found'],app:['Application','3 of 3','rot']};
 function renderBar(){
-  if(U.view){const v=VIEWS[U.view];$('barT').textContent=v[0];
+  const bar=$('bar');
+  if(U.view==='ex'){const e=exById(U.exId);$('barT').textContent=e?e.name:'';bar.classList.remove('always');
+    $('barL').innerHTML='<button class="circ glass" data-a="exBack" aria-label="Back">'+ICON.back+'</button>';$('barR').innerHTML='';}
+  else if(U.view){const v=VIEWS[U.view];$('barT').textContent=v[0];
     $('barL').innerHTML='<button class="circ glass" data-a="'+(v[2]?'view':'exit')+'" data-v="'+(v[2]||'')+'" aria-label="Back">'+ICON.back+'</button>';
-    $('barR').innerHTML='<span class="pill glass">'+v[1]+'</span>';}
-  else{$('barT').textContent={today:'Today',history:'History',exercises:'Exercises'}[U.tab];$('barL').innerHTML='';$('barR').innerHTML='';}
+    $('barR').innerHTML='<a class="circ glass" href="'+VIDEO+'" target="_blank" rel="noopener" aria-label="Open coach video">'+ICON.video+'</a><span class="pill glass">'+v[1]+'</span>';}
+  else{$('barT').textContent={today:'Today',history:'History',exercises:'Exercises',settings:'Settings'}[U.tab];$('barL').innerHTML='';$('barR').innerHTML='';}
 }
 function renderDock(){
   if(U.sheet){$('dock').innerHTML='';return;}
-  if(U.view){const n=Object.keys(X.rot).length;
+  if(U.view&&U.view!=='ex'){const n=Object.keys(X.rot).length;
     const lab={found:'Log foundation',rot:n?'Log '+n+' exercise'+(n>1?'s':''):'Pick an exercise',app:'Finish session'}[U.view];
     $('dock').innerHTML='<button class="cta" data-a="cta">'+lab+'</button>';return;}
   const t=(id,lab,ic)=>'<button class="'+(U.tab===id?'on':'')+'" data-a="tab" data-v="'+id+'" aria-current="'+(U.tab===id?'page':'false')+'">'+ic+lab+'</button>';
-  $('dock').innerHTML='<nav class="tabbar glass" aria-label="Tabs">'+t('today','Today',ICON.mic)+t('history','History',ICON.clock)+t('exercises','Exercises',ICON.list)+'</nav>';
+  $('dock').innerHTML='<nav class="tabbar glass" aria-label="Tabs">'+t('today','Today',ICON.mic)+t('history','History',ICON.clock)+t('exercises','Exercises',ICON.list)+t('settings','Settings',ICON.gear)+'</nav>';
 }
-function sheetWrap(title,body,label){return '<div class="scrim" data-a="close"><div class="sheet glass" role="dialog" aria-label="'+esc(label||title)+'"><div class="grab"></div><h2>'+title+'</h2>'+body+'</div></div>';}
+function sheetWrap(title,body,label){return '<div class="scrim" data-a="close"><div class="sheet glass" role="dialog" aria-modal="true" aria-label="'+esc(label||title)+'"><div class="grab"></div><h2>'+title+'</h2>'+body+'</div></div>';}
+const confirmSheet=(title,text,btn,action,k,cancel)=>sheetWrap(title,'<p class="note">'+text+'</p><button class="cta red" data-a="'+action+'" data-k="'+esc(k||'')+'">'+btn+'</button><button class="ghost" data-a="close">'+(cancel||'Cancel')+'</button>');
 function renderSheet(){
   const s=U.sheet,k=U.sd.k;let h='';
   if(s==='confirmF')h=sheetWrap('Confirm foundation','<div class="grp">'+FOUND.map(e=>'<div class="row"><span class="lbl">'+esc(e.name)+'</span><span class="mut">Level '+X.f[e.id]+'</span></div>').join('')+'</div><div style="margin-top:14px"><button class="cta" data-a="confirmF">Log foundation</button></div><button class="ghost" data-a="close">Edit</button>');
   else if(s==='note'){const cur=X[k]||'';h=sheetWrap('Add a note','<div class="chips">'+NOTE_PRESETS.map(p=>'<button class="chip'+(cur===p?' on':'')+'" data-a="preset" data-v="'+esc(p)+'">'+esc(p)+'</button>').join('')+'</div><div class="hdr">Or write your own</div><textarea class="field" id="noteIn" maxlength="140" placeholder="Felt easier on the high notes">'+esc(cur)+'</textarea><div style="margin-top:14px"><button class="cta" data-a="saveNote">Save note</button></div>'+(cur?'<button class="ghost" data-a="clearNote" style="color:var(--danger)">Remove note</button>':'<button class="ghost" data-a="close">Cancel</button>'));}
-  else if(s==='addEx')h=sheetWrap('Add exercise','<input class="field" id="exName" maxlength="40" placeholder="Siren on ng" autocomplete="off"><div class="err" id="exErr" hidden></div><div class="hdr">Focus</div><div class="chips" id="focusChips">'+FOCI.map((f,i)=>'<button class="chip'+(i===0?' on':'')+'" data-a="focus" data-v="'+f+'">'+f+'</button>').join('')+'</div><div class="hdr">Video timestamp (optional)</div><input class="field" id="exTs" inputmode="numeric" placeholder="41:20" autocomplete="off"><div style="margin-top:14px"><button class="cta" data-a="saveEx">Add exercise</button></div><button class="ghost" data-a="close">Cancel</button>');
+  else if(s==='addEx')h=sheetWrap('Add exercise','<input class="field" id="exName" maxlength="40" placeholder="Siren on ng" autocomplete="off"><div class="err" id="exErr" hidden></div><div class="hdr">Focus</div><div class="chips" id="focusChips">'+FOCI.map((f,i)=>'<button class="chip'+(i===0?' on':'')+'" data-a="focus" data-v="'+f+'">'+f+'</button>').join('')+'</div><div class="hdr">What it is (optional)</div><textarea class="field" id="exWhat" maxlength="400" placeholder="Slide up and down on ng, keeping it light"></textarea><div style="margin-top:14px"><button class="cta" data-a="saveEx">Add exercise</button></div><button class="ghost" data-a="close">Cancel</button>');
+  else if(s==='editWhat'){const e=exById(k)||{};h=sheetWrap('Description','<textarea class="field" id="whatIn" maxlength="400" placeholder="What the exercise is and how to do it">'+esc(e.what||'')+'</textarea><div style="margin-top:14px"><button class="cta" data-a="saveWhat" data-k="'+esc(k)+'">Save</button></div><button class="ghost" data-a="close">Cancel</button>');}
   else if(s==='addSong')h=sheetWrap('Add song','<input class="field" id="songIn" maxlength="60" placeholder="Versace on the Floor · bridge" autocomplete="off"><div class="err" id="songErr" hidden></div><p class="note" style="margin-top:8px">Include the section you’re working on, so takes stay grouped.</p><div style="margin-top:8px"><button class="cta" data-a="saveSong">Add song</button></div><button class="ghost" data-a="close">Cancel</button>');
-  else if(s==='delEx'){const e=exById(k);h=sheetWrap('Remove exercise?','<p class="note">'+esc(e?e.name:'')+' will be removed from your rotation. Past sessions keep it.</p><button class="cta" style="background:var(--danger)" data-a="delEx" data-k="'+k+'">Remove</button><button class="ghost" data-a="close">Cancel</button>');}
-  else if(s==='delSong'){const so=(D.songs||[]).find(x=>x.id===k);h=sheetWrap('Remove song?','<p class="note">'+esc(so?so.name:'')+' and its saved takes will be deleted from this phone.</p><button class="cta" style="background:var(--danger)" data-a="delSong" data-k="'+k+'">Remove</button><button class="ghost" data-a="close">Cancel</button>');}
-  else if(s==='storage'){const size=TAKES.reduce((a,t)=>a+t.size,0);h=sheetWrap('Recordings','<div class="grp"><div class="row"><span class="lbl">Saved takes</span><span class="mut">'+TAKES.length+'</span></div><div class="row"><span class="lbl">Space used</span><span class="mut">'+(size/1048576).toFixed(1)+' MB</span></div><div class="row"><span class="lbl">Starred</span><span class="mut">'+TAKES.filter(t=>t.star).length+'</span></div></div><p class="note" style="margin-top:10px">Recordings live on this phone only. Use Share on a take to save it to iCloud Drive.</p><button class="cta" style="background:var(--danger)" data-a="clearRec">Delete all recordings</button><button class="ghost" data-a="close">Done</button>');}
-  else if(s==='resetMonth')h=sheetWrap('Reset this month?','<p class="note">This month’s minutes go back to zero. Sessions, streak and recordings stay.</p><button class="cta" style="background:var(--danger)" data-a="resetMonth">Reset minutes</button><button class="ghost" data-a="close">Cancel</button>');
-  else if(s==='resetAll')h=sheetWrap('Reset all data?','<p class="note">Deletes your streak, minutes, history, custom exercises, songs and recordings on this phone. This can’t be undone.</p><button class="cta" style="background:var(--danger)" data-a="resetAll">Delete everything</button><button class="ghost" data-a="close">Cancel</button>');
-  else if(s==='discard')h=sheetWrap('Discard session?','<p class="note">Levels and notes from this session won’t be saved. Recordings stay.</p><button class="cta" style="background:var(--danger)" data-a="discardYes">Discard</button><button class="ghost" data-a="close">Keep session</button>');
-  else if(s==='session'||s==='done'){const ss=(D.sessions||[]).find(x=>x.id===k);if(ss)h=sessionSheet(ss,s==='done');}
+  else if(s==='delEx'){const e=exById(k);h=confirmSheet('Delete exercise?',esc(e?e.name:'')+' will be removed from your rotation. Past sessions keep it.','Delete exercise','delEx',k);}
+  else if(s==='delSong'){const so=D.songs.find(x=>x.id===k);h=confirmSheet('Delete song?',esc(so?so.name:'')+' and its saved takes will be deleted from this phone.','Delete song','delSong',k);}
+  else if(s==='delTake'){const t=TAKES.find(x=>x.id===k);h=confirmSheet('Delete take?','This '+(t?mmss(t.len)+' ':'')+'recording will be deleted from this phone. Copies you saved to Files stay.','Delete take','delTake',k);}
+  else if(s==='delSession'){const ss=D.sessions.find(x=>x.id===k);h=confirmSheet('Delete session?',(ss?dayLabel(ss.date)+' ('+hm(ss.mins)+')':'This session')+' will be removed. Its minutes come off that month and its exercises’ last-done dates are updated.','Delete session','delSession',k);}
+  else if(s==='storage'){const size=TAKES.reduce((a,t)=>a+t.size,0);h=sheetWrap('Recordings','<div class="grp"><div class="row"><span class="lbl">Saved takes</span><span class="mut">'+TAKES.length+'</span></div><div class="row"><span class="lbl">Space used</span><span class="mut">'+(size/1048576).toFixed(1)+' MB</span></div><div class="row"><span class="lbl">Starred</span><span class="mut">'+TAKES.filter(t=>t.star).length+'</span></div></div><p class="note" style="margin-top:10px">Recordings live on this phone and in your backups. Use Share on a take to save it to iCloud Drive on its own.</p><button class="cta red" data-a="sheet" data-v="clearRec">Delete all recordings</button><button class="ghost" data-a="close">Done</button>');}
+  else if(s==='clearRec')h=confirmSheet('Delete all recordings?','Every saved take on this phone will be deleted. This can’t be undone.','Delete all recordings','clearRec');
+  else if(s==='resetMonth')h=confirmSheet('Reset this month?','This month’s minutes go back to zero. Sessions and recordings stay.','Reset minutes','resetMonth');
+  else if(s==='resetAll')h=sheetWrap('Reset all data?','<p class="note">Deletes your history, minutes, streak, custom exercises, songs and recordings on this phone. This can’t be undone.</p><button class="cta" data-a="exportPrep" style="margin-bottom:10px">Export a backup first</button><button class="cta red" data-a="resetAll">Delete everything</button><button class="ghost" data-a="close">Cancel</button>');
+  else if(s==='discard')h=confirmSheet('Discard session?','Levels and notes from this session won’t be saved. Recordings stay.','Discard','discardYes','','Keep session');
+  else if(s==='exportReady'&&pendingExport)h=sheetWrap('Backup ready','<div class="grp"><div class="row"><span class="lbl">Sessions</span><span class="mut">'+pendingExport.sessions+'</span></div><div class="row"><span class="lbl">Recordings</span><span class="mut">'+pendingExport.takes+'</span></div><div class="row"><span class="lbl">File size</span><span class="mut">'+(pendingExport.file.size/1048576).toFixed(1)+' MB</span></div></div><p class="note" style="margin-top:10px">Choose Save to Files, then iCloud Drive, so it survives if the app is removed.</p><button class="cta" data-a="exportSave">Save backup</button><button class="ghost" data-a="close">Cancel</button>');
+  else if(s==='exporting')h=sheetWrap('Preparing backup','<p class="note">Gathering your sessions and recordings…</p>');
+  else if(s==='importConfirm'&&pendingImport){const p=pendingImport,d=p.data||{};h=sheetWrap('Restore this backup?','<div class="grp"><div class="row"><span class="lbl">Backed up</span><span class="mut">'+shortDate(p.exportedAt)+' at '+timeOf(p.exportedAt)+'</span></div><div class="row"><span class="lbl">Sessions</span><span class="mut">'+(d.sessions||[]).length+'</span></div><div class="row"><span class="lbl">Songs</span><span class="mut">'+(d.songs||[]).length+'</span></div><div class="row"><span class="lbl">Recordings</span><span class="mut">'+(p.takes||[]).length+'</span></div></div><p class="note" style="margin-top:10px">Everything currently on this phone will be replaced with this backup.</p><button class="cta red" data-a="importYes">Replace and restore</button><button class="ghost" data-a="close">Cancel</button>');}
+  else if(s==='importing')h=sheetWrap('Restoring backup','<p class="note">Restoring your sessions and recordings…</p>');
+  else if(s==='session'||s==='done'){const ss=D.sessions.find(x=>x.id===k);if(ss)h=sessionSheet(ss,s==='done');}
   $('layer').innerHTML=h;
   if(s==='addEx')setTimeout(()=>{const i=$('exName');if(i)i.focus();},250);
   if(s==='addSong')setTimeout(()=>{const i=$('songIn');if(i)i.focus();},250);
@@ -327,22 +480,23 @@ function sessionSheet(ss,done){
   if(rots.length)b+='<div class="hdr">Rotation</div><div class="grp">'+rots.map(id=>'<div class="row"><span class="lbl">'+esc((exById(id)||{name:(ss.rotNames||{})[id]||'Exercise'}).name)+'</span><span class="mut">Level '+ss.rot[id]+'</span></div>').join('')+(ss.rNote?'<div class="row"><span class="lbl mut">'+esc(ss.rNote)+'</span></div>':'')+'</div>';
   if(ss.songName||Object.keys(ss.rate||{}).length)b+='<div class="hdr">Application</div><div class="grp">'+(ss.songName?'<div class="row"><span class="lbl">'+esc(ss.songName)+'</span></div>':'')+['Pitch','Tone','Ease'].filter(x=>(ss.rate||{})[x]).map(x=>'<div class="row"><span class="lbl">'+x+'</span><span class="mut">'+ss.rate[x]+' of 3</span></div>').join('')+'</div>';
   b+=(done?'':'<div style="margin-top:16px"><button class="cta" data-a="copy" data-k="'+ss.id+'">Copy for Toggl</button></div>')+'<button class="ghost" data-a="close">'+(done?'Done':'Close')+'</button>';
-  if(!done)b+='<button class="ghost" data-a="delSession" data-k="'+ss.id+'" style="color:var(--danger)">Delete session</button>';
+  if(!done)b+='<button class="ghost" data-a="sheet" data-v="delSession" data-k="'+ss.id+'" style="color:var(--danger)">Delete session</button>';
   return sheetWrap(done?'Session complete':dayLabel(ss.date),b);
 }
 
 /* ===== Render ===== */
 function render(keepScroll){
   const y=window.scrollY;
-  $('app').innerHTML=U.view?({found:scrFound,rot:scrRot,app:scrApp})[U.view]():({today:scrToday,history:scrHistory,exercises:scrExercises})[U.tab]();
+  closeSwipes();
+  const v=U.view;
+  $('app').innerHTML=v==='ex'?scrEx():v?({found:scrFound,rot:scrRot,app:scrApp})[v]():({today:scrToday,history:scrHistory,exercises:scrExercises,settings:scrSettings})[U.tab]();
   renderBar();renderDock();renderSheet();
   if(keepScroll)window.scrollTo(0,y);
-  const sz=$('storeSize');if(sz)sz.textContent=(TAKES.reduce((a,t)=>a+t.size,0)/1048576).toFixed(1)+' MB';
 }
 const rerender=()=>render(true);
 function go(fn){fn();window.scrollTo(0,0);render();}
 let toastT=null;
-function toast(t){clearTimeout(toastT);const o=document.querySelector('.toast');if(o)o.remove();const el=document.createElement('div');el.className='toast glass';el.setAttribute('role','status');el.textContent=t;document.body.appendChild(el);toastT=setTimeout(()=>el.remove(),1800);}
+function toast(t){clearTimeout(toastT);const o=document.querySelector('.toast');if(o)o.remove();const el=document.createElement('div');el.className='toast glass';el.setAttribute('role','status');el.textContent=t;document.body.appendChild(el);toastT=setTimeout(()=>el.remove(),1900);}
 
 /* ===== Session logic ===== */
 function newSession(){X={start:Date.now(),f:{},fNote:'',fEnd:null,rot:{},rNote:'',rEnd:null,song:null,rate:{},takes:[]};saveDraft();}
@@ -356,17 +510,23 @@ function togglLines(ss){
 }
 function finishSession(){
   const end=Date.now(),mins=Math.max(1,Math.round((end-X.start)/60000));
-  const song=(D.songs||[]).find(s=>s.id===X.song);
+  const song=D.songs.find(s=>s.id===X.song);
   const rotNames={};Object.keys(X.rot).forEach(id=>{const e=exById(id);if(e)rotNames[id]=e.name;});
-  const ss={id:'s'+end.toString(36),date:new Date(X.start).toISOString(),mins,f:X.f,fNote:X.fNote,rot:X.rot,rNote:X.rNote,rotNames,songName:song?song.name:'',rate:X.rate,takes:X.takes};
-  D.sessions=D.sessions||[];D.sessions.push(ss);
-  D.months=D.months||{};const k=monthKey();D.months[k]=(D.months[k]||0)+mins;
-  const t=new Date().toDateString(),y=new Date(end-864e5).toDateString();
-  if(D.lastDate!==t){D.streak=D.lastDate===y?(D.streak||0)+1:1;D.lastDate=t;}
-  const iso=new Date(end).toISOString();
-  FOUND.map(e=>e.id).concat(Object.keys(X.rot)).forEach(id=>{D.ex[id]=D.ex[id]||{n:0,last:null};D.ex[id].n++;D.ex[id].last=iso;});
+  const ss={id:'s'+end.toString(36),date:new Date(X.start).toISOString(),end:new Date(end).toISOString(),mins,f:X.f,fNote:X.fNote,rot:X.rot,rNote:X.rNote,rotNames,songName:song?song.name:'',rate:X.rate,takes:X.takes};
+  D.sessions.push(ss);
+  const k=monthKey(new Date(X.start));D.months[k]=(D.months[k]||0)+mins;
+  FOUND.map(e=>e.id).concat(Object.keys(X.rot)).forEach(id=>{D.ex[id]=D.ex[id]||{n:0,last:null};D.ex[id].n++;D.ex[id].last=ss.end;});
   save();X=null;saveDraft();
   U.view=null;U.tab='today';U.sheet='done';U.sd={k:ss.id};window.scrollTo(0,0);render();
+}
+function deleteSession(id){
+  const ss=D.sessions.find(x=>x.id===id);if(!ss)return;
+  D.sessions=D.sessions.filter(x=>x!==ss);
+  const mk=monthKey(new Date(ss.date));D.months[mk]=Math.max(0,(D.months[mk]||0)-ss.mins);
+  Object.keys(ss.f||{}).concat(Object.keys(ss.rot||{})).forEach(ex=>{const e=D.ex[ex];if(!e)return;e.n=Math.max(0,e.n-1);
+    const rest=D.sessions.filter(s=>(s.f&&s.f[ex])||(s.rot&&s.rot[ex]));
+    e.last=rest.length?sessEnd(rest[rest.length-1]):null;});
+  save();
 }
 
 /* ===== Recording ===== */
@@ -379,9 +539,8 @@ async function startRec(){
   const mime=pickMime();let mr;
   try{mr=new MediaRecorder(stream,Object.assign({audioBitsPerSecond:64000},mime?{mimeType:mime}:{}));}catch(e){mr=new MediaRecorder(stream);}
   rec={mr,stream,chunks:[],t:0,songId:X.song,started:Date.now()};
-  mr.ondataavailable=e=>{if(e.data&&e.data.size)rec.chunks.push(e.data);};
-  mr.onstop=saveRec;
-  mr.start(1000);
+  mr.ondataavailable=e=>{if(e.data&&e.data.size)rec&&rec.chunks.push(e.data);};
+  mr.onstop=saveRec;mr.start(1000);
   rec.timer=setInterval(()=>{if(!rec)return;rec.t=Math.round((Date.now()-rec.started)/1000);const l=$('recLbl');if(l)l.textContent='Stop · '+mmss(rec.t)+' of '+mmss(MAX_TAKE);if(rec.t>=MAX_TAKE)stopRec();},250);
   rerender();
 }
@@ -405,14 +564,64 @@ function playTake(id){
   player.onended=()=>{stopPlayback();rerender();};
   player.play().catch(()=>{stopPlayback();toast('Couldn’t play this take');rerender();});rerender();
 }
-async function shareTake(id){
+function downloadFile(file){const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=file.name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},4000);}
+async function shareFile(file){
+  if(navigator.canShare&&navigator.canShare({files:[file]})){
+    try{await navigator.share({files:[file],title:file.name});return 'shared';}
+    catch(e){if(e&&e.name==='AbortError')return 'cancelled';}
+  }
+  downloadFile(file);return 'downloaded';
+}
+function shareTake(id){
   const t=TAKES.find(x=>x.id===id);if(!t)return;
-  const song=(D.songs||[]).find(s=>s.id===t.songId);
+  const song=D.songs.find(s=>s.id===t.songId);
   const ext=/mp4|aac|m4a/.test(t.type)?'m4a':/webm/.test(t.type)?'webm':'audio';
   const name=((song?song.name:'Vocal take')+' – '+fileDate(new Date(t.created))).replace(/[\/\\:*?"<>|]/g,'-')+'.'+ext;
-  const file=new File([t.blob],name,{type:t.type});
-  if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:name});}catch(e){}return;}
-  const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},2000);
+  shareFile(new File([t.blob],name,{type:t.type}));
+}
+
+/* ===== Backup ===== */
+const blobToDataURL=b=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error);r.readAsDataURL(b);});
+function dataURLToBlob(u){const [head,b64]=u.split(',');const type=(head.match(/data:([^;]+)/)||[])[1]||'application/octet-stream';const bin=atob(b64);const arr=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);return new Blob([arr],{type});}
+async function prepareExport(){
+  U.sheet='exporting';rerender();
+  try{
+    const takes=await allTakes();const out=[];
+    for(const t of takes){const c=Object.assign({},t);delete c.blob;c.data=await blobToDataURL(t.blob);out.push(c);}
+    const now=new Date();
+    const payload={app:'vocal-sessions',format:1,appVersion:APP_VERSION,exportedAt:now.toISOString(),data:D,draft:X,takes:out};
+    const file=new File([JSON.stringify(payload)],'Vocal Sessions backup – '+fileDate(now)+'.json',{type:'application/json'});
+    pendingExport={file,at:payload.exportedAt,sessions:D.sessions.length,takes:out.length};
+    U.sheet='exportReady';
+  }catch(e){U.sheet=null;toast('Couldn’t create the backup. Try again.');}
+  rerender();
+}
+async function saveExport(){
+  const p=pendingExport;if(!p)return;
+  const r=await shareFile(p.file);
+  if(r==='cancelled'){toast('Backup not saved');return;}
+  D.lastBackup=p.at;save();pendingExport=null;U.sheet=null;rerender();toast(r==='shared'?'Backup saved':'Backup downloaded');
+}
+function readImport(file){
+  const r=new FileReader();
+  r.onload=()=>{let p;try{p=JSON.parse(r.result);}catch(e){p=null;}
+    if(!p||p.app!=='vocal-sessions'||!p.data){toast('That file isn’t a Vocal Sessions backup');return;}
+    pendingImport=p;U.sheet='importConfirm';rerender();};
+  r.onerror=()=>toast('Couldn’t read that file');
+  r.readAsText(file);
+}
+async function restoreImport(){
+  const p=pendingImport;if(!p)return;
+  U.sheet='importing';rerender();
+  try{
+    stopPlayback();if(rec)stopRec();
+    await clearTakes();
+    for(const t of (p.takes||[])){const c=Object.assign({},t);c.blob=dataURLToBlob(t.data);delete c.data;await putTake(c);}
+    D=p.data;migrate();D.lastBackup=p.exportedAt;save();
+    X=p.draft||null;saveDraft();
+    await refreshTakes();pendingImport=null;
+    U={tab:'today',view:null,exId:null,exTab:'summary',sheet:null,sd:{}};window.scrollTo(0,0);render();toast('Backup restored');
+  }catch(e){U.sheet=null;rerender();toast('Couldn’t restore that backup');}
 }
 
 /* ===== Copy ===== */
@@ -422,19 +631,37 @@ function copyText(txt){
   if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(ok,fallback);else fallback();
 }
 
+/* ===== Swipe to delete ===== */
+let swT=null,swOpen=null,swJustMoved=0;
+function closeSwipes(except){document.querySelectorAll('.sw.open').forEach(s=>{if(s!==except){s.classList.remove('open');s.querySelector('.fg').style.transform='';}});if(!except)swOpen=null;}
+document.addEventListener('touchstart',e=>{const s=e.target.closest('.sw');if(swOpen&&swOpen!==s)closeSwipes();if(!s)return;const t=e.touches[0];swT={s,x:t.clientX,y:t.clientY,dx:0,base:s.classList.contains('open')?-88:0,lock:null};},{passive:true});
+document.addEventListener('touchmove',e=>{if(!swT)return;const t=e.touches[0],dx=t.clientX-swT.x,dy=t.clientY-swT.y;
+  if(swT.lock===null){if(Math.abs(dx)<8&&Math.abs(dy)<8)return;swT.lock=Math.abs(dx)>Math.abs(dy)?'x':'y';}
+  if(swT.lock!=='x')return;swT.dx=dx;swT.s.classList.add('dragging');
+  const x=Math.max(-120,Math.min(0,swT.base+dx));swT.s.querySelector('.fg').style.transform='translateX('+x+'px)';},{passive:true});
+document.addEventListener('touchend',()=>{if(!swT)return;const s=swT.s;s.classList.remove('dragging');
+  if(swT.lock==='x'){swJustMoved=Date.now();const x=swT.base+swT.dx;const open=x<-44;s.classList.toggle('open',open);s.querySelector('.fg').style.transform=open?'translateX(-88px)':'';swOpen=open?s:null;}
+  swT=null;});
+
 /* ===== Events ===== */
+$('importIn').addEventListener('change',e=>{const f=e.target.files&&e.target.files[0];e.target.value='';if(f)readImport(f);});
 document.addEventListener('click',e=>{
-  const el=e.target.closest('[data-a]');if(!el)return;
+  const el=e.target.closest('[data-a]');
+  if(Date.now()-swJustMoved<350&&!(el&&el.classList.contains('swdel'))){e.preventDefault();return;}
+  if(swOpen&&!(el&&el.classList.contains('swdel'))&&!e.target.closest('.scrim')){const inOpen=e.target.closest('.sw')===swOpen;closeSwipes();if(inOpen){e.preventDefault();return;}}
+  if(!el)return;
   if(el.classList.contains('scrim')&&e.target!==el)return;
   const a=el.dataset.a,v=el.dataset.v,k=el.dataset.k;
   switch(a){
-    case 'tab':go(()=>{U.tab=v;});break;
+    case 'tab':go(()=>{U.tab=v;U.view=null;});break;
     case 'start':newSession();go(()=>{U.view='found';});break;
     case 'resume':go(()=>{U.view=X.fEnd?(X.rEnd?'app':'rot'):'found';});break;
-    case 'discard':U.sheet='discard';rerender();break;
     case 'discardYes':if(rec)stopRec();X=null;saveDraft();U.sheet=null;rerender();break;
     case 'exit':go(()=>{U.view=null;U.tab='today';});break;
     case 'view':go(()=>{U.view=v;});break;
+    case 'openEx':go(()=>{U.prevTab=U.tab;U.view='ex';U.exId=k;U.exTab='summary';});break;
+    case 'exBack':go(()=>{U.view=null;U.tab=U.prevTab||'exercises';});break;
+    case 'exTab':U.exTab=v;rerender();break;
     case 'flv':X.f[k]=+v;saveDraft();rerender();break;
     case 'rlv':X.rot[k]=+v;saveDraft();rerender();break;
     case 'rate':X.rate[k]=+v;saveDraft();rerender();break;
@@ -451,31 +678,36 @@ document.addEventListener('click',e=>{
       break;
     case 'confirmF':X.fEnd=Date.now();saveDraft();U.sheet=null;go(()=>{U.view='rot';});break;
     case 'sheet':U.sheet=v;U.sd={k};rerender();break;
-    case 'close':U.sheet=null;rerender();break;
+    case 'close':U.sheet=null;pendingImport=null;rerender();break;
     case 'preset':{const i=$('noteIn');if(i)i.value=v;document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.dataset.v===v));break;}
     case 'saveNote':{const i=$('noteIn');X[U.sd.k]=(i?i.value:'').trim();saveDraft();U.sheet=null;rerender();break;}
     case 'clearNote':X[U.sd.k]='';saveDraft();U.sheet=null;rerender();break;
     case 'focus':document.querySelectorAll('#focusChips .chip').forEach(c=>c.classList.toggle('on',c===el));break;
-    case 'saveEx':{const n=($('exName').value||'').trim(),err=$('exErr');const ts=parseTs($('exTs').value);
+    case 'saveEx':{const n=($('exName').value||'').trim(),err=$('exErr');
       if(!n){err.textContent='Enter a name';err.hidden=false;return;}
-      if(Number.isNaN(ts)){err.textContent='Write the timestamp like 41:20 or 1:04:30';err.hidden=false;return;}
       const f=(document.querySelector('#focusChips .chip.on')||{}).dataset;
-      D.custom=D.custom||[];const id='c_'+Date.now().toString(36);D.custom.push({id,name:n,focus:f?f.v:'custom',ts});save();
-      if(U.view==='rot'){X.rot[id]=0;saveDraft();}
+      const id='c_'+Date.now().toString(36);D.custom.push({id,name:n,focus:f?f.v:'custom',what:($('exWhat').value||'').trim()});save();
+      if(X&&U.view==='rot'){X.rot[id]=0;saveDraft();}
       U.sheet=null;rerender();toast('Exercise added');break;}
+    case 'saveWhat':{const e=D.custom.find(x=>x.id===k);if(e){e.what=($('whatIn').value||'').trim();save();}U.sheet=null;rerender();break;}
     case 'saveSong':{const n=($('songIn').value||'').trim(),err=$('songErr');if(!n){err.textContent='Enter a song name';err.hidden=false;return;}
-      D.songs=D.songs||[];const id='g_'+Date.now().toString(36);D.songs.push({id,name:n});save();if(X&&U.view==='app'){X.song=id;saveDraft();}U.sheet=null;rerender();toast('Song added');break;}
-    case 'delEx':D.custom=(D.custom||[]).filter(x=>x.id!==k);save();if(X&&k in X.rot){delete X.rot[k];saveDraft();}U.sheet=null;rerender();break;
-    case 'delSong':(async()=>{D.songs=(D.songs||[]).filter(x=>x.id!==k);save();for(const t of TAKES.filter(t=>t.songId===k))await delTake(t.id);if(X&&X.song===k){X.song=null;saveDraft();}await refreshTakes();U.sheet=null;rerender();})();break;
+      const id='g_'+Date.now().toString(36);D.songs.push({id,name:n});save();if(X&&U.view==='app'){X.song=id;saveDraft();}U.sheet=null;rerender();toast('Song added');break;}
+    case 'delEx':D.custom=D.custom.filter(x=>x.id!==k);save();if(X&&k in X.rot){delete X.rot[k];saveDraft();}if(U.view==='ex'&&U.exId===k){U.view=null;}U.sheet=null;rerender();toast('Exercise deleted');break;
+    case 'delSong':(async()=>{D.songs=D.songs.filter(x=>x.id!==k);save();for(const t of TAKES.filter(t=>t.songId===k))await delTake(t.id);if(X&&X.song===k){X.song=null;saveDraft();}await refreshTakes();U.sheet=null;rerender();toast('Song deleted');})();break;
+    case 'delTake':(async()=>{if(playingId===k)stopPlayback();await delTake(k);await refreshTakes();U.sheet=null;rerender();toast('Take deleted');})();break;
+    case 'delSession':deleteSession(k);U.sheet=null;rerender();toast('Session deleted');break;
     case 'clearRec':(async()=>{stopPlayback();await clearTakes();await refreshTakes();U.sheet=null;rerender();toast('Recordings deleted');})();break;
-    case 'resetMonth':D.months=D.months||{};D.months[monthKey()]=0;save();U.sheet=null;rerender();toast('This month reset');break;
-    case 'resetAll':(async()=>{stopPlayback();try{localStorage.removeItem(KEY);localStorage.removeItem(DRAFT);}catch(e){}await clearTakes();D={v2:true,ex:{},custom:[],songs:[],sessions:[],months:{}};save();X=null;await refreshTakes();U={tab:'today',view:null,sheet:null,sd:{}};render();toast('All data deleted');})();break;
-    case 'delSession':{const ss=(D.sessions||[]).find(x=>x.id===k);if(ss){const mk=monthKey(new Date(ss.date));D.months[mk]=Math.max(0,(D.months[mk]||0)-ss.mins);D.sessions=D.sessions.filter(x=>x.id!==k);save();}U.sheet=null;rerender();toast('Session deleted');break;}
-    case 'copy':{const ss=(D.sessions||[]).find(x=>x.id===k);if(ss)copyText(togglLines(ss));break;}
+    case 'resetMonth':D.months[monthKey()]=0;save();U.sheet=null;rerender();toast('This month reset');break;
+    case 'resetAll':(async()=>{stopPlayback();await clearTakes();D={v2:true};migrate();save();X=null;saveDraft();await refreshTakes();U={tab:'today',view:null,exId:null,exTab:'summary',sheet:null,sd:{}};render();toast('All data deleted');})();break;
+    case 'copy':{const ss=D.sessions.find(x=>x.id===k);if(ss)copyText(togglLines(ss));break;}
+    case 'exportPrep':prepareExport();break;
+    case 'exportSave':saveExport();break;
+    case 'importPick':$('importIn').click();break;
+    case 'importYes':restoreImport();break;
   }
 });
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&U.sheet){U.sheet=null;rerender();}});
-window.addEventListener('scroll',()=>$('bar').classList.toggle('scrolled',window.scrollY>36),{passive:true});
+window.addEventListener('scroll',()=>{closeSwipes();$('bar').classList.toggle('scrolled',window.scrollY>36);},{passive:true});
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&rec)stopRec();});
 
 render();

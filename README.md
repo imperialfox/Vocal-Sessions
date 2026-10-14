@@ -8,7 +8,7 @@ A mobile-first companion for structured vocal practice, styled like a native iOS
 
 ## What it does
 
-It guides you through a three-step practice session, keeps a history of your sessions, and produces ready-to-paste [Toggl Track](https://toggl.com/track/) entries with `#tags` inline.
+It guides you through a three-step practice session, keeps a history of every session, and produces ready-to-paste [Toggl Track](https://toggl.com/track/) entries with `#tags` inline.
 
 | Step | What | Time |
 |---|---|---|
@@ -18,39 +18,46 @@ It guides you through a three-step practice session, keeps a history of your ses
 
 ---
 
-## Features
+## Tabs
 
-**Today tab**
-- Streak, minutes this month, and progress towards a 280 min/month target
-- The least-practised rotation exercise, suggested automatically
-- An unfinished session can be resumed or discarded
-- Settings: recordings storage, reset this month, reset all data
+**Today**
+- A progress arch showing this week's minutes against a 70-minute goal
+- A Monday-to-Sunday row that fills in each day you practised
+- A weekly streak: weeks in a row where you hit 70 minutes. The current week never breaks it while it's still in progress.
+- This month's minutes against 280, and the least-practised rotation exercise
+- Start, resume or discard a session
 
-**Session**
-- **Levels:** each exercise has 3 levels, set with a 1 · 2 · 3 picker, so partial sessions are recorded honestly
-- **Coach video:** tapping an exercise opens the coach video in YouTube at that exercise's timestamp
-- **Multi-select rotation:** pick as many exercises as you like, each with its own level
-- **Notes:** one per step, from presets or your own words
-- **Application:**
-  - Choose a song from your library
-  - Record takes and play them back
-  - Rate pitch, tone and ease from 1 to 3
-
-**Recordings**
-- Mono, compressed audio (about 0.5 MB a minute), up to 2 minutes per take
-- Keeps the last 3 takes per song, plus any you star
-- Share saves a take to Files or iCloud Drive, named by song and date
-- Takes are stored on the phone only
-
-**History tab**
+**History**
 - Every finished session, grouped by month, with levels, notes, song and ratings
-- Copy any past session for Toggl again
+- Copy any session for Toggl again
+- Swipe left, or open a session, to delete it. Deleting asks first, takes its minutes off the month, and updates last-done dates.
 
-**Exercises tab**
-- Every exercise, with how often and when you last did it
-- Add or remove your own exercises (with an optional video timestamp) and songs
+**Exercises**
+- One link to the coach video, opening in YouTube
+- Every exercise with when you last did it
+- Tap an exercise for its own page:
+  - **Summary:** what it is, why it helps, and where it shows up in songs
+  - **History:** a chart of your level over time, plus every session it was in
+- Add your own exercises (with an optional description) and songs. Swipe left to delete them.
 
-**Toggl copy:** one tap copies a line per block, for example:
+**Settings**
+- **Export backup:** one file with everything (sessions, minutes, exercises, songs and recordings). Save it to iCloud Drive.
+- **Import backup:** shows what's in the file, then replaces this phone's data after you confirm.
+- When you last backed up, which turns red after two weeks
+- Recordings storage, reset this month, and reset all data. Every reset asks first.
+
+---
+
+## Session details
+
+- **Levels:** each exercise has 3 levels, set with a 1 · 2 · 3 picker
+- **Multi-select rotation:** pick as many as you like, each with its own level
+- **Notes:** one per step, from presets or your own words
+- **Recordings:**
+  - Mono, compressed audio (about 0.5 MB a minute), up to 2 minutes per take
+  - Keeps the last 3 takes per song plus any you star
+  - Each take can be shared (Save to Files or iCloud Drive) or deleted
+- **Toggl copy:** one line per block, for example:
 
 ```
 Foundation: Vocal slides L3, Humming L3, Lip bubbling L3, Singing through a straw L2 #foundation #cord-closure
@@ -67,30 +74,18 @@ Paste into Toggl's description field; the `#` triggers tag autocomplete.
 1. Open the GitHub Pages URL in **Safari**
 2. Tap Share → **Add to Home Screen** → Add
 
-It opens full screen like an app. iOS may ask for microphone access each time you record, which is an Apple limit on Home Screen web apps.
+iOS sets a Home Screen app's icon when you add it. To pick up a new icon:
+1. Export a backup
+2. Remove the app and add it again
+3. Import the backup
 
----
-
-## Hosting
-
-GitHub Pages: **Settings → Pages → Deploy from branch → `main` → `/ (root)`**. Changes go live about a minute after each push.
+Removing a Home Screen app deletes its data, so always export first.
 
 ---
 
 ## Adapting it for yourself
 
-Everything to edit sits at the top of the `<script>` block:
-
-```js
-const VIDEO = 'https://youtu.be/…';  // your coach video
-const TARGET = 280;                    // monthly target in minutes
-const FOUND = [ { id: 'slides', name: 'Vocal slides', focus: 'agility', ts: 0 }, … ];
-const ROT   = [ { id: 'falsetto', name: 'Falsetto voice', focus: 'register', ts: 1170 }, … ];
-```
-
-`ts` is the exercise's start time in the video, in seconds.
-
-If the video is private, the YouTube buttons only work for the owner, signed in to YouTube.
+Everything to edit sits at the top of the `<script>` block: `VIDEO` (your coach video), `TARGET` and `WEEK_TARGET` (minutes), the `FOUND` and `ROT` exercise lists, and `DESC` (the write-up shown on each exercise's Summary tab).
 
 ---
 
@@ -98,13 +93,13 @@ If the video is private, the YouTube buttons only work for the owner, signed in 
 
 - Session data is stored in `localStorage` and recordings in IndexedDB, both on your device only.
 - There's no server, analytics or tracking.
-- Deleting the Home Screen app or clearing Safari's website data erases everything, so save takes you want to keep to iCloud Drive.
+- Backups are plain JSON files that you keep.
 
 ---
 
 ## Stack
 
-Vanilla HTML, CSS and JavaScript, with no frameworks or build step. It uses the iOS system font and a CSS imitation of Liquid Glass (blur and translucency).
+Vanilla HTML, CSS and JavaScript, with no frameworks or build step. It uses the iOS system font and a CSS imitation of Liquid Glass.
 
 ---
 
