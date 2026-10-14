@@ -9,6 +9,14 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.4 · 14 Oct 2026
+
+**Launch screen**
+- Opening the app shows the app icon in the middle of your normal background, light or dark, like a native iOS app.
+- It stays up only until your data and recordings are ready, which is at least 0.6 seconds and never more than 2.5. Then it fades away with a slight zoom.
+- iOS launch images for every recent iPhone and iPad (portrait and landscape on iPad), in light and dark. iOS shows these the instant you tap the icon, before the app has loaded, so there's no white flash.
+  - These images take effect after the app is re-added to the Home Screen. The in-app launch screen works straight away.
+
 ## 3.3.2 · 14 Oct 2026
 
 Fixes from a full audit: about 9,000 random taps across every screen and screen size, plus targeted tests and a code review.

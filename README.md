@@ -2,9 +2,9 @@
 
 A mobile-first companion for structured vocal practice, styled like a native iOS app. It's a single HTML file with no install, no backend and no account. It's designed to live on your iPhone Home Screen.
 
-![Version 3.3.2](https://img.shields.io/badge/version-3.3.2-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue)
+![Version 3.4](https://img.shields.io/badge/version-3.4-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue)
 
-**Current version: 3.3.2 · 14 Oct 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
+**Current version: 3.4 · 14 Oct 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
 
 ---
 
@@ -104,6 +104,8 @@ The layout follows the device, like a native Apple app:
 | iPhone on its side | A compact tab bar, with Today in two columns |
 | iPad, or a narrower Mac window | Tabs at the top, a dashboard on Today, and split views for History and Exercises |
 | Mac, or iPad in landscape | A sidebar |
+
+Opening the app shows a short launch screen with the app icon, in light or dark to match your phone. The launch images for each device are in the `splash` folder.
 
 Sheets open as centred cards on bigger screens. With a mouse or trackpad, rows highlight on hover, and Cmd (or Ctrl) + 1 to 4 switches sections.
 
