@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -34,7 +34,7 @@
   --glass-shadow:rgba(0,0,0,0.5);--scrim:rgba(0,0,0,0.5);color-scheme:dark}}
 
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0}
+html,body{margin:0;touch-action:manipulation;-webkit-text-size-adjust:100%}
 body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:17px;line-height:1.3;-webkit-font-smoothing:antialiased;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-top:env(safe-area-inset-top,0px)}
 button,input,textarea{font:inherit;color:inherit}
@@ -642,6 +642,11 @@ document.addEventListener('touchmove',e=>{if(!swT)return;const t=e.touches[0],dx
 document.addEventListener('touchend',()=>{if(!swT)return;const s=swT.s;s.classList.remove('dragging');
   if(swT.lock==='x'){swJustMoved=Date.now();const x=swT.base+swT.dx;const open=x<-44;s.classList.toggle('open',open);s.querySelector('.fg').style.transform=open?'translateX(-88px)':'';swOpen=open?s:null;}
   swT=null;});
+
+/* ===== No zooming (iOS ignores user-scalable=no, so block pinch and double-tap here) ===== */
+['gesturestart','gesturechange','gestureend'].forEach(t=>document.addEventListener(t,e=>e.preventDefault(),{passive:false}));
+document.addEventListener('touchmove',e=>{if(e.touches.length>1)e.preventDefault();},{passive:false});
+// double-tap zoom is turned off by touch-action:manipulation in the CSS, which keeps quick taps working
 
 /* ===== Events ===== */
 $('importIn').addEventListener('change',e=>{const f=e.target.files&&e.target.files[0];e.target.value='';if(f)readImport(f);});
