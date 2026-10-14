@@ -21,6 +21,7 @@ It guides you through a three-step practice session, keeps a history of every se
 ## Tabs
 
 **Today**
+- Today's date above the title, with an arrow that opens a practice calendar. Practised days are highlighted; tap one to see and open its session.
 - A progress arch showing this week's minutes against a 70-minute goal
 - A Monday-to-Sunday row that fills in each day you practised
 - A weekly streak: weeks in a row where you hit 70 minutes. The current week never breaks it while it's still in progress.
@@ -34,7 +35,7 @@ It guides you through a three-step practice session, keeps a history of every se
 
 **Exercises**
 - One link to the coach video, opening in YouTube
-- Every exercise with when you last did it
+- Every exercise with its own glyph (coloured by focus area) and when you last did it
 - Tap an exercise for its own page:
   - **Summary:** what it is, why it helps, and where it shows up in songs
   - **History:** a chart of your level over time, plus every session it was in
@@ -45,6 +46,7 @@ It guides you through a three-step practice session, keeps a history of every se
 - **Import backup:** shows what's in the file, then replaces this phone's data after you confirm.
 - When you last backed up, which turns red after two weeks
 - Recordings storage, reset this month, and reset all data. Every reset asks first.
+- A link back to this GitHub repo, and the app version with its release date
 
 ---
 
@@ -99,7 +101,7 @@ Everything to edit sits at the top of the `<script>` block: `VIDEO` (your coach 
 
 ## Stack
 
-Vanilla HTML, CSS and JavaScript, with no frameworks or build step. It uses the iOS system font and a CSS imitation of Liquid Glass.
+Vanilla HTML, CSS and JavaScript, with no frameworks or build step. It uses the iOS system font and a CSS imitation of Liquid Glass: rim light, inner glow, a shrinking tab bar, sliding glass pickers and springy motion.
 
 ---
 

@@ -18,9 +18,11 @@
   --sep:rgba(60,60,67,0.16);--fill:rgba(118,118,128,0.12);
   --accent:#007aff;--on-accent:#ffffff;--danger:#ff3b30;--star:#ff9f0a;--rec:#ff3b30;--good:#34c759;
   --done:#8e8e93;--on-done:#ffffff;
-  --glass:rgba(250,250,252,0.62);--glass-strong:rgba(250,250,252,0.86);
+  --glass:rgba(255,255,255,0.44);--glass-strong:rgba(250,250,252,0.86);
   --glass-edge:rgba(0,0,0,0.09);--glass-hi:rgba(255,255,255,0.95);
-  --glass-shadow:rgba(20,20,40,0.14);--scrim:rgba(0,0,0,0.22);
+  --glass-lo:rgba(0,0,0,0.06);--glass-glow:rgba(255,255,255,0.45);--rim1:rgba(255,255,255,0.95);--rim2:rgba(255,255,255,0.55);--spec:rgba(255,255,255,0.55);
+  --tint:rgba(0,122,255,0.82);--hl:rgba(0,122,255,0.14);
+  --glass-shadow:rgba(20,20,40,0.15);--scrim:rgba(0,0,0,0.22);
   --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",system-ui,sans-serif;
   color-scheme:light;
 }
@@ -29,9 +31,11 @@
   --sep:rgba(84,84,88,0.5);--fill:rgba(118,118,128,0.24);
   --accent:#0a84ff;--danger:#ff453a;--star:#ffb340;--rec:#ff453a;--good:#30d158;
   --done:#636366;--on-done:#ffffff;
-  --glass:rgba(40,40,44,0.58);--glass-strong:rgba(44,44,48,0.86);
+  --glass:rgba(58,58,64,0.42);--glass-strong:rgba(44,44,48,0.86);
   --glass-edge:rgba(0,0,0,0.6);--glass-hi:rgba(255,255,255,0.2);
-  --glass-shadow:rgba(0,0,0,0.5);--scrim:rgba(0,0,0,0.5);color-scheme:dark}}
+  --glass-lo:rgba(0,0,0,0.35);--glass-glow:rgba(255,255,255,0.08);--rim1:rgba(255,255,255,0.42);--rim2:rgba(255,255,255,0.14);--spec:rgba(255,255,255,0.16);
+  --tint:rgba(10,132,255,0.78);--hl:rgba(10,132,255,0.24);
+  --glass-shadow:rgba(0,0,0,0.55);--scrim:rgba(0,0,0,0.5);color-scheme:dark}}
 
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;touch-action:manipulation;-webkit-text-size-adjust:100%}
@@ -44,12 +48,24 @@ button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{
 svg.i{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
 .wrap{max-width:430px;margin:0 auto;position:relative}
 
-.glass{background:var(--glass);-webkit-backdrop-filter:blur(22px) saturate(180%);backdrop-filter:blur(22px) saturate(180%);
-  box-shadow:inset 0 1px 0 var(--glass-hi),inset 0 0 0 0.5px var(--glass-edge),0 8px 28px var(--glass-shadow)}
-@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.glass{background:var(--surface)}}
+.glass{background:var(--glass);-webkit-backdrop-filter:blur(26px) saturate(210%) brightness(1.06);backdrop-filter:blur(26px) saturate(210%) brightness(1.06);
+  box-shadow:inset 0 -0.5px 0 var(--glass-lo),inset 0 0 16px var(--glass-glow),0 12px 32px var(--glass-shadow);isolation:isolate}
+.glass::before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;z-index:-1;pointer-events:none;
+  background:linear-gradient(140deg,var(--rim1),transparent 38%,transparent 62%,var(--rim2));
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude}
+.glass::after{content:"";position:absolute;inset:0;border-radius:inherit;z-index:-1;pointer-events:none;background:radial-gradient(120% 70% at 25% 0%,var(--spec),transparent 55%)}
+.glass.tinted{background:var(--tint);color:#fff}
+.circ,.pill,.tabbar,.sheet,.cta{position:relative}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.glass{background:var(--surface)}.glass.tinted{background:var(--accent)}}
+.edge{position:fixed;left:0;right:0;top:0;height:calc(96px + env(safe-area-inset-top,0px));z-index:15;pointer-events:none;opacity:0;transition:opacity .25s;
+  background:linear-gradient(var(--bg) 40%,transparent);-webkit-mask:linear-gradient(#000 55%,transparent);mask:linear-gradient(#000 55%,transparent)}
+body.scrolled .edge{opacity:.9}
+.wrap{transition:transform .45s cubic-bezier(.3,1.3,.5,1),border-radius .45s}
+body.sheet-open .wrap{transform:scale(.94);border-radius:28px}
 
 .bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;height:56px;display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 -8px;padding:0 8px;border-radius:0 0 22px 22px;transition:background .25s,box-shadow .25s}
 .bar:not(.scrolled){background:transparent;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
+.bar:not(.scrolled)::before,.bar:not(.scrolled)::after{display:none}
 .bar .mt{flex:1;min-width:0;text-align:center;font-size:17px;font-weight:600;opacity:0;transition:opacity .2s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bar.scrolled .mt,.bar.always .mt{opacity:1}
 .side{min-width:44px;display:flex;gap:6px;align-items:center}.side.r{justify-content:flex-end}
@@ -72,9 +88,14 @@ h1{font-size:34px;font-weight:700;letter-spacing:0.01em;margin:0 4px 6px}
 .sub{display:flex;justify-content:space-between;align-items:center;padding:0 16px 12px;gap:10px;background:var(--surface)}
 .tag{font-size:13px;color:var(--fg2)}
 
-.seg{display:inline-flex;background:var(--fill);border-radius:999px;padding:3px;gap:2px;flex-shrink:0}
-.seg button{min-width:44px;height:34px;border-radius:999px;font-size:15px;font-weight:500;color:var(--fg2);text-align:center;transition:background .15s,color .15s}
-.seg button.on{color:var(--fg);background:var(--surface);box-shadow:inset 0 1px 0 var(--glass-hi),0 2px 8px var(--glass-shadow),inset 0 0 0 0.5px var(--glass-edge)}
+.seg{position:relative;display:inline-flex;background:var(--fill);border-radius:999px;padding:3px;gap:2px;flex-shrink:0}
+.seg button{position:relative;z-index:2;min-width:44px;height:34px;border-radius:999px;font-size:15px;font-weight:500;color:var(--fg2);text-align:center;transition:color .2s}
+.seg button.on{color:var(--fg)}
+.knob{position:absolute;z-index:1;top:3px;bottom:3px;left:0;width:44px;border-radius:999px;background:var(--surface);opacity:0;
+  box-shadow:inset 0 1px 0 var(--rim1),inset 0 -0.5px 0 var(--glass-lo),inset 0 0 10px var(--glass-glow),0 3px 12px var(--glass-shadow);transition:transform .45s cubic-bezier(.3,1.35,.5,1),width .3s,opacity .2s}
+.knob.set{opacity:1}
+.knob.squish{animation:squish .45s cubic-bezier(.3,1.35,.5,1)}
+@keyframes squish{0%{scale:1 1}35%{scale:1.22 .86}70%{scale:.96 1.04}100%{scale:1 1}}
 .seg.wide{display:flex;width:100%}.seg.wide button{flex:1}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
 .chip{height:36px;padding:0 14px;border-radius:999px;background:var(--fill);font-size:15px;color:var(--fg)}
@@ -100,15 +121,23 @@ h1{font-size:34px;font-weight:700;letter-spacing:0.01em;margin:0 4px 6px}
   box-shadow:inset 0 1px 0 rgba(255,255,255,0.45),inset 0 0 0 0.5px rgba(0,0,0,0.12),0 8px 24px var(--glass-shadow)}
 .cta.ink{background:var(--fg);color:var(--bg);box-shadow:0 8px 24px var(--glass-shadow)}
 .cta.red{background:var(--danger)}
-.cta:active,.circ:active,.row:active,.chip:active,.tabbar button:active{transform:scale(0.98)}
+.cta,.circ,.row,.chip,.tabbar button,.calbtn,.cal button{transition:transform .5s cubic-bezier(.3,1.7,.45,1)}
+.cta:active,.circ:active,.chip:active,.tabbar button:active,.calbtn:active,.cal button:active{transform:scale(0.93);transition-duration:.12s}
+.row:active{transform:scale(0.98);transition-duration:.12s}
 .ghost{display:block;width:100%;text-align:center;height:48px;color:var(--accent);font-weight:500;margin-top:4px}
 
 main{padding-bottom:calc(130px + env(safe-area-inset-bottom,0px))}
 .dock{position:fixed;left:0;right:0;bottom:0;z-index:30;padding:0 max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));pointer-events:none}
 .dock .in{max-width:430px;margin:0 auto;pointer-events:auto}
 .tabbar{display:flex;gap:2px;padding:5px;border-radius:999px;max-width:380px;margin:0 auto}
-.tabbar button{flex:1;height:54px;border-radius:999px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--fg);gap:3px;text-align:center}
+.tabbar{width:max-content;max-width:100%;transition:padding .45s cubic-bezier(.3,1.3,.5,1)}
+.tabbar button{width:80px;max-width:80px;height:54px;border-radius:999px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;font-weight:500;color:var(--fg);gap:3px;text-align:center;overflow:hidden;
+  transition:transform .5s cubic-bezier(.3,1.7,.45,1),max-width .45s cubic-bezier(.3,1.25,.5,1),opacity .25s,background .2s,height .35s}
 .tabbar button.on{color:var(--accent);background:var(--fill)}
+.tabbar.min{gap:0}
+.tabbar.min button{height:48px}
+.tabbar.min button:not(.on){max-width:0;opacity:0;pointer-events:none}
+.tabbar.min button.on{width:48px;max-width:48px;font-size:0;gap:0}
 
 .sw{overflow:hidden;background:var(--danger)}
 .sw .fg{position:relative;z-index:1;transition:transform .22s ease;background:var(--surface)}
@@ -116,6 +145,24 @@ main{padding-bottom:calc(130px + env(safe-area-inset-bottom,0px))}
 .sw .swdel{position:absolute;right:0;top:0;bottom:0;width:88px;color:#fff;font-weight:600;font-size:15px;text-align:center}
 
 .ex-h{display:flex;flex-wrap:wrap;gap:8px;margin:2px 4px 14px}
+.tile{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;color:#fff;flex-shrink:0}
+.tile svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.tile.big{width:64px;height:64px;border-radius:18px;margin:4px 4px 10px}.tile.big svg{width:40px;height:40px;stroke-width:1.7}
+.grp.tiled>*+*::before{left:62px}
+.dateline{font-size:13px;font-weight:600;color:var(--fg2);text-transform:uppercase;letter-spacing:.03em;margin:4px 4px 0}
+.titlerow{display:flex;align-items:center;gap:4px}
+.titlerow h1{margin-bottom:6px}
+.calbtn{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:var(--accent);margin-bottom:2px}
+.calbtn svg{width:24px;height:24px;stroke-width:2.6}
+.calhead{display:flex;align-items:center;justify-content:space-between;margin:0 0 10px}
+.calhead b{font-size:17px;font-weight:600}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px 0;text-align:center;background:var(--surface);border-radius:20px;padding:12px 8px}
+.cal .h{font-size:12px;font-weight:600;color:var(--fg3);height:22px}
+.cal button,.cal .x{width:40px;height:40px;margin:0 auto;border-radius:50%;display:grid;place-items:center;font-size:16px;font-variant-numeric:tabular-nums;color:var(--fg)}
+.cal button.p{background:var(--hl);color:var(--accent);font-weight:600}
+.cal button.t{box-shadow:inset 0 0 0 1.5px var(--fg)}
+.cal button.sel{background:var(--accent);color:#fff}
+.cal button:disabled{color:var(--fg3);cursor:default}
 .badge{font-size:13px;font-weight:500;padding:5px 10px;border-radius:999px;background:var(--fill);color:var(--fg2)}
 .prose{padding:14px 16px;font-size:16px;line-height:1.45}
 .prose ul{margin:0;padding-left:18px}.prose li+li{margin-top:10px}
@@ -124,7 +171,7 @@ main{padding-bottom:calc(130px + env(safe-area-inset-bottom,0px))}
 .chart svg{display:block;width:100%;height:auto}
 
 .scrim{position:fixed;inset:0;z-index:40;background:var(--scrim);display:flex;align-items:flex-end;justify-content:center;animation:fade .2s}
-.sheet{width:100%;max-width:440px;max-height:88vh;overflow-y:auto;margin:0 8px calc(8px + env(safe-area-inset-bottom,0px));border-radius:34px;padding:10px 16px 16px;background:var(--glass-strong);animation:up .28s cubic-bezier(.2,.9,.3,1.1)}
+.sheet{width:100%;max-width:440px;max-height:88vh;overflow-y:auto;margin:0 8px calc(8px + env(safe-area-inset-bottom,0px));border-radius:34px;padding:10px 16px 16px;background:var(--glass-strong);animation:up .55s cubic-bezier(.28,1.35,.45,1)}
 .grab{width:36px;height:5px;border-radius:3px;background:var(--fg3);margin:0 auto 14px}
 .sheet h2{font-size:22px;font-weight:700;margin:0 4px 12px}
 .sheet .grp,.sheet .row{background:var(--surface)}
@@ -147,6 +194,7 @@ textarea.field{resize:none;min-height:84px;line-height:1.35}
 </style>
 </head>
 <body>
+<div class="edge" aria-hidden="true"></div>
 <div class="wrap">
   <header class="bar glass" id="bar">
     <span class="side" id="barL"></span>
@@ -161,7 +209,8 @@ textarea.field{resize:none;min-height:84px;line-height:1.35}
 
 <script>
 /* ===== Config ===== */
-const APP_VERSION='3.0';
+const APP_VERSION='3.1', RELEASE_DATE='14 Oct 2026';
+const REPO='https://github.com/imperialfox/Vocal-Sessions';
 const VIDEO='https://youtu.be/rG-o10NggDI';
 const TARGET=280, WEEK_TARGET=70;
 const UPDATE_DAY='14 Oct'; // counts saved before this date have no dates
@@ -183,6 +232,26 @@ const OLD_ROT_IDS=['falsetto','upperlower','rung','hinge','half','vertical','nas
 const FOCI=['cord-closure','register','resonance','agility','blend'];
 const NOTE_PRESETS=['Felt good placement','Tight today','Clear tone','Cracking on passaggio','Flat pitch','Register blend improving','Needed more warm-up'];
 const MAX_TAKE=120, KEEP_TAKES=3;
+
+/* One glyph per exercise; tile colour = focus area */
+const FOCUS_COL={'cord-closure':'#007aff',register:'#8e5cf7',resonance:'#16a8a0',agility:'#f2a20c',blend:'#f0524a'};
+const GL=p=>'<svg viewBox="0 0 24 24" aria-hidden="true">'+p+'</svg>';
+const GLYPH={
+  slides:GL('<path d="M3 18c3 0 4.5-12 9-12s6 12 9 12"/><path d="M3 21h18" opacity=".45"/>'),
+  humming:GL('<path d="M4.5 14c2.5-1.6 4.8-1.2 7.5 0 2.7-1.2 5-1.6 7.5 0"/><path d="M4.5 14c3 2.6 12 2.6 15 0"/><path d="M9 9V6.5M12 9V5M15 9V6.5"/>'),
+  lip:GL('<path d="M2.5 13c2.3-3.2 6.2-3.2 8.5 0-2.3 3.2-6.2 3.2-8.5 0z"/><path d="M2.5 13H11"/><circle cx="15" cy="10" r="2"/><circle cx="19.5" cy="6" r="1.5"/><circle cx="19" cy="14.5" r="2.5"/>'),
+  falsetto:GL('<path d="M20 4c-8 0-13 5-13 12v4"/><path d="M20 4c0 8-5 12-13 12"/><path d="M7 16l7-7"/>'),
+  upperlower:GL('<path d="M3 5h4v4h4v4h4v4h5"/><path d="M17 14l3 3-3 3"/>'),
+  straw:GL('<path d="M5.5 9.5h13L17 21H7z"/><path d="M12 9.5 15 3h4"/><path d="M8 14h8" opacity=".45"/>'),
+  rung:GL('<path d="M7 3v18M17 3v18M7 7.5h10M7 12h10M7 16.5h10"/>'),
+  hinge:GL('<path d="M5 21V4l8 2.5V21"/><path d="M10.5 13.5v1"/><path d="M16 9.5c1.3 1.4 1.3 3.6 0 5M19 7.5c2.6 2.6 2.6 6.4 0 9"/>'),
+  half:GL('<circle cx="12" cy="12" r="8.5"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor" stroke="none"/>'),
+  vertical:GL('<ellipse cx="12" cy="12" rx="5" ry="8.5"/><path d="M9.2 16.2c1.8-1.4 3.8-1.4 5.6 0"/>'),
+  nasal:GL('<path d="M9.5 3c0 5-.5 7.5-3.5 11 0 2.2 2 3.5 4.5 3.5"/><path d="M14 10c1.6 1.2 1.6 3.8 0 5M17.5 8c3 2.4 3 6.6 0 9"/>'),
+  flex:GL('<path d="M2.5 16l3.5-5 3 3.5 3.5-8 3 5.5 3-3.5 3 4"/><circle cx="12" cy="6.5" r="1" fill="currentColor"/>'),
+  custom:GL('<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M18.5 15.5l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/>')
+};
+const tile=(e,big)=>'<span class="tile'+(big?' big':'')+'" style="background:'+(FOCUS_COL[e.focus]||'#8e8e93')+'">'+(GLYPH[e.id]||GLYPH.custom)+'</span>';
 
 /* Exercise write-ups, from the "Vocal exercises descriptions" doc */
 const DESC={
@@ -290,6 +359,9 @@ const ICON={
   list:'<svg class="i" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"/></svg>',
   gear:'<svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
   back:'<svg class="i" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>',
+  down:'<svg class="i" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>',
+  fwd:'<svg class="i" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>',
+  gh:'<svg class="i" viewBox="0 0 24 24"><path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/></svg>',
   play:'<svg class="i" viewBox="0 0 24 24"><path d="M7 5v14l12-7z" fill="currentColor" stroke="none"/></svg>',
   pause:'<svg class="i" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></svg>',
   video:'<svg class="i" viewBox="0 0 24 24"><rect x="2.5" y="5.5" width="19" height="13" rx="4"/><path d="M10 9.5v5l4.5-2.5z" fill="currentColor" stroke="none"/></svg>',
@@ -302,12 +374,12 @@ const ICON={
   circleOn:'<svg class="i" viewBox="0 0 24 24" style="width:24px;height:24px"><circle cx="12" cy="12" r="10" fill="currentColor" stroke="none"/><path d="M7.5 12.2l3 3 6-6.4" stroke="#fff"/></svg>'
 };
 const chev='<span class="mut" aria-hidden="true" style="font-size:20px">›</span>';
-const seg=(a,key,v)=>'<div class="seg" role="group">'+[1,2,3].map(n=>'<button data-a="'+a+'" data-k="'+esc(key)+'" data-v="'+n+'" class="'+(v===n?'on':'')+'" aria-pressed="'+(v===n)+'" aria-label="Level '+n+'">'+n+'</button>').join('')+'</div>';
+const seg=(a,key,v)=>'<div class="seg" role="group"><span class="knob" aria-hidden="true"></span>'+[1,2,3].map(n=>'<button data-a="'+a+'" data-k="'+esc(key)+'" data-v="'+n+'" class="'+(v===n?'on':'')+'" aria-pressed="'+(v===n)+'" aria-label="Level '+n+'">'+n+'</button>').join('')+'</div>';
 // swipe-to-delete row wrapper
 const sw=(inner,sheet,k)=>'<div class="sw" data-sw="1"><button class="swdel" data-a="sheet" data-v="'+sheet+'" data-k="'+esc(k)+'" tabindex="-1">Delete</button><div class="fg">'+inner+'</div></div>';
 
 /* ===== UI state ===== */
-let U={tab:'today',view:null,exId:null,exTab:'summary',sheet:null,sd:{},prevView:null};
+let U={tab:'today',view:null,exId:null,exTab:'summary',sheet:null,sd:{},prevView:null,calMonth:null,calDay:null};
 let rec=null, player=null, playingId=null, pendingImport=null, pendingExport=null;
 
 /* ===== Screens ===== */
@@ -320,7 +392,8 @@ function scrToday(){
   if(w.mins>=WEEK_TARGET){st=w.streak+'-week streak';sub='This week done';}
   else if(w.streak>0){st=w.streak+'-week streak';sub=left+' min to go this week';}
   else{st='Start a new streak';sub=left+' min this week starts one';}
-  return '<h1>Today</h1>'+
+  const dl=new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
+  return '<div class="dateline">'+dl+'</div><div class="titlerow"><h1>Today</h1><button class="calbtn" data-a="openCal" aria-label="Open practice calendar">'+ICON.down+'</button></div>'+
   '<div class="arch"><svg viewBox="0 0 300 165" role="img" aria-label="'+Math.round(w.mins)+' of '+WEEK_TARGET+' minutes this week"><path d="M24 150 A126 126 0 0 1 276 150" fill="none" stroke="var(--fill)" stroke-width="16" stroke-linecap="round"/>'+
   (p>0?'<path d="M24 150 A126 126 0 0 1 276 150" pathLength="100" stroke-dasharray="'+p+' 100" fill="none" stroke="'+(p>=100?'var(--good)':'var(--accent)')+'" stroke-width="16" stroke-linecap="round"/>':'')+
   '</svg><div class="c"><small>This week</small><b>'+Math.round(w.mins)+'</b><small>of your '+WEEK_TARGET+'-minute goal</small></div></div>'+
@@ -328,7 +401,7 @@ function scrToday(){
   '<div class="week" role="list" aria-label="This week">'+days+'</div>'+
   '<div class="streak">'+st+'<small>'+sub+'</small></div>'+
   '<div class="grp" style="margin-top:22px"><div class="row" style="display:block;padding:14px 16px"><div style="display:flex;justify-content:space-between;gap:8px"><span>This month</span><span class="mut">'+Math.round(mm)+' of '+TARGET+' min</span></div><div class="track"><i class="'+(mp>=100?'full':'')+'" style="width:'+mp+'%"></i></div></div>'+
-  '<button class="row" data-a="openEx" data-k="'+s.id+'"><span class="lbl">Suggested rotation<small>'+esc(s.name)+' · '+lastDone(s.id)+'</small></span>'+chev+'</button></div>';
+  '<button class="row" data-a="openEx" data-k="'+s.id+'">'+tile(s)+'<span class="lbl">Suggested rotation<small>'+esc(s.name)+' · '+lastDone(s.id)+'</small></span>'+chev+'</button></div>';
 }
 function scrHistory(){
   const ss=D.sessions.slice().reverse();
@@ -341,12 +414,12 @@ function scrHistory(){
   return h+'</div><p class="foot">Swipe left on a session to delete it.</p>';
 }
 function scrExercises(){
-  const row=e=>'<button class="row" data-a="openEx" data-k="'+e.id+'"><span class="lbl">'+esc(e.name)+'<small>'+esc(e.focus)+' · '+lastDone(e.id)+'</small></span>'+chev+'</button>';
+  const row=e=>'<button class="row" data-a="openEx" data-k="'+e.id+'">'+tile(e)+'<span class="lbl">'+esc(e.name)+'<small>'+esc(e.focus)+' · '+lastDone(e.id)+'</small></span>'+chev+'</button>';
   return '<h1>Exercises</h1>'+
   '<div class="grp" style="margin-top:8px"><a class="row acc" href="'+VIDEO+'" target="_blank" rel="noopener"><span class="lbl">Coach video<small>Opens in YouTube</small></span>'+ICON.video+'</a></div>'+
-  '<div class="hdr">Foundation</div><div class="grp">'+FOUND.map(row).join('')+'</div>'+
-  '<div class="hdr">Rotation</div><div class="grp">'+ROT.map(row).join('')+'</div>'+
-  '<div class="hdr">Your exercises</div><div class="grp">'+D.custom.map(e=>sw(row(e),'delEx',e.id)).join('')+'<button class="row acc" data-a="sheet" data-v="addEx"><span class="lbl">Add exercise</span>'+ICON.plus+'</button></div>'+
+  '<div class="hdr">Foundation</div><div class="grp tiled">'+FOUND.map(row).join('')+'</div>'+
+  '<div class="hdr">Rotation</div><div class="grp tiled">'+ROT.map(row).join('')+'</div>'+
+  '<div class="hdr">Your exercises</div><div class="grp tiled">'+D.custom.map(e=>sw(row(e),'delEx',e.id)).join('')+'<button class="row acc" data-a="sheet" data-v="addEx"><span class="lbl">Add exercise</span>'+ICON.plus+'</button></div>'+
   '<div class="hdr">Songs</div><div class="grp">'+D.songs.map(s=>sw('<div class="row"><span class="lbl">'+esc(s.name)+'<small>'+TAKES.filter(t=>t.songId===s.id).length+' saved take(s)</small></span><button class="ibtn dng" data-a="sheet" data-v="delSong" data-k="'+s.id+'" aria-label="Remove '+esc(s.name)+'">'+ICON.trash+'</button></div>','delSong',s.id)).join('')+'<button class="row acc" data-a="sheet" data-v="addSong"><span class="lbl">Add song</span>'+ICON.plus+'</button></div>'+
   (D.custom.length||D.songs.length?'<p class="foot">Swipe left on your own exercises and songs to delete them.</p>':'');
 }
@@ -354,8 +427,8 @@ function exHistory(id){return D.sessions.filter(s=>(s.f&&s.f[id])||(s.rot&&s.rot
 function scrEx(){
   const e=exById(U.exId);if(!e)return '<div class="grp"><div class="empty">This exercise was removed.</div></div>';
   const d=DESC[e.id];const isF=FOUND.some(x=>x.id===e.id);
-  let h='<h1>'+esc(e.name)+'</h1><div class="ex-h"><span class="badge">'+(isF?'Foundation':'Rotation')+'</span><span class="badge">'+esc(e.focus)+'</span>'+(d?'<span class="badge">Exercise '+d.n+'</span>':'')+'</div>'+
-  '<div class="seg wide" role="tablist" style="margin-bottom:6px"><button role="tab" data-a="exTab" data-v="summary" class="'+(U.exTab==='summary'?'on':'')+'" aria-selected="'+(U.exTab==='summary')+'">Summary</button><button role="tab" data-a="exTab" data-v="history" class="'+(U.exTab==='history'?'on':'')+'" aria-selected="'+(U.exTab==='history')+'">History</button></div>';
+  let h=tile(e,true)+'<h1>'+esc(e.name)+'</h1><div class="ex-h"><span class="badge">'+(isF?'Foundation':'Rotation')+'</span><span class="badge">'+esc(e.focus)+'</span>'+(d?'<span class="badge">Exercise '+d.n+'</span>':'')+'</div>'+
+  '<div class="seg wide" role="tablist" style="margin-bottom:6px"><span class="knob" aria-hidden="true"></span><button role="tab" data-a="exTab" data-v="summary" class="'+(U.exTab==='summary'?'on':'')+'" aria-selected="'+(U.exTab==='summary')+'">Summary</button><button role="tab" data-a="exTab" data-v="history" class="'+(U.exTab==='history'?'on':'')+'" aria-selected="'+(U.exTab==='history')+'">History</button></div>';
   if(U.exTab==='summary'){
     h+='<div class="hdr">Last done</div><div class="grp"><div class="row"><span class="lbl">'+(lastDone(e.id).replace(/^last done /,'').replace(/^Not done yet$/,'Not done yet'))+'</span></div></div>';
     if(d){
@@ -399,7 +472,8 @@ function scrSettings(){
   '<div class="hdr">Reset</div><div class="grp">'+
    '<button class="row" data-a="sheet" data-v="resetMonth"><span class="lbl dng">Reset this month’s minutes</span></button>'+
    '<button class="row" data-a="sheet" data-v="resetAll"><span class="lbl dng">Reset all data</span></button></div>'+
-  '<p class="foot">Vocal Sessions '+APP_VERSION+'</p>';
+  '<div class="hdr">About</div><div class="grp"><a class="row" href="'+REPO+'" target="_blank" rel="noopener"><span class="lbl acc">View on GitHub<small>imperialfox/Vocal-Sessions</small></span>'+ICON.gh+'</a></div>'+
+  '<p class="foot" style="text-align:center;margin-top:18px">Vocal Sessions '+APP_VERSION+' · '+RELEASE_DATE+'</p>';
 }
 function scrFound(){
   return '<h1>Foundation</h1><p class="note">Set how many levels you got through.</p><div class="grp">'+
@@ -407,11 +481,11 @@ function scrFound(){
   '<div class="grp" style="margin-top:14px"><button class="row" data-a="sheet" data-v="note" data-k="fNote"><span class="lbl '+(X.fNote?'':'mut')+'">'+esc(X.fNote||'Add a note')+'</span>'+chev+'</button></div>';
 }
 function rotRow(e,sug){const on=e.id in X.rot;
-  return '<button class="row" data-a="tog" data-k="'+e.id+'" aria-pressed="'+on+'"><span class="lbl">'+esc(e.name)+'<small>'+(sug?'Least practised · ':'')+lastDone(e.id)+'</small></span><span class="'+(on?'acc':'mut')+'" aria-hidden="true">'+(on?ICON.circleOn:ICON.circle)+'</span></button>'+
-  (on?'<div class="sub"><span class="tag">'+esc(e.focus)+'</span>'+seg('rlv',e.id,X.rot[e.id])+'</div>':'');}
+  return '<button class="row" data-a="tog" data-k="'+e.id+'" aria-pressed="'+on+'">'+tile(e)+'<span class="lbl">'+esc(e.name)+'<small>'+(sug?'Least practised · ':'')+lastDone(e.id)+'</small></span><span class="'+(on?'acc':'mut')+'" aria-hidden="true">'+(on?ICON.circleOn:ICON.circle)+'</span></button>'+
+  (on?'<div class="sub" style="padding-left:62px"><span class="tag">'+esc(e.focus)+'</span>'+seg('rlv',e.id,X.rot[e.id])+'</div>':'');}
 function scrRot(){const s=suggested();const rest=allRot().filter(e=>e.id!==s.id);
-  return '<h1>Rotation</h1><p class="note">Pick as many as you like. Each one gets its own level.</p><div class="hdr">Suggested</div><div class="grp">'+rotRow(s,true)+'</div>'+
-  '<div class="hdr">More exercises</div><div class="grp">'+rest.map(e=>rotRow(e)).join('')+'<button class="row acc" data-a="sheet" data-v="addEx"><span class="lbl">Add exercise</span>'+ICON.plus+'</button></div>'+
+  return '<h1>Rotation</h1><p class="note">Pick as many as you like. Each one gets its own level.</p><div class="hdr">Suggested</div><div class="grp tiled">'+rotRow(s,true)+'</div>'+
+  '<div class="hdr">More exercises</div><div class="grp tiled">'+rest.map(e=>rotRow(e)).join('')+'<button class="row acc" data-a="sheet" data-v="addEx"><span class="lbl">Add exercise</span>'+ICON.plus+'</button></div>'+
   '<div class="grp" style="margin-top:14px"><button class="row" data-a="sheet" data-v="note" data-k="rNote"><span class="lbl '+(X.rNote?'':'mut')+'">'+esc(X.rNote||'Add a note')+'</span>'+chev+'</button></div>';}
 function scrApp(){
   const sid=X.song;
@@ -441,9 +515,9 @@ function renderDock(){
   if(U.sheet){$('dock').innerHTML='';return;}
   if(U.view&&U.view!=='ex'){const n=Object.keys(X.rot).length;
     const lab={found:'Log foundation',rot:n?'Log '+n+' exercise'+(n>1?'s':''):'Pick an exercise',app:'Finish session'}[U.view];
-    $('dock').innerHTML='<button class="cta" data-a="cta">'+lab+'</button>';return;}
+    $('dock').innerHTML='<button class="cta glass tinted" data-a="cta">'+lab+'</button>';return;}
   const t=(id,lab,ic)=>'<button class="'+(U.tab===id?'on':'')+'" data-a="tab" data-v="'+id+'" aria-current="'+(U.tab===id?'page':'false')+'">'+ic+lab+'</button>';
-  $('dock').innerHTML='<nav class="tabbar glass" aria-label="Tabs">'+t('today','Today',ICON.mic)+t('history','History',ICON.clock)+t('exercises','Exercises',ICON.list)+t('settings','Settings',ICON.gear)+'</nav>';
+  $('dock').innerHTML='<nav class="tabbar glass'+(tabMin?' min':'')+'" aria-label="Tabs">'+t('today','Today',ICON.mic)+t('history','History',ICON.clock)+t('exercises','Exercises',ICON.list)+t('settings','Settings',ICON.gear)+'</nav>';
 }
 function sheetWrap(title,body,label){return '<div class="scrim" data-a="close"><div class="sheet glass" role="dialog" aria-modal="true" aria-label="'+esc(label||title)+'"><div class="grab"></div><h2>'+title+'</h2>'+body+'</div></div>';}
 const confirmSheet=(title,text,btn,action,k,cancel)=>sheetWrap(title,'<p class="note">'+text+'</p><button class="cta red" data-a="'+action+'" data-k="'+esc(k||'')+'">'+btn+'</button><button class="ghost" data-a="close">'+(cancel||'Cancel')+'</button>');
@@ -467,10 +541,31 @@ function renderSheet(){
   else if(s==='exporting')h=sheetWrap('Preparing backup','<p class="note">Gathering your sessions and recordings…</p>');
   else if(s==='importConfirm'&&pendingImport){const p=pendingImport,d=p.data||{};h=sheetWrap('Restore this backup?','<div class="grp"><div class="row"><span class="lbl">Backed up</span><span class="mut">'+shortDate(p.exportedAt)+' at '+timeOf(p.exportedAt)+'</span></div><div class="row"><span class="lbl">Sessions</span><span class="mut">'+(d.sessions||[]).length+'</span></div><div class="row"><span class="lbl">Songs</span><span class="mut">'+(d.songs||[]).length+'</span></div><div class="row"><span class="lbl">Recordings</span><span class="mut">'+(p.takes||[]).length+'</span></div></div><p class="note" style="margin-top:10px">Everything currently on this phone will be replaced with this backup.</p><button class="cta red" data-a="importYes">Replace and restore</button><button class="ghost" data-a="close">Cancel</button>');}
   else if(s==='importing')h=sheetWrap('Restoring backup','<p class="note">Restoring your sessions and recordings…</p>');
+  else if(s==='calendar')h=calendarSheet();
   else if(s==='session'||s==='done'){const ss=D.sessions.find(x=>x.id===k);if(ss)h=sessionSheet(ss,s==='done');}
   $('layer').innerHTML=h;
+  if(h&&!document.body.classList.contains('sheet-open'))$('app').parentNode.style.transformOrigin='50% '+(window.scrollY+120)+'px';
+  document.body.classList.toggle('sheet-open',!!h);
+  if(h)placeKnobs($('layer'));
   if(s==='addEx')setTimeout(()=>{const i=$('exName');if(i)i.focus();},250);
   if(s==='addSong')setTimeout(()=>{const i=$('songIn');if(i)i.focus();},250);
+}
+function calendarSheet(){
+  const m=U.calMonth||new Date(new Date().getFullYear(),new Date().getMonth(),1);
+  const y=m.getFullYear(),mo=m.getMonth();
+  const first=new Date(y,mo,1),days=new Date(y,mo+1,0).getDate(),lead=(first.getDay()+6)%7;
+  const byDay={};D.sessions.forEach(s=>{const d=new Date(s.date);if(d.getFullYear()===y&&d.getMonth()===mo)(byDay[d.getDate()]=byDay[d.getDate()]||[]).push(s);});
+  const now=new Date(),isThisMonth=now.getFullYear()===y&&now.getMonth()===mo;
+  let g=['M','T','W','T','F','S','S'].map(l=>'<span class="h">'+l+'</span>').join('');
+  for(let i=0;i<lead;i++)g+='<span></span>';
+  for(let d=1;d<=days;d++){const has=!!byDay[d];const cls=(has?'p ':'')+(isThisMonth&&d===now.getDate()?'t ':'')+(U.calDay===d?'sel':'');
+    g+=has?'<button class="'+cls+'" data-a="calDay" data-v="'+d+'" aria-label="'+d+' '+m.toLocaleDateString('en-GB',{month:'long'})+', '+byDay[d].length+' session'+(byDay[d].length>1?'s':'')+'">'+d+'</button>':'<button class="'+cls+'" disabled aria-label="'+d+'">'+d+'</button>';}
+  const mk=y+'-'+String(mo+1).padStart(2,'0');const n=Object.values(byDay).reduce((a,x)=>a+x.length,0);
+  let b='<div class="calhead"><button class="circ" data-a="calMove" data-v="-1" aria-label="Previous month">'+ICON.back+'</button><b>'+m.toLocaleDateString('en-GB',{month:'long',year:'numeric'})+'</b><button class="circ" data-a="calMove" data-v="1" aria-label="Next month">'+ICON.fwd+'</button></div><div class="cal">'+g+'</div>';
+  if(U.calDay&&byDay[U.calDay]){b+='<div class="hdr">'+new Date(y,mo,U.calDay).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'})+'</div><div class="grp">'+byDay[U.calDay].map(s=>{const r=Object.keys(s.rot||{}).map(id=>(exById(id)||{name:(s.rotNames||{})[id]||'Exercise'}).name);return '<button class="row" data-a="calSession" data-k="'+s.id+'"><span class="lbl">'+timeOf(s.date)+'<small>'+esc(r.length?r.join(', '):'Foundation only')+'</small></span><span class="mut">'+hm(s.mins)+'</span>'+chev+'</button>';}).join('')+'</div>';}
+  else b+='<p class="foot">'+(n?'Tap a highlighted day to see its session.':'No sessions this month.')+'</p>';
+  b+='<div class="grp" style="margin-top:12px"><div class="row"><span class="lbl">This month</span><span class="mut">'+n+' session'+(n===1?'':'s')+' · '+hm(D.months[mk]||0)+'</span></div></div><button class="ghost" data-a="close">Done</button>';
+  return sheetWrap('Practice calendar',b);
 }
 function sessionSheet(ss,done){
   const rots=Object.keys(ss.rot||{});
@@ -492,11 +587,22 @@ function render(keepScroll){
   $('app').innerHTML=v==='ex'?scrEx():v?({found:scrFound,rot:scrRot,app:scrApp})[v]():({today:scrToday,history:scrHistory,exercises:scrExercises,settings:scrSettings})[U.tab]();
   renderBar();renderDock();renderSheet();
   if(keepScroll)window.scrollTo(0,y);
+  placeKnobs();
 }
 const rerender=()=>render(true);
 function go(fn){fn();window.scrollTo(0,0);render();}
 let toastT=null;
 function toast(t){clearTimeout(toastT);const o=document.querySelector('.toast');if(o)o.remove();const el=document.createElement('div');el.className='toast glass';el.setAttribute('role','status');el.textContent=t;document.body.appendChild(el);toastT=setTimeout(()=>el.remove(),1900);}
+
+/* ===== Sliding knobs ===== */
+function placeKnob(sg,animate){const on=sg.querySelector('button.on'),k=sg.querySelector('.knob');if(!k)return;if(!on){k.classList.remove('set');return;}
+  const firstTime=!k.classList.contains('set');if(firstTime){k.style.transition='none';}
+  k.style.width=on.offsetWidth+'px';k.style.transform='translateX('+on.offsetLeft+'px)';k.classList.add('set');
+  if(firstTime){void k.offsetWidth;k.style.transition='';}
+  if(animate){k.classList.remove('squish');void k.offsetWidth;k.classList.add('squish');}}
+function placeKnobs(root){(root||document).querySelectorAll('.seg').forEach(sg=>placeKnob(sg,false));}
+function segPick(el){const sg=el.closest('.seg');sg.querySelectorAll('button').forEach(b=>{const on=b===el;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on);});placeKnob(sg,true);}
+window.addEventListener('resize',()=>placeKnobs());
 
 /* ===== Session logic ===== */
 function newSession(){X={start:Date.now(),f:{},fNote:'',fEnd:null,rot:{},rNote:'',rEnd:null,song:null,rate:{},takes:[]};saveDraft();}
@@ -658,7 +764,11 @@ document.addEventListener('click',e=>{
   if(el.classList.contains('scrim')&&e.target!==el)return;
   const a=el.dataset.a,v=el.dataset.v,k=el.dataset.k;
   switch(a){
-    case 'tab':go(()=>{U.tab=v;U.view=null;});break;
+    case 'tab':if(tabMin){tabMin=false;$('dock').querySelector('.tabbar').classList.remove('min');break;}go(()=>{U.tab=v;U.view=null;});break;
+    case 'openCal':U.calMonth=new Date(new Date().getFullYear(),new Date().getMonth(),1);U.calDay=null;U.sheet='calendar';U.sd={};rerender();break;
+    case 'calMove':{const m=U.calMonth;U.calMonth=new Date(m.getFullYear(),m.getMonth()+(+v),1);U.calDay=null;rerender();break;}
+    case 'calDay':U.calDay=U.calDay===+v?null:+v;rerender();break;
+    case 'calSession':U.sheet='session';U.sd={k,ret:'calendar'};rerender();break;
     case 'start':newSession();go(()=>{U.view='found';});break;
     case 'resume':go(()=>{U.view=X.fEnd?(X.rEnd?'app':'rot'):'found';});break;
     case 'discardYes':if(rec)stopRec();X=null;saveDraft();U.sheet=null;rerender();break;
@@ -666,10 +776,10 @@ document.addEventListener('click',e=>{
     case 'view':go(()=>{U.view=v;});break;
     case 'openEx':go(()=>{U.prevTab=U.tab;U.view='ex';U.exId=k;U.exTab='summary';});break;
     case 'exBack':go(()=>{U.view=null;U.tab=U.prevTab||'exercises';});break;
-    case 'exTab':U.exTab=v;rerender();break;
-    case 'flv':X.f[k]=+v;saveDraft();rerender();break;
-    case 'rlv':X.rot[k]=+v;saveDraft();rerender();break;
-    case 'rate':X.rate[k]=+v;saveDraft();rerender();break;
+    case 'exTab':segPick(el);U.exTab=v;setTimeout(rerender,180);break;
+    case 'flv':X.f[k]=+v;saveDraft();segPick(el);break;
+    case 'rlv':X.rot[k]=+v;saveDraft();segPick(el);break;
+    case 'rate':X.rate[k]=+v;saveDraft();segPick(el);break;
     case 'tog':if(k in X.rot)delete X.rot[k];else X.rot[k]=0;saveDraft();rerender();break;
     case 'song':if(rec)return toast('Stop recording first');stopPlayback();X.song=k;saveDraft();rerender();break;
     case 'rec':rec?stopRec():startRec();break;
@@ -683,7 +793,7 @@ document.addEventListener('click',e=>{
       break;
     case 'confirmF':X.fEnd=Date.now();saveDraft();U.sheet=null;go(()=>{U.view='rot';});break;
     case 'sheet':U.sheet=v;U.sd={k};rerender();break;
-    case 'close':U.sheet=null;pendingImport=null;rerender();break;
+    case 'close':if(U.sd&&U.sd.ret){U.sheet=U.sd.ret;U.sd={};}else U.sheet=null;pendingImport=null;rerender();break;
     case 'preset':{const i=$('noteIn');if(i)i.value=v;document.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.dataset.v===v));break;}
     case 'saveNote':{const i=$('noteIn');X[U.sd.k]=(i?i.value:'').trim();saveDraft();U.sheet=null;rerender();break;}
     case 'clearNote':X[U.sd.k]='';saveDraft();U.sheet=null;rerender();break;
@@ -712,7 +822,11 @@ document.addEventListener('click',e=>{
   }
 });
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&U.sheet){U.sheet=null;rerender();}});
-window.addEventListener('scroll',()=>{closeSwipes();$('bar').classList.toggle('scrolled',window.scrollY>36);},{passive:true});
+let lastY=0,tabMin=false;
+window.addEventListener('scroll',()=>{closeSwipes();const y=window.scrollY;const sc=y>36;$('bar').classList.toggle('scrolled',sc);document.body.classList.toggle('scrolled',sc);
+  const tb=$('dock').querySelector('.tabbar');
+  if(tb&&!U.sheet){if(y>lastY+6&&y>120)tabMin=true;else if(y<lastY-6||y<60)tabMin=false;tb.classList.toggle('min',tabMin);}
+  lastY=y;},{passive:true});
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&rec)stopRec();});
 
 render();
