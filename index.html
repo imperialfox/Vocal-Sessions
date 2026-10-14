@@ -303,6 +303,17 @@ body.wide .side-nav{display:flex;flex-direction:column;gap:2px;position:fixed;z-
   .sbi:not(.on):hover,.toptabs button:not(.on):hover{background:color-mix(in srgb,transparent 92%,var(--fg))}
   .chip:hover{filter:brightness(.96)}
 }
+/* 3.3.1 sheet header: title with a close button that stays put while the sheet scrolls; drag it down to dismiss */
+.shead{position:sticky;top:-10px;z-index:5;margin:-10px -16px 10px;padding:10px 16px 8px;background:var(--glass-strong);-webkit-backdrop-filter:blur(20px) saturate(180%);backdrop-filter:blur(20px) saturate(180%);border-radius:34px 34px 0 0;touch-action:none}
+.shead .grab{margin:0 auto 10px}
+.shead .shtop{margin-bottom:0}
+.shrow{display:flex;align-items:center;gap:12px;min-height:40px}
+.shrow h2{flex:1;min-width:0;margin:0 4px!important}
+.xbtn{width:36px;height:36px;flex-shrink:0;color:var(--fg)}
+.xbtn svg{width:18px;height:18px;stroke-width:2.4}
+body.reg .shead{border-radius:28px 28px 0 0}
+.sheet.drag{transition:none!important;animation:none!important}
+.sheet.back{transition:transform .32s cubic-bezier(.3,1.15,.5,1)!important;animation:none!important}
 @keyframes up{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
 @keyframes fade{from{opacity:0}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
@@ -326,7 +337,7 @@ body.wide .side-nav{display:flex;flex-direction:column;gap:2px;position:fixed;z-
 
 <script>
 /* ===== Config ===== */
-const APP_VERSION='3.3', RELEASE_DATE='14 Oct 2026';
+const APP_VERSION='3.3.1', RELEASE_DATE='14 Oct 2026';
 const REPO='https://github.com/imperialfox/Vocal-Sessions';
 const VIDEO='https://youtu.be/rG-o10NggDI';
 const TARGET=280, WEEK_TARGET=70;
@@ -734,7 +745,7 @@ function renderDock(){
   const t=(id,lab,ic)=>'<button class="'+(U.tab===id?'on':'')+'" data-a="tab" data-v="'+id+'" aria-current="'+(U.tab===id?'page':'false')+'">'+ic+lab+'</button>';
   $('dock').innerHTML='<nav class="tabbar glass'+(tabMin?' min':'')+'" aria-label="Tabs">'+t('today','Today',ICON.mic)+t('history','History',ICON.clock)+t('exercises','Exercises',ICON.list)+t('settings','Settings',ICON.gear)+'</nav>';
 }
-function sheetWrap(title,body,label){return '<div class="scrim" data-a="close"><div class="sheet glass" role="dialog" aria-modal="true" aria-label="'+esc(label||title)+'"><div class="grab"></div><h2>'+title+'</h2>'+body+'</div></div>';}
+function sheetWrap(title,body,label){return '<div class="scrim" data-a="close"><div class="sheet glass" role="dialog" aria-modal="true" aria-label="'+esc(label||title)+'"><div class="shead"><div class="grab"></div><div class="shrow"><h2>'+title+'</h2><button class="shbtn glass xbtn" data-a="close" aria-label="Close">'+ICON.x+'</button></div></div>'+body+'</div></div>';}
 const confirmSheet=(title,text,btn,action,k,cancel)=>sheetWrap(title,'<p class="note">'+text+'</p><button class="cta red" data-a="'+action+'" data-k="'+esc(k||'')+'">'+btn+'</button><button class="ghost" data-a="close">'+(cancel||'Cancel')+'</button>');
 const noteTarget=()=>U.sd&&U.sd.src==='edit'?E:X;
 function selArr(){const s=U.sheet;
@@ -748,7 +759,7 @@ function renderSheet(){
   const s=U.sheet,k=U.sd.k;let h='';
   if(s==='confirmF')h=sheetWrap('Confirm foundation','<div class="grp">'+FOUND.map(e=>'<div class="row"><span class="lbl">'+esc(e.name)+'</span><span class="mut">'+(X.f[e.id]?'Level '+X.f[e.id]:'Skipped')+'</span></div>').join('')+'</div><div style="margin-top:14px"><button class="cta" data-a="confirmF">Log foundation</button></div><button class="ghost" data-a="close">Edit</button>');
   else if(s==='how'&&X){
-    h='<div class="scrim" data-a="close"><div class="sheet glass" role="dialog" aria-modal="true" aria-label="How did it go?"><div class="shtop"><button class="shbtn glass" data-a="skipHow" aria-label="Skip and save">'+ICON.x+'</button><span class="mut" style="font-size:13px">'+(isSong()?'Song practice':'Session')+' · '+hm(finalMins())+'</span><button class="shbtn ok" data-a="saveHow" aria-label="Save">'+ICON.check+'</button></div>'+
+    h='<div class="scrim" data-a="close"><div class="sheet glass" role="dialog" aria-modal="true" aria-label="How did it go?"><div class="shead"><div class="grab"></div><div class="shtop"><button class="shbtn glass" data-a="skipHow" aria-label="Skip and save">'+ICON.x+'</button><span class="mut" style="font-size:13px">'+(isSong()?'Song practice':'Session')+' · '+hm(finalMins())+'</span><button class="shbtn ok" data-a="saveHow" aria-label="Save">'+ICON.check+'</button></div></div>'+
     '<h2 class="c">How did it go?</h2><p class="note" style="text-align:center">Tap any that fit. It’s all optional.</p>'+chipsHTML(wordList('how',HOW_WORDS),X.how,'how')+noteBlock('howNote',X.howNote,'Anything else about today')+'</div></div>';}
   else if(s==='long'&&X){const m=Math.round(elapsedSec()/60);
     h=sheetWrap('How long did you practise?','<p class="note">This '+(isSong()?'song practice':'session')+' has been running for '+hm(m)+'. If you stopped and forgot to finish, enter the minutes you actually practised.</p><input class="field" id="longMins" type="number" inputmode="numeric" min="1" max="'+m+'" value="'+m+'" aria-label="Minutes practised"><div style="margin-top:14px"><button class="cta" data-a="longOk">Continue</button></div><button class="ghost" data-a="longAll">I practised the whole time</button>');}
@@ -834,7 +845,7 @@ function sessionBody(ss,mode){
   '<div class="hdr">Foundation</div><div class="grp">'+FOUND.map(e=>{const f=ss.f||{};return exRow(e.name,e.id,f[e.id]?'Level '+f[e.id]:(e.id in f?'Skipped':'–'));}).join('')+(ss.fNote?'<div class="row"><span class="lbl mut">'+esc(ss.fNote)+'</span></div>':'')+'</div>';
   if(rots.length)b+='<div class="hdr">Rotation</div><div class="grp">'+rots.map(id=>exRow((exById(id)||{name:(ss.rotNames||{})[id]||'Exercise'}).name,id,'Level '+ss.rot[id])).join('')+(ss.rNote?'<div class="row"><span class="lbl mut">'+esc(ss.rNote)+'</span></div>':'')+'</div>';
   if(ss.songName||Object.keys(ss.rate||{}).length)b+='<div class="hdr">Application</div><div class="grp">'+(ss.songName?'<div class="row"><span class="lbl">'+esc(ss.songName)+'</span>'+((ss.takes||[]).length?'<span class="mut">'+ss.takes.length+' take'+(ss.takes.length>1?'s':'')+'</span>':'')+'</div>':'')+['Pitch','Tone','Ease'].filter(x=>(ss.rate||{})[x]).map(x=>'<div class="row"><span class="lbl">'+x+'</span><span class="mut">'+ss.rate[x]+' of 3</span></div>').join('')+'</div>';
-  b+=(done?'':'<div style="margin-top:16px"><button class="cta" data-a="copy" data-k="'+ss.id+'">Copy for Toggl</button></div>')+'<button class="ghost" data-a="editSess" data-k="'+ss.id+'">Edit session</button>'+(pane?'':'<button class="ghost" data-a="close">'+(done?'Done':'Close')+'</button>');
+  b+=(done?'':'<div style="margin-top:16px"><button class="cta" data-a="copy" data-k="'+ss.id+'">Copy for Toggl</button></div>')+'<button class="ghost" data-a="editSess" data-k="'+ss.id+'">Edit session</button>'+(done?'<button class="ghost" data-a="close">Done</button>':'');
   if(!done)b+='<button class="ghost" data-a="sheet" data-v="delSession" data-k="'+ss.id+'" style="color:var(--danger)">Delete session</button>';
   return pane?'<h2 class="ph">'+dayLabel(ss.date)+'</h2>'+b:b;
 }
@@ -846,7 +857,7 @@ function songSessionBody(ss,mode){
   if(tk.length)b+='<div class="hdr">Takes</div><div class="grp">'+tk.map(t=>{const n=noteStr(t.note);return '<div class="row"><button class="ibtn acc" data-a="playTake" data-k="'+t.id+'" aria-label="Play take">'+(playingId===t.id?ICON.pause:ICON.play)+'</button><span class="lbl">'+timeOf(t.created)+' · '+mmss(t.len)+(n?'<small class="acc">'+esc(n)+'</small>':'')+'</span></div>';}).join('')+'</div>';
   else if((ss.takes||[]).length)b+='<p class="foot">This practice’s takes are no longer on this phone.</p>';
   b+='<p class="foot">Toggl tag #song-practice. Kept out of your focused goal and streak.</p><div style="margin-top:12px"><button class="cta" data-a="copy" data-k="'+ss.id+'">Copy for Toggl</button></div>'+
-  '<button class="ghost" data-a="editSess" data-k="'+ss.id+'">Edit</button>'+(pane?'':'<button class="ghost" data-a="close">'+(done?'Done':'Close')+'</button>')+
+  '<button class="ghost" data-a="editSess" data-k="'+ss.id+'">Edit</button>'+(done?'<button class="ghost" data-a="close">Done</button>':'')+
   (done?'':'<button class="ghost" data-a="sheet" data-v="delSongSess" data-k="'+ss.id+'" style="color:var(--danger)">Delete</button>');
   return pane?'<h2 class="ph">'+dayLabel(ss.date)+' · Song practice</h2>'+b:b;
 }
@@ -1210,6 +1221,15 @@ async function refreshApp(){
 Object.values(MQ).forEach(m=>{const f=()=>{layout();if(split()&&U.view==='ex'){U.tab='exercises';U.view=null;}tabMin=false;render(true);};if(m.addEventListener)m.addEventListener('change',f);else if(m.addListener)m.addListener(f);});
 /* keyboard: Cmd/Ctrl + 1–4 switch sections */
 document.addEventListener('keydown',e=>{if(!(e.metaKey||e.ctrlKey)||U.sheet||!/^[1-4]$/.test(e.key))return;e.preventDefault();const t=TABS()[+e.key-1][0];U.clock=false;go(()=>{U.tab=t;U.view=null;});});
+/* drag a sheet down by its header to dismiss it, like iOS */
+let SD=null;
+document.addEventListener('touchstart',e=>{const h=e.target.closest('.shead');SD=null;if(!h||e.touches.length!==1)return;SD={sh:h.closest('.sheet'),y:e.touches[0].clientY,dy:0};},{passive:true});
+document.addEventListener('touchmove',e=>{if(!SD||e.touches.length!==1)return;const dy=e.touches[0].clientY-SD.y;SD.dy=Math.max(0,dy);if(e.cancelable)e.preventDefault();
+  SD.sh.classList.add('drag');SD.sh.style.transform=SD.dy?'translateY('+SD.dy+'px)':'';},{passive:false});
+function sheetDragEnd(){if(!SD)return;const {sh,dy}=SD;SD=null;sh.classList.remove('drag');if(!dy)return;sh.classList.add('back');
+  if(dy>90){sh.style.transform='translateY(110%)';setTimeout(()=>{if(U.sheet)closeSheet();},200);}
+  else{sh.style.transform='';setTimeout(()=>sh.classList.remove('back'),340);}}
+document.addEventListener('touchend',sheetDragEnd);document.addEventListener('touchcancel',sheetDragEnd);
 // live session clock
 setInterval(()=>{if(!X||!U.view||U.view==='ex')return;const t=$('timer');if(t)t.textContent=pillText();const bc=$('bigClock');if(bc)bc.textContent=clk(elapsedSec());const cs=$('curSplit');if(cs)cs.textContent=clk(elapsedSec()-(+cs.dataset.base||0));},1000);
 let lastY=0,tabMin=false;
