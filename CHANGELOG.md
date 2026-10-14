@@ -13,6 +13,7 @@ Version numbers follow **major.minor.patch**:
 
 - Every sheet (session details, calendar, edit and others) has a close button (✕) at the top right, as in iOS 27. It stays in place while you scroll, so you can always get out.
 - Drag a sheet down by its top to close it.
+- Session and song practice details have an edit button (pencil) next to the ✕, replacing the "Edit session" text button. On iPad and Mac, the pencil sits beside the title in the detail pane.
 - The extra "Close" button at the bottom of session details has been removed, because the ✕ does the same job.
 
 ## 3.3 · 14 Oct 2026
