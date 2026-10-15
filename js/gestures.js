@@ -137,6 +137,12 @@ Object.values(MQ).forEach((m) => {
       U.tab = 'exercises';
       U.view = null;
     }
+    if (split() && U.view === 'lyr') {
+      U.tab = 'songs';
+      U.view = null;
+    }
+    if (split()) U.sFocus = false;
+    else if ((U.sq || '').trim()) U.sFocus = true;
     tabMin = false;
     render(true);
   };

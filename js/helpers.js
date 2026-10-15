@@ -212,8 +212,10 @@ const TABS = () => [
   ['today', 'Today', ICON.mic],
   ['history', 'Progress', ICON.chart],
   ['exercises', 'Exercises', ICON.list],
-  ['settings', 'Settings', ICON.gear],
+  ['songs', 'Songs', SGI.music],
 ];
+// Settings opens from the gear on Today, so it belongs to Today
+const tabOf = (t) => (t === 'settings' ? 'today' : t);
 const seg = (a, key, v) =>
   '<div class="seg" role="group"><span class="knob" aria-hidden="true"></span>' +
   [1, 2, 3]
@@ -329,6 +331,15 @@ const freshU = () => ({
   noteOpen: null,
   calMonth: null,
   calDay: null,
+  songId: null,
+  sMode: 'practise',
+  sEdit: null,
+  sq: '',
+  sFocus: false,
+  sList: false,
+  sSel: [],
+  sDraft: null,
+  sRet: null,
 });
 let U = freshU();
 let E = null,

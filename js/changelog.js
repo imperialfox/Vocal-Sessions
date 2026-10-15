@@ -6,16 +6,17 @@
    Each version: "## 3.7 · 15 Oct 2026", then "*Headline*" on the next line.
    "<!-- era: Name · description -->" under an x.0 version names that era.
    "<!-- area: backup -->" on its own line sets the area for the version (right after the headline) or for the next section;
-   at the end of a bullet it sets that bullet's area. Areas: practice, progress, recordings, backup, look, fixes. */
+   at the end of a bullet it sets that bullet's area. Areas: practice, songs, progress, recordings, backup, look, fixes. */
 const LOG_AREAS = {
   p: ['Practice', 'var(--accent)'],
+  s: ['Songs', 'var(--good)'],
   g: ['Progress', 'var(--cF)'],
   r: ['Recordings', 'var(--coral)'],
   d: ['Backup & data', 'var(--cR)'],
   l: ['Look & feel', 'var(--cA)'],
   f: ['Fixes', 'var(--done)'],
 };
-const AREA_CODE = { practice: 'p', progress: 'g', recordings: 'r', backup: 'd', look: 'l', fixes: 'f' };
+const AREA_CODE = { practice: 'p', songs: 's', progress: 'g', recordings: 'r', backup: 'd', look: 'l', fixes: 'f' };
 const MONTHS = { jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6, jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12 };
 let LOG = null,
   LOG_ERAS = {},

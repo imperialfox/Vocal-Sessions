@@ -126,7 +126,9 @@ function scrToday() {
     '</span>' +
     chev +
     '</button></div>' +
-    '<p class="foot">Song practice has its own stats. It never counts towards your weekly goal, streak or monthly minutes.</p></div></div>'
+    '<p class="foot">Song practice has its own stats. It never counts towards your weekly goal, streak or monthly minutes.</p>' +
+    pinnedCard() +
+    '</div></div>'
   );
 }
 function histSel(songs) {
@@ -770,36 +772,7 @@ function scrExercises() {
     '<button class="row acc" data-a="sheet" data-v="addEx"><span class="lbl">Add exercise</span>' +
     ICON.plus +
     '</button></div>' +
-    '<div class="hdr">Songs</div><div class="grp">' +
-    D.songs
-      .map((s) =>
-        sw(
-          '<div class="row"><button class="lbl tk" data-a="openAll" data-v="songs">' +
-            esc(s.name) +
-            '<small>' +
-            ((n) => n + ' saved take' + (n === 1 ? '' : 's'))(TAKES.filter((t) => t.songId === s.id).length) +
-            ' · ' +
-            ((n) => (n ? n + ' song practice' + (n === 1 ? '' : 's') : 'No song practice yet'))(
-              D.songSessions.filter((x) => x.songId === s.id).length
-            ) +
-            '</small></button><button class="ibtn dng" data-a="sheet" data-v="delSong" data-k="' +
-            s.id +
-            '" aria-label="Remove ' +
-            esc(s.name) +
-            '">' +
-            ICON.trash +
-            '</button></div>',
-          'delSong',
-          s.id
-        )
-      )
-      .join('') +
-    '<button class="row acc" data-a="sheet" data-v="addSong"><span class="lbl">Add song</span>' +
-    ICON.plus +
-    '</button></div>' +
-    (D.custom.length || D.songs.length
-      ? '<p class="foot">Swipe left on your own exercises and songs to delete them.</p>'
-      : '');
+    (D.custom.length ? '<p class="foot">Swipe left on your own exercises to delete them.</p>' : '');
   return (
     '<h1>Exercises</h1>' +
     (sp ? '<div class="split"><div class="sl">' + list + '</div><div class="pane">' + scrEx() + '</div></div>' : list)
@@ -997,7 +970,7 @@ function scrSettings() {
     lbText +
     (age > 14 && lb ? '. It’s been over two weeks.' : '') +
     '</p>' +
-    '<p class="foot">A backup holds everything: sessions, minutes, exercises, songs and recordings. Keep them in iCloud Drive › Vocal Sessions › Backups, and import one after re-adding the app or switching phones.</p>' +
+    '<p class="foot">A backup holds everything: sessions, minutes, exercises, songs with their lyrics and marks, and recordings. Keep them in iCloud Drive › Vocal Sessions › Backups, and import one after re-adding the app or switching phones.</p>' +
     '<div class="hdr">Backup files</div><div class="grp">' +
     '<button class="row" data-a="sheet" data-v="bkLog"><span class="lbl">Backup history</span><span class="mut">' +
     loadLog().length +

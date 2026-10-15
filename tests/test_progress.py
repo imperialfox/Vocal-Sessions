@@ -32,9 +32,7 @@ def run(b, t):
     pg.click('[data-a=openAll][data-v=sessions]'); pg.wait_for_timeout(200)
     ok(pg.evaluate("U.histTab") == 'sessions' and pg.locator('.ptag').count() >= 1, 'Show all sessions lists them, older ones tagged as filled in at the end')
     pg.click('[data-a=allBack]'); pg.click('[data-a=tab][data-v=exercises]'); pg.wait_for_timeout(200)
-    pg.click('[data-a=openAll][data-v=songs]'); pg.wait_for_timeout(200)
-    ok(pg.evaluate("U.view") == 'all' and pg.evaluate("U.histTab") == 'songs', 'a song in Exercises opens song practice')
-    pg.click('[data-a=allBack]'); pg.wait_for_timeout(200); ok(pg.evaluate("U.tab") == 'exercises', 'back from there returns to Exercises')
+    ok(pg.locator('main [data-a=openAll][data-v=songs]').count() == 0 and 'Versace' not in pg.inner_text('main'), 'songs live in Songs now, not Exercises')
 
     # a timed session
     pg.click('[data-a=tab][data-v=today]'); pg.click('[data-a=start]'); pg.wait_for_timeout(200)

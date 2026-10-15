@@ -102,13 +102,27 @@ document.addEventListener('click', (e) => {
   switch (a) {
     case 'tab':
       U.clock = false;
-      if (tabMin && !MQ.reg.matches) {
+      if (sgTabTap(v)) break;
+      if (tabMin && !MQ.reg.matches && $('dock').querySelector('.tabbar')) {
         tabMin = false;
         $('dock').querySelector('.tabbar').classList.remove('min');
         break;
       }
       go(() => {
         U.tab = v;
+        U.view = null;
+      });
+      break;
+    case 'openSettings':
+      U.clock = false;
+      go(() => {
+        U.tab = 'settings';
+        U.view = null;
+      });
+      break;
+    case 'setBack':
+      go(() => {
+        U.tab = 'today';
         U.view = null;
       });
       break;
@@ -652,7 +666,7 @@ document.addEventListener('click', (e) => {
         return;
       }
       const id = 'g_' + Date.now().toString(36);
-      D.songs.push({ id, name: n });
+      D.songs.push({ id, name: titleCase(n), artist: '', added: Date.now(), pinned: false });
       save();
       if (X && (U.view === 'app' || U.view === 'song')) {
         X.song = id;
@@ -801,6 +815,8 @@ document.addEventListener('click', (e) => {
         if (r !== 'cancelled') toast(r === 'shared' ? 'Read-me saved' : 'Read-me downloaded');
       });
       break;
+    default:
+      if (SG_ACT[a]) SG_ACT[a](el, v, k, e);
   }
 });
 function updatePcard() {

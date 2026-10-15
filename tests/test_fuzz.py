@@ -12,7 +12,9 @@ INV=r"""(()=>{const p=[];const L=document.getElementById('layer');
  if(U.sheet&&!L.querySelector('.sheet'))p.push('sheet state "'+U.sheet+'" but nothing shown');
  if(!U.sheet&&L.querySelector('.sheet'))p.push('sheet shown without state');
  if(isFlow(U.view)&&!X)p.push('in a session view with no session');
- if(!U.sheet&&!U.view&&!document.querySelector('[data-a=tab]'))p.push('no way to switch tabs');
+ if(!U.sheet&&!U.view&&!U.sList&&!document.querySelector('[data-a=tab]'))p.push('no way to switch tabs');
+ if(U.view==='lyr'&&!songById(U.songId))p.push('song screen with no song');
+ D.songs.forEach(s=>{if(s.order&&s.order.some(x=>!s.sections[x.sid]))p.push('song '+s.id+' points at a missing section');});
  if(isFlow(U.view)&&!U.sheet&&!document.querySelector('#dock [data-a=cta]'))p.push('session view without its action button');
  for(const k in D.months){const v=D.months[k];if(!(v>=0)||!isFinite(v))p.push('bad month '+k+'='+v);}
  D.sessions.concat(D.songSessions).forEach(s=>{if(!(s.mins>0)||!isFinite(s.mins))p.push('bad mins '+s.id+'='+s.mins);if(isNaN(new Date(s.date)))p.push('bad date '+s.id);});
@@ -28,7 +30,7 @@ VIS=r"""(()=>{const L=document.getElementById('layer');const root=L.querySelecto
    const cx=Math.min(innerWidth-1,Math.max(0,r.left+r.width/2)),cy=Math.min(innerHeight-1,Math.max(0,r.top+r.height/2));const t=document.elementFromPoint(cx,cy);return t&&(t===e||e.contains(t)||t.closest('[data-a]')===e);});
  return els.map((e,i)=>{e.setAttribute('data-fz',i);return {i,a:e.dataset.a||e.tagName.toLowerCase(),v:e.dataset.v||'',k:e.dataset.k||'',id:e.id||'',type:e.type||''};});})()"""
 SKIP = {'importPick', 'checkPick', 'exportSave', 'saveReadme', 'rec'}
-HEAVY = ('start','songStart','resume','cta','confirmF','tog','rlv','flv','wTog','saveHow','skipHow','editSess','saveEdit','exNote','takeNote','addWord','saveWord',
+HEAVY = ('sgOpen','sgEdit','sgWord','sgMark','sgEditMode','sgNew','sgSplit','sgSave','sgSearch','sgListEdit','sgToggle','sgCue','sgUnlink','start','songStart','resume','cta','confirmF','tog','rlv','flv','wTog','saveHow','skipHow','editSess','saveEdit','exNote','takeNote','addWord','saveWord',
          'openNote','longOk','pauseToggle','clock','sheet','calDay','calSession','eflv','input','textarea')
 
 def run(b, t):
@@ -46,6 +48,8 @@ def run(b, t):
         pg.goto(url(APP_PATH))
         data = with_song_practice(); data['songSessions'][0]['takes'] = ['tA']
         pg.evaluate("o=>{localStorage.clear();localStorage.setItem('vocalTracker',JSON.stringify(o))}", data); pg.reload(); ready(pg)
+        pg.evaluate("l=>{U.sDraft={step:1,title:'river song',artist:'',text:l};U.sDraft.blocks=splitBlocks(l);U.sDraft.step=2;sgSaveDraft();U.view=null;U.tab='today';render()}",
+                    "[Verse]\nPaper boats along the gutter\n\n[Chorus]\nCarry me over\nLet the river know\n\n[Chorus]\nCarry me over\nLet the river know")
         pg.evaluate("putTake({id:'tA',songId:'g_1',created:Date.now()-864e5,len:30,size:5000,type:'audio/mp4',star:false,blob:new Blob([new Uint8Array(5000)],{type:'audio/mp4'})}).then(refreshTakes).then(rerender)")
         pg.wait_for_timeout(200)
         trace = collections.deque(maxlen=20); trace.append(f'seed {seed}, {w}x{h}')

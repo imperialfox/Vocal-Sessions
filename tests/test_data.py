@@ -17,7 +17,20 @@ def run(b, t):
     pre = json.loads(pg.evaluate("localStorage.getItem('vocalBeforeUpgrade')") or 'null')
     ok(pre and pre['from'] == 0 and pre['to'] == S and 'schema' not in pre['data'] and [x['id'] for x in pre['data']['sessions']] == [x['id'] for x in sample()['sessions']],
        'a copy of the data as it was is kept before upgrading')
-    ok(pre and saved['sessions'] == pre['data']['sessions'] and saved['months'] == pre['data']['months'] and {k: v for k, v in saved.items() if k != 'schema'} == pre['data'], 'upgrading changes nothing else')
+    ok(pre and saved['sessions'] == pre['data']['sessions'] and saved['months'] == pre['data']['months'] and {k: v for k, v in saved.items() if k not in ('schema', 'songs')} == {k: v for k, v in pre['data'].items() if k != 'songs'},
+       'upgrading changes nothing else')
+    # step 2 (3.8): songs get an artist, a pin and the date they were added, and keep everything they had
+    ok(len(saved['songs']) == len(pre['data']['songs']) and all(
+        {k: v for k, v in x.items() if k not in ('artist', 'pinned', 'added')} == y and x['artist'] == '' and x['pinned'] is False and x['added'] > 0
+        for x, y in zip(saved['songs'], pre['data']['songs'])), 'step 2: songs keep their id and name, and gain an artist, a pin and a date added')
+    pg.context.close()
+    from harness import with_song_practice
+    d = with_song_practice(); first = d['songSessions'][0]['date']
+    pg = t.page(b, data=d)
+    import datetime as _dt
+    added = pg.evaluate("D.songs[0].added")
+    ok(abs(added - _dt.datetime.fromisoformat(first.replace('Z', '+00:00')).timestamp() * 1000) < 1000, 'step 2: a song is dated by its first song practice')
+    ok(pg.evaluate("D.schema") == S, 'and the data reaches the current version')
     # once upgraded, reopening doesn't upgrade again
     pg.evaluate("localStorage.removeItem('vocalBeforeUpgrade')"); pg.reload(); ready(pg)
     ok(pg.evaluate("localStorage.getItem('vocalBeforeUpgrade')") is None, 'reopening up-to-date data makes no new copy')

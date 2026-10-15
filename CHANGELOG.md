@@ -9,6 +9,47 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.8 · 15 Oct 2026
+*Songs: lyrics you can mark up*
+<!-- area: songs -->
+
+**Songs**
+- **Songs** is a new tab. Paste the lyrics of a song you're learning and they're split into labelled sections: verse, pre-chorus, chorus, bridge and the rest.
+- Labels are found however the lyrics were written: `[Chorus]`, `Verse 2:`, `PRECHORUS`, `[Chorus: Sam]`. Blank lines split sections too, and a chorus that repeats itself is split in two.
+- Website clutter is cleaned out of the paste: links, "You might also like", "Embed" and the "Lyrics" title line. Curly quotes become straight ones.
+- Before saving, check the labels. Guesses are marked **Guessed**, and exact repeats are linked, so marks only need adding once. Tap the tick at the top to save.
+- The lyrics you pasted are kept exactly as they were, alongside the sections.
+- Titles and artists are capitalised for you.
+
+**Marking up a song**
+- Each section sits in its own card, one phrase per line, with repeats numbered (Chorus 1, Chorus 2). Long lines shrink to fit, and wrap only as a last resort.
+- The pencil opens **Annotate**. Tap a word for Breath, Run, Higher, Lower, Sing as (the vowel to aim for) or a Note. Add an expressive cue to any section.
+- A mark on a linked section shows on every repeat, and the same word lights up in each one.
+- **Lyrics** edits the words. Marks follow their words as you edit. If a marked word changes, its mark is flagged to check; if it's removed, the mark waits at the top of the section to be moved or removed. The pencil shows how many need checking.
+- Hold a section to drag it somewhere else in the song. **Undo** steps back through any change.
+- **Unlink** gives one repeat its own copy, so it can change on its own.
+- **Practise** shows every mark. **Perform** hides the technical ones and leaves the expressive cues. **Key** explains each mark.
+- **Song practice** at the bottom of a song starts song practice with that song picked.
+
+**Finding songs**
+- Pin up to 3 songs. They sit at the top of Songs and on **Today**.
+- The rest sort by Recently practised, Recently added or Title A–Z, chosen from the heading. Songs not practised yet say **New**.
+- Swipe right to pin, left to delete. Press and hold for Pin, Rename and Delete. **Edit** selects several at once.
+- **Search** sits at the bottom, beside the tab bar. It searches titles, artists and lyrics, ignores punctuation and accents, finds words in any order (even across lines) and forgives a slipped letter. Recent searches are kept.
+- Songs from song practice are in Songs too. **Add lyrics** gives them lyrics and keeps their recordings.
+
+<!-- area: look -->
+**Settings moves to Today**
+- **Settings** is now the gear at the top right of Today, and Songs takes its place in the tab bar.
+- Songs are managed in Songs, so they're no longer listed in Exercises.
+- On iPad and Mac, songs are listed on the left and the open song is on the right. New shortcuts: Cmd+F searches songs, Cmd+N adds one, Cmd+E edits, ↑ ↓ move between songs and Cmd+, opens Settings.
+
+<!-- area: backup -->
+**Kept safe**
+- Backups include every song with its lyrics, marks and original paste.
+- Each song is checked on its own when the app opens or a backup is read, so one damaged song can't affect the others. If a song's sections are damaged, they're rebuilt from the original paste.
+- Songs you already had are upgraded in place: same name, same recordings, with a date added from their first song practice.
+
 ## 3.7.2 · 15 Oct 2026
 *Your practice content in one place*
 <!-- area: fixes -->

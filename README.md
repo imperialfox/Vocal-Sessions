@@ -2,9 +2,9 @@
 
 A mobile-first companion for structured vocal practice, styled like a native iOS app. It's a single HTML file with no install, no backend and no account. It's designed to live on your iPhone Home Screen.
 
-![Version 3.7.2](https://img.shields.io/badge/version-3.7.2-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
+![Version 3.8](https://img.shields.io/badge/version-3.8-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
 
-**Current version: 3.7.2 · 15 Oct 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
+**Current version: 3.8 · 15 Oct 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
 
 ---
 
@@ -19,6 +19,8 @@ It guides you through a three-step practice session, keeps a history of every se
 | Application | Sing a real song or section, record a take, rate it | ~5–10 min |
 
 There's also **Song practice**, for when you just want to sing a song and record it. It's kept separate from the focused stats above.
+
+And **Songs**, for learning a song: paste the lyrics, and they're split into labelled sections you can mark up with breaths, runs, pitch, vowels, notes and cues.
 
 ---
 
@@ -35,6 +37,8 @@ There's also **Song practice**, for when you just want to sing a song and record
 - This month's minutes against 280, and the suggested rotation exercise (the one that's gone longest since you last did it)
 - Start, resume or discard a session
 - A Song practice card with its own weekly stats
+- **Pinned songs:** up to 3 songs you're working on, and **Show all songs**
+- **Settings** is the gear at the top right
 - Pull down to refresh. This also checks for a newer version of the app and loads it.
 
 **Progress**
@@ -59,10 +63,22 @@ There's also **Song practice**, for when you just want to sing a song and record
 - Tap an exercise for its own page:
   - **Summary:** what it is, why it helps, and where it shows up in songs
   - **History:** a chart of your level over time, plus every session it was in, with your notes
-- Add your own exercises (with an optional description) and songs. Tap a song to see its song practice. Swipe left to delete them.
+- Add your own exercises (with an optional description). Swipe left to delete them.
 
-**Settings**
-- **Export backup:** one file with everything (sessions, minutes, exercises, songs and recordings), checked before you save it. Keep it in iCloud Drive › Vocal Sessions › Backups.
+**Songs**
+- **New song:** paste lyrics from anywhere. Labels like `[Chorus]`, `Verse 2:` or `PRECHORUS` start sections, and blank lines split them too. Website clutter (links, "You might also like", "Embed") is removed, a chorus that repeats itself is split in two, and exact repeats are linked. Check the labels, change any marked **Guessed**, and save. The original paste is kept untouched.
+- **The list:** up to 3 pinned songs at the top, then the rest sorted by Recently practised, Recently added or Title A–Z (tap the heading). Songs you haven't practised yet say **New**.
+  - Swipe right to pin, left to delete. Press and hold (or right-click) for Pin, Rename and Delete. **Edit** selects several songs to pin or delete.
+  - **Search** titles, artists and lyrics. It ignores case, punctuation and accents, finds words in any order, even across lines, and forgives a slipped letter in longer words. Lyric matches show the line with the words highlighted.
+- **A song:** one phrase per line, each section in its own card, with repeats numbered (Chorus 1, Chorus 2) and linked sections marked with a chain.
+  - **Practise** shows every mark; **Perform** hides the technical ones and shows only the expressive cues. **Key** explains the marks.
+  - The pencil opens **Annotate**: tap a word for Breath, Run, Higher, Lower, Sing as (a vowel) or a Note. Add a cue to a section, unlink a repeat to give it its own copy, or hold a section to move it. Undo steps back through changes.
+  - **Lyrics** edits the words. Marked words are highlighted, marks follow their words, and a mark whose word changed is flagged to check. One whose word was removed waits at the top of its section to be moved or removed.
+  - **Song practice** at the bottom starts song practice with that song picked.
+- Songs from song practice are here too, and **Add lyrics** gives them lyrics without losing their recordings.
+
+**Settings** (the gear on Today)
+- **Export backup:** one file with everything (sessions, minutes, exercises, songs with their lyrics and marks, and recordings), checked before you save it. Keep it in iCloud Drive › Vocal Sessions › Backups.
 - **Import backup:** checks the file and compares it with what's on this device, then replaces this device's data after you confirm.
 - **Check a backup:** tells you whether a file is complete and what's inside, without changing anything.
 - **Undo last restore:** for 30 days after a restore.
@@ -113,12 +129,22 @@ The layout follows the device, like a native Apple app:
 |---|---|
 | iPhone | A floating tab bar at the bottom |
 | iPhone on its side | A compact tab bar, with Today in two columns |
-| iPad, or a narrower Mac window | Tabs at the top, a dashboard on Today, and split views for History and Exercises |
+| iPad, or a narrower Mac window | Tabs at the top, a dashboard on Today, and split views for History, Exercises and Songs |
 | Mac, or iPad in landscape | A sidebar |
 
 Opening the app shows a short launch screen with the app icon, in light or dark to match your phone. The launch images for each device are in the `splash` folder.
 
-Sheets open as centred cards on bigger screens. With a mouse or trackpad, rows highlight on hover, and Cmd (or Ctrl) + 1 to 4 switches sections.
+Sheets open as centred cards on bigger screens. With a mouse or trackpad, rows highlight on hover. Keyboard shortcuts (Cmd on a Mac, Ctrl elsewhere):
+
+| Keys | Does |
+|---|---|
+| Cmd + 1 to 4 | Today, Progress, Exercises, Songs |
+| Cmd + , | Settings |
+| Cmd + F | Search songs |
+| Cmd + N | New song (in Songs) |
+| Cmd + E | Edit the open song, and again for Done |
+| ↑ ↓ | Move between songs (iPad and Mac) |
+| Esc | Close a sheet, menu or search, or deselect a word |
 
 ---
 
@@ -152,7 +178,7 @@ A small service worker (`sw.js`) keeps a copy of the app on your device. When yo
 
 ## Data and privacy
 
-- Session data is stored in `localStorage` and recordings in IndexedDB, both on your device only.
+- Session data and songs are stored in `localStorage` and recordings in IndexedDB, both on your device only. Lyrics you paste stay on your device and in your backups; they're never part of the public app.
 - There's no server, analytics or tracking.
 - Backups are plain JSON files that you keep. See [Backups](#backups).
 

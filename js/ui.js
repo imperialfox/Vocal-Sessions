@@ -15,19 +15,19 @@ function pillText() {
 }
 function renderBar() {
   const bar = $('bar');
-  bar.classList.remove('tabsmode');
+  bar.classList.remove('tabsmode', 'always');
   $('barT').classList.remove('tabs');
+  const tabsMode = MQ.reg.matches && !MQ.wide.matches;
   if (U.view === 'all') {
     $('barL').innerHTML = '<button class="circ glass" data-a="allBack" aria-label="Back">' + ICON.back + '</button>';
     $('barR').innerHTML = '';
-    if (MQ.reg.matches && !MQ.wide.matches) {
+    if (tabsMode) {
       bar.classList.add('tabsmode');
       $('barT').classList.add('tabs');
       $('barT').innerHTML = topTabs();
     } else $('barT').textContent = 'All sessions';
   } else if (U.view === 'log') {
-    bar.classList.remove('always');
-    if (MQ.reg.matches && !MQ.wide.matches) {
+    if (tabsMode) {
       bar.classList.add('tabsmode');
       $('barT').classList.add('tabs');
       $('barT').innerHTML = topTabs();
@@ -37,9 +37,17 @@ function renderBar() {
   } else if (U.view === 'ex') {
     const e = exById(U.exId);
     $('barT').textContent = e ? e.name : '';
-    bar.classList.remove('always');
     $('barL').innerHTML = '<button class="circ glass" data-a="exBack" aria-label="Back">' + ICON.back + '</button>';
     $('barR').innerHTML = '';
+  } else if (U.view === 'lyr') {
+    const b = songViewBar();
+    if (b.tabs) {
+      $('barT').classList.add('tabs');
+      $('barT').innerHTML = b.t;
+    } else $('barT').innerHTML = b.t;
+    if (b.always) bar.classList.add('always');
+    $('barL').innerHTML = b.l;
+    $('barR').innerHTML = b.r;
   } else if (U.view) {
     const v = VIEWS[U.view];
     $('barT').textContent = v[0];
@@ -64,19 +72,34 @@ function renderBar() {
       '" id="timer" data-a="clock" aria-label="Session time. Tap for the clock">' +
       pillText() +
       '</button>';
-  } else if (MQ.reg.matches && !MQ.wide.matches) {
-    bar.classList.add('tabsmode');
-    $('barT').classList.add('tabs');
-    $('barT').innerHTML = topTabs();
-    $('barL').innerHTML = '';
-    $('barR').innerHTML = '';
-    return;
   } else {
-    $('barT').textContent = { today: 'Today', history: 'Progress', exercises: 'Exercises', settings: 'Settings' }[
-      U.tab
-    ];
-    $('barL').innerHTML = '';
-    $('barR').innerHTML = '';
+    // Today has Settings at the top right; Settings has a way back; Songs has its buttons on iPhone
+    const x =
+      U.tab === 'today'
+        ? {
+            l: '',
+            r: '<button class="circ glass" data-a="openSettings" aria-label="Settings">' + ICON.gear + '</button>',
+          }
+        : U.tab === 'settings'
+          ? {
+              l: '<button class="circ glass" data-a="setBack" aria-label="Back to Today">' + ICON.back + '</button>',
+              r: '',
+            }
+          : U.tab === 'songs' && !split()
+            ? songListBar()
+            : { l: '', r: '' };
+    $('barL').innerHTML = x.l;
+    $('barR').innerHTML = x.r;
+    if (tabsMode) {
+      bar.classList.add('tabsmode');
+      $('barT').classList.add('tabs');
+      $('barT').innerHTML = topTabs();
+      return;
+    }
+    $('barT').textContent =
+      x.t ||
+      { today: 'Today', history: 'Progress', exercises: 'Exercises', songs: 'Songs', settings: 'Settings' }[U.tab];
+    if (x.always) bar.classList.add('always');
   }
 }
 const topTabs = () =>
@@ -85,11 +108,11 @@ const topTabs = () =>
     .map(
       (t) =>
         '<button class="' +
-        (U.tab === t[0] ? 'on' : '') +
+        (tabOf(U.tab) === t[0] ? 'on' : '') +
         '" data-a="tab" data-v="' +
         t[0] +
         '" aria-current="' +
-        (U.tab === t[0] ? 'page' : 'false') +
+        (tabOf(U.tab) === t[0] ? 'page' : 'false') +
         '">' +
         t[1] +
         '</button>'
@@ -108,11 +131,11 @@ function renderSide() {
       .map(
         (t) =>
           '<button class="sbi' +
-          (U.tab === t[0] ? ' on' : '') +
+          (tabOf(U.tab) === t[0] ? ' on' : '') +
           '" data-a="tab" data-v="' +
           t[0] +
           '" aria-current="' +
-          (U.tab === t[0] ? 'page' : 'false') +
+          (tabOf(U.tab) === t[0] ? 'page' : 'false') +
           '">' +
           t[2] +
           '<span>' +
@@ -141,27 +164,42 @@ function renderDock() {
     $('dock').innerHTML = '';
     return;
   }
+  const songList = U.tab === 'songs' && !U.view;
+  // iPhone: searching songs, selecting them or editing one takes the place of the tab bar
+  if ((songList && (U.sFocus || U.sList)) || (U.view === 'lyr' && U.sEdit)) {
+    $('dock').innerHTML = '';
+    return;
+  }
   if (window.scrollY < 60) tabMin = false; // never leave it shrunk at the top of a page
-  const t = (id, lab, ic) =>
-    '<button class="' +
-    (U.tab === id ? 'on' : '') +
-    '" data-a="tab" data-v="' +
-    id +
-    '" aria-current="' +
-    (U.tab === id ? 'page' : 'false') +
-    '">' +
-    ic +
-    lab +
-    '</button>';
-  $('dock').innerHTML =
+  const cur = tabOf(U.tab);
+  const nav =
     '<nav class="tabbar glass' +
     (tabMin ? ' min' : '') +
     '" aria-label="Tabs">' +
-    t('today', 'Today', ICON.mic) +
-    t('history', 'Progress', ICON.chart) +
-    t('exercises', 'Exercises', ICON.list) +
-    t('settings', 'Settings', ICON.gear) +
+    TABS()
+      .map(
+        (t) =>
+          '<button class="' +
+          (cur === t[0] ? 'on' : '') +
+          '" data-a="tab" data-v="' +
+          t[0] +
+          '" aria-current="' +
+          (cur === t[0] ? 'page' : 'false') +
+          '">' +
+          t[2] +
+          t[1] +
+          '</button>'
+      )
+      .join('') +
     '</nav>';
+  $('dock').innerHTML =
+    songList && D.songs.length
+      ? '<div class="dockrow">' +
+        nav +
+        '<button class="circ glass scirc" data-a="sgSearch" aria-label="Search songs">' +
+        SGI.search +
+        '</button></div>'
+      : nav;
 }
 function sheetWrap(title, body, label, tools) {
   return (
@@ -222,7 +260,8 @@ function renderSheet() {
   const s = U.sheet,
     k = U.sd.k;
   let h = '';
-  if (s === 'confirmF')
+  if (s && /^sg[A-Z]/.test(s)) h = songSheet(s);
+  else if (s === 'confirmF')
     h = sheetWrap(
       'Confirm foundation',
       '<div class="grp">' +
@@ -978,6 +1017,14 @@ function editSheet() {
 function render(keepScroll) {
   const y = window.scrollY;
   closeSwipes();
+  // keep what's typed in the lyrics editor, and leave editing when the song is no longer on screen
+  if (U.sEdit === 'lyrics' && !SG.noSync && document.querySelector('.lyred')) applyLyrics();
+  SG.noSync = false;
+  if (U.sEdit && !(U.view === 'lyr' || songOpenInPane())) {
+    U.sEdit = null;
+    SG.word = null;
+    SG.drag = null;
+  }
   const v = U.view;
   $('app').innerHTML =
     v === 'log'
@@ -986,9 +1033,17 @@ function render(keepScroll) {
         ? scrEx()
         : v === 'all'
           ? scrAll()
-          : v
-            ? { found: scrFound, rot: scrRot, app: scrApp, song: scrSong }[v]()
-            : { today: scrToday, history: scrHistory, exercises: scrExercises, settings: scrSettings }[U.tab]();
+          : v === 'lyr'
+            ? scrSongView()
+            : v
+              ? { found: scrFound, rot: scrRot, app: scrApp, song: scrSong }[v]()
+              : {
+                  today: scrToday,
+                  history: scrHistory,
+                  exercises: scrExercises,
+                  songs: scrSongs,
+                  settings: scrSettings,
+                }[U.tab]();
   $('app').className =
     (isFlow(v) ? 'flow' : 'tabv') +
     (isFlow(v) || (!v && U.tab === 'settings') || v === 'log' || (v === 'ex' && !split()) ? ' narrow' : '');
@@ -999,6 +1054,7 @@ function render(keepScroll) {
   if (keepScroll) window.scrollTo(0, y);
   placeKnobs();
   logReveal();
+  songsAfter();
 }
 const rerender = () => render(true);
 function go(fn) {

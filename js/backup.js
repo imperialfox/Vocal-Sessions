@@ -91,7 +91,7 @@ function readmeLines(now, s) {
       plural(s.songPractice, 'song practice', 'song practices') +
       ', ' +
       plural(s.recordings, 'voice recording') +
-      ', plus exercises, songs, notes and monthly minutes.',
+      ', plus exercises, songs and their lyrics, notes and monthly minutes.',
     'Made on ' +
       deviceName() +
       ' on ' +
@@ -103,7 +103,7 @@ function readmeLines(now, s) {
       '.',
     'To restore it: open ' +
       APP_URL +
-      ' and add it to your Home Screen. Then go to Settings, tap Import backup and choose this file.',
+      ' and add it to your Home Screen. Then open Settings (the gear at the top of Today), tap Import backup and choose this file.',
     'To check it without restoring: Settings, then Check a backup.',
     'There is one backup file per month for each device. A newer one from the same month replaces the older one.',
     'Please don’t edit this file. The check code at the end confirms nothing is missing or changed.',
@@ -138,7 +138,7 @@ function readmeText() {
     'Code and instructions: ' + REPO,
     '',
     'WHAT’S IN EACH BACKUP',
-    'Every practice session and its minutes, exercise levels, songs, notes, how each session went, and voice recordings.',
+    'Every practice session and its minutes, exercise levels, songs with their lyrics and marks, notes, how each session went, and voice recordings.',
     '',
     'FILE NAMES',
     'Vocal Sessions backup · YEAR-MONTH · DEVICE.json',
@@ -147,7 +147,7 @@ function readmeText() {
     '',
     'HOW TO RESTORE',
     '1. Open ' + APP_URL + ' in Safari and add it to the Home Screen (Share, then Add to Home Screen).',
-    '2. Open the app, go to Settings and tap Import backup.',
+    '2. Open the app, tap the gear at the top of Today for Settings, and tap Import backup.',
     '3. Choose the newest file. The app shows what’s inside and compares it with what’s on the device before anything is replaced.',
     '4. Changed your mind? Settings, then Undo last restore, for 30 days.',
     '',

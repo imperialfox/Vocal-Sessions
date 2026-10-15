@@ -40,6 +40,7 @@ Notes for whoever works on the app next, whether that's Ivan, a new Claude sessi
 | `js/storage.js` | Loading, checking (`cleanData`) and saving data, data-version upgrades, recordings in IndexedDB |
 | `js/helpers.js` | Small helpers (dates, text, icons, layout) and the on-screen state `U` |
 | `js/screens.js` | Today, Progress, Exercises, Settings and the session steps |
+| `js/songs.js` | Songs: the list, pasting and labelling lyrics, the lyrics screen, marks and cues, editing, search, pins, and checking saved songs (`cleanSong`) |
 | `js/changelog.js` | Settings › Changelog, built from CHANGELOG.md |
 | `js/ui.js` | Top bar, tab bar, sidebar, sheets, `render()` and the sliding picker knobs |
 | `js/session.js` | Running a session (steps, clock, finishing, editing) and recording takes |
@@ -67,6 +68,7 @@ Everything stays on the device. There is no server.
 | localStorage | `vocalTracker` | All saved data (`D`): sessions, song practice, months, exercises, songs, words, last backup |
 | localStorage | `vocalDraft` | The session in progress (`X`), so it survives closing the app |
 | localStorage | `vocalBackupLog` | Backup history for this device |
+| localStorage | `vocalSongPrefs` | This device's song sort order and recent searches (not backed up) |
 | localStorage | `vocalBeforeUpgrade` | The data as it was before the last data upgrade, kept for 30 days |
 | IndexedDB `vocalTakes` (version 2) | store `takes` | Recordings, with their audio as Blobs |
 | IndexedDB `vocalTakes` | store `undo` | The copy kept for 30 days after a restore |
@@ -75,13 +77,27 @@ Everything stays on the device. There is no server.
 
 ### Data version
 
-Saved data carries `schema` (currently 1, from 3.7). To change the shape of saved data:
+Saved data carries `schema` (currently 2, from 3.8; 1 was 3.7). To change the shape of saved data:
 
 1. Add a numbered step to `UPGRADES` that changes `D` in place, and raise `SCHEMA` to match.
 2. Steps run in order the first time the new version opens, and whenever an older backup is restored. Before they run, the data is copied to `vocalBeforeUpgrade`.
 3. Add a test in `tests/test_data.py` that loads data from before the step and checks the result.
 
 A backup whose `schema` is higher than the app's shows "Made by a newer version" before restoring.
+
+### Songs
+
+Each song in `D.songs` is its own record. Songs from before 3.8 have only `id` and `name`; everything else is optional.
+
+| Field | Holds |
+|---|---|
+| `id`, `name` | Never change. Recordings (`songId`) and song practice (`songId`, `songName`) point at them. `name` is the title |
+| `artist`, `pinned`, `added` | Artist (may be empty), pinned on Today and at the top of Songs (at most 3), when it was added (ms) |
+| `original` | The lyrics exactly as pasted. Never edited, so damaged lyrics can be rebuilt from it |
+| `sections` | `{sid: {label, cue, lines, ann, orphans}}`. `lines` is an array of lines, each an array of words. `ann` maps `"line:word"` to marks: `br`, `run`, `up`, `dn` (1), `v` (vowel), `nt` (note), and `check` + `was` when the word changed. `orphans` are marks whose word was removed |
+| `order` | The running order `[{o, sid}]`. Linked repeats share a `sid`; each `o` is one place in the song (takes will hang off it) |
+
+`cleanSong()` checks each song on its own when data loads or a backup is read: bad values are dropped, marks on missing words and order entries for missing sections are removed, fields it doesn't know are kept, and if the lyrics are unusable but `original` is there, they're rebuilt from it. Practised dates come from recordings (`TAKES`), so nothing is stored twice.
 
 ### Rules that keep old data working
 
@@ -107,7 +123,7 @@ Settings › Changelog fetches `CHANGELOG.md` and builds the timeline from it (`
 - Another change. <!-- area: fixes -->   ← one bullet in a different area
 ```
 
-- Areas: `practice`, `progress`, `recordings`, `backup`, `look`, `fixes`. Untagged bullets use their section's or version's area, or `fixes` for a patch version and `practice` otherwise.
+- Areas: `practice`, `songs`, `progress`, `recordings`, `backup`, `look`, `fixes`. Untagged bullets use their section's or version's area, or `fixes` for a patch version and `practice` otherwise.
 - An x.0 version can name its era: `<!-- era: Liquid Glass · Native look, deeper tracking… -->`.
 - The comments are invisible on GitHub.
 - `python tests/run.py release` checks every heading, headline and area tag, and the changelog tests check every version appears in the app.

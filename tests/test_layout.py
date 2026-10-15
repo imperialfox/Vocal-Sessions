@@ -8,6 +8,10 @@ SIZES = [('iphone', 390, 844, True), ('iphone-small', 375, 667, True), ('iphone-
 FITS = "document.documentElement.scrollWidth<=innerWidth"
 BAR_IN = "(()=>{const b=document.querySelector('.tabbar,.toptabs,.side .sbi');if(!b)return true;const r=b.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth+0.5})()"
 
+SONG = """(()=>{const l='[Verse 1]\\nPaper boats along the gutter racing rain down Elmwood Lane past the bakery\\nRacing rain\\n\\n[Chorus]\\nCarry me, carry me over\\nLet the river know my name\\n\\n[Chorus]\\nCarry me, carry me over\\nLet the river know my name';
+ U.sDraft={step:1,title:'River song',artist:'Example band',text:l};U.sDraft.blocks=splitBlocks(l);U.sDraft.step=2;sgSaveDraft();
+ const s=songById(U.songId),sid=s.order[1].sid;s.sections[sid].ann['0:2']={br:1,v:'ah'};s.sections[sid].ann['1:1']={nt:'Lift here'};s.sections[sid].cue='Open, full voice';save();rerender();})()"""
+
 TOUCH = """(a)=>{const [type,y]=a;const t=new Touch({identifier:1,target:document.body,clientX:200,clientY:y});
   const e=new TouchEvent(type,{touches:type==='touchend'?[]:[t],changedTouches:[t],bubbles:true,cancelable:true});document.body.dispatchEvent(e);return e.defaultPrevented}"""
 
@@ -24,8 +28,17 @@ def run(b, t):
                 if not pg.evaluate(BAR_IN): bad.append(screen + ' tabs off screen')
                 t.shot(pg, f'{tag}-{screen}')
             check('today')
-            for tab in ['history', 'exercises', 'settings']:
+            for tab in ['history', 'exercises', 'settings', 'songs']:
                 pg.evaluate(f"U.tab='{tab}';U.view=null;render()"); pg.wait_for_timeout(250); check(tab)
+            pg.evaluate(SONG); pg.wait_for_timeout(300); check('song')
+            pg.evaluate("SG_ACT.sgEdit()"); pg.wait_for_timeout(250)
+            pg.click('.sgsec >> nth=1 >> .w >> nth=3'); pg.wait_for_timeout(250)
+            if not pg.evaluate("(()=>{const m=document.getElementById('emenu');if(!m)return false;const r=m.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth+0.5})()"): bad.append('marks menu off screen')
+            check('song-edit')
+            pg.evaluate("SG_ACT.sgEditMode(document.querySelector('[data-a=sgEditMode][data-v=lyrics]'),'lyrics')"); pg.wait_for_timeout(400); check('song-lyrics')
+            pg.evaluate("sgEndEdit(true);U.view=null;U.tab='songs';render();SG_ACT.sgNew()"); pg.wait_for_timeout(500); check('new-song')
+            pg.evaluate("U.sheet=null;U.tab='songs';render();startSearch()"); pg.wait_for_timeout(300); check('songs-search')
+            pg.evaluate("endSearch();U.view=null;U.tab='today';render()"); pg.wait_for_timeout(200)
             pg.evaluate("U.tab='history';render()"); pg.click('[data-a=openAll][data-v=sessions]'); pg.wait_for_timeout(250); check('all-sessions')
             pg.evaluate("U.view=null;U.tab='settings';render()"); pg.click('.row[data-a=openLog]'); pg.wait_for_function("LOG_STATE==='ready'", timeout=8000); pg.wait_for_timeout(1200); check('changelog')
             pg.evaluate("U.view=null;U.tab='today';render()"); pg.click('[data-a=openCal]'); pg.wait_for_timeout(600); check('calendar')

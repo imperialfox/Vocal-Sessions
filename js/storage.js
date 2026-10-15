@@ -38,7 +38,7 @@ function cleanData(d) {
   const out = Object.assign({}, d, {
     sessions: arr(d.sessions).filter(okS).map(fixS),
     songSessions: arr(d.songSessions).filter(okS).map(fixS),
-    songs: arr(d.songs).filter((x) => x && x.id && typeof x.name === 'string'),
+    songs: arr(d.songs).map(cleanSong).filter(Boolean), // each song checked on its own (songs.js)
     custom: arr(d.custom).filter((x) => x && x.id && typeof x.name === 'string'),
     months: obj(d.months),
     ex: obj(d.ex),
@@ -81,10 +81,25 @@ function saveDraft() {
 }
 /* Data version. When the shape of saved data has to change, add a numbered step to UPGRADES and raise SCHEMA.
    Steps may only add things, so older backups and the previous version of the app keep working. */
-const SCHEMA = 1,
+const SCHEMA = 2,
   PRE_UPGRADE = 'vocalBeforeUpgrade';
 const UPGRADES = {
   1: (d) => {}, // 3.7: saved data gets a version number. Nothing else changes.
+  // 3.8: songs can have lyrics, an artist and a pin. Songs already here keep their name and recordings, and get
+  // an artist (none), a pin (off) and the date they were added (their first song practice, or now).
+  2: (d) => {
+    (d.songs || []).forEach((s) => {
+      if (typeof s.artist !== 'string') s.artist = '';
+      if (typeof s.pinned !== 'boolean') s.pinned = false;
+      if (!(s.added > 0)) {
+        const t = (d.songSessions || [])
+          .filter((x) => x.songId === s.id)
+          .map((x) => +new Date(x.date))
+          .filter(isFinite);
+        s.added = t.length ? Math.min.apply(null, t) : Date.now();
+      }
+    });
+  },
 };
 function upgradeData() {
   const from = +D.schema || 0;

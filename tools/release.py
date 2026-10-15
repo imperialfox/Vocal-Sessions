@@ -41,7 +41,7 @@ def problems():
     out += changelog_problems(log)
     return out
 
-AREAS = {'practice', 'progress', 'recordings', 'backup', 'look', 'fixes'}
+AREAS = {'practice', 'songs', 'progress', 'recordings', 'backup', 'look', 'fixes'}
 
 def changelog_problems(log):
     """The app's Changelog page is built from CHANGELOG.md, so check the format it relies on."""
