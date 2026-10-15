@@ -9,6 +9,15 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.7.2 · 15 Oct 2026
+*Your practice content in one place*
+<!-- area: fixes -->
+
+Nothing looks or works differently.
+- Everything about your practice that you might want to change now lives in one file, `js/content.js`: goals, the coach video and its timings, the exercises and their write-ups, the quick words, and the Toggl tags. <!-- area: practice -->
+- The file starts with a short guide to what's safe to change, and the one thing never to change: an exercise's id, which links it to your history.
+- A new check runs with every update and after any edit to that file. It makes sure every exercise has a write-up, quick words and a video timing, and spells out exactly what's missing if not.
+
 ## 3.7.1 · 15 Oct 2026
 *Tidier inside, the same on the outside*
 <!-- area: fixes -->

@@ -875,7 +875,9 @@ function songSessionBody(ss, mode) {
       '</div>';
   else if ((ss.takes || []).length) b += '<p class="foot">This practice’s takes are no longer on this phone.</p>';
   b +=
-    '<p class="foot">Toggl tag #song-practice. Kept out of your focused goal and streak.</p><div style="margin-top:12px"><button class="cta" data-a="copy" data-k="' +
+    '<p class="foot">Toggl tag ' +
+    esc(TOGGL.song) +
+    '. Kept out of your focused goal and streak.</p><div style="margin-top:12px"><button class="cta" data-a="copy" data-k="' +
     ss.id +
     '">Copy for Toggl</button></div>' +
     (done ? '<button class="ghost" data-a="close">Done</button>' : '') +

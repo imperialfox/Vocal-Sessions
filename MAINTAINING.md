@@ -6,7 +6,7 @@ Notes for whoever works on the app next, whether that's Ivan, a new Claude sessi
 
 ## The short version
 
-1. Change the files in `js/` and `css/` (or `index.html` for markup, `sw.js` for offline behaviour).
+1. Change the files in `js/` and `css/` (or `index.html` for markup, `sw.js` for offline behaviour). Practice content (exercises, words, write-ups, goals) is all in `js/content.js`.
 2. Run `python tests/run.py`. Everything must pass.
 3. Run `python tools/release.py 3.7` with the new version, and write the changes in `CHANGELOG.md`.
 4. Run `python tests/run.py release` to check the version agrees everywhere.
@@ -35,7 +35,8 @@ Notes for whoever works on the app next, whether that's Ivan, a new Claude sessi
 
 | File | Holds |
 |---|---|
-| `js/config.js` | Exercise lists, coach-video timings, quick words, targets and other fixed content |
+| `js/content.js` | **The practice content:** goals, coach video and timings (`VID`), exercises (`FOUND`, `ROT`), write-ups (`DESC`), quick words and Toggl tags. Loaded first |
+| `js/config.js` | App settings and fixed design: limits, focus areas and colours, exercise icons |
 | `js/storage.js` | Loading, checking (`cleanData`) and saving data, data-version upgrades, recordings in IndexedDB |
 | `js/helpers.js` | Small helpers (dates, text, icons, layout) and the on-screen state `U` |
 | `js/screens.js` | Today, Progress, Exercises, Settings and the session steps |
@@ -139,6 +140,7 @@ The tests drive the real app in Chromium, served from `localhost` as GitHub Page
 | File | Covers |
 |---|---|
 | `test_release.py` | The version agrees in the app, README and CHANGELOG |
+| `test_content.py` | content.js fits together: every exercise has a valid focus, a write-up, quick words and a video timing; no bare `&`; Toggl tags in use |
 | `test_flows.py` | A full session with notes, the clock, Skip, editing, song practice, Toggl text and drafts |
 | `test_progress.py` | The Progress chart, ranges, picking bars, time per step and the "doors" to All sessions |
 | `test_edge.py` | Every bug from the 3.3.2 audit, so none come back |

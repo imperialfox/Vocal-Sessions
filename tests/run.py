@@ -13,7 +13,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from playwright.sync_api import sync_playwright
 import harness
 
-ORDER = ['release', 'flows', 'progress', 'edge', 'backup', 'data', 'changelog', 'recording', 'layout', 'fuzz']
+ORDER = ['release', 'content', 'flows', 'progress', 'edge', 'backup', 'data', 'changelog', 'recording', 'layout', 'fuzz']
 
 def main():
     picked = [a for a in sys.argv[1:] if not a.startswith('-')] or ORDER

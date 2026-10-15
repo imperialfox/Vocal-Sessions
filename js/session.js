@@ -47,7 +47,8 @@ function togglLines(ss) {
       (ss.songName ? ': ' + ss.songName : '') +
       (n ? ', ' + n + ' take' + (n > 1 ? 's' : '') : '') +
       (how ? ' — ' + how : '') +
-      ' #song-practice'
+      ' ' +
+      TOGGL.song
     );
   }
   const L = [],
@@ -60,7 +61,8 @@ function togglLines(ss) {
         return e.name + (lv ? ' L' + lv : ' skipped') + (n ? ' (' + n + ')' : '');
       }).join(', ') +
       (ss.fNote ? ' — ' + ss.fNote : '') +
-      ' #foundation #cord-closure'
+      ' ' +
+      TOGGL.foundation
   );
   Object.keys(ss.rot || {}).forEach((id) => {
     const e = exById(id) || { name: (ss.rotNames || {})[id] || 'Exercise', focus: 'custom' };
@@ -72,7 +74,9 @@ function togglLines(ss) {
         '/3' +
         (n ? ' — ' + n : '') +
         (ss.rNote ? ' — ' + ss.rNote : '') +
-        ' #rotation #' +
+        ' ' +
+        TOGGL.rotation +
+        ' #' +
         e.focus
     );
   });
@@ -81,7 +85,7 @@ function togglLines(ss) {
     .filter((x) => r[x])
     .map((x) => x.toLowerCase() + ' ' + r[x])
     .join(', ');
-  L.push('Application' + (ss.songName ? ': ' + ss.songName : '') + (rt ? ' — ' + rt : '') + ' #application');
+  L.push('Application' + (ss.songName ? ': ' + ss.songName : '') + (rt ? ' — ' + rt : '') + ' ' + TOGGL.application);
   if (how) L.push('How it went: ' + how);
   return L.join('\n');
 }
