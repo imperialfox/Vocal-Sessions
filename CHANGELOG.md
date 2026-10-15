@@ -9,6 +9,33 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.5 · 15 Oct 2026
+
+**History is now Progress**
+- **Recent:** your last 5 sessions, each with a small bar showing how its time split, and **Show all sessions**.
+- **Practice time:**
+  - A **D · W · M · 6M · Y · All** switch, like the Health app.
+  - Your total for the period, with arrows to go back through earlier ones.
+  - A stacked bar chart of Foundation, Rotation and Application. Tap or slide across the bars to see each hour, day, week or month.
+  - A breakdown with time and percentage for each step.
+- **Song practice:** this week's and this month's totals, your last 3 song practices, and **Show all song practice**.
+- **All sessions** holds the full Sessions | Song practice list, with the same details, Copy for Toggl, edit and delete as before. On iPad and Mac it keeps its detail pane.
+
+**Time per step**
+- Each session now saves the real time spent on Foundation, Rotation and Application, from the session clock.
+- If a step took under 2 minutes, you probably filled it in at the end, for example while following the coach video in the car. These sessions show as a blended bar on the chart. Their time is still split using the coach video's length for each exercise, scaled by the levels you did, with Application as whatever's left.
+- Sessions from before this version are split the same way.
+- Session details show the time per step. Edit lets you switch between timed and filled in at the end, and set the minutes for each step.
+
+**Colours**
+- The chart uses indigo (Foundation), teal (Rotation) and amber (Application). They're checked for colour-blind separation and contrast in light and dark mode.
+
+**More ways to the same place**
+- Every summary leads to the same full lists and details. Song practice can be reached from Today, Progress, the calendar, and each song in Exercises.
+
+**Works offline**
+- The app now keeps a copy of itself on your device, so it opens with no signal. When you're online it still loads fresh and picks up updates, including through pull to refresh.
+
 ## 3.4.1 · 14 Oct 2026
 
 - The launch screen no longer flashes white before the icon appears. The right background colour is set on the very first frame, and the icon is built into the page so it appears at the same moment.

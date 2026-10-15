@@ -2,9 +2,9 @@
 
 A mobile-first companion for structured vocal practice, styled like a native iOS app. It's a single HTML file with no install, no backend and no account. It's designed to live on your iPhone Home Screen.
 
-![Version 3.4.1](https://img.shields.io/badge/version-3.4.1-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue)
+![Version 3.5](https://img.shields.io/badge/version-3.5-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue)
 
-**Current version: 3.4.1 · 14 Oct 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
+**Current version: 3.5 · 15 Oct 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
 
 ---
 
@@ -37,15 +37,21 @@ There's also **Song practice**, for when you just want to sing a song and record
 - A Song practice card with its own weekly stats
 - Pull down to refresh. This also checks for a newer version of the app and loads it.
 
-**History**
-- A **Sessions | Song practice** switch
-- Every finished session, grouped by month, with levels, notes and how it went
-- Open a session to:
+**Progress**
+- **Recent:** your last 5 sessions, each with a small bar showing how its time split. **Show all sessions** opens the full list.
+- **Practice time:**
+  - A **D · W · M · 6M · Y · All** switch, like the Health app
+  - Your total time for that period, with arrows to step back through earlier ones
+  - A stacked bar chart: Foundation (indigo), Rotation (teal) and Application (amber). Tap or slide across the bars to see each hour, day, week or month.
+  - A breakdown of time and percentage for each step
+- **Filled in at the end:** if you don't tap through each step (for example, following the coach video in the car), the app notices and shows that session as a blended bar. Its time is still split using the coach video's length for each exercise and the levels you did, with Application as whatever's left. Sessions from before this version are split the same way.
+- **Song practice:** this week's and this month's totals, your last 3 song practices, and **Show all song practice**
+- **All sessions:** a **Sessions | Song practice** list, grouped by month. Open any session to:
   - Copy it for Toggl again
-  - **Edit** the date, minutes, levels, notes and how it went. Totals, streak and last-done dates update to match.
+  - Edit it with the pencil: date, minutes, levels, notes, how it went, and how its time was split between the steps. Totals, streak and last-done dates update to match.
   - Delete it
+- Every summary leads to the same lists and details, from wherever it appears: Progress, the calendar, Today and Exercises.
 - Pull down to refresh
-- Swipe left to delete. Deleting asks first, takes its minutes off the month, and updates last-done dates.
 
 **Exercises**
 - One link to the coach video, opening in YouTube
@@ -53,7 +59,7 @@ There's also **Song practice**, for when you just want to sing a song and record
 - Tap an exercise for its own page:
   - **Summary:** what it is, why it helps, and where it shows up in songs
   - **History:** a chart of your level over time, plus every session it was in, with your notes
-- Add your own exercises (with an optional description) and songs. Swipe left to delete them.
+- Add your own exercises (with an optional description) and songs. Tap a song to see its song practice. Swipe left to delete them.
 
 **Settings**
 - **Export backup:** one file with everything (sessions, minutes, exercises, songs and recordings). Save it to iCloud Drive.
@@ -134,6 +140,10 @@ Removing a Home Screen app deletes its data, so always export first.
 Everything to edit sits at the top of the `<script>` block: `VIDEO` (your coach video), `TARGET` and `WEEK_TARGET` (minutes), the `FOUND` and `ROT` exercise lists, `DESC` (the write-up shown on each exercise's Summary tab), `EX_WORDS` (quick words for each exercise) and `HOW_WORDS` (the "How did it go?" words).
 
 ---
+
+## Offline
+
+A small service worker (`sw.js`) keeps a copy of the app on your device. When you're online, the app loads fresh and picks up updates. With no signal, or a connection too slow to answer within 4 seconds, it opens from the saved copy.
 
 ## Data and privacy
 

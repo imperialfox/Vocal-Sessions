@@ -77,6 +77,7 @@
   --tint:rgba(0,122,255,0.82);--hl:rgba(0,122,255,0.14);
   --glass-shadow:rgba(20,20,40,0.15);--scrim:rgba(0,0,0,0.22);
   --coral:#f0524a;--warnbg:#fff4e5;--warnfg:#9a5b00;--pause:#ff9f0a;
+  --cF:#5856d6;--cR:#1a9bb5;--cA:#e8890c;--grid:rgba(60,60,67,.14);
   --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",system-ui,sans-serif;
   color-scheme:light;
 }
@@ -90,7 +91,8 @@
   --glass-lo:rgba(0,0,0,0.35);--glass-glow:rgba(255,255,255,0.08);--rim1:rgba(255,255,255,0.42);--rim2:rgba(255,255,255,0.14);--spec:rgba(255,255,255,0.16);
   --tint:rgba(10,132,255,0.78);--hl:rgba(10,132,255,0.24);
   --glass-shadow:rgba(0,0,0,0.55);--scrim:rgba(0,0,0,0.5);color-scheme:dark;
-  --coral:#ff6961;--warnbg:#3a2a12;--warnfg:#ffcf86;--pause:#ff9f0a}}
+  --coral:#ff6961;--warnbg:#3a2a12;--warnfg:#ffcf86;--pause:#ff9f0a;
+  --cF:#7a77ff;--cR:#2f9cc4;--cA:#cc800a;--grid:rgba(255,255,255,.12)}}
 
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;touch-action:manipulation;-webkit-text-size-adjust:100%;overflow-x:clip}
@@ -374,6 +376,40 @@ body.reg .shead{border-radius:28px 28px 0 0}
 #splash img{position:absolute;left:50%;top:50%;margin:-56px 0 0 -56px;width:112px;height:112px;border-radius:26px;box-shadow:0 10px 30px rgba(226,36,64,.28);transition:transform .45s cubic-bezier(.3,.9,.4,1)}
 #splash.out{opacity:0;pointer-events:none}
 #splash.out img{transform:scale(1.18)}
+/* 3.5 Progress */
+.mini{display:flex;height:4px;border-radius:2px;overflow:hidden;gap:2px;margin-top:6px;max-width:150px}
+.mini i{display:block;height:100%;border-radius:2px}
+.mx{background:linear-gradient(90deg,var(--cF),var(--cR),var(--cA))}
+.dot{width:9px;height:9px;border-radius:3px;display:inline-block;flex-shrink:0}
+.dot.mx{background:linear-gradient(0deg,var(--cF),var(--cR),var(--cA))}
+.pcard{background:var(--surface);border-radius:22px;padding:16px 16px 14px;margin-top:12px}
+.kick{font-size:13px;font-weight:600;color:var(--fg2);text-transform:uppercase;letter-spacing:.03em}
+.bignum{display:flex;align-items:baseline;gap:4px;margin-top:2px;font-variant-numeric:tabular-nums}
+.bignum b{font-size:44px;font-weight:700;letter-spacing:-.02em;line-height:1.05}.bignum span{font-size:22px;font-weight:600;color:var(--fg2);margin-right:6px}
+.prange{display:flex;align-items:center;gap:6px;color:var(--fg2);font-size:15px;font-weight:600;margin-top:2px;min-height:32px}
+.prange .t{flex:1}
+.pnav{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;color:var(--accent)}
+.pnav:disabled{color:var(--fg3);cursor:default}
+.pnav svg{width:18px;height:18px;stroke-width:2.4}
+.pchart{position:relative;margin-top:10px;touch-action:pan-y;-webkit-user-select:none;user-select:none}
+.pchart svg{display:block;width:100%;height:auto;overflow:visible}
+.pchart .gl{stroke:var(--grid);stroke-width:1}.pchart .gl.d{stroke-dasharray:2 3}
+.pchart text{font-size:11px;fill:var(--fg2);font-family:var(--font)}
+.pchart .bar{transition:opacity .2s}
+.pchart.picked .bar{opacity:.3}.pchart.picked .bar.on{opacity:1}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin:10px 2px 0;font-size:13px;color:var(--fg2)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.share{width:64px;height:6px;border-radius:3px;background:var(--fill);overflow:hidden;flex-shrink:0}
+.share i{display:block;height:100%;border-radius:3px}
+.val{font-variant-numeric:tabular-nums;min-width:62px;text-align:right}
+.pct{width:40px;text-align:right;color:var(--fg2);font-variant-numeric:tabular-nums}
+.stat3{display:flex;gap:28px;padding:14px 16px 6px}.stat3 div{font-size:13px;color:var(--fg2)}.stat3 b{display:block;font-size:24px;font-weight:700;color:var(--fg);font-variant-numeric:tabular-nums}
+.hdr .r{float:right;text-transform:none}
+.ptag{display:inline-block;font-size:11px;font-weight:600;color:var(--fg2);background:var(--fill);border-radius:999px;padding:2px 7px;margin-left:6px;vertical-align:1px}
+.seg.r6 button{min-width:0;padding:0 4px}
+body.reg .pgrid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);grid-template-rows:auto 1fr;column-gap:28px;align-items:start}
+body.reg .p-time{grid-column:1;grid-row:1 / span 2}body.reg .p-rec{grid-column:2;grid-row:1}body.reg .p-song{grid-column:2;grid-row:2}
+body.reg .pgrid>div>.hdr:first-child{margin-top:8px}
 @keyframes up{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
 @keyframes fade{from{opacity:0}}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
@@ -398,7 +434,7 @@ body.reg .shead{border-radius:28px 28px 0 0}
 
 <script>
 /* ===== Config ===== */
-const APP_VERSION='3.4.1', RELEASE_DATE='14 Oct 2026';
+const APP_VERSION='3.5', RELEASE_DATE='15 Oct 2026';
 const REPO='https://github.com/imperialfox/Vocal-Sessions';
 const VIDEO='https://youtu.be/rG-o10NggDI';
 const TARGET=280, WEEK_TARGET=70;
@@ -437,6 +473,10 @@ const EX_WORDS={
   flex:['Clean runs','Pitch slipped','Ready to speed up','Tripped on the run']};
 const EX_WORDS_DEFAULT=['Felt good','Tight today','Clear tone','Needed more warm-up'];
 const MAX_TAKE=120, KEEP_TAKES=3;
+// length of each exercise in the coach video (seconds, all 3 levels), from its timestamps; used to split sessions filled in at the end
+const VID={slides:435,humming:355,lip:380,straw:355,falsetto:315,upperlower:120,rung:520,hinge:437,half:493,vertical:460,nasal:390,flex:420};
+const VID_DEFAULT=420, QUICK_STEP=120; // own exercises ≈ 7 min; a step under 2 min means the form was filled in at the end
+const FLOW={found:1,rot:1,app:1,song:1};const isFlow=v=>!!FLOW[v];
 
 /* One glyph per exercise; tile colour = focus area */
 const FOCUS_COL={'cord-closure':'#007aff',register:'#8e5cf7',resonance:'#16a8a0',agility:'#f2a20c',blend:'#f0524a'};
@@ -581,6 +621,14 @@ const wordList=(key,base)=>base.concat((D.words[key]||[]).filter(w=>!base.includ
 const findSess=id=>D.sessions.find(x=>x.id===id)||D.songSessions.find(x=>x.id===id);
 const isoDay=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 function lastFor(id){let m=null;D.sessions.forEach(s=>{if((s.f&&s.f[id])||(s.rot&&s.rot[id])){const t=sessEnd(s);if(!m||new Date(t)>new Date(m))m=t;}});return m;}
+// minutes per step: real timings when you tapped through, otherwise the coach video's lengths (scaled by levels done)
+function vidSplit(ss){const tot=+ss.mins||0;let f=0,r=0;
+  FOUND.forEach(e=>{const lv=+((ss.f||{})[e.id])||0;f+=VID[e.id]*lv/3;});
+  Object.keys(ss.rot||{}).forEach(id=>{const lv=+ss.rot[id]||0;r+=(VID[id]||VID_DEFAULT)*lv/3;});
+  f/=60;r/=60;if(f+r>tot&&f+r>0){const k=tot/(f+r);f*=k;r*=k;}return {f,r,a:Math.max(0,tot-f-r),mixed:true};}
+function splitOf(ss){const sp=ss.split,tot=+ss.mins||0;
+  if(!ss.mixed&&sp&&[sp.f,sp.r,sp.a].every(v=>isFinite(+v)&&+v>=0)){const sum=+sp.f+ +sp.r+ +sp.a;if(sum>0){const k=tot/sum;return {f:sp.f*k,r:sp.r*k,a:sp.a*k,mixed:false};}}
+  return vidSplit(ss);}
 function songWeek(){const ws=weekStart(new Date());const l=D.songSessions.filter(s=>new Date(s.date)>=ws);return {n:l.length,m:l.reduce((a,s)=>a+s.mins,0)};}
 function minsIn(from,to){return D.sessions.filter(s=>{const t=new Date(s.date);return t>=from&&t<to;}).reduce((a,s)=>a+s.mins,0);}
 function weekInfo(){
@@ -595,6 +643,7 @@ function weekInfo(){
 const ICON={
   mic:'<svg class="i" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>',
   clock:'<svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  chart:'<svg class="i" viewBox="0 0 24 24"><path d="M5 20V11M10.5 20V5M16 20v-6M21.5 20H2.5"/></svg>',
   list:'<svg class="i" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"/></svg>',
   gear:'<svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
   back:'<svg class="i" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>',
@@ -620,7 +669,7 @@ const chev='<span class="mut" aria-hidden="true" style="font-size:20px">›</spa
 const MQ={reg:matchMedia('(min-width:700px) and (min-height:501px)'),wide:matchMedia('(min-width:1100px) and (min-height:501px)'),land:matchMedia('(orientation:landscape) and (max-height:500px)')};
 const split=()=>MQ.reg.matches;
 function layout(){const b=document.body.classList;b.toggle('reg',MQ.reg.matches);b.toggle('wide',MQ.wide.matches);b.toggle('land',MQ.land.matches&&!MQ.reg.matches);}
-const TABS=()=>[['today','Today',ICON.mic],['history','History',ICON.clock],['exercises','Exercises',ICON.list],['settings','Settings',ICON.gear]];
+const TABS=()=>[['today','Today',ICON.mic],['history','Progress',ICON.chart],['exercises','Exercises',ICON.list],['settings','Settings',ICON.gear]];
 const seg=(a,key,v)=>'<div class="seg" role="group"><span class="knob" aria-hidden="true"></span>'+[1,2,3].map(n=>'<button data-a="'+a+'" data-k="'+esc(key)+'" data-v="'+n+'" class="'+(v===n?'on':'')+'" aria-pressed="'+(v===n)+'" aria-label="Level '+n+'">'+n+'</button>').join('')+'</div>';
 const segF=(a,key,v)=>'<div class="seg" role="group"><span class="knob" aria-hidden="true"></span>'+[0,1,2,3].map(n=>'<button data-a="'+a+'" data-k="'+esc(key)+'" data-v="'+n+'" class="'+(n?'':'sk ')+(v===n?'on':'')+'" aria-pressed="'+(v===n)+'" aria-label="'+(n?'Level '+n:'Skip')+'">'+(n||'Skip')+'</button>').join('')+'</div>';
 const songTile='<span class="tile" style="background:var(--coral)">'+GL('<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>')+'</span>';
@@ -631,7 +680,7 @@ function noteBlock(id,val,ph){if(U.noteOpen!==id&&!val)return '<button class="ad
 const sw=(inner,sheet,k)=>'<div class="sw" data-sw="1"><button class="swdel" data-a="sheet" data-v="'+sheet+'" data-k="'+esc(k)+'" tabindex="-1">Delete</button><div class="fg">'+inner+'</div></div>';
 
 /* ===== UI state ===== */
-const freshU=()=>({tab:'today',view:null,exId:null,exTab:'summary',sheet:null,sd:{},histTab:'sessions',clock:false,noteOpen:null,calMonth:null,calDay:null});
+const freshU=()=>({range:'W',roff:0,pick:null,tab:'today',view:null,exId:null,exTab:'summary',sheet:null,sd:{},histTab:'sessions',clock:false,noteOpen:null,calMonth:null,calDay:null});
 let U=freshU();
 let E=null, bgSaved=false, lastLayerKey='';
 let rec=null, player=null, playingId=null, pendingImport=null, pendingExport=null;
@@ -670,12 +719,93 @@ function scrToday(){
 }
 function histSel(songs){const arr=songs?D.songSessions:D.sessions;let x=U.sel&&arr.find(s=>s.id===U.sel);
   if(!x&&arr.length)x=arr.slice().sort((a,b)=>new Date(b.date)-new Date(a.date))[0];return x||null;}
+/* ===== Progress ===== */
+const BLK=[['f','Foundation','--cF'],['r','Rotation','--cR'],['a','Application','--cA']];
+const RANGES=['D','W','M','6M','Y','All'];
+const pday=d=>{const x=new Date(d);x.setHours(0,0,0,0);return x;};
+const padd=(d,n,u)=>{const x=new Date(d);if(u==='d')x.setDate(x.getDate()+n);else if(u==='m')x.setMonth(x.getMonth()+n);else x.setFullYear(x.getFullYear()+n);return x;};
+const pfmt=(d,o)=>d.toLocaleDateString('en-GB',o);
+function hmBig(m){m=Math.round(m);const h=Math.floor(m/60),x=m%60;return h?'<b>'+h+'</b><span>hr</span>'+(x?'<b>'+x+'</b><span>min</span>':''):'<b>'+x+'</b><span>min</span>';}
+// the period a range covers and its bars; each step's minutes land in the bar for when it happened
+function period(){
+  const t=pday(new Date()),R=U.range||'W',off=U.roff||0;let a,b,bk=[],label;
+  if(R==='D'){a=padd(t,off,'d');b=padd(a,1,'d');for(let h=0;h<24;h++){const st=new Date(a);st.setHours(h);const e=new Date(st);e.setHours(h+1);bk.push({s:st,e,x:h%6===0?(h===0?'12am':h===12?'12pm':(h%12)+(h<12?'am':'pm')):''});}
+    label=off===0?'Today':off===-1?'Yesterday':pfmt(a,{weekday:'long',day:'numeric',month:'long'});}
+  else if(R==='W'){a=padd(weekStart(t),off*7,'d');b=padd(a,7,'d');for(let i=0;i<7;i++){const st=padd(a,i,'d');bk.push({s:st,e:padd(st,1,'d'),x:'MTWTFSS'[i]});}
+    const e=padd(b,-1,'d');label=pfmt(a,{day:'numeric'})+(a.getMonth()!==e.getMonth()?' '+pfmt(a,{month:'short'}):'')+'–'+pfmt(e,{day:'numeric',month:'short',year:'numeric'});}
+  else if(R==='M'){a=new Date(t.getFullYear(),t.getMonth()+off,1);b=padd(a,1,'m');for(let st=new Date(a);st<b;st=padd(st,1,'d')){const d=st.getDate();bk.push({s:new Date(st),e:padd(st,1,'d'),x:[1,8,15,22,29].includes(d)?String(d):''});}
+    label=pfmt(a,{month:'long',year:'numeric'});}
+  else if(R==='6M'){const end=padd(weekStart(t),7+off*182,'d');a=padd(end,-182,'d');b=end;for(let i=0;i<26;i++){const st=padd(a,i*7,'d'),pv=i?padd(st,-7,'d'):null;bk.push({s:st,e:padd(st,7,'d'),x:(!pv||pv.getMonth()!==st.getMonth())?pfmt(st,{month:'narrow'}):''});}
+    const e=padd(b,-1,'d');label=pfmt(a,{month:'short'})+(a.getFullYear()!==e.getFullYear()?' '+a.getFullYear():'')+' – '+pfmt(e,{month:'short',year:'numeric'});}
+  else if(R==='Y'){a=new Date(t.getFullYear()+off,0,1);b=padd(a,1,'y');for(let m=0;m<12;m++){const st=new Date(a.getFullYear(),m,1);bk.push({s:st,e:padd(st,1,'m'),x:pfmt(st,{month:'narrow'})});}label=String(a.getFullYear());}
+  else{const ds=D.sessions.map(x=>new Date(x.date)).filter(d=>!isNaN(d));const first=ds.length?new Date(Math.min(...ds)):t;a=new Date(first.getFullYear(),first.getMonth(),1);b=new Date(t.getFullYear(),t.getMonth()+1,1);
+    for(let st=new Date(a);st<b;st=padd(st,1,'m'))bk.push({s:new Date(st),e:padd(st,1,'m'),x:(+st===+a||st.getMonth()===0)?pfmt(st,{month:'short'})+(st.getMonth()===0?" '"+String(st.getFullYear()).slice(2):''):''});
+    label='Since '+pfmt(a,{month:'long',year:'numeric'});}
+  bk.forEach(k=>{k.f=k.r=k.a=k.mf=k.mr=k.ma=0;});
+  const sess=D.sessions.filter(x=>{const d=new Date(x.date);return d>=a&&d<b;});
+  sess.forEach(x=>{const sp=splitOf(x),st=+new Date(x.date);[['f',sp.f,0],['r',sp.r,sp.f],['a',sp.a,sp.f+sp.r]].forEach(([key,m,o])=>{if(!(m>0))return;const at=new Date(st+o*60000);const k=bk.find(k=>at>=k.s&&at<k.e)||bk[bk.length-1];k[(sp.mixed?'m':'')+key]+=m;});});
+  bk.forEach(k=>{k.mx=k.mf+k.mr+k.ma;k.t=k.f+k.r+k.a+k.mx;});
+  return {a,b,bk,label,sess};
+}
+function bucketName(k){const R=U.range;if(R==='D')return pfmt(k.s,{hour:'numeric',hour12:true}).replace(' ','')+'–'+pfmt(k.e,{hour:'numeric',hour12:true}).replace(' ','');
+  if(R==='W'||R==='M')return pfmt(k.s,{weekday:'short',day:'numeric',month:'short'});if(R==='6M')return 'Week of '+pfmt(k.s,{day:'numeric',month:'short'});return pfmt(k.s,{month:'long',year:'numeric'});}
+const unitOf=()=>({D:'hour',W:'day',M:'day','6M':'week',Y:'month',All:'month'})[U.range];
+// stacked bars: 2px gaps between steps, rounded tops, axis on the right like Health; blended bar = filled in at the end
+function chartSVG(P){
+  const W=340,H=170,RA=30,B=22,T=6,n=P.bk.length,max=Math.max(10,...P.bk.map(k=>k.t));
+  const step=max<=30?10:max<=60?20:max<=120?30:max<=300?60:max<=600?120:max<=1500?300:max<=3000?600:1200;const top=Math.ceil(max/step)*step;
+  const cw=(W-RA)/n,bw=Math.max(2,Math.min(cw*0.62,22)),y=v=>T+(H-T-B)*(1-v/top);
+  let g='<defs><linearGradient id="mxg" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="var(--cF)"/><stop offset=".5" stop-color="var(--cR)"/><stop offset="1" stop-color="var(--cA)"/></linearGradient></defs>';
+  for(let v=0;v<=top;v+=step)g+='<line class="gl'+(v?' d':'')+'" x1="0" x2="'+(W-RA)+'" y1="'+y(v)+'" y2="'+y(v)+'"/><text x="'+(W-RA+6)+'" y="'+(y(v)+4)+'">'+(v>=60&&v%60===0?(v/60)+'h':v)+'</text>';
+  P.bk.forEach((k,i)=>{const x=i*cw+(cw-bw)/2;let base=H-B;const segs=BLK.filter(([key])=>k[key]>0).map(([key,,c])=>'var('+c+')');if(k.mx>0)segs.push('url(#mxg)');
+    const vals=BLK.filter(([key])=>k[key]>0).map(([key])=>k[key]).concat(k.mx>0?[k.mx]:[]);let g2='';
+    segs.forEach((col,j)=>{const h=(H-T-B)*vals[j]/top,gap=j?2:0,yy=base-h,hh=Math.max(1,h-gap),r=Math.min(4,bw/2,hh);
+      g2+=j===segs.length-1?'<path d="M'+x+','+(yy+hh)+' V'+(yy+r)+' Q'+x+','+yy+' '+(x+r)+','+yy+' H'+(x+bw-r)+' Q'+(x+bw)+','+yy+' '+(x+bw)+','+(yy+r)+' V'+(yy+hh)+' Z" fill="'+col+'"/>':'<rect x="'+x+'" y="'+yy+'" width="'+bw+'" height="'+hh+'" fill="'+col+'"/>';base-=h;});
+    g+='<g class="bar'+(U.pick===i?' on':'')+'" role="listitem" aria-label="'+(k.t?hm(k.t):'Nothing')+', '+bucketName(k)+'">'+g2+'<rect data-pick="'+i+'" x="'+(i*cw)+'" y="0" width="'+cw+'" height="'+H+'" fill="transparent" style="cursor:pointer"/></g>';
+    if(k.x)g+='<text x="'+(i*cw+cw/2)+'" y="'+(H-6)+'" text-anchor="middle">'+k.x+'</text>';});
+  return '<svg viewBox="0 0 '+W+' '+H+'" role="list" aria-label="Practice time by '+unitOf()+'">'+g+'</svg>';
+}
+function pcardHTML(){
+  const P=period(),k=U.pick!=null?P.bk[U.pick]:null,sum=key=>P.bk.reduce((a,x)=>a+x[key],0);
+  const src=k?{f:k.f+k.mf,r:k.r+k.mr,a:k.a+k.ma,mx:k.mx}:{f:sum('f')+sum('mf'),r:sum('r')+sum('mr'),a:sum('a')+sum('ma'),mx:sum('mx')},tot=src.f+src.r+src.a;
+  const days=new Set(P.sess.map(x=>+pday(x.date))).size;
+  const card='<div class="kick">'+(k?'Practised':'Total practice')+'</div><div class="bignum" aria-live="polite">'+hmBig(tot)+'</div>'+
+    '<div class="prange">'+(U.range==='All'?'':'<button class="pnav" data-a="pnav" data-v="-1" aria-label="Earlier">'+ICON.back+'</button>')+'<span class="t">'+(k?bucketName(k):P.label)+'</span>'+(U.range==='All'?'':'<button class="pnav" data-a="pnav" data-v="1" aria-label="Later"'+((U.roff||0)>=0?' disabled':'')+'>'+ICON.fwd+'</button>')+'</div>'+
+    '<div class="pchart'+(k?' picked':'')+'" id="pchart">'+chartSVG(P)+'</div>'+
+    '<div class="legend">'+BLK.map(([,nm,c])=>'<span><i class="dot" style="background:var('+c+')"></i>'+nm+'</span>').join('')+'<span><i class="dot mx"></i>Filled in at the end</span></div>';
+  const brk='<div class="hdr">Breakdown<span class="r">'+(k?'':P.sess.length+' session'+(P.sess.length===1?'':'s')+(U.range!=='D'?' · '+days+' day'+(days===1?'':'s'):''))+'</span></div><div class="grp">'+
+    BLK.map(([key,nm,c])=>{const v=src[key],p=tot?Math.round(v/tot*100):0;return '<div class="row"><i class="dot" style="background:var('+c+')"></i><span class="lbl">'+nm+'</span><span class="share" aria-hidden="true"><i style="width:'+p+'%;background:var('+c+')"></i></span><span class="pct">'+p+'%</span><span class="val">'+hm(v)+'</span></div>';}).join('')+'</div>'+
+    '<p class="foot">Tap or slide across the bars to see each '+unitOf()+'.'+(src.mx>=1?' '+hm(src.mx)+' was filled in at the end, so it’s split using the coach video’s length for each exercise.':'')+'</p>';
+  return {card,brk};
+}
+function sessRow(s){const sp=splitOf(s),rots=Object.keys(s.rot||{}).map(id=>(exById(id)||{name:(s.rotNames||{})[id]||'Exercise'}).name);
+  return '<button class="row" data-a="sheet" data-v="session" data-k="'+s.id+'"><span class="lbl">'+dayLabel(s.date)+'<small>'+esc(rots.length?rots.join(', '):'Foundation only')+'</small><span class="mini" aria-hidden="true">'+
+    (sp.mixed?'<i class="mx" style="flex:1"></i>':BLK.map(([key,,c])=>sp[key]>0?'<i style="flex:'+sp[key]+';background:var('+c+')"></i>':'').join(''))+'</span></span><span class="mut">'+hm(s.mins)+'</span>'+chev+'</button>';}
+function songRow(s,a){const n=(s.takes||[]).length,how=howStr(s);
+  return '<button class="row" data-a="'+(a||'sheet')+'" data-v="songSession" data-k="'+s.id+'">'+songTile+'<span class="lbl">'+esc(s.songName||'Song practice')+'<small>'+dayLabel(s.date)+(n?' · '+n+' take'+(n>1?'s':''):'')+(how?' · '+esc(how):'')+'</small></span><span class="mut">'+hm(s.mins)+'</span>'+chev+'</button>';}
 function scrHistory(){
+  const recent=D.sessions.slice().sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,5);
+  const songs=D.songSessions.slice().sort((a,b)=>new Date(b.date)-new Date(a.date));
+  const sw2=songWeek(),now=new Date(),sm=songs.filter(x=>{const d=new Date(x.date);return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();}).length;
+  const {card,brk}=pcardHTML();
+  const recentB='<div class="hdr">Recent</div><div class="grp">'+(recent.length?recent.map(sessRow).join(''):'<div class="empty">Your finished sessions will appear here.</div>')+
+    '<button class="row acc" data-a="openAll" data-v="sessions"><span class="lbl">Show all sessions</span>'+chev+'</button></div>';
+  const timeB='<div class="hdr">Practice time</div><div class="seg wide r6" role="tablist" aria-label="Range"><span class="knob" aria-hidden="true"></span>'+RANGES.map(r=>'<button role="tab" data-a="prange" data-v="'+r+'" class="'+(U.range===r?'on':'')+'" aria-selected="'+(U.range===r)+'">'+r+'</button>').join('')+'</div>'+
+    '<div class="pcard" id="pcard">'+card+'</div><div id="pbrk">'+brk+'</div>';
+  const songB='<div class="hdr">Song practice</div><div class="grp"><div class="stat3"><div><b>'+sw2.n+'</b>This week</div><div><b>'+hm(sw2.m)+'</b>Time</div><div><b>'+sm+'</b>This month</div></div>'+
+    songs.slice(0,3).map(x=>songRow(x)).join('')+'<button class="row acc" data-a="openAll" data-v="songs"><span class="lbl">Show all song practice</span>'+chev+'</button></div>'+
+    '<p class="foot">Kept apart from your focused practice time. You can also get here from Today, the calendar and each song in Exercises.</p>';
+  return '<h1>Progress</h1><div class="pgrid"><div class="p-rec">'+recentB+'</div><div class="p-time">'+timeB+'</div><div class="p-song">'+songB+'</div></div>';
+}
+function histSel(songs){const arr=songs?D.songSessions:D.sessions;let x=U.sel&&arr.find(s=>s.id===U.sel);
+  if(!x&&arr.length)x=arr.slice().sort((a,b)=>new Date(b.date)-new Date(a.date))[0];return x||null;}
+// every "Show all" lands here: one list for sessions and song practice
+function scrAll(){
   const songs=U.histTab==='songs',sp=split(),sel=sp?histSel(songs):null,sid=sel?sel.id:null;
   const segH='<div class="seg wide" role="tablist" style="margin:2px 0 4px"><span class="knob" aria-hidden="true"></span><button role="tab" data-a="histTab" data-v="sessions" class="'+(songs?'':'on')+'" aria-selected="'+!songs+'">Sessions</button><button role="tab" data-a="histTab" data-v="songs" class="'+(songs?'on':'')+'" aria-selected="'+songs+'">Song practice</button></div>';
   const list=songs?songHistory(sid):sessionHistory(sid);
-  if(!sp)return '<h1>History</h1>'+segH+list;
-  return '<h1>History</h1><div class="split"><div class="sl">'+segH+list+'</div><div class="pane">'+(sel?(songs?songSessionBody(sel,'pane'):sessionBody(sel,'pane')):'<div class="grp" style="margin-top:6px"><div class="empty">Select something on the left to see it here.</div></div>')+'</div></div>';
+  if(!sp)return '<h1>All sessions</h1>'+segH+list;
+  return '<h1>All sessions</h1><div class="split"><div class="sl">'+segH+list+'</div><div class="pane">'+(sel?(songs?songSessionBody(sel,'pane'):sessionBody(sel,'pane')):'<div class="grp" style="margin-top:6px"><div class="empty">Nothing here yet.</div></div>')+'</div></div>';
 }
 function sessionHistory(selId){
   const ss=D.sessions.slice().sort((a,b)=>new Date(b.date)-new Date(a.date));
@@ -683,7 +813,7 @@ function sessionHistory(selId){
   let h='',cur='';
   ss.forEach(s=>{const k=monthKey(new Date(s.date));if(k!==cur){if(cur)h+='</div>';cur=k;const lab=new Date(s.date).toLocaleDateString('en-GB',{month:'long',year:'numeric'});h+='<div class="hdr">'+lab+' · <span style="text-transform:none">'+hm(D.months[k]||0)+'</span></div><div class="grp">';}
     const rots=Object.keys(s.rot||{}).map(id=>(exById(id)||{name:(s.rotNames||{})[id]||'Exercise'}).name);const how=howStr(s);
-    h+=sw('<button class="row'+(s.id===selId?' sel':'')+'" data-a="sheet" data-v="session" data-k="'+s.id+'"><span class="lbl">'+dayLabel(s.date)+'<small>'+esc(rots.length?rots.join(', '):'Foundation only')+'</small>'+(how?'<small class="acc">'+esc(how)+'</small>':'')+'</span><span class="mut">'+hm(s.mins)+'</span>'+chev+'</button>','delSession',s.id);});
+    h+=sw('<button class="row'+(s.id===selId?' sel':'')+'" data-a="sheet" data-v="session" data-k="'+s.id+'"><span class="lbl">'+dayLabel(s.date)+(splitOf(s).mixed?'<span class="ptag">Filled in at the end</span>':'')+'<small>'+esc(rots.length?rots.join(', '):'Foundation only')+'</small>'+(how?'<small class="acc">'+esc(how)+'</small>':'')+'</span><span class="mut">'+hm(s.mins)+'</span>'+chev+'</button>','delSession',s.id);});
   return h+'</div><p class="foot">Swipe left on a session to delete it. Open one to edit it.</p>';
 }
 function songHistory(selId){
@@ -704,7 +834,7 @@ function scrExercises(){
   '<div class="hdr">Foundation</div><div class="grp tiled">'+FOUND.map(row).join('')+'</div>'+
   '<div class="hdr">Rotation</div><div class="grp tiled">'+ROT.map(row).join('')+'</div>'+
   '<div class="hdr">Your exercises</div><div class="grp tiled">'+D.custom.map(e=>sw(row(e),'delEx',e.id)).join('')+'<button class="row acc" data-a="sheet" data-v="addEx"><span class="lbl">Add exercise</span>'+ICON.plus+'</button></div>'+
-  '<div class="hdr">Songs</div><div class="grp">'+D.songs.map(s=>sw('<div class="row"><span class="lbl">'+esc(s.name)+'<small>'+TAKES.filter(t=>t.songId===s.id).length+' saved take(s)</small></span><button class="ibtn dng" data-a="sheet" data-v="delSong" data-k="'+s.id+'" aria-label="Remove '+esc(s.name)+'">'+ICON.trash+'</button></div>','delSong',s.id)).join('')+'<button class="row acc" data-a="sheet" data-v="addSong"><span class="lbl">Add song</span>'+ICON.plus+'</button></div>'+
+  '<div class="hdr">Songs</div><div class="grp">'+D.songs.map(s=>sw('<div class="row"><button class="lbl tk" data-a="openAll" data-v="songs">'+esc(s.name)+'<small>'+(n=>n+' saved take'+(n===1?'':'s'))(TAKES.filter(t=>t.songId===s.id).length)+' · '+(n=>n?n+' song practice'+(n===1?'':'s'):'No song practice yet')(D.songSessions.filter(x=>x.songId===s.id).length)+'</small></button><button class="ibtn dng" data-a="sheet" data-v="delSong" data-k="'+s.id+'" aria-label="Remove '+esc(s.name)+'">'+ICON.trash+'</button></div>','delSong',s.id)).join('')+'<button class="row acc" data-a="sheet" data-v="addSong"><span class="lbl">Add song</span>'+ICON.plus+'</button></div>'+
   (D.custom.length||D.songs.length?'<p class="foot">Swipe left on your own exercises and songs to delete them.</p>':'');
   return '<h1>Exercises</h1>'+(sp?'<div class="split"><div class="sl">'+list+'</div><div class="pane">'+scrEx()+'</div></div>':list);
 }
@@ -799,27 +929,30 @@ const VIEWS={found:['Foundation','1 of 3',null],rot:['Rotation','2 of 3','found'
 function pillText(){const st=VIEWS[U.view]&&VIEWS[U.view][1];return (X&&X.paused?'❚❚ ':'')+(st?st+' · ':'')+clk(elapsedSec());}
 function renderBar(){
   const bar=$('bar');bar.classList.remove('tabsmode');$('barT').classList.remove('tabs');
-  if(U.view==='ex'){const e=exById(U.exId);$('barT').textContent=e?e.name:'';bar.classList.remove('always');
+  if(U.view==='all'){$('barL').innerHTML='<button class="circ glass" data-a="allBack" aria-label="Back">'+ICON.back+'</button>';$('barR').innerHTML='';
+    if(MQ.reg.matches&&!MQ.wide.matches){bar.classList.add('tabsmode');$('barT').classList.add('tabs');$('barT').innerHTML=topTabs();}else $('barT').textContent='All sessions';}
+  else if(U.view==='ex'){const e=exById(U.exId);$('barT').textContent=e?e.name:'';bar.classList.remove('always');
     $('barL').innerHTML='<button class="circ glass" data-a="exBack" aria-label="Back">'+ICON.back+'</button>';$('barR').innerHTML='';}
   else if(U.view){const v=VIEWS[U.view];$('barT').textContent=v[0];
     $('barL').innerHTML='<button class="circ glass" data-a="'+(v[2]?'view':'exit')+'" data-v="'+(v[2]||'')+'" aria-label="Back">'+ICON.back+'</button>';
     $('barR').innerHTML=(U.view==='song'?'':'<a class="circ glass" href="'+VIDEO+'" target="_blank" rel="noopener" aria-label="Open coach video">'+ICON.video+'</a>')+
       '<button class="pill glass'+(X&&X.paused?' paused':'')+'" id="timer" data-a="clock" aria-label="Session time. Tap for the clock">'+pillText()+'</button>';}
   else if(MQ.reg.matches&&!MQ.wide.matches){bar.classList.add('tabsmode');$('barT').classList.add('tabs');
-    $('barT').innerHTML='<nav class="toptabs glass" aria-label="Tabs">'+TABS().map(t=>'<button class="'+(U.tab===t[0]?'on':'')+'" data-a="tab" data-v="'+t[0]+'" aria-current="'+(U.tab===t[0]?'page':'false')+'">'+t[1]+'</button>').join('')+'</nav>';$('barL').innerHTML='';$('barR').innerHTML='';return;}
-  else{$('barT').textContent={today:'Today',history:'History',exercises:'Exercises',settings:'Settings'}[U.tab];$('barL').innerHTML='';$('barR').innerHTML='';}
+    $('barT').innerHTML=topTabs();$('barL').innerHTML='';$('barR').innerHTML='';return;}
+  else{$('barT').textContent={today:'Today',history:'Progress',exercises:'Exercises',settings:'Settings'}[U.tab];$('barL').innerHTML='';$('barR').innerHTML='';}
 }
+const topTabs=()=>'<nav class="toptabs glass" aria-label="Tabs">'+TABS().map(t=>'<button class="'+(U.tab===t[0]?'on':'')+'" data-a="tab" data-v="'+t[0]+'" aria-current="'+(U.tab===t[0]?'page':'false')+'">'+t[1]+'</button>').join('')+'</nav>';
 function renderSide(){const el=$('side');if(!MQ.wide.matches){el.innerHTML='';return;}
   el.innerHTML='<div class="sbt">Vocal Sessions</div>'+TABS().map(t=>'<button class="sbi'+(U.tab===t[0]?' on':'')+'" data-a="tab" data-v="'+t[0]+'" aria-current="'+(U.tab===t[0]?'page':'false')+'">'+t[2]+'<span>'+t[1]+'</span></button>').join('');}
 function renderDock(){
   if(U.sheet){$('dock').innerHTML='';return;}
-  if(U.view&&U.view!=='ex'){const n=Object.keys(X.rot).length;
+  if(isFlow(U.view)){const n=Object.keys(X.rot).length;
     const lab={found:'Log foundation',rot:n?'Log '+n+' exercise'+(n>1?'s':''):'Pick an exercise',app:'Finish session',song:'Save song practice'}[U.view];
     $('dock').innerHTML='<button class="cta glass tinted" data-a="cta">'+lab+'</button>';return;}
   if(MQ.reg.matches){$('dock').innerHTML='';return;}
   if(window.scrollY<60)tabMin=false; // never leave it shrunk at the top of a page
   const t=(id,lab,ic)=>'<button class="'+(U.tab===id?'on':'')+'" data-a="tab" data-v="'+id+'" aria-current="'+(U.tab===id?'page':'false')+'">'+ic+lab+'</button>';
-  $('dock').innerHTML='<nav class="tabbar glass'+(tabMin?' min':'')+'" aria-label="Tabs">'+t('today','Today',ICON.mic)+t('history','History',ICON.clock)+t('exercises','Exercises',ICON.list)+t('settings','Settings',ICON.gear)+'</nav>';
+  $('dock').innerHTML='<nav class="tabbar glass'+(tabMin?' min':'')+'" aria-label="Tabs">'+t('today','Today',ICON.mic)+t('history','Progress',ICON.chart)+t('exercises','Exercises',ICON.list)+t('settings','Settings',ICON.gear)+'</nav>';
 }
 function sheetWrap(title,body,label,tools){return '<div class="scrim" data-a="close"><div class="sheet glass" role="dialog" aria-modal="true" aria-label="'+esc(label||title)+'"><div class="shead"><div class="grab"></div><div class="shrow"><h2>'+title+'</h2>'+(tools||'')+'<button class="shbtn glass xbtn" data-a="close" aria-label="Close">'+ICON.x+'</button></div></div>'+body+'</div></div>';}
 const confirmSheet=(title,text,btn,action,k,cancel)=>sheetWrap(title,'<p class="note">'+text+'</p><button class="cta red" data-a="'+action+'" data-k="'+esc(k||'')+'">'+btn+'</button><button class="ghost" data-a="close">'+(cancel||'Cancel')+'</button>');
@@ -866,7 +999,7 @@ function renderSheet(){
   else if(s==='session'||s==='done'){const ss=D.sessions.find(x=>x.id===k);if(ss)h=sessionSheet(ss,s==='done');}
   else if(s==='songSession'||s==='songDone'){const ss=D.songSessions.find(x=>x.id===k);if(ss)h=songSessionSheet(ss,s==='songDone');}
   if(s&&!h){U.sheet=null;U.sd={};}
-  if(!h&&U.clock&&X&&U.view&&U.view!=='ex')h=clockHTML();
+  if(!h&&U.clock&&X&&isFlow(U.view))h=clockHTML();
   const key=h?(U.sheet?U.sheet+'|'+(k||''):'clock'):'';
   const prev=$('layer').querySelector('.sheet'),st=prev?prev.scrollTop:0,same=!!key&&key===lastLayerKey;lastLayerKey=key;
   $('layer').innerHTML=h;
@@ -918,7 +1051,11 @@ function sessionBody(ss,mode){
   const done=mode==='done',pane=mode==='pane';
   const rots=Object.keys(ss.rot||{}),xn=ss.xn||{};
   const exRow=(name,id,val)=>{const n=noteStr(xn[id]);return '<div class="row"><span class="lbl">'+esc(name)+(n?'<small class="acc">'+esc(n)+'</small>':'')+'</span><span class="mut">'+val+'</span></div>';};
-  let b='<div class="grp"><div class="row"><span class="lbl">Total time</span><span class="mut">'+hm(ss.mins)+'</span></div>'+howRow(ss)+'</div>'+
+  const spl=splitOf(ss);
+  let b='<div class="grp"><div class="row"><span class="lbl">Total time</span><span class="mut">'+hm(ss.mins)+'</span></div>'+
+  '<div class="row" style="display:block;padding:12px 16px"><div style="display:flex;justify-content:space-between;font-size:15px"><span>Time per step</span><span class="mut" style="font-size:13px">'+(spl.mixed?'Filled in at the end':'Timed')+'</span></div>'+
+  '<div class="mini" style="max-width:none;height:6px;margin-top:8px" aria-hidden="true">'+(spl.mixed?'<i class="mx" style="flex:1"></i>':BLK.map(([key,,c])=>spl[key]>0?'<i style="flex:'+spl[key]+';background:var('+c+')"></i>':'').join(''))+'</div>'+
+  '<div class="legend" style="margin-top:8px">'+BLK.map(([key,nm,c])=>'<span><i class="dot" style="background:var('+c+')"></i>'+nm+' '+hm(spl[key])+'</span>').join('')+'</div></div>'+howRow(ss)+'</div>'+
   (done?'<div style="margin-top:12px"><button class="cta" data-a="copy" data-k="'+ss.id+'">Copy for Toggl</button></div>':'')+
   '<div class="hdr">Foundation</div><div class="grp">'+FOUND.map(e=>{const f=ss.f||{};return exRow(e.name,e.id,f[e.id]?'Level '+f[e.id]:(e.id in f?'Skipped':'–'));}).join('')+(ss.fNote?'<div class="row"><span class="lbl mut">'+esc(ss.fNote)+'</span></div>':'')+'</div>';
   if(rots.length)b+='<div class="hdr">Rotation</div><div class="grp">'+rots.map(id=>exRow((exById(id)||{name:(ss.rotNames||{})[id]||'Exercise'}).name,id,'Level '+ss.rot[id])).join('')+(ss.rNote?'<div class="row"><span class="lbl mut">'+esc(ss.rNote)+'</span></div>':'')+'</div>';
@@ -947,6 +1084,12 @@ function editSheet(){
     b+='<div class="hdr">Foundation</div><div class="grp tiled">'+FOUND.map(e=>exBlock(e,'eflv',(E.f||{})[e.id],true,E,'edit')).join('')+'</div>';
     const rk=Object.keys(E.rot||{});
     if(rk.length)b+='<div class="hdr">Rotation</div><div class="grp tiled">'+rk.map(id=>exBlock(exById(id)||{id,name:(E.rotNames||{})[id]||'Exercise',focus:'custom'},'erlv',E.rot[id],false,E,'edit')).join('')+'</div>';
+    const tot=+E.mins||0,ef=E.split&&!E.mixed?E.split:null;
+    b+='<div class="hdr">Time per step</div><div class="grp"><div class="row" style="display:block;padding:10px 16px 12px"><div class="seg wide" role="group" aria-label="How it was tracked"><span class="knob" aria-hidden="true"></span><button data-a="esplit" data-v="timed" class="'+(ef?'on':'')+'">Timed</button><button data-a="esplit" data-v="mixed" class="'+(ef?'':'on')+'">Filled in at the end</button></div></div>'+
+      (ef?'<div class="row"><span class="lbl">Foundation</span><input class="field dt num" type="number" inputmode="numeric" id="edF" min="0" max="600" value="'+Math.round(ef.f)+'" aria-label="Foundation minutes"></div>'+
+        '<div class="row"><span class="lbl">Rotation</span><input class="field dt num" type="number" inputmode="numeric" id="edR" min="0" max="600" value="'+Math.round(ef.r)+'" aria-label="Rotation minutes"></div>'+
+        '<div class="row"><span class="lbl">Application</span><span class="mut" id="edA">'+Math.max(0,tot-Math.round(ef.f)-Math.round(ef.r))+' min</span></div>':'')+'</div>'+
+      '<p class="foot">'+(ef?'Application is whatever’s left of the total.':'Split using the coach video’s length for each exercise and the levels you did. Application is whatever’s left.')+'</p>';
     if(E.songName)b+='<div class="hdr">Application · '+esc(E.songName)+'</div><div class="grp">'+['Pitch','Tone','Ease'].map(x=>'<div class="row"><span class="lbl">'+x+'</span>'+seg('erate',x,(E.rate||{})[x])+'</div>').join('')+'</div>';
   }
   b+='<div class="hdr">How it went</div>'+chipsHTML(wordList('how',HOW_WORDS),E.how,'how')+noteBlock('edHowNote',E.howNote,'Anything else about this '+(song?'practice':'session'));
@@ -959,8 +1102,8 @@ function render(keepScroll){
   const y=window.scrollY;
   closeSwipes();
   const v=U.view;
-  $('app').innerHTML=v==='ex'?scrEx():v?({found:scrFound,rot:scrRot,app:scrApp,song:scrSong})[v]():({today:scrToday,history:scrHistory,exercises:scrExercises,settings:scrSettings})[U.tab]();
-  $('app').className=(v?'flow':'tabv')+(v&&v!=='ex'||(!v&&U.tab==='settings')||(v==='ex'&&!split())?' narrow':'');
+  $('app').innerHTML=v==='ex'?scrEx():v==='all'?scrAll():v?({found:scrFound,rot:scrRot,app:scrApp,song:scrSong})[v]():({today:scrToday,history:scrHistory,exercises:scrExercises,settings:scrSettings})[U.tab]();
+  $('app').className=(isFlow(v)?'flow':'tabv')+(isFlow(v)||(!v&&U.tab==='settings')||(v==='ex'&&!split())?' narrow':'');
   renderBar();renderSheet();renderDock();renderSide();
   if(keepScroll)window.scrollTo(0,y);
   placeKnobs();
@@ -1005,7 +1148,10 @@ function finishSession(){
     const ss=Object.assign(base,{kind:'song',songId:X.song});D.songSessions.push(ss);save();X=null;saveDraft();
     U.view=null;U.tab='today';U.clock=false;U.noteOpen=null;U.sheet='songDone';U.sd={k:ss.id};window.scrollTo(0,0);render();return;}
   const rotNames={};Object.keys(X.rot).forEach(id=>{const e=exById(id);if(e)rotNames[id]=e.name;});
-  const ss=Object.assign(base,{f:X.f,fNote:X.fNote||'',rot:X.rot,rNote:X.rNote||'',rotNames,xn:X.xn||{},rate:X.rate});
+  const e=Math.max(1,elapsedSec()),fE=Math.min(e,X.fE||0),rE=Math.min(e,Math.max(fE,X.rE||fE)),sc=mins*60/e;
+  const mixed=fE<QUICK_STEP||(rE-fE)<QUICK_STEP; // a step under 2 minutes means the levels were filled in afterwards
+  const ss=Object.assign(base,{f:X.f,fNote:X.fNote||'',rot:X.rot,rNote:X.rNote||'',rotNames,xn:X.xn||{},rate:X.rate,mixed},
+    mixed?{}:{split:{f:Math.round(fE*sc/6)/10,r:Math.round((rE-fE)*sc/6)/10,a:Math.round((e-rE)*sc/6)/10}});
   D.sessions.push(ss);
   const k=monthKey(new Date(X.start));D.months[k]=(D.months[k]||0)+mins;
   exIds(ss).forEach(id=>{D.ex[id]=D.ex[id]||{n:0,last:null};D.ex[id].n++;D.ex[id].last=ss.end;});
@@ -1028,7 +1174,8 @@ function applyEdit(){
   const shift=nd-od,mins=Math.max(1,Math.min(600,Math.round(+E.mins)||ss.mins));
   ss.date=nd.toISOString();if(ss.end)ss.end=new Date(new Date(ss.end).getTime()+shift).toISOString();
   ss.mins=mins;ss.how=(E.how||[]).slice();ss.howNote=(E.howNote||'').trim();
-  if(!song){ss.f=E.f;ss.rot=E.rot;ss.xn=E.xn||{};ss.rate=E.rate||{};}
+  if(!song){ss.f=E.f;ss.rot=E.rot;ss.xn=E.xn||{};ss.rate=E.rate||{};
+    if(E.mixed||!E.split){ss.mixed=true;delete ss.split;}else{const f=Math.max(0,Math.round(+E.split.f)||0),r=Math.max(0,Math.round(+E.split.r)||0);ss.mixed=false;ss.split={f,r,a:Math.max(0,mins-f-r)};}}
   arr.sort((a,b)=>new Date(a.date)-new Date(b.date));
   if(!song){
     D.months[oldMonth]=Math.max(0,(D.months[oldMonth]||0)-oldMins);const nk=monthKey(nd);D.months[nk]=(D.months[nk]||0)+mins;
@@ -1233,10 +1380,15 @@ document.addEventListener('click',e=>{
       if(w){const arr=selArr();if(arr&&!arr.includes(w))arr.push(w);if(U.sheet==='how'||(U.sheet==='exNote'&&noteTarget()===X))saveDraft();toast('Saved for next time');}
       rerender();break;}
     case 'openNote':U.noteOpen=k;rerender();setTimeout(()=>{const t=$(k);if(t){t.focus();t.scrollIntoView({block:'center',behavior:'smooth'});}},80);break;
-    case 'editSess':{const ss=findSess(k);if(!ss)break;E=JSON.parse(JSON.stringify(ss));E.kind=ss.kind||'focused';E.dateStr=isoDay(new Date(ss.date));E.how=E.how||[];E.howNote=E.howNote||'';E.xn=E.xn||{};
+    case 'editSess':{const ss=findSess(k);if(!ss)break;E=JSON.parse(JSON.stringify(ss));E.kind=ss.kind||'focused';E.dateStr=isoDay(new Date(ss.date));E.how=E.how||[];E.howNote=E.howNote||'';E.xn=E.xn||{};if(E.kind!=='song'&&(!E.split||E.mixed)){E.mixed=true;}
       const r=here();U.noteOpen=null;U.sheet='edit';U.sd={k,ret:r};rerender();break;}
-    case 'saveEdit':if(E){const m=+E.mins;if(!(m>=1&&m<=600)){toast('Enter minutes between 1 and 600');break;}applyEdit();toast('Changes saved');}closeSheet();break;
-    case 'sheet':if((v==='session'||v==='songSession')&&split()&&!U.view&&U.tab==='history'&&!U.sheet){U.sel=k;rerender();break;}U.sheet=v;U.sd={k};rerender();break;
+    case 'saveEdit':if(E){const m=+E.mins;if(!(m>=1&&m<=600)){toast('Enter minutes between 1 and 600');break;}if(E.kind!=='song'&&!E.mixed&&E.split){const f=+E.split.f,r=+E.split.r;if(!(f>=0&&r>=0)||f+r>m){toast('Foundation and Rotation can’t add up to more than the total');break;}}applyEdit();toast('Changes saved');}closeSheet();break;
+    case 'sheet':if((v==='session'||v==='songSession')&&split()&&U.view==='all'&&!U.sheet){U.sel=k;rerender();break;}U.sheet=v;U.sd={k};rerender();break;
+    case 'openAll':U.histTab=v==='songs'?'songs':'sessions';U.sel=null;U.sheet=null;go(()=>{U.prevTab=U.tab;U.tab='history';U.view='all';});break;
+    case 'allBack':go(()=>{U.view=null;U.tab=U.prevTab&&U.prevTab!=='history'?U.prevTab:'history';});break;
+    case 'prange':segPick(el);U.range=v;U.roff=0;U.pick=null;setTimeout(updatePcard,150);break;
+    case 'pnav':U.roff=Math.min(0,(U.roff||0)+(+v));U.pick=null;updatePcard();break;
+    case 'esplit':if(E){segPick(el);if(v==='timed'){const sp=E.split&&!E.mixed?E.split:vidSplit(E);E.split={f:Math.round(sp.f),r:Math.round(sp.r),a:0};E.mixed=false;}else{E.mixed=true;}setTimeout(rerender,160);}break;
     case 'close':closeSheet();break;
     case 'focus':document.querySelectorAll('#focusChips .chip').forEach(c=>c.classList.toggle('on',c===el));break;
     case 'saveEx':{const n=($('exName').value||'').trim(),err=$('exErr');
@@ -1263,7 +1415,16 @@ document.addEventListener('click',e=>{
     case 'importYes':restoreImport();break;
   }
 });
+function updatePcard(){const a=$('pcard'),b=$('pbrk');if(!a&&!b)return;const c=pcardHTML();if(a)a.innerHTML=c.card;if(b)b.innerHTML=c.brk;}
+// tap a bar, or slide a finger across them like Health
+function pickAt(x,y){const el=document.elementFromPoint(x,y),b=el&&el.closest&&el.closest('[data-pick]');if(!b)return;const i=+b.dataset.pick;if(i!==U.pick){U.pick=i;updatePcard();}}
+let pickT=0;
+document.addEventListener('pointerdown',e=>{if(e.target.closest&&e.target.closest('#pchart')){const b=e.target.closest('[data-pick]');if(b){const i=+b.dataset.pick;U.pick=U.pick===i&&e.pointerType==='mouse'?null:i;pickT=Date.now();updatePcard();}}});
+document.addEventListener('pointermove',e=>{if(U.pick==null||!(e.buttons||e.pointerType==='touch'))return;if(e.target.closest&&e.target.closest('#pchart'))pickAt(e.clientX,e.clientY);});
+document.addEventListener('click',e=>{if(U.pick!=null&&Date.now()-pickT>400&&e.target.isConnected&&!(e.target.closest&&e.target.closest('#pcard'))){U.pick=null;updatePcard();}},true);
 document.addEventListener('input',e=>{const t=e.target,id=t.id,v=t.value;
+  if((id==='edF'||id==='edR')&&E&&E.split){E.split[id==='edF'?'f':'r']=v;const a=$('edA');if(a)a.textContent=Math.max(0,Math.round(+E.mins||0)-Math.round(+E.split.f||0)-Math.round(+E.split.r||0))+' min';}
+  if(id==='edMins'&&E&&E.split&&$('edA'))$('edA').textContent=Math.max(0,Math.round(+v||0)-Math.round(+E.split.f||0)-Math.round(+E.split.r||0))+' min';
   if(id==='howNote'&&X){X.howNote=v;saveDraft();}
   else if(id==='xnText'){const T=noteTarget();if(T&&T.xn&&T.xn[U.sd.k]){T.xn[U.sd.k].t=v;if(T===X)saveDraft();}}
   else if(id==='tnText'){const tk=TAKES.find(x=>x.id===U.sd.k);if(tk&&tk.note)tk.note.t=v;}
@@ -1314,7 +1475,7 @@ function sheetDragEnd(){if(!SD)return;const {sh,dy}=SD;SD=null;sh.classList.remo
   else{sh.style.transform='';setTimeout(()=>sh.classList.remove('back'),340);}}
 document.addEventListener('touchend',sheetDragEnd);document.addEventListener('touchcancel',sheetDragEnd);
 // live session clock
-setInterval(()=>{if(!X||!U.view||U.view==='ex')return;const t=$('timer');if(t)t.textContent=pillText();const bc=$('bigClock');if(bc)bc.textContent=clk(elapsedSec());const cs=$('curSplit');if(cs)cs.textContent=clk(elapsedSec()-(+cs.dataset.base||0));},1000);
+setInterval(()=>{if(!X||!isFlow(U.view))return;const t=$('timer');if(t)t.textContent=pillText();const bc=$('bigClock');if(bc)bc.textContent=clk(elapsedSec());const cs=$('curSplit');if(cs)cs.textContent=clk(elapsedSec()-(+cs.dataset.base||0));},1000);
 let lastY=0,tabMin=false;
 window.addEventListener('scroll',()=>{closeSwipes();const y=window.scrollY;const sc=y>36;$('bar').classList.toggle('scrolled',sc);document.body.classList.toggle('scrolled',sc);
   const tb=$('dock').querySelector('.tabbar');
@@ -1324,6 +1485,7 @@ window.addEventListener('scroll',()=>{closeSwipes();const y=window.scrollY;const
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(rec){bgSaved=true;stopRec();}}else{if(!U.sheet&&!rec)render(true);if(bgSaved){bgSaved=false;setTimeout(()=>toast('Your take was saved when you left the app'),500);}}});
 
 layout();render();
+if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
 /* launch screen: stay up until recordings are loaded (at least 0.6 s, at most 2.5 s), then fade */
 function hideSplash(){const sp=$('splash');if(!sp||sp.classList.contains('out'))return;sp.classList.add('out');setTimeout(()=>sp.remove(),500);}
 const splashMin=new Promise(r=>setTimeout(r,Math.max(0,600-performance.now())));
