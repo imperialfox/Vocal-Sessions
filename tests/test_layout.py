@@ -1,9 +1,14 @@
 """Every screen at every size: iPhone (two sizes, portrait and landscape), iPad both ways and Mac, light and dark.
 Also pull to refresh and the keyboard shortcuts. Screenshots of each go to tests/output/."""
+import os
 from harness import with_song_practice
 
 SIZES = [('iphone', 390, 844, True), ('iphone-small', 375, 667, True), ('iphone-se', 320, 568, True), ('landscape', 852, 393, True),
          ('ipad', 820, 1180, True), ('ipad-landscape', 1180, 820, True), ('mac', 1440, 900, False)]
+
+# VS_LAYOUT_SIZES=iphone,mac checks only those sizes (the runner uses this to check sizes side by side)
+_only = [x for x in os.environ.get('VS_LAYOUT_SIZES', '').split(',') if x]
+if _only: SIZES = [x for x in SIZES if x[0] in _only]
 
 FITS = "document.documentElement.scrollWidth<=innerWidth"
 BAR_IN = "(()=>{const b=document.querySelector('.tabbar,.toptabs,.side .sbi');if(!b)return true;const r=b.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth+0.5})()"
@@ -61,7 +66,8 @@ def run(b, t):
                 pg.keyboard.press('Control+2'); pg.wait_for_timeout(200); ok(pg.evaluate("U.tab") == 'history', 'Mac: Cmd/Ctrl+2 opens Progress')
             pg.context.close()
 
-    # pull to refresh on iPhone
+    # pull to refresh on iPhone (once, with the iPhone size)
+    if not any(x[0] == 'iphone' for x in SIZES): return
     pg = t.page(b, touch=True)
     def drag(y0, y1, steps=10):
         pg.evaluate(TOUCH, ['touchstart', y0])

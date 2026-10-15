@@ -7,12 +7,14 @@ Notes for whoever works on the app next, whether that's Ivan, a new Claude sessi
 ## The short version
 
 1. Change the files in `js/` and `css/` (or `index.html` for markup, `sw.js` for offline behaviour). Practice content (exercises, words, write-ups, goals) is all in `js/content.js`.
-2. Run `python tests/run.py`. Everything must pass.
+2. While building, run `python tests/run.py quick` (about a minute and a half) or just the files you're changing. Before pushing, run `python tests/run.py` (about 3½ minutes). Everything must pass.
 3. Run `python tools/release.py 3.7` with the new version, and write the changes in `CHANGELOG.md`.
 4. Run `python tests/run.py release` to check the version agrees everywhere.
 5. Push to `main`. GitHub Pages publishes it within a minute or two, and the **Tests** check runs on GitHub.
 
 **Working with Claude:** Ivan reviews prototypes first. Nothing is built into the app or pushed until he says **"render"**.
+- Research and prototyping happen in one chat; each build happens in a **fresh chat**, started from a short handoff note (the agreed scope, decisions and what's queued), so the build begins with a clear memory.
+- Tests are tiered: `quick` or single files while building, the full suite once before pushing. The full suite runs files side by side.
 
 ---
 
@@ -146,8 +148,10 @@ The fixtures in `tests/fixtures/` are real backups made by 3.5 and 3.6, plus a c
 ```
 pip install playwright==1.56.0
 python -m playwright install chromium
-python tests/run.py                  # everything, about 10 minutes
+python tests/run.py                  # everything, side by side: about 3½ minutes (before every push)
+python tests/run.py quick            # all but layout and random taps: about 1½ minutes (while building)
 python tests/run.py backup flows     # just some files
+python tests/run.py --one-at-a-time  # everything, one file after another: about 11 minutes
 VS_FUZZ_STEPS=2000 python tests/run.py fuzz   # a longer random-tap run
 ```
 
@@ -162,10 +166,13 @@ The tests drive the real app in Chromium, served from `localhost` as GitHub Page
 | `test_edge.py` | Every bug from the 3.3.2 audit, so none come back |
 | `test_data.py` | Data version upgrades and the copy kept first, backups from a newer version, Storage protection, and opening offline |
 | `test_changelog.py` | The Changelog page shows every version in CHANGELOG.md, the chart, Show all, Every change, and a failed load |
+| `test_songs.py` | Pasting and labelling lyrics, the song screen, Annotate and Lyrics editing (marks following their words), unlink, reorder, pins, the list, search, Today's pinned songs, older and damaged songs, backups, and iPad/Mac shortcuts |
 | `test_backup.py` | Export, Check a backup, damaged files, restore comparison, undo, the old-backup fixtures and the exercise-id guard |
 | `test_recording.py` | Recording with a fake microphone, leaving mid-take, keeping 3 takes, and audio in backups |
 | `test_layout.py` | Every screen on iPhone, iPhone landscape, iPad and Mac, light and dark, plus pull to refresh |
 | `test_fuzz.py` | Thousands of random taps, checking nothing breaks after each one |
+
+Running side by side, each layout size and each random-tap seed is its own job, every job has its own browser and test web server, and `VS_JOBS` sets how many run at once (default: twice the processor count). Results are shown per job as each one finishes.
 
 Tests reach into the app through its globals (`D`, `X`, `U`, `render`…), so the scripts must stay classic `<script>`s, not ES modules. `harness.offline(path)` switches the test web server off for a real "no connection" (Playwright's own offline switch doesn't reach the offline helper).
 

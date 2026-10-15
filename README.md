@@ -206,7 +206,7 @@ Vanilla HTML, CSS and JavaScript, with no frameworks or build step: `index.html`
 
 See [MAINTAINING.md](MAINTAINING.md) for how the app is built, where data lives, the rules that keep old backups working, and how to release.
 
-- `python tests/run.py` runs the full test suite in Chromium: every screen at every size, a full practice session, backups (including real ones from earlier versions), recording, and thousands of random taps. GitHub runs it after every push.
+- `python tests/run.py` runs the full test suite in Chromium, several files side by side: every screen at every size, a full practice session, songs, backups (including real ones from earlier versions), recording, and thousands of random taps. GitHub runs it after every push. `python tests/run.py quick` skips the slow layout and random-tap checks while building.
 - `python tools/release.py 3.7` sets a new version number everywhere at once.
 
 ---

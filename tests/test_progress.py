@@ -57,6 +57,8 @@ def run(b, t):
     pg.click('[data-a=esplit][data-v=mixed]'); pg.wait_for_timeout(400); pg.click('[data-a=saveEdit]'); pg.wait_for_timeout(300)
     ok(pg.evaluate("D.sessions[D.sessions.length-1].mixed") is True, 'Edit can switch back to filled in at the end')
     pg.click('.xbtn[data-a=close]'); pg.wait_for_timeout(300)
+    # sessions started 45-50 minutes ago fall on yesterday just after midnight, so pin them to today for the Day view
+    pg.evaluate("D.sessions.slice(-2).forEach((s,i)=>{const d=startOfDay(new Date());d.setMinutes(i);s.date=d.toISOString();s.end=new Date(+d+s.mins*6e4).toISOString()});save()")
     pg.click('[data-a=tab][data-v=history]'); pg.click('[data-a=prange][data-v=D]'); pg.wait_for_timeout(300)
     ok(pg.evaluate("period().sess.length") == 2, 'Day view shows both new sessions')
     ok(not pg.evaluate("document.documentElement.scrollWidth>innerWidth"), 'no sideways scroll')
