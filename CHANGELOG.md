@@ -9,6 +9,28 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.6 · 15 Oct 2026
+
+**Organised backups**
+- Backups are named by month and device, such as **Vocal Sessions backup · 2026-10 · iPhone.json**. Backing up again in the same month, Files asks to replace that month's file, so you keep one per month for each device.
+- **Where backups go** in Settings shows how to make an **iCloud Drive › Vocal Sessions › Backups** folder. The first backup offers it too.
+- **Backup history** in Settings lists every backup made on this device, with its size and what was in it.
+
+**Checked backups**
+- Each backup has a check code, a fingerprint of everything inside it.
+- Before you save, the app reads the finished file back and checks it.
+- **Check a backup** in Settings tells you whether a file is complete, what's inside and when it was made, without changing anything. It spots files that were cut short while copying, edited, or have damaged recordings.
+- Backups from earlier versions still import. They're checked for readability, but have no check code.
+
+**Safer restores**
+- Import now shows the backup side by side with what's on this device.
+- If anything here isn't in the backup, it tells you what would be removed and offers to back up first.
+- **Undo last restore** in Settings puts everything back as it was, recordings included, for 30 days.
+
+**Easy to recognise later**
+- Each backup file starts with a short note in plain English: what it is, which device made it, what's inside and how to restore it.
+- **Save a read-me file** in Settings saves a text file explaining the backups, to keep in the same folder.
+
 ## 3.5 · 15 Oct 2026
 
 **History is now Progress**

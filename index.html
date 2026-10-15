@@ -133,6 +133,20 @@ h1{font-size:34px;font-weight:700;letter-spacing:0.01em;margin:0 4px 6px}
 .note{font-size:13px;color:var(--fg2);margin:0 4px 14px;line-height:1.4}
 .foot{font-size:13px;color:var(--fg2);margin:7px 16px 0;line-height:1.4}
 .foot.warn{color:var(--danger)}
+.bkstat{display:flex;gap:12px;align-items:flex-start;border-radius:16px;padding:12px 14px;margin:0 0 4px;font-size:14px;line-height:1.38;color:var(--fg)}
+.bkstat b{display:block;font-size:15px;margin-bottom:2px}
+.bkstat svg.i{margin-top:1px}
+.bkstat.ok{background:color-mix(in srgb,var(--good) 15%,transparent)}.bkstat.ok svg.i{color:var(--good)}
+.bkstat.warn{background:var(--warnbg);color:var(--warnfg)}
+.bkstat.bad{background:color-mix(in srgb,var(--danger) 14%,transparent)}.bkstat.bad svg.i{color:var(--danger)}
+.cmpv{flex:none;width:76px;text-align:right;color:var(--fg2);font-variant-numeric:tabular-nums}
+.row.cmph{min-height:34px;font-size:13px}.cmph .cmpv{font-weight:600}
+.cmpv.diff{color:var(--fg);font-weight:600}
+.steps{margin:0;padding:0;counter-reset:st}
+.steps li{list-style:none;counter-increment:st;position:relative;padding:11px 16px 11px 50px;background:var(--surface);font-size:15px;line-height:1.38}
+.steps li+li{border-top:.5px solid var(--sep)}
+.steps li::before{content:counter(st);position:absolute;left:14px;top:10px;width:24px;height:24px;border-radius:50%;background:var(--accent);color:var(--on-accent);font-size:13px;font-weight:600;display:grid;place-items:center}
+.fname{font-size:13px;color:var(--fg2);word-break:break-word}
 .hdr{font-size:13px;color:var(--fg2);margin:22px 16px 7px;text-transform:uppercase;letter-spacing:0.03em}
 .grp{background:var(--surface);border-radius:20px;overflow:hidden}
 .row{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:50px;padding:6px 16px;position:relative;width:100%;background:var(--surface)}
@@ -434,8 +448,8 @@ body.reg .pgrid>div>.hdr:first-child{margin-top:8px}
 
 <script>
 /* ===== Config ===== */
-const APP_VERSION='3.5', RELEASE_DATE='15 Oct 2026';
-const REPO='https://github.com/imperialfox/Vocal-Sessions';
+const APP_VERSION='3.6', RELEASE_DATE='15 Oct 2026';
+const REPO='https://github.com/imperialfox/Vocal-Sessions', APP_URL='https://imperialfox.github.io/Vocal-Sessions/';
 const VIDEO='https://youtu.be/rG-o10NggDI';
 const TARGET=280, WEEK_TARGET=70;
 const UPDATE_DAY='14 Oct'; // counts saved before this date have no dates
@@ -580,12 +594,18 @@ normX();
 
 /* ===== Recordings (IndexedDB) ===== */
 let dbp=null;
-function db(){if(dbp)return dbp;dbp=new Promise((res,rej)=>{if(!window.indexedDB)return rej(new Error('no idb'));const r=indexedDB.open('vocalTakes',1);r.onupgradeneeded=()=>r.result.createObjectStore('takes',{keyPath:'id'});r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});return dbp;}
-async function tx(mode,fn){const d=await db();return new Promise((res,rej)=>{const t=d.transaction('takes',mode);const out=fn(t.objectStore('takes'));t.oncomplete=()=>res(out&&out.result!==undefined?out.result:undefined);t.onerror=()=>rej(t.error);});}
+function db(){if(dbp)return dbp;dbp=new Promise((res,rej)=>{if(!window.indexedDB)return rej(new Error('no idb'));const r=indexedDB.open('vocalTakes',2);r.onupgradeneeded=()=>{const d=r.result;if(!d.objectStoreNames.contains('takes'))d.createObjectStore('takes',{keyPath:'id'});if(!d.objectStoreNames.contains('undo'))d.createObjectStore('undo',{keyPath:'id'});};r.onsuccess=()=>{const d=r.result;d.onversionchange=()=>{d.close();dbp=null;};res(d);};r.onerror=()=>{dbp=null;rej(r.error);};});return dbp;}
+async function tx(mode,fn,store){store=store||'takes';const d=await db();return new Promise((res,rej)=>{const t=d.transaction(store,mode);const out=fn(t.objectStore(store));t.oncomplete=()=>res(out&&out.result!==undefined?out.result:undefined);t.onerror=()=>rej(t.error);});}
 const allTakes=()=>tx('readonly',s=>s.getAll()).then(r=>r||[]).catch(()=>[]);
 const putTake=t=>tx('readwrite',s=>s.put(t));
 const delTake=id=>tx('readwrite',s=>s.delete(id));
 const clearTakes=()=>tx('readwrite',s=>s.clear()).catch(()=>{});
+// the copy of your data kept for 30 days after a restore, so it can be undone
+const getUndo=()=>tx('readonly',s=>s.get('last'),'undo').then(r=>r||null).catch(()=>null);
+const putUndo=o=>tx('readwrite',s=>s.put(o),'undo');
+const clearUndo=()=>tx('readwrite',s=>s.clear(),'undo').catch(()=>{});
+const UNDO_DAYS=30;let UNDO=null;
+async function refreshUndo(){const u=await getUndo();if(u&&!(Date.now()-u.at<UNDO_DAYS*864e5)){await clearUndo();UNDO=null;return;}UNDO=u;}
 let TAKES=[];
 async function refreshTakes(){TAKES=(await allTakes()).sort((a,b)=>a.created-b.created);}
 
@@ -659,6 +679,9 @@ const ICON={
   x:'<svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>',
   pen:'<svg class="i" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>',
   save:'<svg class="i" viewBox="0 0 24 24"><path d="M12 3v12M8 11l4 4 4-4M5 21h14"/></svg>',
+  okc:'<svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M7.5 12.5l3 3 6-6.5"/></svg>',
+  warn:'<svg class="i" viewBox="0 0 24 24"><path d="M12 3.8L21.3 20H2.7z"/><path d="M12 10v4.5M12 17.4h.01"/></svg>',
+  bad:'<svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M9 9l6 6M15 9l-6 6"/></svg>',
   check:'<svg class="i" viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M5 12l5 5 9-10"/></svg>',
   plus:'<svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
   circle:'<svg class="i" viewBox="0 0 24 24" style="width:24px;height:24px"><circle cx="12" cy="12" r="9.5"/></svg>',
@@ -880,9 +903,15 @@ function scrSettings(){
   return '<h1>Settings</h1>'+
   '<div class="hdr">Backup</div><div class="grp">'+
    '<button class="row" data-a="exportPrep"><span class="lbl acc">Export backup</span>'+ICON.share+'</button>'+
-   '<button class="row" data-a="importPick"><span class="lbl acc">Import backup</span>'+chev+'</button></div>'+
+   '<button class="row" data-a="importPick"><span class="lbl acc">Import backup</span>'+chev+'</button>'+
+   '<button class="row" data-a="checkPick"><span class="lbl acc">Check a backup</span>'+chev+'</button>'+
+   (UNDO?'<button class="row" data-a="sheet" data-v="undoRestore"><span class="lbl acc">Undo last restore<small>Restored '+shortDate(UNDO.at)+' at '+timeOf(UNDO.at)+'</small></span>'+chev+'</button>':'')+'</div>'+
   '<p class="foot'+(age>14?' warn':'')+'">'+lbText+(age>14&&lb?'. It’s been over two weeks.':'')+'</p>'+
-  '<p class="foot">A backup holds everything: sessions, minutes, exercises, songs and recordings. Save it to iCloud Drive, then import it after re-adding the app or switching phones.</p>'+
+  '<p class="foot">A backup holds everything: sessions, minutes, exercises, songs and recordings. Keep them in iCloud Drive › Vocal Sessions › Backups, and import one after re-adding the app or switching phones.</p>'+
+  '<div class="hdr">Backup files</div><div class="grp">'+
+   '<button class="row" data-a="sheet" data-v="bkLog"><span class="lbl">Backup history</span><span class="mut">'+loadLog().length+'</span>'+chev+'</button>'+
+   '<button class="row" data-a="sheet" data-v="bkGuide"><span class="lbl">Where backups go</span>'+chev+'</button>'+
+   '<button class="row" data-a="saveReadme"><span class="lbl acc">Save a read-me file</span>'+ICON.share+'</button></div>'+
   '<div class="hdr">Recordings</div><div class="grp"><button class="row" data-a="sheet" data-v="storage"><span class="lbl">Recordings</span><span class="mut">'+TAKES.length+' · '+(size/1048576).toFixed(1)+' MB</span>'+chev+'</button></div>'+
   '<div class="hdr">Reset</div><div class="grp">'+
    '<button class="row" data-a="sheet" data-v="resetMonth"><span class="lbl dng">Reset this month’s minutes</span></button>'+
@@ -991,9 +1020,18 @@ function renderSheet(){
   else if(s==='resetMonth')h=confirmSheet('Reset this month?','This month’s minutes go back to zero. Sessions and recordings stay.','Reset minutes','resetMonth');
   else if(s==='resetAll')h=sheetWrap('Reset all data?','<p class="note">Deletes your history, minutes, streak, custom exercises, songs, song practice and recordings on this phone. This can’t be undone.</p><button class="cta" data-a="exportPrep" style="margin-bottom:10px">Export a backup first</button><button class="cta red" data-a="resetAll">Delete everything</button><button class="ghost" data-a="close">Cancel</button>');
   else if(s==='discard')h=isSong()?confirmSheet('Discard song practice?','This practice won’t be saved. Recordings stay.','Discard','discardYes','','Keep going'):confirmSheet('Discard session?','Levels and notes from this session won’t be saved. Recordings stay.','Discard','discardYes','','Keep session');
-  else if(s==='exportReady'&&pendingExport)h=sheetWrap('Backup ready','<div class="grp"><div class="row"><span class="lbl">Sessions</span><span class="mut">'+pendingExport.sessions+'</span></div><div class="row"><span class="lbl">Song practice</span><span class="mut">'+pendingExport.songs+'</span></div><div class="row"><span class="lbl">Recordings</span><span class="mut">'+pendingExport.takes+'</span></div><div class="row"><span class="lbl">File size</span><span class="mut">'+(pendingExport.file.size/1048576).toFixed(1)+' MB</span></div></div><p class="note" style="margin-top:10px">Choose Save to Files, then iCloud Drive, so it survives if the app is removed.</p><button class="cta" data-a="exportSave">Save backup</button><button class="ghost" data-a="close">Cancel</button>');
+  else if(s==='exportReady'&&pendingExport){const P=pendingExport,first=!loadLog().length;
+    h=sheetWrap('Backup ready','<div class="bkstat ok">'+ICON.okc+'<div><b>'+(P.verified?'Checked':'Ready')+'</b>'+(P.verified?'The file reads back correctly and its check code matches.':'The file reads back correctly.')+'</div></div>'+
+      '<div class="grp" style="margin-top:10px"><div class="row"><span class="lbl">File<small class="fname">'+esc(P.file.name)+'</small></span><span class="mut">'+mb(P.file.size)+'</span></div><div class="row"><span class="lbl">Sessions</span><span class="mut">'+P.s.sessions+'</span></div><div class="row"><span class="lbl">Song practice</span><span class="mut">'+P.s.songPractice+'</span></div><div class="row"><span class="lbl">Recordings</span><span class="mut">'+P.s.recordings+'</span></div></div>'+
+      '<p class="note" style="margin-top:10px">Choose <b>Save to Files</b>, then <b>iCloud Drive › Vocal Sessions › Backups</b>.'+(first?'':' If Files asks, tap Replace to update this month’s backup.')+'</p>'+
+      (first?'<button class="row grp" data-a="bkGuideFrom" style="margin-bottom:14px;border-radius:16px"><span class="lbl acc">First time? Set up the folder</span>'+chev+'</button>':'')+
+      '<button class="cta" data-a="exportSave">Save backup</button><button class="ghost" data-a="close">Cancel</button>');}
+  else if(s==='bkReport'&&pendingImport)h=bkReportHTML(pendingImport,U.sd.mode);
+  else if(s==='bkGuide')h=bkGuideHTML();
+  else if(s==='bkLog')h=bkLogHTML();
+  else if(s==='undoRestore'&&UNDO)h=undoHTML();
+  else if(s==='undoing')h=sheetWrap('Undoing restore','<p class="note">Putting back your sessions and recordings…</p>');
   else if(s==='exporting')h=sheetWrap('Preparing backup','<p class="note">Gathering your sessions and recordings…</p>');
-  else if(s==='importConfirm'&&pendingImport){const p=pendingImport,d=p.data||{};h=sheetWrap('Restore this backup?','<div class="grp"><div class="row"><span class="lbl">Backed up</span><span class="mut">'+shortDate(p.exportedAt)+' at '+timeOf(p.exportedAt)+'</span></div><div class="row"><span class="lbl">Sessions</span><span class="mut">'+(d.sessions||[]).length+'</span></div><div class="row"><span class="lbl">Song practice</span><span class="mut">'+(d.songSessions||[]).length+'</span></div><div class="row"><span class="lbl">Songs</span><span class="mut">'+(d.songs||[]).length+'</span></div><div class="row"><span class="lbl">Recordings</span><span class="mut">'+(p.takes||[]).length+'</span></div></div><p class="note" style="margin-top:10px">Everything currently on this phone will be replaced with this backup.</p><button class="cta red" data-a="importYes">Replace and restore</button><button class="ghost" data-a="close">Cancel</button>');}
   else if(s==='importing')h=sheetWrap('Restoring backup','<p class="note">Restoring your sessions and recordings…</p>');
   else if(s==='calendar')h=calendarSheet();
   else if(s==='session'||s==='done'){const ss=D.sessions.find(x=>x.id===k);if(ss)h=sessionSheet(ss,s==='done');}
@@ -1246,17 +1284,78 @@ function shareTake(id){
 }
 
 /* ===== Backup ===== */
+// Files are named by month and device, e.g. "Vocal Sessions backup · 2026-10 · iPhone.json".
+// Backing up again in the same month replaces that month's file, so the folder keeps one file per month per device.
 const blobToDataURL=b=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error);r.readAsDataURL(b);});
 function dataURLToBlob(u){const [head,b64]=u.split(',');const type=(head.match(/data:([^;]+)/)||[])[1]||'application/octet-stream';const bin=atob(b64);const arr=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);return new Blob([arr],{type});}
+const BLOG='vocalBackupLog', README_NAME='READ ME – Vocal Sessions backups.txt';
+function deviceName(){const u=navigator.userAgent||'';if(/iPad/.test(u)||(/Macintosh/.test(u)&&navigator.maxTouchPoints>1))return 'iPad';if(/iPhone|iPod/.test(u))return 'iPhone';if(/Macintosh/.test(u))return 'Mac';if(/Android/.test(u))return 'Android';return 'computer';}
+const thisDev=()=>'this '+deviceName();
+const ym=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+const backupName=d=>'Vocal Sessions backup · '+ym(d)+' · '+deviceName()+'.json';
+const mb=n=>n<1048576?Math.max(1,Math.round(n/1024))+' KB':(n/1048576).toFixed(1)+' MB';
+function loadLog(){try{const a=JSON.parse(localStorage.getItem(BLOG)||'[]');return Array.isArray(a)?a.filter(x=>x&&x.at&&!isNaN(new Date(x.at))):[]}catch(e){return []}}
+function addLog(e){const a=loadLog();a.unshift(e);try{localStorage.setItem(BLOG,JSON.stringify(a.slice(0,24)))}catch(x){}}
+// check code: a SHA-256 fingerprint of everything in the backup, so a cut-off or edited file is spotted
+async function checkCode(p){if(!(window.crypto&&crypto.subtle&&window.TextEncoder))return null;
+  try{const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify({data:p.data,draft:p.draft==null?null:p.draft,takes:p.takes||[]})));
+  return Array.from(new Uint8Array(buf),b=>b.toString(16).padStart(2,'0')).join('');}catch(e){return null}}
+function sumOf(d,takes){const all=(d.sessions||[]).concat(d.songSessions||[]);const t=all.map(x=>+new Date(x.date)).filter(isFinite).sort((a,b)=>a-b);
+  return {sessions:(d.sessions||[]).length,songPractice:(d.songSessions||[]).length,songs:(d.songs||[]).length,recordings:(takes||[]).length,
+    minutes:all.reduce((a,x)=>a+(+x.mins||0),0),first:t.length?new Date(t[0]).toISOString():null,last:t.length?new Date(t[t.length-1]).toISOString():null};}
+const plural=(n,w,ws)=>n+' '+(n===1?w:(ws||w+'s'));
+// plain-English note at the top of every backup file, for anyone who finds it later
+function readmeLines(now,s){return [
+  'This is a backup from Vocal Sessions, a singing practice app for iPhone, iPad and Mac.',
+  'It holds '+plural(s.sessions,'practice session')+', '+plural(s.songPractice,'song practice','song practices')+', '+plural(s.recordings,'voice recording')+', plus exercises, songs, notes and monthly minutes.',
+  'Made on '+deviceName()+' on '+fileDate(now)+' at '+timeOf(now)+' with Vocal Sessions '+APP_VERSION+'.',
+  'To restore it: open '+APP_URL+' and add it to your Home Screen. Then go to Settings, tap Import backup and choose this file.',
+  'To check it without restoring: Settings, then Check a backup.',
+  'There is one backup file per month for each device. A newer one from the same month replaces the older one.',
+  'Please don’t edit this file. The check code at the end confirms nothing is missing or changed.'];}
+function backupText(p){return '{\n'+Object.keys(p).map(k=>'  '+JSON.stringify(k)+': '+(k==='README'||k==='summary'?JSON.stringify(p[k],null,2).replace(/\n/g,'\n  '):JSON.stringify(p[k]))).join(',\n')+'\n}\n';}
+function readmeText(){const now=new Date();return ['Vocal Sessions backups','======================','',
+  'This folder holds backups from Vocal Sessions, a singing practice app. It runs in Safari and is added to the Home Screen like an app.','',
+  'App: '+APP_URL,'Code and instructions: '+REPO,'',
+  'WHAT’S IN EACH BACKUP','Every practice session and its minutes, exercise levels, songs, notes, how each session went, and voice recordings.','',
+  'FILE NAMES','Vocal Sessions backup · YEAR-MONTH · DEVICE.json','For example: Vocal Sessions backup · '+ym(now)+' · '+deviceName()+'.json',
+  'There is one file per month for each device (iPhone, iPad or Mac). Backing up again in the same month replaces that month’s file.','',
+  'HOW TO RESTORE','1. Open '+APP_URL+' in Safari and add it to the Home Screen (Share, then Add to Home Screen).','2. Open the app, go to Settings and tap Import backup.',
+  '3. Choose the newest file. The app shows what’s inside and compares it with what’s on the device before anything is replaced.','4. Changed your mind? Settings, then Undo last restore, for 30 days.','',
+  'HOW TO CHECK A BACKUP','Settings, then Check a backup. Each file has a check code that confirms it’s complete and unchanged.','',
+  'CAN I DELETE OLD ONES?','Yes, once you have newer ones. Keep at least the last few months.','',
+  'Written by Vocal Sessions '+APP_VERSION+' on '+fileDate(now)+'.',''].join('\n');}
+
+// read a backup file and work out whether it can be trusted, without changing anything
+async function inspectBackup(text,name,size){
+  const r={name:name||'',size:size==null?text.length:size};let p=null;
+  try{p=JSON.parse(text);}catch(e){}
+  if(!p||typeof p!=='object'||Array.isArray(p)){r.status='broken';r.why=/vocal-sessions/.test(String(text).slice(0,6000))?'It’s a Vocal Sessions backup, but the file is cut short or damaged, so it can’t be read. Try an older backup.':'This file isn’t a Vocal Sessions backup.';return r;}
+  if(p.app!=='vocal-sessions'||!p.data){r.status='broken';r.why='This file isn’t a Vocal Sessions backup.';return r;}
+  const code=p.checkCode?await checkCode(p):null;
+  const d=cleanData(p.data);if(!d||(p.takes!=null&&!Array.isArray(p.takes))){r.status='broken';r.why='The backup is damaged inside, so it can’t be restored. Try an older backup.';return r;}
+  const ok=[];let bad=0;
+  for(const t of (p.takes||[])){try{if(!t||!t.id||typeof t.data!=='string'||!/^data:[^,]*;base64,/.test(t.data))throw 0;atob(t.data.slice(t.data.indexOf(',')+1));ok.push(t);}catch(e){bad++;}}
+  r.bad=bad;r.exportedAt=isNaN(new Date(p.exportedAt))?null:p.exportedAt;r.device=typeof p.device==='string'?p.device:'';r.version=typeof p.appVersion==='string'?p.appVersion:'';
+  r.p=Object.assign({},p,{data:d,takes:ok,draft:p.draft&&typeof p.draft==='object'&&+p.draft.start>0?p.draft:null});r.sum=sumOf(d,ok);
+  r.code=!p.checkCode?'none':code==null?'unchecked':code===p.checkCode?'match':'mismatch';
+  r.status=r.code==='mismatch'?'changed':bad?'partial':r.code==='match'?'good':r.code==='none'?'old':'unchecked';
+  return r;
+}
 async function prepareExport(){
-  U.sheet='exporting';rerender();
+  U.sheet='exporting';U.sd={};rerender();
   try{
     const takes=await allTakes();const out=[];
     for(const t of takes){const c=Object.assign({},t);delete c.blob;c.data=await blobToDataURL(t.blob);out.push(c);}
-    const now=new Date();
-    const payload={app:'vocal-sessions',format:1,appVersion:APP_VERSION,exportedAt:now.toISOString(),data:D,draft:X,takes:out};
-    const file=new File([JSON.stringify(payload)],'Vocal Sessions backup – '+fileDate(now)+'.json',{type:'application/json'});
-    pendingExport={file,at:payload.exportedAt,sessions:D.sessions.length,songs:D.songSessions.length,takes:out.length};
+    const now=new Date(),sm=sumOf(D,out);
+    const p={README:readmeLines(now,sm),app:'vocal-sessions',format:2,appVersion:APP_VERSION,exportedAt:now.toISOString(),device:deviceName(),summary:sm,data:D,draft:X||null,takes:out};
+    p.checkCode=await checkCode(p);
+    const file=new File([backupText(p)],backupName(now),{type:'application/json'});
+    // read the finished file back and check it before offering to save it
+    const back=await inspectBackup(await file.text(),file.name,file.size);
+    const okBack=(back.status==='good'||(back.status==='old'&&!p.checkCode))&&back.sum.sessions===sm.sessions&&back.sum.songPractice===sm.songPractice&&back.sum.recordings===sm.recordings;
+    if(!okBack)throw new Error('read-back failed');
+    pendingExport={file,at:p.exportedAt,s:sm,code:p.checkCode,verified:back.status==='good'};
     U.sheet='exportReady';
   }catch(e){U.sheet=null;toast('Couldn’t create the backup. Try again.');}
   rerender();
@@ -1265,33 +1364,111 @@ async function saveExport(){
   const p=pendingExport;if(!p)return;
   const r=await shareFile(p.file);
   if(r==='cancelled'){toast('Backup not saved');return;}
-  D.lastBackup=p.at;save();pendingExport=null;U.sheet=null;rerender();toast(r==='shared'?'Backup saved':'Backup downloaded');
+  D.lastBackup=p.at;save();
+  addLog({at:p.at,name:p.file.name,size:p.file.size,sessions:p.s.sessions,songPractice:p.s.songPractice,recordings:p.s.recordings,code:(p.code||'').slice(0,8),verified:p.verified,how:r});
+  pendingExport=null;U.sheet=null;rerender();toast(r==='shared'?'Backup saved':'Backup downloaded');
 }
-function readImport(file){
-  const r=new FileReader();
-  r.onload=()=>{let p;try{p=JSON.parse(r.result);}catch(e){p=null;}
-    if(!p||p.app!=='vocal-sessions'||!p.data){toast('That file isn’t a Vocal Sessions backup');return;}
-    const d=cleanData(p.data);if(!d||(p.takes&&!Array.isArray(p.takes))){toast('That backup file looks damaged');return;}
-    p.data=d;p.takes=(p.takes||[]).filter(t=>t&&t.id&&typeof t.data==='string');
-    pendingImport=p;U.sheet='importConfirm';rerender();};
-  r.onerror=()=>toast('Couldn’t read that file');
-  r.readAsText(file);
+let pickMode='import';
+function readBackupFile(file){
+  const fr=new FileReader();
+  fr.onload=async()=>{const rep=await inspectBackup(String(fr.result),file.name,file.size);pendingImport=rep;U.sheet='bkReport';U.sd={mode:pickMode};rerender();};
+  fr.onerror=()=>toast('Couldn’t read that file');
+  fr.readAsText(file);
 }
 async function restoreImport(){
-  const p=pendingImport;if(!p)return;
-  U.sheet='importing';rerender();
+  const r=pendingImport;if(!r||!r.p)return;const p=r.p;
+  U.sheet='importing';U.sd={};rerender();
   try{
     stopPlayback();if(rec)stopRec();
     // decode every recording first, so a bad file can't leave you with half your data
-    const ready=(p.takes||[]).map(t=>{const c=Object.assign({},t);c.blob=dataURLToBlob(t.data);delete c.data;return c;});
+    const ready=p.takes.map(t=>{const c=Object.assign({},t);c.blob=dataURLToBlob(t.data);delete c.data;return c;});
+    // keep a copy of what's here now, so the restore can be undone
+    let undoOK=true;
+    try{await putUndo({id:'last',at:Date.now(),data:JSON.parse(JSON.stringify(D)),draft:X?JSON.parse(JSON.stringify(X)):null,takes:await allTakes(),
+      restored:p.data.sessions.concat(p.data.songSessions).map(x=>x.id),from:r.name||''});}catch(e){undoOK=false;await clearUndo();}
     await clearTakes();
     for(const c of ready)await putTake(c);
     D=cleanData(p.data)||{};migrate();D.lastBackup=p.exportedAt||new Date().toISOString();save();
     X=p.draft||null;normX();saveDraft();
-    await refreshTakes();pendingImport=null;
-    U=freshU();window.scrollTo(0,0);render();toast('Backup restored');
+    await refreshTakes();await refreshUndo();pendingImport=null;
+    U=freshU();window.scrollTo(0,0);render();toast(undoOK?'Backup restored':'Backup restored. Undo isn’t available: not enough space.');
   }catch(e){U.sheet=null;rerender();toast('Couldn’t restore that backup');}
 }
+async function undoRestore(){
+  const u=await getUndo();if(!u){UNDO=null;U.sheet=null;rerender();toast('Nothing to undo');return;}
+  U.sheet='undoing';U.sd={};rerender();
+  try{
+    stopPlayback();if(rec)stopRec();
+    await clearTakes();for(const t of (u.takes||[]))await putTake(t);
+    D=cleanData(u.data)||{};migrate();save();X=u.draft&&+u.draft.start>0?u.draft:null;normX();saveDraft();
+    await clearUndo();UNDO=null;await refreshTakes();
+    U=freshU();U.tab='settings';window.scrollTo(0,0);render();toast('Restore undone');
+  }catch(e){U.sheet=null;rerender();toast('Couldn’t undo the restore');}
+}
+// sessions logged after a restore, which undoing it would remove
+function sinceRestore(u){if(!u)return 0;const keep=new Set((u.restored||[]).concat(((u.data||{}).sessions||[]).concat((u.data||{}).songSessions||[]).map(x=>x.id)));
+  return D.sessions.concat(D.songSessions).filter(x=>!keep.has(x.id)).length;}
+
+const BK_STAT=r=>({
+  good:['ok',ICON.okc,'This backup is complete','The check code matches, so nothing is missing or changed.'],
+  unchecked:['ok',ICON.okc,'This backup reads correctly','This browser can’t verify the check code, but everything inside reads correctly.'],
+  old:['ok',ICON.okc,'This backup reads correctly','It was made before backups had check codes, so it can’t be fully verified. Everything inside reads correctly.'],
+  partial:['warn',ICON.warn,'Some recordings are damaged',plural(r.bad,'recording')+' can’t be read and will be left out. Everything else is fine.'],
+  changed:['warn',ICON.warn,'This backup has been changed','The check code doesn’t match, so the file may have been edited or not fully copied. It still reads, but check what’s inside before restoring.'+(r.bad?' '+plural(r.bad,'recording')+' can’t be read.':'')],
+  broken:['bad',ICON.bad,'This file can’t be used',r.why]})[r.status];
+const bkStat=r=>{const b=BK_STAT(r);return '<div class="bkstat '+b[0]+'">'+b[1]+'<div><b>'+b[2]+'</b>'+esc(b[3])+'</div></div>';};
+const when=d=>d?fileDate(new Date(d))+' at '+timeOf(d):'Unknown';
+function bkReportHTML(r,mode){
+  const imp=mode==='import';
+  let b=bkStat(r);
+  if(r.status==='broken')return sheetWrap(imp?'Can’t restore':'Backup check',b+'<div class="grp" style="margin-top:10px"><div class="row"><span class="lbl">File<small class="fname">'+esc(r.name)+'</small></span><span class="mut">'+mb(r.size)+'</span></div></div><button class="ghost" data-a="close">Done</button>');
+  const S=r.sum;
+  b+='<div class="grp" style="margin-top:10px"><div class="row"><span class="lbl">Backed up</span><span class="mut">'+when(r.exportedAt)+'</span></div>'+
+    (r.device?'<div class="row"><span class="lbl">Made on</span><span class="mut">'+esc(r.device)+'</span></div>':'')+
+    (r.version?'<div class="row"><span class="lbl">App version</span><span class="mut">'+esc(r.version)+'</span></div>':'')+
+    '<div class="row"><span class="lbl">File<small class="fname">'+esc(r.name)+'</small></span><span class="mut">'+mb(r.size)+'</span></div></div>';
+  if(imp){
+    const H=sumOf(D,TAKES);
+    const cell=(a,h,f)=>'<span class="cmpv'+(a!==h?' diff':'')+'">'+(f?f(a):a)+'</span><span class="cmpv">'+(f?f(h):h)+'</span>';
+    const sd=x=>x?shortDate(x):'–';
+    b+='<div class="hdr">Compared with '+thisDev()+'</div><div class="grp"><div class="row cmph"><span class="lbl"></span><span class="cmpv">Backup</span><span class="cmpv">'+esc(deviceName()==='computer'?'Here':'This '+deviceName())+'</span></div>'+
+      [['Sessions',S.sessions,H.sessions],['Song practice',S.songPractice,H.songPractice],['Songs',S.songs,H.songs],['Recordings',S.recordings,H.recordings],['Practice time',S.minutes,H.minutes,hm],['Latest practice',S.last,H.last,sd]]
+      .map(x=>'<div class="row"><span class="lbl">'+x[0]+'</span>'+cell(x[1],x[2],x[3])+'</div>').join('')+'</div>';
+    const ids=new Set(r.p.data.sessions.map(x=>x.id)),gids=new Set(r.p.data.songSessions.map(x=>x.id)),tids=new Set(r.p.takes.map(x=>x.id));
+    const lS=D.sessions.filter(x=>!ids.has(x.id)).length,lG=D.songSessions.filter(x=>!gids.has(x.id)).length,lT=TAKES.filter(x=>!tids.has(x.id)).length;
+    const lost=[lS?plural(lS,'session'):'',lG?plural(lG,'song practice','song practices'):'',lT?plural(lT,'recording'):''].filter(Boolean);
+    const older=H.last&&(!S.last||new Date(S.last)<new Date(H.last));
+    if(lost.length){const list=lost.length>1?lost.slice(0,-1).join(', ')+' and '+lost[lost.length-1]:lost[0];
+      b+='<div class="bkstat warn" style="margin-top:12px">'+ICON.warn+'<div><b>'+(older?'This backup is older than '+thisDev():'Not everything here is in this backup')+'</b>'+esc(list)+' on '+thisDev()+(lS+lG+lT===1?' isn’t':' aren’t')+' in this backup. Restoring removes '+(lS+lG+lT===1?'it':'them')+'.</div></div>'+
+        '<button class="ghost" data-a="exportPrep">Back up '+thisDev()+' first</button>';}
+    else if(D.sessions.length||D.songSessions.length||TAKES.length)b+='<p class="note" style="margin-top:12px">Everything on '+thisDev()+' is also in this backup.</p>';
+    else b+='<p class="note" style="margin-top:12px">'+(deviceName()==='computer'?'This device':'This '+deviceName())+' has no practice saved yet.</p>';
+    b+='<p class="note">You can undo a restore from Settings for '+UNDO_DAYS+' days.</p><button class="cta red" data-a="importYes">'+(r.status==='changed'?'Restore anyway':'Replace and restore')+'</button><button class="ghost" data-a="close">Cancel</button>';
+    return sheetWrap('Restore this backup?',b);
+  }
+  b+='<div class="hdr">Inside</div><div class="grp">'+[['Sessions',S.sessions],['Song practice',S.songPractice],['Songs',S.songs],['Recordings',S.recordings],['Practice time',hm(S.minutes)],['Practice from',S.first?shortDate(S.first)+' – '+shortDate(S.last):'–']]
+    .map(x=>'<div class="row"><span class="lbl">'+x[0]+'</span><span class="mut">'+x[1]+'</span></div>').join('')+'</div>'+
+    '<p class="note" style="margin-top:10px">Nothing has been changed on '+thisDev()+'.</p><button class="cta" data-a="bkToImport">Restore from this backup</button><button class="ghost" data-a="close">Done</button>';
+  return sheetWrap('Backup check',b);
+}
+function bkGuideHTML(){
+  return sheetWrap('Where backups go','<p class="note">Keep every backup in one folder in iCloud Drive, so it’s safe if you lose your phone or remove the app.</p>'+
+    '<div class="grp"><ol class="steps"><li>Tap <b>Export backup</b>, then <b>Save backup</b>.</li><li>In the share sheet, choose <b>Save to Files</b>.</li>'+
+    '<li>Go to <b>iCloud Drive</b>. The first time, tap the new-folder button to make a folder called <b>Vocal Sessions</b>, and inside it one called <b>Backups</b>.</li>'+
+    '<li>Open Backups and tap <b>Save</b>. Files remembers this folder for next time.</li></ol></div>'+
+    '<div class="hdr">File names</div><div class="grp"><div class="row"><span class="lbl fname" style="color:var(--fg)">Vocal Sessions backup · '+ym(new Date())+' · '+esc(deviceName())+'.json</span></div></div>'+
+    '<p class="foot">One file per month for each device. If you back up again in the same month, Files asks whether to replace it. Tap <b>Replace</b> to keep one per month, or <b>Keep Both</b> for an extra copy.</p>'+
+    '<div class="hdr">If you find them later</div><p class="note">Each backup starts with a short note in plain English saying what it is and how to restore it. You can also save a read-me file into the Backups folder.</p>'+
+    '<button class="cta" data-a="saveReadme">Save a read-me file</button><button class="ghost" data-a="close">Done</button>');
+}
+function bkLogHTML(){const a=loadLog();
+  const rows=a.map(e=>'<div class="row"><span class="lbl">'+when(e.at)+'<small class="fname">'+esc(e.name||'')+'</small><small>'+[plural(+e.sessions||0,'session'),plural(+e.recordings||0,'recording')].join(' · ')+(e.verified?' · Checked':'')+(e.how==='downloaded'?' · Downloaded':'')+'</small></span><span class="mut">'+mb(+e.size||0)+'</span></div>').join('');
+  return sheetWrap('Backup history',(a.length?'<div class="grp">'+rows+'</div>':'<p class="note">No backups made on '+thisDev()+' yet.</p>')+
+    '<p class="foot">This list is kept on '+thisDev()+'. The files are wherever you saved them, ideally iCloud Drive › Vocal Sessions › Backups.</p><button class="ghost" data-a="close">Done</button>');}
+function undoHTML(){const u=UNDO;if(!u)return '';const n=sinceRestore(u),until=new Date(u.at+UNDO_DAYS*864e5);
+  return sheetWrap('Undo last restore?','<p class="note">This puts back everything as it was before you restored a backup on '+when(u.at)+'.</p>'+
+    (n?'<div class="bkstat warn">'+ICON.warn+'<div><b>'+plural(n,'session')+' since then</b>Anything you’ve logged since the restore will be removed. Back up first if you want to keep it.</div></div><button class="ghost" data-a="exportPrep">Back up first</button>':'')+
+    '<p class="note">The backup file stays in Files, so you can restore it again. Undo is available until '+fileDate(until)+'.</p><button class="cta red" data-a="undoYes">Undo restore</button><button class="ghost" data-a="close">Cancel</button>');}
 
 /* ===== Copy ===== */
 function copyText(txt){
@@ -1318,7 +1495,7 @@ document.addEventListener('touchmove',e=>{if(e.touches.length>1)e.preventDefault
 // double-tap zoom is turned off by touch-action:manipulation in the CSS, which keeps quick taps working
 
 /* ===== Events ===== */
-$('importIn').addEventListener('change',e=>{const f=e.target.files&&e.target.files[0];e.target.value='';if(f)readImport(f);});
+$('importIn').addEventListener('change',e=>{const f=e.target.files&&e.target.files[0];e.target.value='';if(f)readBackupFile(f);});
 document.addEventListener('click',e=>{
   const el=e.target.closest('[data-a]');
   if(Date.now()-swJustMoved<350&&!(el&&el.classList.contains('swdel'))){e.preventDefault();return;}
@@ -1407,12 +1584,17 @@ document.addEventListener('click',e=>{
     case 'delSongSess':D.songSessions=D.songSessions.filter(x=>x.id!==k);save();U.sheet=null;rerender();toast('Song practice deleted');break;
     case 'clearRec':(async()=>{stopPlayback();await clearTakes();await refreshTakes();U.sheet=null;rerender();toast('Recordings deleted');})();break;
     case 'resetMonth':D.months[monthKey()]=0;save();U.sheet=null;rerender();toast('This month reset');break;
-    case 'resetAll':(async()=>{stopPlayback();await clearTakes();D={v2:true};migrate();save();X=null;saveDraft();await refreshTakes();U=freshU();render();toast('All data deleted');})();break;
+    case 'resetAll':(async()=>{stopPlayback();await clearTakes();await clearUndo();UNDO=null;try{localStorage.removeItem(BLOG)}catch(e){}D={v2:true};migrate();save();X=null;saveDraft();await refreshTakes();U=freshU();render();toast('All data deleted');})();break;
     case 'copy':{const ss=findSess(k);if(ss)copyText(togglLines(ss));break;}
     case 'exportPrep':prepareExport();break;
     case 'exportSave':saveExport();break;
-    case 'importPick':$('importIn').click();break;
+    case 'importPick':pickMode='import';$('importIn').click();break;
+    case 'checkPick':pickMode='check';$('importIn').click();break;
+    case 'bkToImport':U.sd.mode='import';rerender();{const sh=document.querySelector('.sheet');if(sh)sh.scrollTop=0;}break;
     case 'importYes':restoreImport();break;
+    case 'undoYes':undoRestore();break;
+    case 'bkGuideFrom':U.sheet='bkGuide';U.sd={ret:'exportReady'};rerender();break;
+    case 'saveReadme':shareFile(new File([readmeText()],README_NAME,{type:'text/plain'})).then(r=>{if(r!=='cancelled')toast(r==='shared'?'Read-me saved':'Read-me downloaded');});break;
   }
 });
 function updatePcard(){const a=$('pcard'),b=$('pbrk');if(!a&&!b)return;const c=pcardHTML();if(a)a.innerHTML=c.card;if(b)b.innerHTML=c.brk;}
@@ -1490,7 +1672,7 @@ if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceW
 function hideSplash(){const sp=$('splash');if(!sp||sp.classList.contains('out'))return;sp.classList.add('out');setTimeout(()=>sp.remove(),500);}
 const splashMin=new Promise(r=>setTimeout(r,Math.max(0,600-performance.now())));
 setTimeout(hideSplash,2500);
-refreshTakes().then(rerender).catch(()=>{}).then(()=>splashMin).then(hideSplash);
+Promise.all([refreshTakes(),refreshUndo()]).then(rerender).catch(()=>{}).then(()=>splashMin).then(hideSplash);
 </script>
 </body>
 </html>
