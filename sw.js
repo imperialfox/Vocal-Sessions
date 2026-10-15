@@ -1,9 +1,11 @@
 /* Vocal Sessions offline support.
-   The app page is fetched fresh when you're online (so updates arrive), and the saved copy is used
-   when there's no signal or the network is too slow. Images are served from the saved copy. */
-const CACHE = 'vocal-sessions-v1';
-const SHELL = ['./', './index.html', './icon.png?v=3', './splash/logo.png'];
+   Everything except images is fetched fresh when you're online (so updates and the changelog arrive),
+   and the saved copy is used when there's no signal or the network is too slow.
+   Images rarely change, so they're served from the saved copy. */
+const CACHE = 'vocal-sessions-v2';
+const SHELL = ['./', './index.html', './CHANGELOG.md', './icon.png?v=3', './splash/logo.png'];
 const NET_TIMEOUT = 4000; // ms to wait for the network before using the saved copy
+const IMAGE = /\.(png|jpe?g|webp|gif|svg|ico)$/i;
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => Promise.all(SHELL.map(u => c.add(u).catch(() => {})))));
@@ -19,21 +21,27 @@ self.addEventListener('fetch', e => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (url.origin !== location.origin) return;
-  const isPage = req.mode === 'navigate' || url.pathname.endsWith('/') || url.pathname.endsWith('.html');
-  e.respondWith(isPage ? networkFirst(req) : cacheFirst(req));
+  e.respondWith(IMAGE.test(url.pathname) ? cacheFirst(req) : networkFirst(req, url));
 });
 
-async function networkFirst(req) {
+// The app page is saved under './' whatever address opened it; other files under their own path.
+const isPage = (req, url) => req.mode === 'navigate' || url.pathname.endsWith('/') || url.pathname.endsWith('.html');
+
+async function networkFirst(req, url) {
   const cache = await caches.open(CACHE);
+  const key = isPage(req, url) ? './' : url.pathname;
   try {
     const res = await Promise.race([
       fetch(req),
       new Promise((_, reject) => setTimeout(() => reject(new Error('slow network')), NET_TIMEOUT))
     ]);
-    if (res && res.ok) { cache.put('./', res.clone()); }
+    if (res && res.ok) { cache.put(key, res.clone()); }
     return res;
   } catch (err) {
-    return (await cache.match('./')) || (await cache.match('./index.html')) || (await cache.match(req, { ignoreSearch: true })) || Response.error();
+    const saved = isPage(req, url)
+      ? (await cache.match('./')) || (await cache.match('./index.html'))
+      : (await cache.match(key)) || (await cache.match(req, { ignoreSearch: true }));
+    return saved || Response.error();
   }
 }
 

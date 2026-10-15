@@ -133,6 +133,60 @@ h1{font-size:34px;font-weight:700;letter-spacing:0.01em;margin:0 4px 6px}
 .note{font-size:13px;color:var(--fg2);margin:0 4px 14px;line-height:1.4}
 .foot{font-size:13px;color:var(--fg2);margin:7px 16px 0;line-height:1.4}
 .foot.warn{color:var(--danger)}
+/* Changelog timeline */
+.lgcard{background:var(--surface);border-radius:22px;padding:16px 16px 12px;margin-top:6px}
+.lgcard .sub2{font-size:15px;color:var(--fg2);margin-top:2px}
+#lgchart{display:block;width:100%;height:auto;margin-top:12px;touch-action:pan-y}
+#lgchart .ar{transition:opacity .25s}
+#lgchart.picking .ar{opacity:.55}
+.lgdraw{animation:lgdraw 1.1s cubic-bezier(.3,.7,.2,1) both}
+@keyframes lgdraw{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
+.lglegend{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:10px;font-size:13px;color:var(--fg2)}
+.lglegend span{display:inline-flex;align-items:center;gap:5px}.lglegend i{width:9px;height:9px;border-radius:3px;display:inline-block}
+.lgjump{display:inline-flex;align-items:center;gap:2px;color:var(--accent);font-size:15px;font-weight:500;margin-top:4px;min-height:32px}
+.tl{position:relative;padding:4px 0 4px 34px;margin-top:6px}
+.tl::before{content:'';position:absolute;left:14px;top:22px;bottom:30px;width:2px;border-radius:2px;background:linear-gradient(to top,var(--fg3),var(--accent) 80%)}
+.tl-era{position:relative;display:flex;gap:12px;align-items:center;margin:22px 0 10px -34px}
+.tl-era:first-child{margin-top:8px}
+.tl-badge{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--accent);color:var(--on-accent);font-weight:700;font-size:15px;box-shadow:0 0 0 4px var(--bg);z-index:1}
+.tl-era b{display:block;font-size:20px;font-weight:700;letter-spacing:-.01em}.tl-era small{display:block;font-size:13px;color:var(--fg2);margin-top:1px}
+.tl-date{position:relative;font-size:13px;font-weight:600;color:var(--fg2);text-transform:uppercase;letter-spacing:.03em;margin:16px 0 8px 2px}
+.tl-gap{position:relative;margin:4px 0 4px -34px;padding:18px 0 18px 34px;font-size:13px;color:var(--fg2);font-style:italic}
+.tl-gap::before{content:'';position:absolute;left:14px;top:0;bottom:0;width:2px;background:repeating-linear-gradient(to bottom,var(--fg3) 0 4px,var(--bg) 4px 9px);z-index:1}
+.tl-item{position:relative;margin-bottom:12px}
+.tl-node{position:absolute;left:-26px;top:20px;width:12px;height:12px;border-radius:50%;background:var(--surface);border:2.5px solid var(--accent);box-shadow:0 0 0 3px var(--bg);z-index:1}
+.tl-item.patch .tl-node{left:-24px;top:22px;width:8px;height:8px;border:0;background:var(--fg3)}
+.tl-item.major .tl-node{left:-28px;top:18px;width:16px;height:16px;border:0;background:var(--accent)}
+.tl-item.now .tl-node::after{content:'';position:absolute;inset:-6px;border-radius:50%;border:2px solid var(--accent);opacity:.5;animation:lgpulse 2.2s ease-out infinite}
+@keyframes lgpulse{0%{transform:scale(.6);opacity:.7}100%{transform:scale(1.5);opacity:0}}
+.tl-card{background:var(--surface);border-radius:20px;padding:14px 16px 6px;transition:box-shadow .4s}
+.tl-card.flash{box-shadow:0 0 0 3px var(--hl)}
+.tl-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tl-v{font-size:17px;font-weight:700;font-variant-numeric:tabular-nums}
+.tl-kind{font-size:12px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--fill);color:var(--fg2)}
+.tl-item.major .tl-kind{background:var(--accent);color:var(--on-accent)}
+.tl-item.minor .tl-kind{background:var(--hl);color:var(--accent)}
+.tl-nowc{font-size:12px;font-weight:600;color:var(--good)}
+.tl-n{margin-left:auto;font-size:13px;color:var(--fg2);font-variant-numeric:tabular-nums}
+.tl-title{font-size:17px;font-weight:600;margin-top:4px;line-height:1.25}
+.tl-bar{display:flex;height:6px;border-radius:3px;overflow:hidden;gap:2px;margin:10px 0 4px}
+.tl-bar i{display:block;height:100%}
+.tl-list{margin:6px 0 0;padding:0;list-style:none}
+.tl-list li{position:relative;padding:5px 0 5px 16px;font-size:15px;line-height:1.38}
+.tl-list li::before{content:'';position:absolute;left:1px;top:12px;width:7px;height:7px;border-radius:50%;background:var(--c)}
+.tl-sub{margin:4px 0 0;padding:0 0 0 2px;list-style:none;color:var(--fg2);font-size:14px}
+.tl-list .tl-sub li{padding:2px 0 2px 14px}.tl-list .tl-sub li::before{width:5px;height:5px;top:10px;background:var(--fg3)}
+.tl-intro{font-size:15px;color:var(--fg2);margin:8px 0 2px;line-height:1.38}
+.tl-list code{font:13px ui-monospace,Menlo,monospace;background:var(--fill);padding:1px 4px;border-radius:5px}
+.tl-sec{font-size:13px;font-weight:600;color:var(--fg2);text-transform:uppercase;letter-spacing:.03em;margin:12px 0 0}
+.tl-more{display:flex;align-items:center;gap:4px;color:var(--accent);font-size:15px;font-weight:500;min-height:40px;width:100%}
+.tl-more svg.i{width:16px;height:16px;transition:transform .3s}.tl-more.open svg.i{transform:rotate(180deg)}
+.tl-end{position:relative;display:flex;align-items:center;gap:12px;margin:14px 0 4px -34px;font-size:15px;color:var(--fg2)}
+.tl-end .tl-badge{background:var(--fg3);width:30px;height:30px}
+.tl-in{opacity:0;transform:translateY(14px)}
+.tl-in.seen{opacity:1;transform:none;transition:opacity .5s ease,transform .6s cubic-bezier(.2,.8,.2,1)}
+@media (prefers-reduced-motion:reduce){.tl-in{opacity:1;transform:none}.lgdraw{animation:none}.tl-item.now .tl-node::after{animation:none}}
+
 .bkstat{display:flex;gap:12px;align-items:flex-start;border-radius:16px;padding:12px 14px;margin:0 0 4px;font-size:14px;line-height:1.38;color:var(--fg)}
 .bkstat b{display:block;font-size:15px;margin-bottom:2px}
 .bkstat svg.i{margin-top:1px}
@@ -448,7 +502,7 @@ body.reg .pgrid>div>.hdr:first-child{margin-top:8px}
 
 <script>
 /* ===== Config ===== */
-const APP_VERSION='3.6', RELEASE_DATE='15 Oct 2026';
+const APP_VERSION='3.7', RELEASE_DATE='15 Oct 2026';
 const REPO='https://github.com/imperialfox/Vocal-Sessions', APP_URL='https://imperialfox.github.io/Vocal-Sessions/';
 const VIDEO='https://youtu.be/rG-o10NggDI';
 const TARGET=280, WEEK_TARGET=70;
@@ -572,6 +626,19 @@ function cleanData(d){
 function save(){try{localStorage.setItem(KEY,JSON.stringify(D))}catch(e){toast('Couldn’t save. Storage may be full.')}}
 function loadDraft(){try{const o=JSON.parse(localStorage.getItem(DRAFT)||'null');return o&&typeof o==='object'&&+o.start>0?o:null}catch(e){return null}}
 function saveDraft(){try{X?localStorage.setItem(DRAFT,JSON.stringify(X)):localStorage.removeItem(DRAFT)}catch(e){}}
+/* Data version. When the shape of saved data has to change, add a numbered step to UPGRADES and raise SCHEMA.
+   Steps may only add things, so older backups and the previous version of the app keep working. */
+const SCHEMA=1, PRE_UPGRADE='vocalBeforeUpgrade';
+const UPGRADES={
+  1:d=>{} // 3.7: saved data gets a version number. Nothing else changes.
+};
+function upgradeData(){
+  const from=+D.schema||0;if(from>=SCHEMA)return;
+  // keep the data as it was, for 30 days, in case an upgrade ever goes wrong
+  if((D.sessions||[]).length||(D.songSessions||[]).length){try{localStorage.setItem(PRE_UPGRADE,JSON.stringify({from,to:SCHEMA,at:Date.now(),data:D}))}catch(e){}}
+  for(let n=from+1;n<=SCHEMA;n++){UPGRADES[n](D);D.schema=n;}
+}
+function tidyPreUpgrade(){try{const o=JSON.parse(localStorage.getItem(PRE_UPGRADE)||'null');if(o&&!(Date.now()-o.at<30*864e5))localStorage.removeItem(PRE_UPGRADE);}catch(e){}}
 let D=load();
 function migrate(){
   if(!D.v2){
@@ -583,8 +650,9 @@ function migrate(){
   }
   D.ex=D.ex||{};D.custom=D.custom||[];D.songs=D.songs||[];D.sessions=D.sessions||[];D.months=D.months||{};
   D.songSessions=D.songSessions||[];D.words=D.words||{};
+  upgradeData();
 }
-migrate();save();
+migrate();save();tidyPreUpgrade();
 let X=loadDraft();
 // bring older drafts up to date (3.2 adds Skip, per-exercise notes, how it went, pause and song practice)
 function normX(){if(!X)return;X.kind=X.kind||'focused';X.f=X.f||{};X.rot=X.rot||{};X.xn=X.xn||{};X.rate=X.rate||{};X.takes=X.takes||[];
@@ -606,6 +674,11 @@ const putUndo=o=>tx('readwrite',s=>s.put(o),'undo');
 const clearUndo=()=>tx('readwrite',s=>s.clear(),'undo').catch(()=>{});
 const UNDO_DAYS=30;let UNDO=null;
 async function refreshUndo(){const u=await getUndo();if(u&&!(Date.now()-u.at<UNDO_DAYS*864e5)){await clearUndo();UNDO=null;return;}UNDO=u;}
+// ask the browser not to clear the app's data when the device is low on space
+let PERSIST=null; // true, false, or 'na' when the browser doesn't offer it
+async function checkPersist(ask){const st=navigator.storage;if(!st||!st.persisted){PERSIST='na';return PERSIST;}
+  try{let p=await st.persisted();if(!p&&ask&&st.persist)p=await st.persist();PERSIST=!!p;}catch(e){PERSIST='na';}return PERSIST;}
+const persistVal=()=>PERSIST===true?'On':PERSIST===false?'Off':PERSIST==='na'?'Not available':'…';
 let TAKES=[];
 async function refreshTakes(){TAKES=(await allTakes()).sort((a,b)=>a.created-b.created);}
 
@@ -703,7 +776,7 @@ function noteBlock(id,val,ph){if(U.noteOpen!==id&&!val)return '<button class="ad
 const sw=(inner,sheet,k)=>'<div class="sw" data-sw="1"><button class="swdel" data-a="sheet" data-v="'+sheet+'" data-k="'+esc(k)+'" tabindex="-1">Delete</button><div class="fg">'+inner+'</div></div>';
 
 /* ===== UI state ===== */
-const freshU=()=>({range:'W',roff:0,pick:null,tab:'today',view:null,exId:null,exTab:'summary',sheet:null,sd:{},histTab:'sessions',clock:false,noteOpen:null,calMonth:null,calDay:null});
+const freshU=()=>({logOpen:[],logAll:false,logPick:null,logDrawn:false,range:'W',roff:0,pick:null,tab:'today',view:null,exId:null,exTab:'summary',sheet:null,sd:{},histTab:'sessions',clock:false,noteOpen:null,calMonth:null,calDay:null});
 let U=freshU();
 let E=null, bgSaved=false, lastLayerKey='';
 let rec=null, player=null, playingId=null, pendingImport=null, pendingExport=null;
@@ -912,12 +985,13 @@ function scrSettings(){
    '<button class="row" data-a="sheet" data-v="bkLog"><span class="lbl">Backup history</span><span class="mut">'+loadLog().length+'</span>'+chev+'</button>'+
    '<button class="row" data-a="sheet" data-v="bkGuide"><span class="lbl">Where backups go</span>'+chev+'</button>'+
    '<button class="row" data-a="saveReadme"><span class="lbl acc">Save a read-me file</span>'+ICON.share+'</button></div>'+
-  '<div class="hdr">Recordings</div><div class="grp"><button class="row" data-a="sheet" data-v="storage"><span class="lbl">Recordings</span><span class="mut">'+TAKES.length+' · '+(size/1048576).toFixed(1)+' MB</span>'+chev+'</button></div>'+
+  '<div class="hdr">Storage</div><div class="grp"><button class="row" data-a="sheet" data-v="storage"><span class="lbl">Recordings</span><span class="mut">'+TAKES.length+' · '+(size/1048576).toFixed(1)+' MB</span>'+chev+'</button>'+
+   '<button class="row" data-a="sheet" data-v="persist"><span class="lbl">Storage protection<small>'+(PERSIST===true?'iOS won’t clear the app’s data to free up space':PERSIST===false?'iOS could clear it if your '+deviceName()+' runs very low on space':PERSIST==='na'?'This browser doesn’t offer it. Keep backing up.':'Checking…')+'</small></span><span class="mut">'+persistVal()+'</span>'+chev+'</button></div>'+
   '<div class="hdr">Reset</div><div class="grp">'+
    '<button class="row" data-a="sheet" data-v="resetMonth"><span class="lbl dng">Reset this month’s minutes</span></button>'+
    '<button class="row" data-a="sheet" data-v="resetAll"><span class="lbl dng">Reset all data</span></button></div>'+
-  '<div class="hdr">About</div><div class="grp"><a class="row" href="'+REPO+'" target="_blank" rel="noopener"><span class="lbl acc">View on GitHub<small>imperialfox/Vocal-Sessions</small></span>'+ICON.gh+'</a></div>'+
-  '<p class="foot" style="text-align:center;margin-top:18px">Vocal Sessions '+APP_VERSION+' · '+RELEASE_DATE+'</p>';
+  '<div class="hdr">About</div><div class="grp"><button class="row" data-a="openLog"><span class="lbl">Changelog<small>What’s new in '+APP_VERSION+', and every version before it</small></span>'+chev+'</button><a class="row" href="'+REPO+'" target="_blank" rel="noopener"><span class="lbl acc">View on GitHub<small>imperialfox/Vocal-Sessions</small></span>'+ICON.gh+'</a></div>'+
+  '<button class="foot" data-a="openLog" style="display:block;width:calc(100% - 32px);text-align:center;margin-top:18px">Vocal Sessions '+APP_VERSION+' · '+RELEASE_DATE+'</button>';
 }
 // one exercise with its level picker and notes pencil (used in Foundation, Rotation and Edit)
 function exBlock(e,a,v,skip,T,src){const n=noteStr((T.xn||{})[e.id]);
@@ -953,6 +1027,121 @@ function scrSong(){
   return h+'<button class="ghost" data-a="sheet" data-v="discard" style="color:var(--danger);margin-top:14px">Discard song practice</button>';
 }
 
+/* ===== Changelog (Settings › Changelog), built from CHANGELOG.md =====
+   Each version: "## 3.7 · 15 Oct 2026", then "*Headline*" on the next line.
+   "<!-- era: Name · description -->" under an x.0 version names that era.
+   "<!-- area: backup -->" on its own line sets the area for the version (right after the headline) or for the next section;
+   at the end of a bullet it sets that bullet's area. Areas: practice, progress, recordings, backup, look, fixes. */
+const LOG_AREAS={p:['Practice','var(--accent)'],g:['Progress','var(--cF)'],r:['Recordings','var(--coral)'],d:['Backup & data','var(--cR)'],l:['Look & feel','var(--cA)'],f:['Fixes','var(--done)']};
+const AREA_CODE={practice:'p',progress:'g',recordings:'r',backup:'d',look:'l',fixes:'f'};
+const MONTHS={jan:1,feb:2,mar:3,apr:4,may:5,jun:6,jul:7,aug:8,sep:9,oct:10,nov:11,dec:12};
+let LOG=null,LOG_ERAS={},LOG_STATE='idle',LOG_WARN=[];
+function parseChangelog(md){
+  const out=[],eras={},warn=[];let e=null,sec=null,item=null,area=null;
+  const code=n=>{if(AREA_CODE[n])return AREA_CODE[n];warn.push('unknown area "'+n+'"');return null;};
+  const newSec=(t,n)=>{sec={t,n:n||'',a:area||e.area,items:[]};e.notes.push(sec);area=null;item=null;};
+  for(const raw of String(md).split(/\r?\n/)){
+    const line=raw.replace(/\s+$/,'');let m;
+    if((m=line.match(/^## (\d+(?:\.\d+)+) · (\d{1,2}) ([A-Za-z]{3})[A-Za-z]* (\d{4})$/))){
+      const mo=MONTHS[m[3].toLowerCase()];if(!mo)warn.push(m[1]+': unknown month');
+      e={v:m[1],date:m[4]+'-'+String(mo||1).padStart(2,'0')+'-'+m[2].padStart(2,'0'),title:'',intro:'',notes:[],area:null};
+      out.push(e);sec=null;item=null;area=null;continue;}
+    if(/^#{1,2} /.test(line)){if(e&&/^## /.test(line))warn.push('heading not understood: '+line);e=null;continue;}
+    if(!e)continue;
+    if((m=line.match(/^<!--\s*era:\s*(.+?)\s*-->$/))){const p=m[1].split(' · ');eras[+e.v.split('.')[0]]=[p[0],p.slice(1).join(' · ')];continue;}
+    if((m=line.match(/^<!--\s*area:\s*([a-z]+)\s*-->$/))){area=code(m[1]);if(!sec)e.area=area;continue;}
+    if(!e.title&&!sec&&!e.intro&&(m=line.match(/^\*([^*](?:.*[^*])?)\*$/))){e.title=m[1];continue;}
+    if(!line.trim()||line==='---')continue;
+    if((m=line.match(/^\*\*([^*]+[^*:])\*\*(?: (\(.+\)))?$/))){newSec(m[1],m[2]);continue;}
+    if((m=line.match(/^\s{2,}[-*] (.+)$/))&&item){item[2].push(m[1]);continue;}
+    let text=null;
+    if((m=line.match(/^[-*] (.+)$/)))text=m[1];else if(/^\*\*[^*]+:\*\* /.test(line))text=line;
+    if(text!=null){
+      if(!sec||(area&&!/^[-*] /.test(line)))newSec('');
+      let a=null;const t=text.match(/\s*<!--\s*area:\s*([a-z]+)\s*-->\s*$/);if(t){a=code(t[1]);text=text.slice(0,t.index);}
+      item=[a||sec.a||e.area||(e.v.split('.').length===3?'f':'p'),text,[]];sec.items.push(item);continue;}
+    if(!e.notes.length)e.intro+=(e.intro?' ':'')+line;
+  }
+  out.forEach(x=>{if(!x.title)warn.push(x.v+': no headline');x.notes=x.notes.filter(s=>s.items.length).map(s=>[s.t,s.items,s.n]);if(x.intro.replace(/\.$/,'')===x.title)x.intro='';x.hl=Math.min(4,x.notes.reduce((n,s)=>n+s[1].length,0));if(!x.hl)warn.push(x.v+': no changes listed');});
+  return {out,eras,warn};
+}
+async function fetchChangelog(){
+  if(LOG_STATE==='loading')return;LOG_STATE='loading';
+  try{const r=await fetch('CHANGELOG.md',{cache:'no-cache'});if(!r.ok)throw new Error(r.status);
+    const p=parseChangelog(await r.text());if(!p.out.length)throw new Error('empty');LOG=p.out;LOG_ERAS=p.eras;LOG_WARN=p.warn;LOG_STATE='ready';}
+  catch(err){LOG_STATE=LOG?'ready':'error';}
+  if(U.view==='log')rerender();
+}
+
+const LOGSEEN=new Set(),TI=k=>(LOGSEEN.has(k)?'tl-in seen':'tl-in')+'" data-r="'+k;
+const logKind=v=>/^\d+\.0$/.test(v)?'major':v.split('.').length===3?'patch':'minor';
+const LOG_KIND={major:'Redesign',minor:'New features',patch:'Fixes'};
+const logItems=e=>e.notes.reduce((a,s)=>a.concat(s[1]),[]);
+const mdi=s=>esc(s).replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>').replace(/`([^`]+)`/g,'<code>$1</code>').replace(/\[([^\]]+)\]\([^)]+\)/g,'$1');
+const logDate=d=>new Date(d+'T12:00:00');
+const logId=v=>'log-'+v.replace(/\./g,'-');
+// highlights: the first change from each section, then fill up
+function logHL(e){const out=[];let i=0;while(out.length<e.hl){let added=false;for(const s of e.notes){if(s[1][i]&&out.length<e.hl){out.push(s[1][i]);added=true;}}if(!added)break;i++;}return out;}
+function logGrowth(){const acc={};Object.keys(LOG_AREAS).forEach(k=>acc[k]=0);
+  return LOG.slice().reverse().map(e=>{const it=logItems(e);it.forEach(x=>acc[x[0]]++);return {v:e.v,date:e.date,c:Object.assign({},acc),add:it.length,by:it.reduce((m,x)=>(m[x[0]]=(m[x[0]]||0)+1,m),{})};});}
+function logChart(G){
+  const W=340,H=140,top=8,bot=22,n=G.length,max=Math.max(...G.map(g=>Object.values(g.c).reduce((a,b)=>a+b,0)));
+  const X=i=>6+i*(W-12)/(n-1),Y=v=>top+(H-top-bot)*(1-v/max);
+  const keys=Object.keys(LOG_AREAS);let base=G.map(()=>0),paths='';
+  keys.forEach(k=>{const lo=base.slice(),hi=base.map((b,i)=>b+G[i].c[k]);
+    paths+='<path class="ar" fill="'+LOG_AREAS[k][1]+'" d="M'+hi.map((v,i)=>X(i).toFixed(1)+' '+Y(v).toFixed(1)).join(' L')+' L'+lo.map((v,i)=>[X(i),Y(v)]).reverse().map(p=>p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' L')+'Z"/>';base=hi;});
+  const tot=base;let grid='';[0,.5,1].forEach(f=>{const y=Y(max*f);grid+='<line x1="0" x2="'+W+'" y1="'+y+'" y2="'+y+'" stroke="var(--grid)" stroke-width="1"/>';});
+  let dots='',labels='',hits='',lastL=-99;
+  G.forEach((g,i)=>{const k=logKind(g.v),r=k==='major'?4.5:k==='minor'?3.2:2.2,on=U.logPick===i;
+    dots+='<circle cx="'+X(i)+'" cy="'+Y(tot[i])+'" r="'+(on?r+2:r)+'" fill="'+(on?'var(--accent)':'var(--surface)')+'" stroke="var(--accent)" stroke-width="2"/>';
+    if((k==='major'||i===n-1)&&(X(i)-lastL>34||i===n-1)&&(i===n-1||X(n-1)-X(i)>34)&&(lastL=X(i)))labels+='<text x="'+X(i)+'" y="'+(H-5)+'" text-anchor="'+(i===0?'start':i===n-1?'end':'middle')+'" font-size="11" fill="var(--fg2)" font-weight="'+(i===n-1?600:400)+'">'+g.v+'</text>';
+    hits+='<rect data-a="lgpick" data-k="'+i+'" x="'+(X(i)-(W-12)/(n-1)/2)+'" y="0" width="'+((W-12)/(n-1))+'" height="'+H+'" fill="transparent"/>';});
+  const rule=U.logPick!=null?'<line x1="'+X(U.logPick)+'" x2="'+X(U.logPick)+'" y1="'+top+'" y2="'+(H-bot)+'" stroke="var(--accent)" stroke-width="1.5" stroke-dasharray="3 3"/>':'';
+  return '<svg id="lgchart" class="'+(U.logPick!=null?'picking':'')+'" viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Improvements added over time, by area"><g'+(U.logDrawn?'':' class="lgdraw"')+'>'+grid+paths+'<path d="M'+tot.map((v,i)=>X(i).toFixed(1)+' '+Y(v).toFixed(1)).join(' L')+'" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/></g>'+rule+dots+labels+hits+'</svg>';
+}
+function logCardTop(G){const all=G[G.length-1],T=Object.values(all.c).reduce((a,b)=>a+b,0);
+  if(U.logPick==null)return '<div class="kick">Improvements</div><div class="bignum"><b>'+T+'</b></div><div class="sub2">across '+LOG.length+' versions since '+fileDate(logDate(LOG[LOG.length-1].date))+'</div>';
+  const g=G[U.logPick],t=Object.values(g.c).reduce((a,b)=>a+b,0),e=LOG.find(x=>x.v===g.v);
+  return '<div class="kick">Version '+g.v+' · '+shortDate(logDate(g.date))+'</div><div class="bignum"><b>+'+g.add+'</b><span>'+esc(e.title)+'</span></div><div class="sub2">'+t+' of '+T+' improvements by this version</div><button class="lgjump" data-a="lgjump" data-k="'+g.v+'">Show in timeline '+ICON.fwd.replace('class="i"','class="i" style="width:16px;height:16px"')+'</button>';}
+function logEntry(e,prev){
+  const k=logKind(e.v),it=logItems(e),open=U.logAll||U.logOpen.includes(e.v),now=e.v===APP_VERSION;
+  const by=it.reduce((m,x)=>(m[x[0]]=(m[x[0]]||0)+1,m),{});
+  const li=x=>'<li style="--c:'+LOG_AREAS[x[0]][1]+'">'+mdi(x[1])+(open&&x[2].length?'<ul class="tl-sub">'+x[2].map(c=>'<li>'+mdi(c)+'</li>').join('')+'</ul>':'')+'</li>';
+  let h='';
+  if(!prev||prev.date!==e.date)h+='<div class="tl-date '+TI('d'+e.date)+'">'+fileDate(logDate(e.date))+'</div>';
+  h+='<article class="tl-item '+k+(now?' now':'')+' '+TI(logId(e.v))+'" id="'+logId(e.v)+'"><span class="tl-node" aria-hidden="true"></span><div class="tl-card">'+
+    '<div class="tl-head"><span class="tl-v">'+e.v+'</span><span class="tl-kind">'+LOG_KIND[k]+'</span>'+(now?'<span class="tl-nowc">● This version</span>':'')+'<span class="tl-n">+'+it.length+'</span></div>'+
+    '<div class="tl-title">'+esc(e.title)+'</div>'+
+    '<div class="tl-bar" aria-hidden="true">'+Object.keys(LOG_AREAS).filter(a=>by[a]).map(a=>'<i style="flex:'+by[a]+';background:'+LOG_AREAS[a][1]+'"></i>').join('')+'</div>';
+  if(open)h+=(e.intro?'<p class="tl-intro">'+mdi(e.intro)+'</p>':'')+e.notes.map(s=>(s[0]?'<div class="tl-sec">'+esc(s[0])+'</div>':'')+(s[2]?'<p class="tl-intro" style="margin-top:2px">'+mdi(s[2].replace(/^\((.*)\)$/,'$1'))+'</p>':'')+'<ul class="tl-list">'+s[1].map(li).join('')+'</ul>').join('');
+  else h+='<ul class="tl-list">'+logHL(e).map(li).join('')+'</ul>';
+  if(it.length>e.hl&&!U.logAll)h+='<button class="tl-more'+(open?' open':'')+'" data-a="logMore" data-k="'+e.v+'">'+(open?'Show less':'Show all '+it.length+' changes')+ICON.down+'</button>';
+  else h+='<div style="height:10px"></div>';
+  return h+'</div></article>';
+}
+function scrLog(){
+  if(!LOG||!LOG.length)return '<h1>Changelog</h1><div class="lgcard">'+(LOG_STATE==='error'?'<p class="note" style="margin:0 0 12px">The changelog couldn’t be loaded. Connect to the internet once and it’s kept for offline use.</p><button class="cta" data-a="logRetry">Try again</button>':'<p class="note" style="margin:0">Loading…</p>')+'</div>';
+  const G=logGrowth();let h='<h1>Changelog</h1>'+
+    '<div class="lgcard" id="lgcard"><div id="lgtop">'+logCardTop(G)+'</div><div id="lgsvg">'+logChart(G)+'</div>'+
+    '<div class="lglegend">'+Object.keys(LOG_AREAS).map(a=>'<span><i style="background:'+LOG_AREAS[a][1]+'"></i>'+LOG_AREAS[a][0]+' '+G[G.length-1].c[a]+'</span>').join('')+'</div></div>'+
+    '<div class="seg wide" role="tablist" style="margin-top:18px"><span class="knob" aria-hidden="true"></span><button role="tab" data-a="logMode" data-v="hl" class="'+(U.logAll?'':'on')+'" aria-selected="'+!U.logAll+'">Highlights</button><button role="tab" data-a="logMode" data-v="all" class="'+(U.logAll?'on':'')+'" aria-selected="'+!!U.logAll+'">Every change</button></div>'+
+    '<div class="tl">';
+  let era=null,prev=null;
+  LOG.forEach(e=>{const m=+e.v.split('.')[0];
+    if(m!==era){if(prev){const gap=Math.round((logDate(prev.date)-logDate(e.date))/864e5);if(gap>14)h+='<div class="tl-gap '+TI('gap'+m)+'">'+(gap>60?Math.round(gap/30.4)+' months':gap+' days')+' between versions</div>';}
+      era=m;const E=LOG_ERAS[m]||['',''];const vs=LOG.filter(x=>+x.v.split('.')[0]===m);
+      h+='<div class="tl-era '+TI('era'+m)+'"><span class="tl-badge">'+m+'</span><div><b>Version '+m+(E[0]?' · '+esc(E[0]):'')+'</b><small>'+esc(E[1])+' · '+plural(vs.length,'release')+'</small></div></div>';prev=null;}
+    h+=logEntry(e,prev);prev=e;});
+  return h+'<div class="tl-end '+TI('end')+'"><span class="tl-badge" aria-hidden="true">'+ICON.star.replace('class="i"','class="i" style="width:16px;height:16px;color:#fff"')+'</span><span>Started '+fileDate(logDate(LOG[LOG.length-1].date))+'</span></div></div>';
+}
+function updateLogCard(){const a=$('lgtop'),b=$('lgsvg');if(!a||!b)return;const G=logGrowth();a.innerHTML=logCardTop(G);b.innerHTML=logChart(G);}
+let logIO=null;
+function logReveal(){if(logIO){logIO.disconnect();logIO=null;}if(U.view!=='log')return;U.logDrawn=true;
+  const els=document.querySelectorAll('.tl-in:not(.seen)');
+  if(!('IntersectionObserver' in window)){els.forEach(el=>{el.classList.add('seen');LOGSEEN.add(el.dataset.r);});return;}
+  logIO=new IntersectionObserver(es=>es.forEach(x=>{if(x.isIntersecting){x.target.classList.add('seen');LOGSEEN.add(x.target.dataset.r);logIO.unobserve(x.target);}}),{rootMargin:'0px 0px -6% 0px'});
+  els.forEach(el=>logIO.observe(el));}
+
 /* ===== Chrome ===== */
 const VIEWS={found:['Foundation','1 of 3',null],rot:['Rotation','2 of 3','found'],app:['Application','3 of 3','rot'],song:['Song practice','',null]};
 function pillText(){const st=VIEWS[U.view]&&VIEWS[U.view][1];return (X&&X.paused?'❚❚ ':'')+(st?st+' · ':'')+clk(elapsedSec());}
@@ -960,6 +1149,7 @@ function renderBar(){
   const bar=$('bar');bar.classList.remove('tabsmode');$('barT').classList.remove('tabs');
   if(U.view==='all'){$('barL').innerHTML='<button class="circ glass" data-a="allBack" aria-label="Back">'+ICON.back+'</button>';$('barR').innerHTML='';
     if(MQ.reg.matches&&!MQ.wide.matches){bar.classList.add('tabsmode');$('barT').classList.add('tabs');$('barT').innerHTML=topTabs();}else $('barT').textContent='All sessions';}
+  else if(U.view==='log'){bar.classList.remove('always');if(MQ.reg.matches&&!MQ.wide.matches){bar.classList.add('tabsmode');$('barT').classList.add('tabs');$('barT').innerHTML=topTabs();}else $('barT').textContent='Changelog';$('barL').innerHTML='<button class="circ glass" data-a="logBack" aria-label="Back">'+ICON.back+'</button>';$('barR').innerHTML='';}
   else if(U.view==='ex'){const e=exById(U.exId);$('barT').textContent=e?e.name:'';bar.classList.remove('always');
     $('barL').innerHTML='<button class="circ glass" data-a="exBack" aria-label="Back">'+ICON.back+'</button>';$('barR').innerHTML='';}
   else if(U.view){const v=VIEWS[U.view];$('barT').textContent=v[0];
@@ -1026,6 +1216,11 @@ function renderSheet(){
       '<p class="note" style="margin-top:10px">Choose <b>Save to Files</b>, then <b>iCloud Drive › Vocal Sessions › Backups</b>.'+(first?'':' If Files asks, tap Replace to update this month’s backup.')+'</p>'+
       (first?'<button class="row grp" data-a="bkGuideFrom" style="margin-bottom:14px;border-radius:16px"><span class="lbl acc">First time? Set up the folder</span>'+chev+'</button>':'')+
       '<button class="cta" data-a="exportSave">Save backup</button><button class="ghost" data-a="close">Cancel</button>');}
+  else if(s==='persist'){const on=PERSIST===true;
+    h=sheetWrap('Storage protection','<div class="bkstat '+(on?'ok':'warn')+'">'+(on?ICON.okc:ICON.warn)+'<div><b>'+(on?'On':PERSIST==='na'?'Not available here':'Off for now')+'</b>'+(on?'iOS has agreed to keep Vocal Sessions’ data, even when space runs low.':PERSIST==='na'?'This browser doesn’t let apps ask for protected storage.':'iOS hasn’t agreed yet. It decides this itself, and usually agrees for apps on the Home Screen.')+'</div></div>'+
+      '<p class="note" style="margin-top:12px">When '+(deviceName()==='computer'?'a device':'an '+deviceName())+' is very low on space, iOS can clear data saved by websites and web apps. Vocal Sessions asks iOS to protect its sessions and recordings from that.</p>'+
+      '<p class="note">Either way, your backups in iCloud Drive are what keep everything safe.</p>'+
+      (PERSIST===false?'<button class="cta" data-a="persistAsk">Ask again</button>':'')+'<button class="ghost" data-a="exportPrep">Back up now</button><button class="ghost" data-a="close">Done</button>');}
   else if(s==='bkReport'&&pendingImport)h=bkReportHTML(pendingImport,U.sd.mode);
   else if(s==='bkGuide')h=bkGuideHTML();
   else if(s==='bkLog')h=bkLogHTML();
@@ -1140,11 +1335,11 @@ function render(keepScroll){
   const y=window.scrollY;
   closeSwipes();
   const v=U.view;
-  $('app').innerHTML=v==='ex'?scrEx():v==='all'?scrAll():v?({found:scrFound,rot:scrRot,app:scrApp,song:scrSong})[v]():({today:scrToday,history:scrHistory,exercises:scrExercises,settings:scrSettings})[U.tab]();
-  $('app').className=(isFlow(v)?'flow':'tabv')+(isFlow(v)||(!v&&U.tab==='settings')||(v==='ex'&&!split())?' narrow':'');
+  $('app').innerHTML=v==='log'?scrLog():v==='ex'?scrEx():v==='all'?scrAll():v?({found:scrFound,rot:scrRot,app:scrApp,song:scrSong})[v]():({today:scrToday,history:scrHistory,exercises:scrExercises,settings:scrSettings})[U.tab]();
+  $('app').className=(isFlow(v)?'flow':'tabv')+(isFlow(v)||(!v&&U.tab==='settings')||v==='log'||(v==='ex'&&!split())?' narrow':'');
   renderBar();renderSheet();renderDock();renderSide();
   if(keepScroll)window.scrollTo(0,y);
-  placeKnobs();
+  placeKnobs();logReveal();
 }
 const rerender=()=>render(true);
 function go(fn){const was=U.view;fn();if(rec&&U.view!==was){stopRec();toast('Recording stopped and saved');}window.scrollTo(0,0);render();}
@@ -1338,6 +1533,7 @@ async function inspectBackup(text,name,size){
   for(const t of (p.takes||[])){try{if(!t||!t.id||typeof t.data!=='string'||!/^data:[^,]*;base64,/.test(t.data))throw 0;atob(t.data.slice(t.data.indexOf(',')+1));ok.push(t);}catch(e){bad++;}}
   r.bad=bad;r.exportedAt=isNaN(new Date(p.exportedAt))?null:p.exportedAt;r.device=typeof p.device==='string'?p.device:'';r.version=typeof p.appVersion==='string'?p.appVersion:'';
   r.p=Object.assign({},p,{data:d,takes:ok,draft:p.draft&&typeof p.draft==='object'&&+p.draft.start>0?p.draft:null});r.sum=sumOf(d,ok);
+  r.newer=(+d.schema||0)>SCHEMA;
   r.code=!p.checkCode?'none':code==null?'unchecked':code===p.checkCode?'match':'mismatch';
   r.status=r.code==='mismatch'?'changed':bad?'partial':r.code==='match'?'good':r.code==='none'?'old':'unchecked';
   return r;
@@ -1421,6 +1617,7 @@ const when=d=>d?fileDate(new Date(d))+' at '+timeOf(d):'Unknown';
 function bkReportHTML(r,mode){
   const imp=mode==='import';
   let b=bkStat(r);
+  if(r.newer&&r.status!=='broken')b+='<div class="bkstat warn" style="margin-top:8px">'+ICON.warn+'<div><b>Made by a newer version</b>This backup is from Vocal Sessions '+esc(r.version||'')+', which is newer than this app ('+APP_VERSION+'). Pull down on Today to update first, then restore it.</div></div>';
   if(r.status==='broken')return sheetWrap(imp?'Can’t restore':'Backup check',b+'<div class="grp" style="margin-top:10px"><div class="row"><span class="lbl">File<small class="fname">'+esc(r.name)+'</small></span><span class="mut">'+mb(r.size)+'</span></div></div><button class="ghost" data-a="close">Done</button>');
   const S=r.sum;
   b+='<div class="grp" style="margin-top:10px"><div class="row"><span class="lbl">Backed up</span><span class="mut">'+when(r.exportedAt)+'</span></div>'+
@@ -1517,6 +1714,15 @@ document.addEventListener('click',e=>{
     case 'exit':U.clock=false;go(()=>{U.view=null;U.tab='today';});break;
     case 'view':go(()=>{U.view=v;});break;
     case 'openEx':if(split()){const was=U.tab;U.exId=k;U.exTab='summary';if(was!=='exercises')go(()=>{U.tab='exercises';U.view=null;});else rerender();break;}go(()=>{U.prevTab=U.tab;U.view='ex';U.exId=k;U.exTab='summary';});break;
+    case 'openLog':LOGSEEN.clear();fetchChangelog();go(()=>{U.prevTab=U.tab;U.view='log';U.logPick=null;U.logDrawn=false;});break;
+    case 'logRetry':LOG_STATE='idle';fetchChangelog();rerender();break;
+    case 'logBack':go(()=>{U.view=null;U.tab='settings';});break;
+    case 'logMode':segPick(el);U.logAll=v==='all';setTimeout(rerender,180);break;
+    case 'logMore':{const i=U.logOpen.indexOf(k);if(i<0)U.logOpen.push(k);else U.logOpen.splice(i,1);
+      const card=el.closest('.tl-item'),top=card?card.getBoundingClientRect().top:0;rerender();const nc=$(logId(k));
+      if(nc){if(i>=0)window.scrollBy(0,nc.getBoundingClientRect().top-top);}break;}
+    case 'lgpick':U.logPick=U.logPick===+k?null:+k;updateLogCard();break;
+    case 'lgjump':{const t=$(logId(k));if(t){t.classList.add('seen');LOGSEEN.add(t.dataset.r);const y=t.getBoundingClientRect().top+window.scrollY-110;window.scrollTo({top:y,behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth'});const c=t.querySelector('.tl-card');setTimeout(()=>{c.classList.add('flash');setTimeout(()=>c.classList.remove('flash'),1200);},350);}break;}
     case 'exBack':go(()=>{U.view=null;U.tab=U.prevTab||'exercises';});break;
     case 'exTab':segPick(el);U.exTab=v;setTimeout(rerender,180);break;
     case 'histTab':segPick(el);U.histTab=v;setTimeout(rerender,180);break;
@@ -1593,6 +1799,7 @@ document.addEventListener('click',e=>{
     case 'bkToImport':U.sd.mode='import';rerender();{const sh=document.querySelector('.sheet');if(sh)sh.scrollTop=0;}break;
     case 'importYes':restoreImport();break;
     case 'undoYes':undoRestore();break;
+    case 'persistAsk':checkPersist(true).then(r=>{rerender();toast(r===true?'Storage protection is on':'iOS didn’t turn it on this time');});break;
     case 'bkGuideFrom':U.sheet='bkGuide';U.sd={ret:'exportReady'};rerender();break;
     case 'saveReadme':shareFile(new File([readmeText()],README_NAME,{type:'text/plain'})).then(r=>{if(r!=='cancelled')toast(r==='shared'?'Read-me saved':'Read-me downloaded');});break;
   }
@@ -1667,11 +1874,12 @@ window.addEventListener('scroll',()=>{closeSwipes();const y=window.scrollY;const
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(rec){bgSaved=true;stopRec();}}else{if(!U.sheet&&!rec)render(true);if(bgSaved){bgSaved=false;setTimeout(()=>toast('Your take was saved when you left the app'),500);}}});
 
 layout();render();
-if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
+if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost'))navigator.serviceWorker.register('sw.js').catch(()=>{});
 /* launch screen: stay up until recordings are loaded (at least 0.6 s, at most 2.5 s), then fade */
 function hideSplash(){const sp=$('splash');if(!sp||sp.classList.contains('out'))return;sp.classList.add('out');setTimeout(()=>sp.remove(),500);}
 const splashMin=new Promise(r=>setTimeout(r,Math.max(0,600-performance.now())));
 setTimeout(hideSplash,2500);
+checkPersist(true).then(()=>{if(U.tab==='settings'&&!U.view)rerender();});
 Promise.all([refreshTakes(),refreshUndo()]).then(rerender).catch(()=>{}).then(()=>splashMin).then(hideSplash);
 </script>
 </body>

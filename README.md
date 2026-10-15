@@ -2,9 +2,9 @@
 
 A mobile-first companion for structured vocal practice, styled like a native iOS app. It's a single HTML file with no install, no backend and no account. It's designed to live on your iPhone Home Screen.
 
-![Version 3.5](https://img.shields.io/badge/version-3.6-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
+![Version 3.7](https://img.shields.io/badge/version-3.7-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
 
-**Current version: 3.6 · 15 Oct 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
+**Current version: 3.7 · 15 Oct 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
 
 ---
 
@@ -68,7 +68,9 @@ There's also **Song practice**, for when you just want to sing a song and record
 - **Undo last restore:** for 30 days after a restore.
 - **Backup history**, **Where backups go** (a set-up guide) and **Save a read-me file**
 - When you last backed up, which turns red after two weeks
-- Recordings storage, reset this month, and reset all data. Every reset asks first.
+- **Storage:** recordings, and **Storage protection**, which shows whether iOS has agreed not to clear the app's data when space runs low
+- Reset this month, and reset all data. Every reset asks first.
+- **Changelog:** every version on a timeline, with a growth chart of improvements by area. It's built from [CHANGELOG.md](CHANGELOG.md), and tapping the version number opens it too.
 - A link back to this GitHub repo, and the app version with its release date
 
 ---
@@ -146,7 +148,7 @@ Everything to edit sits at the top of the `<script>` block: `VIDEO` (your coach 
 
 ## Offline
 
-A small service worker (`sw.js`) keeps a copy of the app on your device. When you're online, the app loads fresh and picks up updates. With no signal, or a connection too slow to answer within 4 seconds, it opens from the saved copy.
+A small service worker (`sw.js`) keeps a copy of the app on your device. When you're online, the app loads fresh and picks up updates. With no signal, or a connection too slow to answer within 4 seconds, it opens from the saved copy. The changelog is kept for offline use the same way.
 
 ## Data and privacy
 
@@ -162,7 +164,7 @@ A small service worker (`sw.js`) keeps a copy of the app on your device. When yo
 
 **Check code.** Every backup ends with a SHA-256 fingerprint of its contents. Before offering to save, the app reads the finished file back and checks it. Check a backup and Import check it again, so a file that was cut short while copying, or edited, is spotted before anything is replaced. Backups from before 3.6 have no check code; they still import and are checked for readability.
 
-**Before you restore.** Import shows the backup next to what's on this device: sessions, song practice, songs, recordings, practice time and the latest practice. If anything on the device isn't in the backup, it says how much would be removed and offers to back up first. A copy of the device's data, recordings included, is kept for 30 days so the restore can be undone.
+**Before you restore.** A backup from a newer version of the app says so and suggests updating first. Import shows the backup next to what's on this device: sessions, song practice, songs, recordings, practice time and the latest practice. If anything on the device isn't in the backup, it says how much would be removed and offers to back up first. A copy of the device's data, recordings included, is kept for 30 days so the restore can be undone.
 
 **Finding them later.** Each file opens with a short plain-English note: what it is, which device and app version made it, how many sessions and recordings it holds, and how to restore it. Settings › Save a read-me file saves `READ ME – Vocal Sessions backups.txt` for the folder too.
 

@@ -27,6 +27,7 @@ def run(b, t):
             for tab in ['history', 'exercises', 'settings']:
                 pg.evaluate(f"U.tab='{tab}';U.view=null;render()"); pg.wait_for_timeout(250); check(tab)
             pg.evaluate("U.tab='history';render()"); pg.click('[data-a=openAll][data-v=sessions]'); pg.wait_for_timeout(250); check('all-sessions')
+            pg.evaluate("U.view=null;U.tab='settings';render()"); pg.click('.row[data-a=openLog]'); pg.wait_for_function("LOG_STATE==='ready'", timeout=8000); pg.wait_for_timeout(1200); check('changelog')
             pg.evaluate("U.view=null;U.tab='today';render()"); pg.click('[data-a=openCal]'); pg.wait_for_timeout(600); check('calendar')
             pg.keyboard.press('Escape'); pg.wait_for_timeout(300)
             pg.click('[data-a=start]'); pg.wait_for_timeout(300); check('foundation')

@@ -33,6 +33,24 @@ def problems():
     if not heads or heads[0].strip() != f'{v} · {d}': out.append(f'the newest CHANGELOG section is "{heads[0] if heads else "missing"}", not "{v} · {d}"')
     top = log.split('\n## ', 2)[1] if '\n## ' in log else ''
     if PLACEHOLDER in top: out.append(f'CHANGELOG {v} still has the placeholder; write what changed')
+    if f'*Headline for {v}*' in top: out.append(f'CHANGELOG {v} still has the placeholder headline')
+    out += changelog_problems(log)
+    return out
+
+AREAS = {'practice', 'progress', 'recordings', 'backup', 'look', 'fixes'}
+
+def changelog_problems(log):
+    """The app's Changelog page is built from CHANGELOG.md, so check the format it relies on."""
+    out, lines = [], log.split('\n')
+    for i, line in enumerate(lines):
+        if line.startswith('## '):
+            if not re.fullmatch(r'## \d+(\.\d+)+ · \d{1,2} [A-Z][a-z]{2,3} \d{4}', line):
+                out.append(f'CHANGELOG heading "{line}" should look like "## 3.7 · 15 Oct 2026"')
+            nxt = next((l for l in lines[i + 1:] if l.strip()), '')
+            if not re.fullmatch(r'\*[^*].*\*', nxt.strip()):
+                out.append(f'CHANGELOG {line[3:]} needs an *italic headline* on the line after the heading')
+    for a in re.findall(r'<!--\s*area:\s*([a-z]+)\s*-->', log):
+        if a not in AREAS: out.append(f'CHANGELOG uses unknown area "{a}" (use {", ".join(sorted(AREAS))})')
     return out
 
 def release(v, d):
@@ -49,7 +67,7 @@ def release(v, d):
     log = read('CHANGELOG.md')
     if f'\n## {v} · ' not in log:
         i = log.index('\n## ')
-        log = log[:i] + f'\n## {v} · {d}\n\n{PLACEHOLDER}\n' + log[i:]
+        log = log[:i] + f'\n## {v} · {d}\n*Headline for {v}*\n\n{PLACEHOLDER}\n' + log[i:]
         write('CHANGELOG.md', log)
         print(f'Added a {v} section to CHANGELOG.md. Write what changed there.')
     print(f'{old} → {v} · {d}')
