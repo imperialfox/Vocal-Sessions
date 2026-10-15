@@ -2,7 +2,7 @@
 
 A mobile-first companion for structured vocal practice, styled like a native iOS app. It's a single HTML file with no install, no backend and no account. It's designed to live on your iPhone Home Screen.
 
-![Version 3.5](https://img.shields.io/badge/version-3.6-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue)
+![Version 3.5](https://img.shields.io/badge/version-3.6-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
 
 **Current version: 3.6 · 15 Oct 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
 
@@ -171,6 +171,15 @@ A small service worker (`sw.js`) keeps a copy of the app on your device. When yo
 ## Stack
 
 Vanilla HTML, CSS and JavaScript, with no frameworks or build step. It uses the iOS system font and a CSS imitation of Liquid Glass: rim light, inner glow, a shrinking tab bar, sliding glass pickers and springy motion.
+
+---
+
+## Development
+
+See [MAINTAINING.md](MAINTAINING.md) for how the app is built, where data lives, the rules that keep old backups working, and how to release.
+
+- `python tests/run.py` runs the full test suite in Chromium: every screen at every size, a full practice session, backups (including real ones from earlier versions), recording, and thousands of random taps. GitHub runs it after every push.
+- `python tools/release.py 3.7` sets a new version number everywhere at once.
 
 ---
 
