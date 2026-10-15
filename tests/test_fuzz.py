@@ -22,6 +22,7 @@ INV=r"""(()=>{const p=[];const L=document.getElementById('layer');
  const txt=(document.getElementById('app').innerText+' '+L.innerText+' '+document.getElementById('bar').innerText);
  if(/\bundefined\b|\bNaN\b|\[object Object\]|\bnull\b/.test(txt))p.push('bad text: '+(txt.match(/.{0,40}(undefined|NaN|\[object Object\]|\bnull\b).{0,30}/)||[''])[0]);
  if(X&&X.paused&&!X.pausedAt)p.push('paused without time');
+ if(!rec&&(document.querySelector('.sgmodes.locked,.recbar')))p.push('song locked or recording bar shown without recording');
  try{JSON.parse(localStorage.getItem('vocalTracker'))}catch(e){p.push('saved data unreadable')}
  const sumOk=Object.keys(D.months).length>=0;
  return p;})()"""
@@ -29,8 +30,9 @@ VIS=r"""(()=>{const L=document.getElementById('layer');const root=L.querySelecto
  const els=[...root.querySelectorAll('[data-a],input:not([type=file]),textarea')].filter(e=>{const r=e.getBoundingClientRect();if(r.width<2||r.height<2)return false;if(r.bottom<0||r.top>innerHeight||r.right<0||r.left>innerWidth)return false;
    const cx=Math.min(innerWidth-1,Math.max(0,r.left+r.width/2)),cy=Math.min(innerHeight-1,Math.max(0,r.top+r.height/2));const t=document.elementFromPoint(cx,cy);return t&&(t===e||e.contains(t)||t.closest('[data-a]')===e);});
  return els.map((e,i)=>{e.setAttribute('data-fz',i);return {i,a:e.dataset.a||e.tagName.toLowerCase(),v:e.dataset.v||'',k:e.dataset.k||'',id:e.id||'',type:e.type||''};});})()"""
-SKIP = {'importPick', 'checkPick', 'exportSave', 'saveReadme', 'rec'}
-HEAVY = ('sgOpen','sgEdit','sgWord','sgMark','sgEditMode','sgNew','sgSplit','sgSave','sgSearch','sgListEdit','sgToggle','sgCue','sgUnlink','start','songStart','resume','cta','confirmF','tog','rlv','flv','wTog','saveHow','skipHow','editSess','saveEdit','exNote','takeNote','addWord','saveWord',
+# no microphone here: Record shows on a selected section, but recording itself is covered by test_recording and test_sections
+SKIP = {'importPick', 'checkPick', 'exportSave', 'saveReadme', 'rec', 'sgRec'}
+HEAVY = ('sgOpen','sgSec','sgTakes','playTake','star','sgEdit','sgWord','sgMark','sgEditMode','sgNew','sgSplit','sgSave','sgSearch','sgListEdit','sgToggle','sgCue','sgUnlink','start','songStart','resume','cta','confirmF','tog','rlv','flv','wTog','saveHow','skipHow','editSess','saveEdit','exNote','takeNote','addWord','saveWord',
          'openNote','longOk','pauseToggle','clock','sheet','calDay','calSession','eflv','input','textarea')
 
 def run(b, t):
@@ -51,6 +53,8 @@ def run(b, t):
         pg.evaluate("l=>{U.sDraft={step:1,title:'river song',artist:'',text:l};U.sDraft.blocks=splitBlocks(l);U.sDraft.step=2;sgSaveDraft();U.view=null;U.tab='today';render()}",
                     "[Verse]\nPaper boats along the gutter\n\n[Chorus]\nCarry me over\nLet the river know\n\n[Chorus]\nCarry me over\nLet the river know")
         pg.evaluate("putTake({id:'tA',songId:'g_1',created:Date.now()-864e5,len:30,size:5000,type:'audio/mp4',star:false,blob:new Blob([new Uint8Array(5000)],{type:'audio/mp4'})}).then(refreshTakes).then(rerender)")
+        # a take from the river song's first chorus, so a section has takes and its sheet can open
+        pg.evaluate("(()=>{const s=D.songs.find(x=>x.name==='River Song');return putTake({id:'tB',songId:s.id,o:s.order[1].o,created:Date.now()-2*864e5,len:14,size:5000,type:'audio/mp4',star:true,blob:new Blob([new Uint8Array(5000)],{type:'audio/mp4'})}).then(refreshTakes).then(rerender)})()")
         pg.wait_for_timeout(200)
         trace = collections.deque(maxlen=20); trace.append(f'seed {seed}, {w}x{h}')
         for step in range(STEPS):

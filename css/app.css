@@ -3413,3 +3413,218 @@ textarea.field.sglyr {
 .sgpane .sgph h1 {
   font-size: 28px;
 }
+/* 3.9 recording a section */
+.sgsec.tap {
+  cursor: pointer;
+  transition:
+    box-shadow 0.2s,
+    background 0.2s;
+}
+.sgsec:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.sgsec.sel {
+  box-shadow: 0 0 0 2px var(--accent);
+  background: linear-gradient(var(--accent-wash), var(--accent-wash)), var(--surface);
+}
+.sgrecp {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+.sgmodes.locked {
+  opacity: 0.35;
+  pointer-events: none;
+}
+.sghint {
+  text-align: center;
+  font-size: 13px;
+  color: var(--fg2);
+  margin: 14px 0 0;
+}
+.rechead {
+  color: var(--rec);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sgph .rechead {
+  font-size: 17px;
+  flex-shrink: 0;
+  max-width: 50%;
+}
+.recbar {
+  height: 64px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0 8px 0 22px;
+  max-width: 414px;
+  margin: 0 auto;
+}
+.rectime {
+  color: var(--rec);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 64px;
+}
+.recdot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--rec);
+  animation: recblink 1s infinite;
+}
+@keyframes recblink {
+  50% {
+    opacity: 0.3;
+  }
+}
+.meter {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+  height: 28px;
+  flex: 1;
+  justify-content: center;
+  min-width: 0;
+}
+.meter i {
+  width: 4px;
+  border-radius: 2px;
+  background: var(--fg2);
+  height: 16%;
+  transition: height 0.1s;
+}
+.stopb {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid var(--fg3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.stopb i {
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  background: var(--rec);
+}
+/* the takes for a section */
+.newtake {
+  background: var(--surface);
+  border-radius: 20px;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.playbig {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+.playbig svg {
+  width: 22px;
+  height: 22px;
+}
+.sgtag {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 1px;
+}
+.prog {
+  display: block;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--fill);
+  margin-top: 6px;
+  overflow: hidden;
+}
+.prog i {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: var(--accent);
+}
+.sgtake {
+  min-height: 64px;
+}
+.foot.sgfresh {
+  margin: 8px 16px 4px;
+}
+.sgagain {
+  display: flex;
+  justify-content: center;
+  margin-top: 14px;
+}
+/* an iOS switch */
+.tgl {
+  position: relative;
+  width: 51px;
+  height: 31px;
+  border-radius: 999px;
+  background: var(--fill);
+  flex-shrink: 0;
+  transition: background 0.25s;
+}
+.tgl::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s cubic-bezier(0.3, 1.3, 0.5, 1);
+}
+.tgl[aria-checked='true'] {
+  background: var(--good);
+}
+.tgl[aria-checked='true']::after {
+  transform: translateX(20px);
+}
+.bkstat.info {
+  background: var(--fill);
+}
+.bkstat.info svg.i {
+  color: var(--fg2);
+}
+.recbar.glass {
+  background: var(--glass-strong);
+}
+.tkw {
+  white-space: nowrap;
+}
+@media (max-width: 359px) {
+  .newtake {
+    gap: 10px;
+    padding: 12px;
+  }
+  .playbig {
+    width: 46px;
+    height: 46px;
+  }
+}

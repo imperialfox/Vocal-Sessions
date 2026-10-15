@@ -17,6 +17,13 @@ SONG = """(()=>{const l='[Verse 1]\\nPaper boats along the gutter racing rain do
  U.sDraft={step:1,title:'River song',artist:'Example band',text:l};U.sDraft.blocks=splitBlocks(l);U.sDraft.step=2;sgSaveDraft();
  const s=songById(U.songId),sid=s.order[1].sid;s.sections[sid].ann['0:2']={br:1,v:'ah'};s.sections[sid].ann['1:1']={nt:'Lift here'};s.sections[sid].cue='Open, full voice';save();rerender();})()"""
 
+INSIDE = "sel=>{const e=document.querySelector(sel);if(!e)return false;const r=e.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth+0.5&&r.top>=0&&r.bottom<=innerHeight+0.5}"
+# three takes from the chorus (one starred), and that section selected
+TAKES = """(async()=>{const s=songById(U.songId),o=s.order[1].o,b=new Blob([new Uint8Array(3000)],{type:'audio/mp4'});
+ for(const [id,ago,star] of [['lt1',4,true],['lt2',2,false],['lt3',0,false]])
+  await putTake({id,songId:s.id,o,created:Date.now()-ago*864e5-60000,len:16+ago,size:3000,type:'audio/mp4',blob:b,star,note:id==='lt1'?{w:['Breathy'],t:''}:undefined});
+ await refreshTakes();U.sSec=o;render();})()"""
+
 TOUCH = """(a)=>{const [type,y]=a;const t=new Touch({identifier:1,target:document.body,clientX:200,clientY:y});
   const e=new TouchEvent(type,{touches:type==='touchend'?[]:[t],changedTouches:[t],bubbles:true,cancelable:true});document.body.dispatchEvent(e);return e.defaultPrevented}"""
 
@@ -36,6 +43,17 @@ def run(b, t):
             for tab in ['history', 'exercises', 'settings', 'songs']:
                 pg.evaluate(f"U.tab='{tab}';U.view=null;render()"); pg.wait_for_timeout(250); check(tab)
             pg.evaluate(SONG); pg.wait_for_timeout(300); check('song')
+            # a selected section, recording it (without a microphone: the screen as it looks), and its takes
+            pg.evaluate(TAKES); pg.wait_for_timeout(300); check('song-selected')
+            if pg.locator('.sgsec.sel [data-a=sgRec]').count() != 1: bad.append('selected section has no Record pill')
+            pg.evaluate("(()=>{const s=songById(U.songId);rec={o:s.order[1].o,songId:s.id,t:16,stopping:true};render()})()"); pg.wait_for_timeout(300)
+            if not pg.evaluate(INSIDE, '.recbar'): bad.append('recording bar off screen')
+            if not pg.evaluate("(()=>{const r=document.querySelector('.rechead');return !!r&&r.getBoundingClientRect().width>20&&r.scrollWidth<=r.clientWidth+1})()"): bad.append('recording label missing or cut off')
+            check('song-recording')
+            pg.evaluate("rec=null;const s=songById(U.songId);U.sheet='sgTakes';U.sd={k:s.id,o:s.order[1].o,fresh:'lt3'};render()"); pg.wait_for_timeout(500)
+            if not pg.evaluate(INSIDE, '.sheet') or pg.locator('.sheet .newtake').count() != 1: bad.append('takes sheet off screen')
+            check('song-takes')
+            pg.evaluate("U.sheet=null;U.sd={};U.sSec=null;render()"); pg.wait_for_timeout(300)
             pg.evaluate("SG_ACT.sgEdit()"); pg.wait_for_timeout(250)
             pg.click('.sgsec >> nth=1 >> .w >> nth=3'); pg.wait_for_timeout(250)
             if not pg.evaluate("(()=>{const m=document.getElementById('emenu');if(!m)return false;const r=m.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth+0.5})()"): bad.append('marks menu off screen')

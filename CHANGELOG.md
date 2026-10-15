@@ -9,6 +9,34 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.9 · 16 Oct 2026
+*Songs: record a section and hear it back*
+<!-- area: recordings -->
+
+**Record a section**
+- In **Practise** or **Perform**, tap a section to select it. It gets a blue outline and two buttons: **Record**, and how many takes it has. Tap it again to let go.
+- **Record** starts straight away. The page scrolls to the section, the top bar says what's recording (for example "Recording Chorus 2"), and a recording bar at the bottom shows the time, a level meter and Stop.
+- While recording, the screen stays on that section: the Practise and Perform switch dims, other sections can't be tapped, and there's no back or edit until you stop.
+- A take stops by itself after 2 minutes. Leaving the app or the song stops it and saves it, as song practice already does.
+- Recordings are AAC mono at about 96 kbps where the phone offers it, with the phone's voice processing (echo and noise reduction, automatic volume) turned off, so the take sounds like your voice in the room.
+
+**Hear it back**
+- Stopping opens the section's takes over the song: the new take, big, with play, its progress, a star and a reminder that fresh ears help.
+- Below it are every take you've starred for that section, and the latest and first while they're kept. **Record again** is at the bottom, and tapping a take adds notes, as in song practice.
+- The same sheet opens from the section's takes button. A section that isn't selected shows how many takes it has in its heading.
+
+**Where takes live**
+- Each take belongs to one place in the song. Linked repeats share their lyrics, but Chorus 1 and Chorus 2 keep their own takes.
+- Unlinking or moving a section keeps its takes with it.
+- The keep rule is the same: the last 3 takes of a song, from any section, plus every take you star.
+- Takes from before 3.9 belong to the whole song and still play in song practice, which now says which section each take came from.
+- Recording a take counts as practising the song, so **Practised today** and the Recently practised order update straight away.
+
+<!-- area: backup -->
+**Backups**
+- Backups still include recordings. **Exclude recordings** on Backup ready makes a smaller file without them.
+- Check a backup and Import say **Recordings not included** for such a file. Restoring it keeps the recordings already on the device, and undoing that restore leaves them alone too.
+
 ## 3.8 · 15 Oct 2026
 *Songs: lyrics you can mark up*
 <!-- area: songs -->

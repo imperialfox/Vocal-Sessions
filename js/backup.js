@@ -82,7 +82,7 @@ function sumOf(d, takes) {
 }
 const plural = (n, w, ws) => n + ' ' + (n === 1 ? w : ws || w + 's');
 // plain-English note at the top of every backup file, for anyone who finds it later
-function readmeLines(now, s) {
+function readmeLines(now, s, noRec) {
   return [
     'This is a backup from Vocal Sessions, a singing practice app for iPhone, iPad and Mac.',
     'It holds ' +
@@ -91,7 +91,8 @@ function readmeLines(now, s) {
       plural(s.songPractice, 'song practice', 'song practices') +
       ', ' +
       plural(s.recordings, 'voice recording') +
-      ', plus exercises, songs and their lyrics, notes and monthly minutes.',
+      ', plus exercises, songs and their lyrics, notes and monthly minutes.' +
+      (noRec ? ' Voice recordings were left out when it was made.' : ''),
     'Made on ' +
       deviceName() +
       ' on ' +
@@ -200,6 +201,8 @@ async function inspectBackup(text, name, size) {
     }
   }
   r.bad = bad;
+  // made with Exclude recordings: nothing to restore, so the device's own recordings are kept
+  r.noRec = p.recordingsExcluded === true && !ok.length && !bad;
   r.exportedAt = isNaN(new Date(p.exportedAt)) ? null : p.exportedAt;
   r.device = typeof p.device === 'string' ? p.device : '';
   r.version = typeof p.appVersion === 'string' ? p.appVersion : '';
@@ -223,12 +226,19 @@ async function inspectBackup(text, name, size) {
             : 'unchecked';
   return r;
 }
-async function prepareExport() {
-  U.sheet = 'exporting';
-  U.sd = {};
+// noRec: leave the recordings out (Exclude recordings); restoring such a backup keeps the device's own
+async function prepareExport(noRec, quiet) {
+  if (quiet && pendingExport) {
+    // flipping Exclude recordings: stay on Backup ready while the file is made again
+    pendingExport.noRec = !!noRec;
+    pendingExport.busy = true;
+  } else {
+    U.sheet = 'exporting';
+    U.sd = {};
+  }
   rerender();
   try {
-    const takes = await allTakes();
+    const takes = noRec ? [] : await allTakes();
     const out = [];
     for (const t of takes) {
       const c = Object.assign({}, t);
@@ -238,18 +248,21 @@ async function prepareExport() {
     }
     const now = new Date(),
       sm = sumOf(D, out);
-    const p = {
-      README: readmeLines(now, sm),
-      app: 'vocal-sessions',
-      format: 2,
-      appVersion: APP_VERSION,
-      exportedAt: now.toISOString(),
-      device: deviceName(),
-      summary: sm,
-      data: D,
-      draft: X || null,
-      takes: out,
-    };
+    const p = Object.assign(
+      {
+        README: readmeLines(now, sm, noRec),
+        app: 'vocal-sessions',
+        format: 2,
+        appVersion: APP_VERSION,
+        exportedAt: now.toISOString(),
+        device: deviceName(),
+        summary: sm,
+        data: D,
+        draft: X || null,
+      },
+      noRec ? { recordingsExcluded: true } : {},
+      { takes: out }
+    );
     p.checkCode = await checkCode(p);
     const file = new File([backupText(p)], backupName(now), { type: 'application/json' });
     // read the finished file back and check it before offering to save it
@@ -258,9 +271,17 @@ async function prepareExport() {
       (back.status === 'good' || (back.status === 'old' && !p.checkCode)) &&
       back.sum.sessions === sm.sessions &&
       back.sum.songPractice === sm.songPractice &&
-      back.sum.recordings === sm.recordings;
+      back.sum.recordings === sm.recordings &&
+      !!back.noRec === !!noRec;
     if (!okBack) throw new Error('read-back failed');
-    pendingExport = { file, at: p.exportedAt, s: sm, code: p.checkCode, verified: back.status === 'good' };
+    pendingExport = {
+      file,
+      at: p.exportedAt,
+      s: sm,
+      code: p.checkCode,
+      verified: back.status === 'good',
+      noRec: !!noRec,
+    };
     U.sheet = 'exportReady';
   } catch (e) {
     U.sheet = null;
@@ -270,7 +291,7 @@ async function prepareExport() {
 }
 async function saveExport() {
   const p = pendingExport;
-  if (!p) return;
+  if (!p || p.busy) return;
   const r = await shareFile(p.file);
   if (r === 'cancelled') {
     toast('Backup not saved');
@@ -285,6 +306,7 @@ async function saveExport() {
     sessions: p.s.sessions,
     songPractice: p.s.songPractice,
     recordings: p.s.recordings,
+    noRec: p.noRec,
     code: (p.code || '').slice(0, 8),
     verified: p.verified,
     how: r,
@@ -332,16 +354,19 @@ async function restoreImport() {
         at: Date.now(),
         data: JSON.parse(JSON.stringify(D)),
         draft: X ? JSON.parse(JSON.stringify(X)) : null,
-        takes: await allTakes(),
+        takes: r.noRec ? [] : await allTakes(),
         restored: p.data.sessions.concat(p.data.songSessions).map((x) => x.id),
         from: r.name || '',
+        keptTakes: !!r.noRec,
       });
     } catch (e) {
       undoOK = false;
       await clearUndo();
     }
-    await clearTakes();
-    for (const c of ready) await putTake(c);
+    if (!r.noRec) {
+      await clearTakes();
+      for (const c of ready) await putTake(c);
+    }
     D = cleanData(p.data) || {};
     migrate();
     D.lastBackup = p.exportedAt || new Date().toISOString();
@@ -355,7 +380,13 @@ async function restoreImport() {
     U = freshU();
     window.scrollTo(0, 0);
     render();
-    toast(undoOK ? 'Backup restored' : 'Backup restored. Undo isn’t available: not enough space.');
+    toast(
+      !undoOK
+        ? 'Backup restored. Undo isn’t available: not enough space.'
+        : r.noRec
+          ? 'Backup restored. Your recordings were kept.'
+          : 'Backup restored'
+    );
   } catch (e) {
     U.sheet = null;
     rerender();
@@ -377,8 +408,11 @@ async function undoRestore() {
   try {
     stopPlayback();
     if (rec) stopRec();
-    await clearTakes();
-    for (const t of u.takes || []) await putTake(t);
+    // a restore that kept the recordings didn't change them, so neither does undoing it
+    if (!u.keptTakes) {
+      await clearTakes();
+      for (const t of u.takes || []) await putTake(t);
+    }
     D = cleanData(u.data) || {};
     migrate();
     save();
@@ -467,7 +501,21 @@ function bkReportHTML(r, mode) {
         mb(r.size) +
         '</span></div></div><button class="ghost" data-a="close">Done</button>'
     );
-  const S = r.sum;
+  const S = r.sum,
+    recs = (x) => (r.noRec ? 'Not included' : x);
+  if (r.noRec)
+    b +=
+      '<div class="bkstat info" style="margin-top:8px">' +
+      ICON.mic +
+      '<div><b>Recordings not included</b>' +
+      (imp
+        ? 'This backup was made with Exclude recordings. Restoring it keeps the ' +
+          plural(TAKES.length, 'recording') +
+          ' on ' +
+          thisDev() +
+          '.'
+        : 'This backup was made with Exclude recordings. Restoring it keeps the recordings already on the device.') +
+      '</div></div>';
   b +=
     '<div class="grp" style="margin-top:10px"><div class="row"><span class="lbl">Backed up</span><span class="mut">' +
     when(r.exportedAt) +
@@ -508,7 +556,16 @@ function bkReportHTML(r, mode) {
         ['Practice time', S.minutes, H.minutes, hm],
         ['Latest practice', S.last, H.last, sd],
       ]
-        .map((x) => '<div class="row"><span class="lbl">' + x[0] + '</span>' + cell(x[1], x[2], x[3]) + '</div>')
+        .map(
+          (x, i) =>
+            '<div class="row"><span class="lbl">' +
+            x[0] +
+            '</span>' +
+            (i === 3 && r.noRec
+              ? '<span class="cmpv">Not included</span><span class="cmpv">' + H.recordings + '</span>'
+              : cell(x[1], x[2], x[3])) +
+            '</div>'
+        )
         .join('') +
       '</div>';
     const ids = new Set(r.p.data.sessions.map((x) => x.id)),
@@ -516,7 +573,7 @@ function bkReportHTML(r, mode) {
       tids = new Set(r.p.takes.map((x) => x.id));
     const lS = D.sessions.filter((x) => !ids.has(x.id)).length,
       lG = D.songSessions.filter((x) => !gids.has(x.id)).length,
-      lT = TAKES.filter((x) => !tids.has(x.id)).length;
+      lT = r.noRec ? 0 : TAKES.filter((x) => !tids.has(x.id)).length;
     const lost = [
       lS ? plural(lS, 'session') : '',
       lG ? plural(lG, 'song practice', 'song practices') : '',
@@ -562,7 +619,7 @@ function bkReportHTML(r, mode) {
       ['Sessions', S.sessions],
       ['Song practice', S.songPractice],
       ['Songs', S.songs],
-      ['Recordings', S.recordings],
+      ['Recordings', recs(S.recordings)],
       ['Practice time', hm(S.minutes)],
       ['Practice from', S.first ? shortDate(S.first) + ' – ' + shortDate(S.last) : '–'],
     ]
@@ -601,7 +658,10 @@ function bkLogHTML() {
         '<small class="fname">' +
         esc(e.name || '') +
         '</small><small>' +
-        [plural(+e.sessions || 0, 'session'), plural(+e.recordings || 0, 'recording')].join(' · ') +
+        [
+          plural(+e.sessions || 0, 'session'),
+          e.noRec ? 'Recordings not included' : plural(+e.recordings || 0, 'recording'),
+        ].join(' · ') +
         (e.verified ? ' · Checked' : '') +
         (e.how === 'downloaded' ? ' · Downloaded' : '') +
         '</small></span><span class="mut">' +
@@ -635,6 +695,9 @@ function undoHTML() {
           '<div><b>' +
           plural(n, 'session') +
           ' since then</b>Anything you’ve logged since the restore will be removed. Back up first if you want to keep it.</div></div><button class="ghost" data-a="exportPrep">Back up first</button>'
+        : '') +
+      (u.keptTakes
+        ? '<p class="note">That backup didn’t include recordings, so your recordings were kept as they were. Undoing leaves them as they are now.</p>'
         : '') +
       '<p class="note">The backup file stays in Files, so you can restore it again. Undo is available until ' +
       fileDate(until) +

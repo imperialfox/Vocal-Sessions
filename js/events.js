@@ -777,6 +777,9 @@ document.addEventListener('click', (e) => {
     case 'exportSave':
       saveExport();
       break;
+    case 'exportNoRec':
+      if (pendingExport && !pendingExport.busy) prepareExport(!pendingExport.noRec, true);
+      break;
     case 'importPick':
       pickMode = 'import';
       $('importIn').click();

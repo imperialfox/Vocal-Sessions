@@ -2,9 +2,9 @@
 
 A mobile-first companion for structured vocal practice, styled like a native iOS app. It's a single HTML file with no install, no backend and no account. It's designed to live on your iPhone Home Screen.
 
-![Version 3.8](https://img.shields.io/badge/version-3.8-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
+![Version 3.9](https://img.shields.io/badge/version-3.9-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
 
-**Current version: 3.8 · 15 Oct 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
+**Current version: 3.9 · 16 Oct 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
 
 ---
 
@@ -74,11 +74,12 @@ And **Songs**, for learning a song: paste the lyrics, and they're split into lab
   - **Practise** shows every mark; **Perform** hides the technical ones and shows only the expressive cues. **Key** explains the marks.
   - The pencil opens **Annotate**: tap a word for Breath, Run, Higher, Lower, Sing as (a vowel) or a Note. Add a cue to a section, unlink a repeat to give it its own copy, or hold a section to move it. Undo steps back through changes.
   - **Lyrics** edits the words. Marked words are highlighted, marks follow their words, and a mark whose word changed is flagged to check. One whose word was removed waits at the top of its section to be moved or removed.
+  - **Record a section:** in Practise or Perform, tap a section, then **Record**. The screen stays on that section while it records, with a recording bar at the bottom (time, level meter, Stop). Stopping opens the takes for that section over the song: the new take, every starred one, and the latest and first. Each repeat keeps its own takes, even when linked.
   - **Song practice** at the bottom starts song practice with that song picked.
 - Songs from song practice are here too, and **Add lyrics** gives them lyrics without losing their recordings.
 
 **Settings** (the gear on Today)
-- **Export backup:** one file with everything (sessions, minutes, exercises, songs with their lyrics and marks, and recordings), checked before you save it. Keep it in iCloud Drive › Vocal Sessions › Backups.
+- **Export backup:** one file with everything (sessions, minutes, exercises, songs with their lyrics and marks, and recordings), checked before you save it. **Exclude recordings** makes a smaller file without them; restoring it keeps the device's recordings. Keep it in iCloud Drive › Vocal Sessions › Backups.
 - **Import backup:** checks the file and compares it with what's on this device, then replaces this device's data after you confirm.
 - **Check a backup:** tells you whether a file is complete and what's inside, without changing anything.
 - **Undo last restore:** for 30 days after a restore.
@@ -101,8 +102,8 @@ And **Songs**, for learning a song: paste the lyrics, and they're split into lab
   - Sessions over 90 minutes ask how long you actually practised.
 - **How did it go?** After finishing, tap words that fit (or add your own) and an optional note. You can skip it.
 - **Recordings:**
-  - Mono, compressed audio (about 0.5 MB a minute), up to 2 minutes per take
-  - Keeps the last 3 takes per song plus any you star
+  - Mono AAC at about 96 kbps (about 0.7 MB a minute), with the phone's voice processing off, up to 2 minutes per take
+  - Keeps the last 3 takes per song, from song practice or any section, plus any you star
   - Tap a take to add notes, such as "Flat on the high note"
   - Each take can be shared (Save to Files or iCloud Drive) or deleted
   - Leaving the app while recording stops the take and saves it

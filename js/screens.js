@@ -970,7 +970,7 @@ function scrSettings() {
     lbText +
     (age > 14 && lb ? '. It’s been over two weeks.' : '') +
     '</p>' +
-    '<p class="foot">A backup holds everything: sessions, minutes, exercises, songs with their lyrics and marks, and recordings. Keep them in iCloud Drive › Vocal Sessions › Backups, and import one after re-adding the app or switching phones.</p>' +
+    '<p class="foot">A backup holds everything: sessions, minutes, exercises, songs with their lyrics and marks, and recordings (you can exclude those when you export). Keep them in iCloud Drive › Vocal Sessions › Backups, and import one after re-adding the app or switching phones.</p>' +
     '<div class="hdr">Backup files</div><div class="grp">' +
     '<button class="row" data-a="sheet" data-v="bkLog"><span class="lbl">Backup history</span><span class="mut">' +
     loadLog().length +
@@ -1130,7 +1130,13 @@ function songPicker() {
   );
 }
 function takeRows(sid) {
-  const tk = TAKES.filter((t) => t.songId === sid);
+  const tk = TAKES.filter((t) => t.songId === sid),
+    sg = songById(sid);
+  // takes recorded from a section say which one
+  const where = (t) => {
+    const i = t.o && hasLyrics(sg) ? occIdx(sg, t.o) : -1;
+    return i < 0 ? '' : esc(occLabel(sg, i)) + ' · ';
+  };
   return (
     '<div class="hdr">Takes</div><div class="grp"><button class="row recbtn' +
     (rec ? ' on' : '') +
@@ -1148,6 +1154,7 @@ function takeRows(sid) {
             '</button><button class="lbl tk" data-a="takeNote" data-k="' +
             t.id +
             '" aria-label="Notes for this take">' +
+            where(t) +
             shortDate(t.created) +
             ' · ' +
             mmss(t.len) +

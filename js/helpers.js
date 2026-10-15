@@ -340,6 +340,7 @@ const freshU = () => ({
   sSel: [],
   sDraft: null,
   sRet: null,
+  sSec: null,
 });
 let U = freshU();
 let E = null,

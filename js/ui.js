@@ -149,6 +149,16 @@ function renderDock() {
     $('dock').innerHTML = '';
     return;
   }
+  // recording a section: the recording bar takes the place of the tab bar
+  if (rec && rec.o) {
+    $('dock').innerHTML =
+      '<div class="recbar glass" role="group" aria-label="Recording"><span class="rectime"><span class="recdot" aria-hidden="true"></span><span id="recT">' +
+      mmss(rec.t) +
+      '</span></span><span class="meter" id="recMeter" aria-hidden="true">' +
+      '<i></i>'.repeat(14) +
+      '</span><button class="stopb" data-a="sgStop" aria-label="Stop recording"><i></i></button></div>';
+    return;
+  }
   if (isFlow(U.view)) {
     const n = Object.keys(X.rot).length;
     const lab = {
@@ -486,8 +496,13 @@ function renderSheet() {
         '</span></div><div class="row"><span class="lbl">Song practice</span><span class="mut">' +
         P.s.songPractice +
         '</span></div><div class="row"><span class="lbl">Recordings</span><span class="mut">' +
-        P.s.recordings +
+        (P.busy ? '…' : P.noRec ? 'Not included' : P.s.recordings) +
         '</span></div></div>' +
+        '<div class="grp" style="margin-top:10px"><button class="row" data-a="exportNoRec" role="switch" aria-checked="' +
+        P.noRec +
+        '"><span class="lbl">Exclude recordings<small>A smaller file. Restoring it keeps the recordings already on the device.</small></span><span class="tgl" aria-checked="' +
+        P.noRec +
+        '" aria-hidden="true"></span></button></div>' +
         '<p class="note" style="margin-top:10px">Choose <b>Save to Files</b>, then <b>iCloud Drive › Vocal Sessions › Backups</b>.' +
         (first ? '' : ' If Files asks, tap Replace to update this month’s backup.') +
         '</p>' +
@@ -496,7 +511,9 @@ function renderSheet() {
             chev +
             '</button>'
           : '') +
-        '<button class="cta" data-a="exportSave">Save backup</button><button class="ghost" data-a="close">Cancel</button>'
+        '<button class="cta" data-a="exportSave"' +
+        (P.busy ? ' disabled' : '') +
+        '>Save backup</button><button class="ghost" data-a="close">Cancel</button>'
     );
   } else if (s === 'persist') {
     const on = PERSIST === true;

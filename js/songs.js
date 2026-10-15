@@ -39,6 +39,7 @@ const SGI = {
   trash:
     '<svg class="i" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 002 2h6a2 2 0 002-2l1-12M9 7V4h6v3"/></svg>',
   x: '<svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  mic: '<svg class="i" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0013 0M12 17.5V21"/></svg>',
 };
 // moments on screen that don't need saving: the selected word, undo steps, open menus, a drag in progress
 const SG = {
@@ -85,6 +86,15 @@ function checkCount(sg) {
   return n;
 }
 const takesOf = (id) => TAKES.filter((t) => t.songId === id).length;
+// takes recorded from one place in a song (an entry in its order), oldest first
+const takesAt = (id, o) => TAKES.filter((t) => t.songId === id && t.o === o);
+// a section of this song is being recorded: the screen is locked to it
+const recHere = (sg) => !!(rec && rec.o && sg && rec.songId === sg.id);
+const nTakes = (n) => n + ' take' + (n === 1 ? '' : 's');
+function takeWhen(t) {
+  const r = sgRel(t);
+  return r.startsWith('on ') ? r.slice(3) : r.charAt(0).toUpperCase() + r.slice(1);
+}
 // practised means a take was recorded: in song practice now, and from a song's sections later
 function lastPractised(s, map) {
   const t = map ? map[s.id] || 0 : TAKES.reduce((a, k) => (k.songId === s.id && k.created > a ? k.created : a), 0);
@@ -624,7 +634,9 @@ function sgFixSel() {
 }
 function openSong(id, from) {
   if (!songById(id)) return;
+  if (rec && rec.o && rec.songId !== id) return toast('Stop recording first');
   if (U.sEdit) sgEndEdit(true);
+  if (U.songId !== id) U.sSec = null;
   U.sMode = 'practise';
   if (split()) {
     const was = U.tab === 'songs' && !U.view;
@@ -922,12 +934,23 @@ function sgSection(sg, idx) {
     sec = sg.sections[sid],
     linked = uses(sg, sid) > 1,
     ed = U.sEdit === 'annotate';
+  // Practise and Perform: tap a section to select it, then record it or hear its takes
+  const recOn = recHere(sg),
+    tap = !U.sEdit && !rec,
+    sel = !U.sEdit && (recOn ? rec.o === o : U.sSec === o),
+    n = U.sEdit ? 0 : takesAt(sg.id, o).length;
   let h =
-    '<section class="sgsec" data-o="' +
+    '<section class="sgsec' +
+    (tap ? ' tap' : '') +
+    (sel ? ' sel' : '') +
+    (sel && recOn ? ' recording' : '') +
+    '" data-o="' +
     o +
     '" aria-label="' +
     esc(occLabel(sg, idx)) +
-    '"><div class="sghead"><span class="sglab">' +
+    '"' +
+    (tap ? ' data-a="sgSec" data-k="' + o + '" tabindex="0" aria-current="' + (sel ? 'true' : 'false') + '"' : '') +
+    '><div class="sghead"><span class="sglab">' +
     esc(occLabel(sg, idx)) +
     (linked ? SGI.link : '') +
     '</span>';
@@ -940,6 +963,7 @@ function sgSection(sg, idx) {
       '</button>' +
       (linked ? '<button class="sgpill sm" data-a="sgUnlink" data-k="' + o + '">Unlink</button>' : '') +
       '</span>';
+  else if (n && !sel) h += '<span class="shared">' + nTakes(n) + '</span>';
   h += '</div>';
   if (ed)
     sec.orphans.forEach((op) => {
@@ -977,7 +1001,17 @@ function sgSection(sg, idx) {
       if (a && a.nt) h += '<p class="sgnote">' + SGI.note + '<span>' + esc(a.nt) + '</span></p>';
     });
   });
-  return h + '</div></section>';
+  h += '</div>';
+  if (sel && !rec)
+    h +=
+      '<div class="sgrecp">' +
+      (n ? '<button class="sgpill" data-a="sgTakes" data-k="' + o + '">' + nTakes(n) + '</button>' : '') +
+      '<button class="sgpill blue" data-a="sgRec" data-k="' +
+      o +
+      '">' +
+      SGI.mic +
+      'Record</button></div>';
+  return h + '</section>';
 }
 function lyricsEditHTML(sg) {
   const seen = [];
@@ -1045,6 +1079,10 @@ function songControls(sg) {
         '</div>',
       r: '<button class="circ glass tinted" data-a="sgDone" aria-label="Done">' + SGI.check + '</button>',
     };
+  if (recHere(sg)) {
+    const i = occIdx(sg, rec.o);
+    return { l: '', t: '', r: '', rec: 'Recording' + (i < 0 ? '' : ' ' + occLabel(sg, i)) };
+  }
   const cc = checkCount(sg);
   return {
     l: '',
@@ -1064,6 +1102,7 @@ function songViewBar() {
   if (!sg) return { l: '', t: '', r: '' };
   const c = songControls(sg);
   if (U.sEdit) return { l: c.l, t: c.t, r: c.r, tabs: true, always: true };
+  if (c.rec) return { l: '', t: '<span class="rechead">' + esc(c.rec) + '</span>', r: '', always: true };
   return {
     l: '<button class="circ glass" data-a="sgBack" aria-label="Back">' + ICON.back + '</button>',
     t: esc(songTitle(sg)),
@@ -1104,7 +1143,11 @@ function songBody(sg, inPane) {
     const c = songControls(sg);
     h += ed
       ? '<div class="sgph sgedit">' + c.l + '<span class="sgphc">' + c.t + '</span>' + c.r + '</div>'
-      : '<div class="sgph"><h1>' + esc(songTitle(sg)) + '</h1>' + c.r + '</div>';
+      : '<div class="sgph"><h1>' +
+        esc(songTitle(sg)) +
+        '</h1>' +
+        (c.rec ? '<span class="rechead">' + esc(c.rec) + '</span>' : c.r) +
+        '</div>';
   } else h += '<h1>' + esc(songTitle(sg)) + '</h1>';
   if (sg.artist && !ed) h += '<p class="sgart">' + esc(sg.artist) + '</p>';
   if (!hasLyrics(sg))
@@ -1119,7 +1162,9 @@ function songBody(sg, inPane) {
     );
   if (!ed)
     h +=
-      '<div class="sgmodes"><div class="seg sgseg" role="tablist"><span class="knob" aria-hidden="true"></span>' +
+      '<div class="sgmodes' +
+      (recHere(sg) ? ' locked" aria-disabled="true' : '') +
+      '"><div class="seg sgseg" role="tablist"><span class="knob" aria-hidden="true"></span>' +
       [
         ['practise', 'Practise'],
         ['perform', 'Perform'],
@@ -1178,6 +1223,7 @@ function songBody(sg, inPane) {
   if (perf) h += '<p class="sgbanner">Technical marks hidden. Expressive cues only.</p>';
   sg.order.forEach((_, i) => (h += sgSection(sg, i)));
   h += '</div>';
+  if (!ed && !rec && !sg.order.some((x) => x.o === U.sSec)) h += '<p class="sghint">Tap a section to record it</p>';
   if (!ed) h += practiceRow(sg);
   return h;
 }
@@ -1266,6 +1312,7 @@ function songSheet(s) {
         '</div><p class="foot">Add or change marks with the pencil.</p>'
     );
   }
+  if (s === 'sgTakes') return takesSheet(sd);
   if (!sg && s !== 'sgDel' && s !== 'sgPinFull' && s !== 'sgRename') return '';
   if (s === 'sgCue') {
     const sec = hasLyrics(sg) && sg.sections[sd.k];
@@ -1363,6 +1410,117 @@ function songSheet(s) {
     );
   }
   return '';
+}
+// the takes for one place in the song: straight after recording, or from its "N takes" pill
+function takeRowHTML(t, tag) {
+  const n = noteStr(t.note);
+  return (
+    '<div class="row sgtake"><button class="ibtn acc" data-a="playTake" data-k="' +
+    t.id +
+    '" aria-label="' +
+    (playingId === t.id ? 'Pause' : 'Play') +
+    ' take">' +
+    (playingId === t.id ? ICON.pause : ICON.play) +
+    '</button><button class="lbl tk" data-a="takeNote" data-k="' +
+    t.id +
+    '" aria-label="Notes for this take">' +
+    (tag ? '<span class="sgtag">' + tag + '</span>' : '') +
+    '<span class="tkw">' +
+    takeWhen(t.created) +
+    ' · ' +
+    mmss(t.len) +
+    '</span>' +
+    '<small class="' +
+    (n ? 'acc' : '') +
+    '">' +
+    (n ? esc(n) : 'Add a note') +
+    '</small><span class="prog"><i id="pg-' +
+    t.id +
+    '"></i></span></button>' +
+    starBtn(t) +
+    '</div>'
+  );
+}
+const starBtn = (t) =>
+  '<button class="ibtn star' +
+  (t.star ? ' on' : '') +
+  '" data-a="star" data-k="' +
+  t.id +
+  '" aria-label="' +
+  (t.star ? 'Unstar' : 'Star') +
+  ' take" aria-pressed="' +
+  !!t.star +
+  '" style="' +
+  (t.star ? '' : 'color:var(--fg3)') +
+  '">' +
+  ICON.star +
+  '</button>';
+function takesSheet(sd) {
+  const sg = songById(sd.k),
+    i = hasLyrics(sg) ? occIdx(sg, sd.o) : -1;
+  if (i < 0) return '';
+  const list = takesAt(sg.id, sd.o),
+    fresh = sd.fresh && list.find((t) => t.id === sd.fresh),
+    first = list[0],
+    latest = list[list.length - 1];
+  let h = '';
+  if (fresh) {
+    const n = noteStr(fresh.note);
+    h +=
+      '<div class="newtake"><button class="playbig" data-a="playTake" data-k="' +
+      fresh.id +
+      '" aria-label="' +
+      (playingId === fresh.id ? 'Pause' : 'Play') +
+      ' new take">' +
+      (playingId === fresh.id ? ICON.pause : ICON.play) +
+      '</button><button class="lbl tk" data-a="takeNote" data-k="' +
+      fresh.id +
+      '" aria-label="Notes for the new take"><span class="sgtag">New take</span><span class="tkw">Just now · ' +
+      mmss(fresh.len) +
+      '</span>' +
+      '<small class="' +
+      (n ? 'acc' : '') +
+      '">' +
+      (n ? esc(n) : 'Add a note') +
+      '</small><span class="prog"><i id="pg-' +
+      fresh.id +
+      '"></i></span></button>' +
+      starBtn(fresh) +
+      '</div><p class="foot sgfresh">Fresh ears help. Try listening again tomorrow.</p>';
+  }
+  // every starred take, then the latest and the first while they're still kept
+  const rows = [];
+  const add = (t) => t && t !== fresh && !rows.includes(t) && rows.push(t);
+  list
+    .filter((t) => t.star)
+    .reverse()
+    .forEach(add);
+  add(latest);
+  add(first);
+  const tagOf = (t) =>
+    [t === latest ? 'Latest' : '', t === first && list.length > 1 ? 'First' : '', t.star ? 'Starred' : '']
+      .filter(Boolean)
+      .join(' · ');
+  if (rows.length)
+    h +=
+      (fresh ? '<div class="hdr">Earlier takes</div>' : '') +
+      '<div class="grp">' +
+      rows.map((t) => takeRowHTML(t, tagOf(t))).join('') +
+      '</div>';
+  if (!list.length) h += '<p class="note">No takes for this section yet.</p>';
+  const more = list.length - rows.length - (fresh ? 1 : 0);
+  h +=
+    '<p class="foot">' +
+    (more ? (more === 1 ? '1 more take' : more + ' more takes') + ' in Song practice. ' : '') +
+    'Keeps the last ' +
+    KEEP_TAKES +
+    ' takes of this song, from any section, plus every take you star.</p><div class="sgagain"><button class="sgpill" data-a="sgRec" data-k="' +
+    sd.o +
+    '">' +
+    SGI.mic +
+    (list.length ? 'Record again' : 'Record') +
+    '</button></div>';
+  return sheetWrap(esc(occLabel(sg, i)), h, 'Takes for ' + occLabel(sg, i));
 }
 function newSongSheet() {
   const d = U.sDraft;
@@ -1829,10 +1987,38 @@ const SG_ACT = {
   sgSave() {
     sgSaveDraft();
   },
+  sgSec(el, v, k) {
+    if (rec || U.sEdit) return;
+    U.sSec = U.sSec === k ? null : k;
+    rerender();
+  },
+  sgRec(el, v, k) {
+    const sg = songShown();
+    if (!hasLyrics(sg) || occIdx(sg, k) < 0) return;
+    if (rec) return toast('Stop recording first');
+    if (U.sEdit) return;
+    stopPlayback();
+    U.sheet = null;
+    U.sd = {};
+    U.sSec = k;
+    startRec({ songId: sg.id, o: k });
+  },
+  sgStop() {
+    stopRec();
+  },
+  sgTakes(el, v, k) {
+    const sg = songShown();
+    if (!sg || rec) return;
+    U.sheet = 'sgTakes';
+    U.sd = { k: sg.id, o: k };
+    rerender();
+  },
   sgMode(el, v) {
+    if (rec) return;
     if (U.sMode === v) return;
     segPick(el);
     U.sMode = v;
+    U.sSec = null;
     setTimeout(rerender, 180);
   },
   sgKey() {
@@ -1842,6 +2028,8 @@ const SG_ACT = {
   },
   sgEdit() {
     if (!hasLyrics(songById(U.songId))) return;
+    if (rec) return toast('Stop recording first');
+    U.sSec = null;
     U.sEdit = 'annotate';
     SG.word = null;
     SG.undo = [];
@@ -2141,6 +2329,13 @@ function slayerHTML() {
 }
 function songsAfter() {
   sgEnsure();
+  if (rec && rec.o && !rec.stopping) {
+    const sh = songShown();
+    if (!sh || sh.id !== rec.songId) {
+      stopRec();
+      toast('Recording stopped and saved');
+    }
+  }
   if (SG.ctx && !(U.tab === 'songs' && !U.view)) SG.ctx = null;
   const bar = $('sgbar'),
     show = U.tab === 'songs' && !U.view && !split() && U.sFocus && !U.sheet && D.songs.length > 0;
@@ -2531,7 +2726,7 @@ document.addEventListener(
       (e.key === 'Enter' || e.key === ' ') &&
       !typing &&
       e.target.matches &&
-      e.target.matches('[role=button][data-a]')
+      e.target.matches('[role=button][data-a],.sgsec[data-a]')
     ) {
       e.preventDefault();
       e.target.click();
@@ -2553,7 +2748,7 @@ document.addEventListener(
       else if (U.sList) SG_ACT.sgListDone();
       return;
     }
-    if (!mod || U.sheet || (X && isFlow(U.view))) return;
+    if (!mod || U.sheet || rec || (X && isFlow(U.view))) return;
     const k = e.key.toLowerCase();
     if (k === 'f') {
       e.preventDefault();

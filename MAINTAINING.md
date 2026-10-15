@@ -95,11 +95,16 @@ Each song in `D.songs` is its own record. Songs from before 3.8 have only `id` a
 |---|---|
 | `id`, `name` | Never change. Recordings (`songId`) and song practice (`songId`, `songName`) point at them. `name` is the title |
 | `artist`, `pinned`, `added` | Artist (may be empty), pinned on Today and at the top of Songs (at most 3), when it was added (ms) |
+| `practised` | When a take of it was last recorded (ms), set when a take is saved |
 | `original` | The lyrics exactly as pasted. Never edited, so damaged lyrics can be rebuilt from it |
 | `sections` | `{sid: {label, cue, lines, ann, orphans}}`. `lines` is an array of lines, each an array of words. `ann` maps `"line:word"` to marks: `br`, `run`, `up`, `dn` (1), `v` (vowel), `nt` (note), and `check` + `was` when the word changed. `orphans` are marks whose word was removed |
-| `order` | The running order `[{o, sid}]`. Linked repeats share a `sid`; each `o` is one place in the song (takes will hang off it) |
+| `order` | The running order `[{o, sid}]`. Linked repeats share a `sid`; each `o` is one place in the song, and takes recorded from a section carry it. Unlinking and moving sections never change an `o` |
 
-`cleanSong()` checks each song on its own when data loads or a backup is read: bad values are dropped, marks on missing words and order entries for missing sections are removed, fields it doesn't know are kept, and if the lyrics are unusable but `original` is there, they're rebuilt from it. Practised dates come from recordings (`TAKES`), so nothing is stored twice.
+`cleanSong()` checks each song on its own when data loads or a backup is read: bad values are dropped, marks on missing words and order entries for missing sections are removed, fields it doesn't know are kept, and if the lyrics are unusable but `original` is there, they're rebuilt from it. Practised dates come from recordings (`TAKES`) and `practised`, whichever is later.
+
+### Recordings
+
+Each take in IndexedDB is `{id, songId, created, len, size, type, star, blob, note?, o?}`. `o` is the place in the song it was recorded from (an `order` entry); takes without one (song practice, and everything before 3.9) belong to the whole song. `prune()` keeps the last `KEEP_TAKES` (3) unstarred takes per song, whatever their section, plus every starred one. Recording a section uses the same `startRec`/`stopRec`/`saveRec` as song practice, with a `{songId, o}` target; while it runs, `rec.o` locks the song screen to it.
 
 ### Rules that keep old data working
 
@@ -134,6 +139,7 @@ Settings › Changelog fetches `CHANGELOG.md` and builds the timeline from it (`
 
 A backup is a JSON file with: a plain-English `README` array, `app`, `format` (2), `appVersion`, `exportedAt`, `device`, `summary`, `data` (= `D`), `draft` (= `X`), `takes` (recordings as data URLs) and `checkCode`.
 
+- **Exclude recordings** writes `takes: []` and `recordingsExcluded: true`, and the check code is worked out on that file as written. Check a backup and Import say "Recordings not included", and restoring one keeps the device's recordings (the undo copy notes `keptTakes`, and undoing leaves them alone).
 - `checkCode` is the SHA-256 of `JSON.stringify({data, draft, takes})`. `inspectBackup()` recalculates it to decide whether a file is complete (`good`), from before 3.6 (`old`), edited or partly copied (`changed`), missing some recordings (`partial`) or unusable (`broken`).
 - Export reads its own file back through `inspectBackup()` before offering to save it.
 - Restore keeps an undo copy first; `undoRestore()` puts it back.
@@ -169,6 +175,7 @@ The tests drive the real app in Chromium, served from `localhost` as GitHub Page
 | `test_songs.py` | Pasting and labelling lyrics, the song screen, Annotate and Lyrics editing (marks following their words), unlink, reorder, pins, the list, search, Today's pinned songs, older and damaged songs, backups, and iPad/Mac shortcuts |
 | `test_backup.py` | Export, Check a backup, damaged files, restore comparison, undo, the old-backup fixtures and the exercise-id guard |
 | `test_recording.py` | Recording with a fake microphone, leaving mid-take, keeping 3 takes, and audio in backups |
+| `test_sections.py` | Recording a section: selecting, the lock while recording, takes saved with their place, the review sheet, stars and the keep rule across sections, unlink and reorder, leaving mid-take, and backups with Exclude recordings |
 | `test_layout.py` | Every screen on iPhone, iPhone landscape, iPad and Mac, light and dark, plus pull to refresh |
 | `test_fuzz.py` | Thousands of random taps, checking nothing breaks after each one |
 

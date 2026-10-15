@@ -256,6 +256,7 @@ function closeSheet() {
     }
   }
   if (s === 'edit') E = null;
+  if (s === 'sgTakes') stopPlayback();
   const r = U.sd && U.sd.ret;
   if (typeof r === 'string') {
     U.sheet = r;
@@ -283,28 +284,37 @@ function pickMime() {
     }) || ''
   );
 }
-async function startRec() {
+// target: {songId, o} for a section of a song; nothing for song practice (the song picked in the session)
+let recBusy = false;
+async function startRec(target) {
+  const tg = target || { songId: X && X.song };
+  if (rec || recBusy) return;
   if (!navigator.mediaDevices || !window.MediaRecorder) {
     toast('Recording isn’t supported in this browser');
     return;
   }
+  recBusy = true;
   let stream;
   try {
+    // voice processing off, so the take sounds like the voice in the room
     stream = await navigator.mediaDevices.getUserMedia({
       audio: { channelCount: 1, echoCancellation: false, noiseSuppression: false, autoGainControl: false },
     });
   } catch (e) {
+    recBusy = false;
     toast('Microphone access was blocked. Allow it in Settings, then try again.');
     return;
   }
+  recBusy = false;
   const mime = pickMime();
   let mr;
   try {
-    mr = new MediaRecorder(stream, Object.assign({ audioBitsPerSecond: 64000 }, mime ? { mimeType: mime } : {}));
+    // AAC mono at about 96 kbps where the browser offers it
+    mr = new MediaRecorder(stream, Object.assign({ audioBitsPerSecond: 96000 }, mime ? { mimeType: mime } : {}));
   } catch (e) {
     mr = new MediaRecorder(stream);
   }
-  rec = { mr, stream, chunks: [], t: 0, songId: X.song, started: Date.now() };
+  rec = { mr, stream, chunks: [], t: 0, songId: tg.songId, o: tg.o || null, started: Date.now() };
   mr.ondataavailable = (e) => {
     if (e.data && e.data.size) rec && rec.chunks.push(e.data);
   };
@@ -315,14 +325,55 @@ async function startRec() {
     rec.t = Math.round((Date.now() - rec.started) / 1000);
     const l = $('recLbl');
     if (l) l.textContent = 'Stop · ' + mmss(rec.t) + ' of ' + mmss(MAX_TAKE);
+    const c = $('recT');
+    if (c) c.textContent = mmss(rec.t);
     if (rec.t >= MAX_TAKE) stopRec();
   }, 250);
+  if (rec.o) {
+    recMeter(rec);
+    U.sSec = rec.o;
+  }
   rerender();
+  if (rec.o) scrollToSec(rec.o);
+}
+// the level meter in the recording bar: the last few moments of loudness, newest on the right
+function recMeter(r) {
+  r.lv = [];
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    r.ac = new AC();
+    const an = r.ac.createAnalyser();
+    an.fftSize = 512;
+    r.ac.createMediaStreamSource(r.stream).connect(an);
+    if (r.ac.state === 'suspended') r.ac.resume().catch(() => {});
+    const buf = new Uint8Array(an.fftSize);
+    r.mt = setInterval(() => {
+      if (rec !== r) return;
+      an.getByteTimeDomainData(buf);
+      let sum = 0;
+      for (let i = 0; i < buf.length; i++) sum += (buf[i] - 128) * (buf[i] - 128);
+      r.lv.push(Math.min(1, (Math.sqrt(sum / buf.length) / 128) * 4));
+      if (r.lv.length > 14) r.lv.shift();
+      const bars = document.querySelectorAll('#recMeter i'),
+        off = bars.length - r.lv.length;
+      bars.forEach((b, i) => (b.style.height = Math.round(16 + (i < off ? 0 : r.lv[i - off]) * 84) + '%'));
+    }, 90);
+  } catch (e) {}
+}
+function scrollToSec(o) {
+  const s = document.querySelector('.sgsec[data-o="' + o + '"]');
+  if (!s) return;
+  const bar = $('bar'),
+    top = bar ? bar.getBoundingClientRect().bottom : 70;
+  window.scrollTo({ top: Math.max(0, s.getBoundingClientRect().top + window.scrollY - top - 12), behavior: 'smooth' });
 }
 function stopRec() {
   if (!rec || rec.stopping) return;
   rec.stopping = true;
   clearInterval(rec.timer);
+  clearInterval(rec.mt);
+  if (rec.ac) rec.ac.close().catch(() => {});
   try {
     rec.mr.stop();
   } catch (e) {
@@ -342,19 +393,24 @@ async function saveRec() {
     rerender();
     return;
   }
-  const t = {
-    id: 't' + Date.now().toString(36),
-    songId: r.songId,
-    created: Date.now(),
-    len,
-    size: blob.size,
-    type,
-    star: false,
-    blob,
-  };
+  const t = Object.assign(
+    {
+      id: 't' + Date.now().toString(36),
+      songId: r.songId,
+      created: Date.now(),
+      len,
+      size: blob.size,
+      type,
+      star: false,
+      blob,
+    },
+    r.o ? { o: r.o } : {} // the place in the song it was sung from (an entry in the song's order)
+  );
+  let saved = false;
   try {
     await putTake(t);
-    if (X) {
+    saved = true;
+    if (X && !r.o) {
       X.takes.push(t.id);
       saveDraft();
     }
@@ -363,6 +419,17 @@ async function saveRec() {
   }
   await prune(r.songId);
   await refreshTakes();
+  const song = saved && D.songs.find((s) => s.id === r.songId);
+  if (song) {
+    song.practised = t.created; // practised means a take was recorded
+    save();
+  }
+  // straight to the review sheet, layered over the song, if it's still on screen
+  const sh = saved && r.o && songShown();
+  if (sh && sh.id === r.songId && !U.sheet) {
+    U.sheet = 'sgTakes';
+    U.sd = { k: r.songId, o: r.o, fresh: t.id };
+  }
   rerender();
 }
 async function prune(songId) {
@@ -398,6 +465,15 @@ function playTake(id) {
     rerender();
   });
   rerender();
+  const p = player;
+  const tick = () => {
+    if (player !== p) return;
+    const el = $('pg-' + id),
+      d = isFinite(p.duration) && p.duration > 0 ? p.duration : t.len || 1;
+    if (el) el.style.width = Math.min(100, (p.currentTime / d) * 100) + '%';
+    requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
 }
 function downloadFile(file) {
   const a = document.createElement('a');
