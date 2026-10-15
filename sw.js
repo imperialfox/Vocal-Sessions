@@ -1,14 +1,24 @@
 /* Vocal Sessions offline support.
-   Everything except images is fetched fresh when you're online (so updates and the changelog arrive),
-   and the saved copy is used when there's no signal or the network is too slow.
-   Images rarely change, so they're served from the saved copy. */
-const CACHE = 'vocal-sessions-v2';
-const SHELL = ['./', './index.html', './CHANGELOG.md', './icon.png?v=3', './splash/logo.png'];
-const NET_TIMEOUT = 4000; // ms to wait for the network before using the saved copy
+
+   The app is index.html plus its files in css/ and js/, each with ?v=<version> in its address.
+   - The page is fetched fresh when you're online, so updates arrive. A new version is only saved for offline
+     use once the page AND every file it lists have downloaded, so the saved copy is never half old, half new.
+   - Versioned files never change, so they're served from the saved copy when there is one.
+   - Other files (CHANGELOG.md) are fetched fresh, falling back to the saved copy.
+   - Images rarely change, so they come from the saved copy.
+   With no signal, or a network too slow to answer within 4 seconds, the saved copy is used. */
+const CACHE = 'vocal-sessions-v3';
+const EXTRA = ['./CHANGELOG.md', './icon.png?v=3', './splash/logo.png'];
+const NET_TIMEOUT = 4000;
 const IMAGE = /\.(png|jpe?g|webp|gif|svg|ico)$/i;
+const APP_FILE = /\/(js|css)\/[^/]+$/;
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => Promise.all(SHELL.map(u => c.add(u).catch(() => {})))));
+  e.waitUntil((async () => {
+    const cache = await caches.open(CACHE);
+    try { const res = await fetch('./', { cache: 'reload' }); if (res.ok) await savePage(res); } catch (err) {}
+    await Promise.all(EXTRA.map(u => cache.add(u).catch(() => {})));
+  })());
   self.skipWaiting();
 });
 
@@ -21,27 +31,55 @@ self.addEventListener('fetch', e => {
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (url.origin !== location.origin) return;
-  e.respondWith(IMAGE.test(url.pathname) ? cacheFirst(req) : networkFirst(req, url));
+  if (isPage(req, url)) e.respondWith(page(e));
+  else if ((APP_FILE.test(url.pathname) && url.search) || IMAGE.test(url.pathname)) e.respondWith(cacheFirst(req));
+  else e.respondWith(networkFirst(req, url));
 });
 
-// The app page is saved under './' whatever address opened it; other files under their own path.
 const isPage = (req, url) => req.mode === 'navigate' || url.pathname.endsWith('/') || url.pathname.endsWith('.html');
+const withTimeout = p => Promise.race([p, new Promise((_, reject) => setTimeout(() => reject(new Error('slow network')), NET_TIMEOUT))]);
+
+async function page(e) {
+  try {
+    const res = await withTimeout(fetch(e.request));
+    if (res && res.ok) e.waitUntil(savePage(res.clone()).catch(() => {}));
+    return res;
+  } catch (err) {
+    const cache = await caches.open(CACHE);
+    return (await cache.match('./')) || (await cache.match('./index.html')) || Response.error();
+  }
+}
+
+// Save a version of the app for offline use, but only once every file it needs has downloaded.
+async function savePage(res) {
+  const html = await res.text();
+  const files = [...html.matchAll(/(?:src|href)="((?:js|css)\/[^"?]+\?v=[^"]+)"/g)].map(m => m[1]);
+  const cache = await caches.open(CACHE);
+  const fresh = await Promise.all(files.map(async f => {
+    if (await cache.match(f)) return null;
+    const r = await fetch(f, { cache: 'reload' });
+    if (!r.ok) throw new Error('missing ' + f);
+    // read it now: an unread response keeps its connection busy, and browsers only allow 6 per site
+    return [f, new Response(await r.blob(), { headers: r.headers })];
+  }));
+  await Promise.all(fresh.filter(Boolean).map(([f, r]) => cache.put(f, r)));
+  await cache.put('./', new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } }));
+  // remove files that no saved version uses any more
+  const keep = new Set(files.map(f => new URL(f, self.registration.scope).href));
+  for (const k of await cache.keys()) {
+    const u = new URL(k.url);
+    if (APP_FILE.test(u.pathname) && u.search && !keep.has(u.href)) await cache.delete(k);
+  }
+}
 
 async function networkFirst(req, url) {
   const cache = await caches.open(CACHE);
-  const key = isPage(req, url) ? './' : url.pathname;
   try {
-    const res = await Promise.race([
-      fetch(req),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('slow network')), NET_TIMEOUT))
-    ]);
-    if (res && res.ok) { cache.put(key, res.clone()); }
+    const res = await withTimeout(fetch(req));
+    if (res && res.ok) cache.put(url.pathname, res.clone());
     return res;
   } catch (err) {
-    const saved = isPage(req, url)
-      ? (await cache.match('./')) || (await cache.match('./index.html'))
-      : (await cache.match(key)) || (await cache.match(req, { ignoreSearch: true }));
-    return saved || Response.error();
+    return (await cache.match(url.pathname)) || (await cache.match(req, { ignoreSearch: true })) || Response.error();
   }
 }
 

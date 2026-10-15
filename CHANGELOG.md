@@ -9,6 +9,15 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.7.1 · 15 Oct 2026
+*Tidier inside, the same on the outside*
+<!-- area: fixes -->
+
+Nothing looks or works differently. This release makes the app easier and safer to keep improving.
+- The app's code is split from one very long file into a dozen readable ones: styles, settings, saved data, screens, the Changelog, backups, sessions and gestures.
+- Updates now arrive all at once. The offline copy only switches to a new version after every part of it has downloaded, so a patchy connection mid-update can never leave a half-updated app.
+- Every screen was compared before and after, and backups made before and after the change are identical.
+
 ## 3.7 · 15 Oct 2026
 *Changelog, and data built to last*
 

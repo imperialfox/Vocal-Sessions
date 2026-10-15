@@ -6,7 +6,7 @@ Notes for whoever works on the app next, whether that's Ivan, a new Claude sessi
 
 ## The short version
 
-1. Change `index.html` (and `sw.js` if offline behaviour changes).
+1. Change the files in `js/` and `css/` (or `index.html` for markup, `sw.js` for offline behaviour).
 2. Run `python tests/run.py`. Everything must pass.
 3. Run `python tools/release.py 3.7` with the new version, and write the changes in `CHANGELOG.md`.
 4. Run `python tests/run.py release` to check the version agrees everywhere.
@@ -20,8 +20,10 @@ Notes for whoever works on the app next, whether that's Ivan, a new Claude sessi
 
 | File | What it is |
 |---|---|
-| `index.html` | The whole app: markup, styles and script in one file, with no build step |
-| `sw.js` | Offline support. Everything except images is fetched fresh (4-second timeout, then the saved copy); images come from the saved copy. Registered on `https` and on `localhost` (so the tests cover it) |
+| `index.html` | The page: markup, the launch screen, `APP_VERSION`, and the list of css/js files it loads |
+| `css/app.css` | All styles. Light and dark colours are the `--variables` at the top |
+| `js/*.js` | The app's code, in the order `index.html` loads them (below). No build step: the files are served as they are |
+| `sw.js` | Offline support. The page is fetched fresh (4-second timeout, then the saved copy), and a new version is saved for offline use only once the page and every file it loads have downloaded. Versioned css/js files and images come from the saved copy; CHANGELOG.md is fetched fresh. Registered on `https` and on `localhost` (so the tests cover it) |
 | `icon.png`, `splash/` | Home Screen icon and iOS launch images (light and dark, every recent iPhone and iPad) |
 | `CHANGELOG.md` | What changed in each version, written for Ivan, not developers. The app's Changelog page is built from it (see below) |
 | `.nojekyll` | Tells GitHub Pages to serve files exactly as they are, so `CHANGELOG.md` reaches the app as plain text |
@@ -29,7 +31,29 @@ Notes for whoever works on the app next, whether that's Ivan, a new Claude sessi
 | `tools/release.py` | Sets the version number everywhere at once |
 | `.github/workflows/tests.yml` | Runs the tests on GitHub after every push |
 
-Inside `index.html`, the script is split into sections marked `/* ===== Name ===== */`: Config, Storage, Recordings, Helpers, UI state, Screens, Progress, Chrome, Render, Session logic, Recording, Backup, Copy, Events and Pull to refresh.
+### The code, in load order
+
+| File | Holds |
+|---|---|
+| `js/config.js` | Exercise lists, coach-video timings, quick words, targets and other fixed content |
+| `js/storage.js` | Loading, checking (`cleanData`) and saving data, data-version upgrades, recordings in IndexedDB |
+| `js/helpers.js` | Small helpers (dates, text, icons, layout) and the on-screen state `U` |
+| `js/screens.js` | Today, Progress, Exercises, Settings and the session steps |
+| `js/changelog.js` | Settings › Changelog, built from CHANGELOG.md |
+| `js/ui.js` | Top bar, tab bar, sidebar, sheets, `render()` and the sliding picker knobs |
+| `js/session.js` | Running a session (steps, clock, finishing, editing) and recording takes |
+| `js/backup.js` | Export, Check a backup, restore, undo, and Copy for Toggl |
+| `js/events.js` | Every button action, swipe to delete, and blocking zoom |
+| `js/gestures.js` | Pull to refresh and the update check, rotating, keyboard shortcuts, dragging sheets, scrolling |
+| `js/boot.js` | Starts the app: loads saved data, then draws the first screen. Always last |
+
+They're plain scripts, not modules: they share one global scope, and a file can use anything from the files before it. Nothing runs while the files load except in `boot.js`, so the order only matters for `boot.js` being last. Inside each file, sections are still marked `/* ===== Name ===== */`.
+
+The code is formatted with Prettier (`npx prettier@3.3.3 --write --single-quote --print-width 120 --trailing-comma es5 js css`). Formatting is optional, but keeps changes easy to read.
+
+### Every file has a version in its address
+
+`index.html` loads `js/storage.js?v=3.7.1` and so on. A new version means new addresses, so no phone can mix an old file with a new page, and the offline copy can keep each version complete. `tools/release.py` updates every `?v=`; the release test fails if one is missed or a listed file doesn't exist. **Add a new file by adding its `<script>` (or `<link>`) to `index.html` with the same `?v=`.**
 
 ---
 
@@ -125,7 +149,7 @@ The tests drive the real app in Chromium, served from `localhost` as GitHub Page
 | `test_layout.py` | Every screen on iPhone, iPhone landscape, iPad and Mac, light and dark, plus pull to refresh |
 | `test_fuzz.py` | Thousands of random taps, checking nothing breaks after each one |
 
-Tests reach into the app through its globals (`D`, `X`, `U`, `render`…), so the script must stay a classic `<script>`, not an ES module.
+Tests reach into the app through its globals (`D`, `X`, `U`, `render`…), so the scripts must stay classic `<script>`s, not ES modules. `harness.offline(path)` switches the test web server off for a real "no connection" (Playwright's own offline switch doesn't reach the offline helper).
 
 ---
 

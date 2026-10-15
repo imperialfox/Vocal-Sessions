@@ -4,7 +4,7 @@
     python tools/release.py 3.7             release 3.7 dated today
     python tools/release.py 3.7 --date "16 Oct 2026"
 
-Releasing updates APP_VERSION and RELEASE_DATE in index.html, the README badge and
+Releasing updates APP_VERSION and RELEASE_DATE in index.html, the ?v= on every css/js file it loads, the README badge and
 "Current version" line, and adds a "## 3.7 · date" section to CHANGELOG.md if there isn't one.
 The tests fail until that section has real notes in place of the placeholder.
 """
@@ -34,6 +34,10 @@ def problems():
     top = log.split('\n## ', 2)[1] if '\n## ' in log else ''
     if PLACEHOLDER in top: out.append(f'CHANGELOG {v} still has the placeholder; write what changed')
     if f'*Headline for {v}*' in top: out.append(f'CHANGELOG {v} still has the placeholder headline')
+    stale = [f for f, fv in re.findall(r'(?:src|href)="((?:js|css)/[^"?]+)\?v=([^"]+)"', read('index.html')) if fv != v]
+    if stale: out.append(f'these files in index.html are not marked ?v={v}: {", ".join(stale)}')
+    for f in re.findall(r'(?:src|href)="((?:js|css)/[^"?]+)\?v=', read('index.html')):
+        if not os.path.exists(P(f)): out.append(f'index.html loads {f}, which does not exist')
     out += changelog_problems(log)
     return out
 
@@ -58,7 +62,9 @@ def release(v, d):
     if not re.fullmatch(r'\d+\.\d+(\.\d+)?', v): raise SystemExit(f'"{v}" is not a version like 3.7 or 3.7.1')
     if key(v) <= key(old): raise SystemExit(f'{v} is not newer than the current {old}')
     html = read('index.html')
-    write('index.html', html.replace(f"const APP_VERSION='{old}', RELEASE_DATE='{old_d}'", f"const APP_VERSION='{v}', RELEASE_DATE='{d}'"))
+    html = html.replace(f"const APP_VERSION='{old}', RELEASE_DATE='{old_d}'", f"const APP_VERSION='{v}', RELEASE_DATE='{d}'")
+    html = re.sub(r'((?:src|href)="(?:js|css)/[^"?]+)\?v=[^"]+"', lambda m: f'{m.group(1)}?v={v}"', html)  # new addresses, so browsers fetch the new files
+    write('index.html', html)
     readme = read('README.md')
     readme = re.sub(r'version-[\d.]+-blue', f'version-{v}-blue', readme)
     readme = re.sub(r'!\[Version [\d.]+\]', f'![Version {v}]', readme)

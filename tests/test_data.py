@@ -1,6 +1,6 @@
 """Data version upgrades, backups from newer versions, storage protection and working offline."""
 import json, os
-from harness import sample, ready, fix, OUT
+from harness import sample, ready, fix, OUT, url, APP_PATH, offline, online
 
 PERSIST = {'granted': "navigator.storage.persisted=async()=>false;navigator.storage.persist=async()=>true",
            'refused': "navigator.storage.persisted=async()=>false;navigator.storage.persist=async()=>false",
@@ -54,16 +54,47 @@ def run(b, t):
     ctx = b.new_context(viewport={'width': 390, 'height': 844}, timezone_id='Europe/London')
     pg = ctx.new_page(); errs = []
     pg.on('pageerror', lambda e: errs.append(str(e)))
-    from harness import url, APP_PATH
     pg.goto(url(APP_PATH)); ready(pg)
     pg.evaluate("navigator.serviceWorker.ready"); pg.reload(); ready(pg)
     ok(pg.evaluate("!!navigator.serviceWorker.controller"), 'the offline helper is running')
     pg.evaluate("U.tab='settings';render()"); pg.click('.row[data-a=openLog]'); pg.wait_for_function("LOG_STATE==='ready'", timeout=8000)
-    ctx.set_offline(True)
+    offline(APP_PATH)
     pg.reload(); ready(pg)
     ok(pg.locator('[data-a=tab]').count() > 0, 'with no connection, the app still opens')
     pg.evaluate("U.tab='settings';render()"); pg.click('.row[data-a=openLog]'); pg.wait_for_function("LOG_STATE!=='loading'", timeout=8000); pg.wait_for_timeout(300)
     ok(pg.locator('.tl-item').count() > 5, 'and the Changelog opens from the saved copy')
-    ctx.set_offline(False)
+    online(APP_PATH)
     for e in errs: t.errors.append('offline: ' + e)
+    ctx.close()
+
+    # an update that can't fully download never replaces the working offline copy
+    import shutil, re as _re
+    from harness import ROOT
+    site = os.path.join(OUT, 'update-site'); shutil.rmtree(site, ignore_errors=True)
+    os.makedirs(site)
+    for f in ['index.html', 'sw.js', 'CHANGELOG.md', 'icon.png']: shutil.copy(os.path.join(ROOT, f), os.path.join(site, f))
+    for d in ['js', 'css', 'splash']: shutil.copytree(os.path.join(ROOT, d), os.path.join(site, d))
+    ctx = b.new_context(viewport={'width': 390, 'height': 844}, timezone_id='Europe/London'); pg = ctx.new_page()
+    pg.goto(url(os.path.join(site, 'index.html'))); ready(pg); pg.evaluate("navigator.serviceWorker.ready"); pg.reload(); ready(pg)
+    pg.wait_for_function("caches.open('vocal-sessions-v3').then(c=>c.match('./')).then(r=>!!r)", timeout=10000)
+    v_old = pg.evaluate("APP_VERSION")
+    html = open(os.path.join(site, 'index.html'), encoding='utf-8').read()
+    broken = _re.sub(r'\?v=[\d.]+"', '?v=99.0"', html).replace("const APP_VERSION='" + v_old, "const APP_VERSION='99.0").replace('js/boot.js?v=99.0', 'js/not-there.js?v=99.0')
+    open(os.path.join(site, 'index.html'), 'w', encoding='utf-8').write(broken)
+    pg.reload(); pg.wait_for_timeout(2500)  # the new page arrives, but one of its files is missing
+    ok(pg.evaluate("caches.open('vocal-sessions-v3').then(c=>c.match('./')).then(r=>r.text()).then(t=>t.includes(\"APP_VERSION='" + v_old + "'\"))"),
+       'an update with a missing file is not saved for offline use')
+    site_page = os.path.join(site, 'index.html')
+    offline(site_page); pg.reload(); ready(pg)
+    ok(pg.evaluate("APP_VERSION") == v_old and pg.locator('[data-a=tab]').count() > 0, f'offline, the complete {v_old} still opens')
+    online(site_page)
+    open(os.path.join(site, 'index.html'), 'w', encoding='utf-8').write(html.replace("const APP_VERSION='" + v_old, "const APP_VERSION='99.1").replace('?v=' + v_old + '"', '?v=99.1"'))
+    pg.reload(); ready(pg); pg.wait_for_timeout(1500)
+    ok(pg.evaluate("caches.open('vocal-sessions-v3').then(c=>c.match('./')).then(r=>r.text()).then(t=>t.includes(\"APP_VERSION='99.1'\"))"),
+       'a complete update is saved for offline use')
+    offline(site_page); pg.reload(); ready(pg)
+    ok(pg.evaluate("APP_VERSION") == '99.1' and pg.locator('[data-a=tab]').count() > 0, 'and opens offline')
+    ok(pg.evaluate("caches.open('vocal-sessions-v3').then(c=>c.keys()).then(k=>k.filter(r=>/\\/js\\//.test(r.url)&&!r.url.includes('v=99.1')).length)") == 0,
+       'files from older versions are cleared from the offline copy')
+    online(site_page)
     ctx.close()

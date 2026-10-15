@@ -24,6 +24,18 @@ def url(path):
         threading.Thread(target=srv.serve_forever, daemon=True).start()
         _servers[folder] = srv
     return f'http://localhost:{_servers[folder].server_address[1]}/{os.path.basename(path)}'
+
+def offline(path):
+    """Switch the server for this folder off: a real "no connection" for the page and its offline helper.
+    (Playwright's set_offline doesn't reach service workers.)"""
+    folder = os.path.dirname(os.path.abspath(path)); srv = _servers[folder]
+    srv.shutdown(); srv.server_close()
+
+def online(path):
+    """Switch it back on, on the same port, so the address (and the saved offline copy) stays the same."""
+    folder = os.path.dirname(os.path.abspath(path)); port = _servers[folder].server_address[1]
+    srv = ThreadingHTTPServer(('127.0.0.1', port), functools.partial(_Quiet, directory=folder))
+    threading.Thread(target=srv.serve_forever, daemon=True).start(); _servers[folder] = srv
 OUT = os.path.join(ROOT, 'tests', 'output')
 FIX = os.path.join(ROOT, 'tests', 'fixtures')
 os.makedirs(OUT, exist_ok=True)
