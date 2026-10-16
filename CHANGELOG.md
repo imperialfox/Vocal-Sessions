@@ -9,6 +9,12 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.10.2 · 16 Oct 2026
+*Recall stays put*
+<!-- area: songs -->
+
+- Changing the hint level in Recall no longer shows a tip line above the lyrics, so the sections stay exactly where they are.
+
 ## 3.10.1 · 16 Oct 2026
 *Steadier sheets, honest timing, softer Recall*
 <!-- area: fixes -->

@@ -1246,12 +1246,8 @@ function songBody(sg, inPane) {
           '</button>'
         : '') +
       '</div>' +
-      (U.sMode === 'recall' && (U.sHint || U.sOrder === 'end')
-        ? '<p class="sgsub">' +
-          (U.sOrder === 'end' ? 'Working from the end. ' : '') +
-          (U.sHint ? 'Tap a line to peek. Tap a heading to record.' : '') +
-          '</p>'
-        : '');
+      // no tip line when the level changes, so the lyrics never move down (3.10.2)
+      (U.sMode === 'recall' && U.sOrder === 'end' ? '<p class="sgsub">Working from the end.</p>' : '');
   else
     h +=
       '<p class="sgsub">' +
