@@ -23,6 +23,8 @@ INV=r"""(()=>{const p=[];const L=document.getElementById('layer');
  if(/\bundefined\b|\bNaN\b|\[object Object\]|\bnull\b/.test(txt))p.push('bad text: '+(txt.match(/.{0,40}(undefined|NaN|\[object Object\]|\bnull\b).{0,30}/)||[''])[0]);
  if(X&&X.paused&&!X.pausedAt)p.push('paused without time');
  if(!rec&&(document.querySelector('.sgmodes.locked,.recbar')))p.push('song locked or recording bar shown without recording');
+ if(!!document.querySelector('#dock .hcap')!==(recallOn()&&!U.sheet&&!rec))p.push('hint capsule shown when it shouldn\'t be, or missing in Recall');
+ if(document.querySelector('.hx')&&!recallOn())p.push('hidden letters outside Recall');
  try{JSON.parse(localStorage.getItem('vocalTracker'))}catch(e){p.push('saved data unreadable')}
  const sumOk=Object.keys(D.months).length>=0;
  return p;})()"""
@@ -32,7 +34,7 @@ VIS=r"""(()=>{const L=document.getElementById('layer');const root=L.querySelecto
  return els.map((e,i)=>{e.setAttribute('data-fz',i);return {i,a:e.dataset.a||e.tagName.toLowerCase(),v:e.dataset.v||'',k:e.dataset.k||'',id:e.id||'',type:e.type||''};});})()"""
 # no microphone here: Record shows on a selected section, but recording itself is covered by test_recording and test_sections
 SKIP = {'importPick', 'checkPick', 'exportSave', 'saveReadme', 'rec', 'sgRec'}
-HEAVY = ('sgOpen','sgSec','sgTakes','playTake','star','sgEdit','sgWord','sgMark','sgEditMode','sgNew','sgSplit','sgSave','sgSearch','sgListEdit','sgToggle','sgCue','sgUnlink','start','songStart','resume','cta','confirmF','tog','rlv','flv','wTog','saveHow','skipHow','editSess','saveEdit','exNote','takeNote','addWord','saveWord',
+HEAVY = ('sgOpen','sgSec','sgTakes','playTake','star','sgMode','sgHint','sgHMenu','sgSetHint','sgRMenu','sgOrder','sgAnywhere','sgEdit','sgWord','sgMark','sgEditMode','sgNew','sgSplit','sgSave','sgSearch','sgListEdit','sgToggle','sgCue','sgUnlink','start','songStart','resume','cta','confirmF','tog','rlv','flv','wTog','saveHow','skipHow','editSess','saveEdit','exNote','takeNote','addWord','saveWord',
          'openNote','longOk','pauseToggle','clock','sheet','calDay','calSession','eflv','input','textarea')
 
 def run(b, t):

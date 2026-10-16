@@ -102,6 +102,10 @@ Each song in `D.songs` is its own record. Songs from before 3.8 have only `id` a
 
 `cleanSong()` checks each song on its own when data loads or a backup is read: bad values are dropped, marks on missing words and order entries for missing sections are removed, fields it doesn't know are kept, and if the lyrics are unusable but `original` is there, they're rebuilt from it. Practised dates come from recordings (`TAKES`) and `practised`, whichever is later.
 
+### Recall
+
+Recall is a song mode (`U.sMode = 'recall'`) that hides lyrics without changing the layout: `maskText()` wraps hidden letters in `.hx` spans, which are transparent with a faint line underneath, so every word keeps its width. `U.sHint` is the level (0 Full lyrics to 4 Blank) and `U.sOrder` is `start` or `end`. Neither is saved, and entering Recall always resets them. Tapping a `.rl` line adds `.peeking` for `PEEK_MS`; it never re-renders. Nothing about Recall is stored in songs or backups.
+
 ### Recordings
 
 Each take in IndexedDB is `{id, songId, created, len, size, type, star, blob, note?, o?}`. `o` is the place in the song it was recorded from (an `order` entry); takes without one (song practice, and everything before 3.9) belong to the whole song. `prune()` keeps the last `KEEP_TAKES` (3) unstarred takes per song, whatever their section, plus every starred one. Recording a section uses the same `startRec`/`stopRec`/`saveRec` as song practice, with a `{songId, o}` target; while it runs, `rec.o` locks the song screen to it.
@@ -175,6 +179,7 @@ The tests drive the real app in Chromium, served from `localhost` as GitHub Page
 | `test_songs.py` | Pasting and labelling lyrics, the song screen, Annotate and Lyrics editing (marks following their words), unlink, reorder, pins, the list, search, Today's pinned songs, older and damaged songs, backups, and iPad/Mac shortcuts |
 | `test_backup.py` | Export, Check a backup, damaged files, restore comparison, undo, the old-backup fixtures and the exercise-id guard |
 | `test_recording.py` | Recording with a fake microphone, leaving mid-take, keeping 3 takes, and audio in backups |
+| `test_recall.py` | Recall: the five hint levels (checked letter by letter, and that nothing moves), peeking, the hint capsule and its menu, From the start, From the end and Start anywhere |
 | `test_sections.py` | Recording a section: selecting, the lock while recording, takes saved with their place, the review sheet, stars and the keep rule across sections, unlink and reorder, leaving mid-take, and backups with Exclude recordings |
 | `test_layout.py` | Every screen on iPhone, iPhone landscape, iPad and Mac, light and dark, plus pull to refresh |
 | `test_fuzz.py` | Thousands of random taps, checking nothing breaks after each one |

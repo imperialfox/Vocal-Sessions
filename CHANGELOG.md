@@ -9,6 +9,23 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.10 · 16 Oct 2026
+*Songs: Recall, sing it from memory*
+<!-- area: songs -->
+
+**Recall**
+- **Recall** is a new mode for a song, between Practise and Perform. It hides the lyrics a step at a time, so you can learn them by heart.
+- Five levels: **Full lyrics**, **Word shapes** (each word's first letter), **First words** (the first word of each line), **Cues only** and **Blank**. Hidden letters become faint lines in place, so nothing on the page moves as you change level.
+- Marks stay visible at every level, so breaths, runs and pitch marks still guide you.
+- The hint capsule at the bottom steps between levels: the open eye shows more, the closed eye hides more, and tapping the level's name opens a menu of all five.
+- Tap a hidden line to peek at it for a couple of seconds. Tap a section's heading to select it and record, as in Practise.
+- The options button (•••) offers **From the start**, **From the end** (sections listed last first) and **Start anywhere**, which picks a section at random and points to it.
+- Recall always starts at Full lyrics, from the start.
+
+<!-- area: look -->
+**Small screens**
+- The Practise, Recall and Perform switch fits beside its buttons on the smallest iPhones.
+
 ## 3.9 · 16 Oct 2026
 *Songs: record a section and hear it back*
 <!-- area: recordings -->

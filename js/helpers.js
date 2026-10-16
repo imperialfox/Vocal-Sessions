@@ -341,6 +341,8 @@ const freshU = () => ({
   sDraft: null,
   sRet: null,
   sSec: null,
+  sHint: 0,
+  sOrder: 'start',
 });
 let U = freshU();
 let E = null,

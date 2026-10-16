@@ -159,6 +159,11 @@ function renderDock() {
       '</span><button class="stopb" data-a="sgStop" aria-label="Stop recording"><i></i></button></div>';
     return;
   }
+  // Recall: the hint capsule takes the place of the tab bar
+  if (recallOn()) {
+    $('dock').innerHTML = hintCapHTML();
+    return;
+  }
   if (isFlow(U.view)) {
     const n = Object.keys(X.rot).length;
     const lab = {

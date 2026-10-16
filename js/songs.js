@@ -40,7 +40,17 @@ const SGI = {
     '<svg class="i" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 002 2h6a2 2 0 002-2l1-12M9 7V4h6v3"/></svg>',
   x: '<svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>',
   mic: '<svg class="i" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0013 0M12 17.5V21"/></svg>',
+  eye: '<svg class="i" viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></svg>',
+  eyeOff:
+    '<svg class="i" viewBox="0 0 24 24"><path d="M10.6 5.6A10 10 0 0112 5.5c6 0 9.5 6.5 9.5 6.5a17 17 0 01-2.6 3.4M6.6 6.6C3.9 8.3 2.5 12 2.5 12S6 18.5 12 18.5c1.9 0 3.6-.6 5-1.5M9.9 9.9a3 3 0 004.2 4.2M3 3l18 18"/></svg>',
+  updown: '<svg class="i" viewBox="0 0 12 18"><path d="M2.5 6.5L6 3l3.5 3.5M2.5 11.5L6 15l3.5-3.5"/></svg>',
+  more: '<svg class="i" viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><circle cx="6" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="18" cy="12" r="1.8"/></svg>',
+  shuffle:
+    '<svg class="i" viewBox="0 0 24 24"><path d="M3 7h3.5c4.5 0 6.5 10 11 10H21M3 17h3.5c1.8 0 3-1.6 4.1-3.6M14.4 9.6C15.5 7.6 16.7 7 18 7h3M18 4l3 3-3 3M18 14l3 3-3 3"/></svg>',
 };
+// Recall: how much of the lyrics to hide. Letters turn into grey lines in place, so the layout never moves
+const SG_HINTS = ['Full lyrics', 'Word shapes', 'First words', 'Cues only', 'Blank'];
+const PEEK_MS = 2600;
 // moments on screen that don't need saving: the selected word, undo steps, open menus, a drag in progress
 const SG = {
   word: null,
@@ -54,6 +64,8 @@ const SG = {
   sw: null,
   swOpen: null,
   noSync: false,
+  rMenu: false,
+  hMenu: false,
 };
 
 /* ===== Songs: small helpers ===== */
@@ -90,6 +102,30 @@ const takesOf = (id) => TAKES.filter((t) => t.songId === id).length;
 const takesAt = (id, o) => TAKES.filter((t) => t.songId === id && t.o === o);
 // a section of this song is being recorded: the screen is locked to it
 const recHere = (sg) => !!(rec && rec.o && sg && rec.songId === sg.id);
+// Recall is on for the song on screen (not while editing)
+const recallOn = () => U.sMode === 'recall' && !U.sEdit && hasLyrics(songShown());
+const hintLv = () => (recallOn() ? U.sHint || 0 : 0);
+// hide letters without moving them: 'shape' keeps each word's first letter, 'all' hides every letter
+function maskText(t, mode) {
+  let out = '',
+    run = '',
+    seen = false;
+  const flush = () => {
+    if (run) out += '<span class="hx">' + esc(run) + '</span>';
+    run = '';
+  };
+  for (const c of String(t)) {
+    const letter = /[\p{L}\p{N}]/u.test(c);
+    if (letter && (mode === 'all' || seen)) run += c;
+    else {
+      flush();
+      out += esc(c);
+    }
+    if (letter) seen = true;
+  }
+  flush();
+  return out;
+}
 const nTakes = (n) => n + ' take' + (n === 1 ? '' : 's');
 function takeWhen(t) {
   const r = sgRel(t);
@@ -894,7 +930,7 @@ function marksHTML(a) {
     (a.nt ? '<span class="m nt" aria-label="note">' + SGI.note + '</span>' : '')
   );
 }
-function sgWord(o, sid, li, wi, w, sec) {
+function sgWord(o, sid, li, wi, w, sec, mask) {
   const a = sec.ann[li + ':' + wi] || {},
     s = SG.word,
     ed = U.sEdit === 'annotate';
@@ -923,8 +959,8 @@ function sgWord(o, sid, li, wi, w, sec) {
         '"'
       : '') +
     '>' +
-    (a.v ? '<span class="v">' + esc(a.v) + '</span>' : '') +
-    esc(w) +
+    (a.v ? '<span class="v">' + (mask === 'all' ? maskText(a.v, 'all') : esc(a.v)) + '</span>' : '') +
+    (mask ? maskText(w, mask) : esc(w)) +
     '</span>' +
     marksHTML(a)
   );
@@ -982,23 +1018,40 @@ function sgSection(sg, idx) {
         op.id +
         '">Remove</button></span></div>';
     });
-  if (sec.cue) h += '<p class="sgcue">' + esc(sec.cue) + '</p>';
+  // Recall: 1 word shapes, 2 first words, 3 cues only, 4 blank. Marks stay visible
+  const lv = hintLv(),
+    mk = (wi) => (!lv ? null : lv === 1 ? 'shape' : lv === 2 && wi === 0 ? null : 'all'),
+    peek = lv ? ' role="button" tabindex="0" aria-label="Peek at this line"' : '';
+  if (sec.cue) h += '<p class="sgcue">' + (lv >= 4 ? maskText(sec.cue, 'all') : esc(sec.cue)) + '</p>';
   h += '<div class="sglines">';
   sec.lines.forEach((ln, li) => {
     const hasv = ln.some((w, wi) => (sec.ann[li + ':' + wi] || {}).v);
     h +=
       '<p class="sgl' +
       (hasv ? ' hasv' : '') +
+      (lv ? ' rl' : '') +
       '" data-o="' +
       o +
       '" data-li="' +
       li +
-      '">' +
-      ln.map((w, wi) => sgWord(o, sid, li, wi, w, sec)).join(' ') +
+      '"' +
+      peek +
+      '>' +
+      ln.map((w, wi) => sgWord(o, sid, li, wi, w, sec, mk(wi))).join(' ') +
       '</p>';
     ln.forEach((w, wi) => {
       const a = sec.ann[li + ':' + wi];
-      if (a && a.nt) h += '<p class="sgnote">' + SGI.note + '<span>' + esc(a.nt) + '</span></p>';
+      if (a && a.nt)
+        h +=
+          '<p class="sgnote' +
+          (lv ? ' rl' : '') +
+          '"' +
+          peek +
+          '>' +
+          SGI.note +
+          '<span>' +
+          (lv >= 2 ? maskText(a.nt, 'all') : esc(a.nt)) +
+          '</span></p>';
     });
   });
   h += '</div>';
@@ -1167,6 +1220,7 @@ function songBody(sg, inPane) {
       '"><div class="seg sgseg" role="tablist"><span class="knob" aria-hidden="true"></span>' +
       [
         ['practise', 'Practise'],
+        ['recall', 'Recall'],
         ['perform', 'Perform'],
       ]
         .map(
@@ -1184,7 +1238,18 @@ function songBody(sg, inPane) {
         .join('') +
       '</div>' +
       (U.sMode === 'practise' ? '<button class="sgpill" data-a="sgKey">Key</button>' : '') +
-      '</div>';
+      (U.sMode === 'recall'
+        ? '<button class="circ glass sgrbtn" id="sgrbtn" data-a="sgRMenu" aria-label="Recall options" aria-haspopup="menu">' +
+          SGI.more +
+          '</button>'
+        : '') +
+      '</div>' +
+      (U.sMode === 'recall' && (U.sHint || U.sOrder === 'end')
+        ? '<p class="sgsub">' +
+          (U.sOrder === 'end' ? 'Working from the end. ' : '') +
+          (U.sHint ? 'Tap a line to peek. Tap a heading to record.' : '') +
+          '</p>'
+        : '');
   else
     h +=
       '<p class="sgsub">' +
@@ -1221,9 +1286,12 @@ function songBody(sg, inPane) {
   const perf = U.sMode === 'perform' && !ed;
   h += '<div class="sgsong' + (perf ? ' perform' : '') + (ed ? ' editing' : '') + '">';
   if (perf) h += '<p class="sgbanner">Technical marks hidden. Expressive cues only.</p>';
-  sg.order.forEach((_, i) => (h += sgSection(sg, i)));
+  const idx = sg.order.map((_, i) => i);
+  if (recallOn() && U.sOrder === 'end') idx.reverse();
+  idx.forEach((i) => (h += sgSection(sg, i)));
   h += '</div>';
-  if (!ed && !rec && !sg.order.some((x) => x.o === U.sSec)) h += '<p class="sghint">Tap a section to record it</p>';
+  if (!ed && !rec && !hintLv() && !sg.order.some((x) => x.o === U.sSec))
+    h += '<p class="sghint">Tap a section to record it</p>';
   if (!ed) h += practiceRow(sg);
   return h;
 }
@@ -2019,7 +2087,56 @@ const SG_ACT = {
     segPick(el);
     U.sMode = v;
     U.sSec = null;
+    SG.rMenu = SG.hMenu = false;
+    if (v === 'recall') {
+      // Recall always starts with the full lyrics, from the start
+      U.sHint = 0;
+      U.sOrder = 'start';
+    }
     setTimeout(rerender, 180);
+  },
+  sgHint(el, v) {
+    const n = Math.max(0, Math.min(SG_HINTS.length - 1, (U.sHint || 0) + +v));
+    if (n === U.sHint) return;
+    U.sHint = n;
+    rerender();
+  },
+  sgHMenu() {
+    SG.hMenu = true;
+    rerender();
+  },
+  sgSetHint(el, v) {
+    U.sHint = Math.max(0, Math.min(SG_HINTS.length - 1, +v || 0));
+    SG.hMenu = false;
+    rerender();
+  },
+  sgRMenu() {
+    SG.rMenu = true;
+    rerender();
+  },
+  sgMClose() {
+    SG.rMenu = SG.hMenu = false;
+    rerender();
+  },
+  sgOrder(el, v) {
+    U.sOrder = v === 'end' ? 'end' : 'start';
+    SG.rMenu = false;
+    rerender();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  },
+  sgAnywhere() {
+    const sg = songShown();
+    SG.rMenu = false;
+    if (!hasLyrics(sg)) return rerender();
+    const o = sg.order[Math.floor(Math.random() * sg.order.length)].o;
+    rerender();
+    scrollToSec(o);
+    const el = document.querySelector('.sgsec[data-o="' + o + '"]');
+    if (el) {
+      el.classList.add('flash');
+      setTimeout(() => el.classList.remove('flash'), 1400);
+    }
+    toast('Start from ' + occLabel(sg, occIdx(sg, o)));
   },
   sgKey() {
     U.sheet = 'sgKey';
@@ -2280,6 +2397,45 @@ function slayerHTML() {
       ).join('') +
       '</div><span class="tail"></span></div>';
   }
+  if (sg && recallOn() && !U.sheet && !rec) {
+    if (SG.rMenu)
+      h +=
+        '<div class="ctxback clear" data-a="sgMClose"></div><div class="ctxmenu glass" id="rmenu" role="menu"><button role="menuitem" data-a="sgAnywhere">Start anywhere' +
+        SGI.shuffle +
+        '</button>' +
+        [
+          ['start', 'From the start'],
+          ['end', 'From the end'],
+        ]
+          .map(
+            (x) =>
+              '<button role="menuitemradio" aria-checked="' +
+              ((U.sOrder || 'start') === x[0]) +
+              '" data-a="sgOrder" data-v="' +
+              x[0] +
+              '">' +
+              x[1] +
+              ((U.sOrder || 'start') === x[0] ? ICON.check : '<span></span>') +
+              '</button>'
+          )
+          .join('') +
+        '</div>';
+    if (SG.hMenu)
+      h +=
+        '<div class="ctxback clear" data-a="sgMClose"></div><div class="ctxmenu glass" id="hmenu" role="menu">' +
+        SG_HINTS.map(
+          (l, i) =>
+            '<button role="menuitemradio" aria-checked="' +
+            (U.sHint === i) +
+            '" data-a="sgSetHint" data-v="' +
+            i +
+            '">' +
+            l +
+            (U.sHint === i ? ICON.check : '<span></span>') +
+            '</button>'
+        ).join('') +
+        '</div>';
+  }
   const list = U.tab === 'songs' && !U.view && !U.sheet;
   if (list && SG.sortMenu)
     h +=
@@ -2337,6 +2493,7 @@ function songsAfter() {
     }
   }
   if (SG.ctx && !(U.tab === 'songs' && !U.view)) SG.ctx = null;
+  if ((SG.rMenu || SG.hMenu) && !recallOn()) SG.rMenu = SG.hMenu = false;
   const bar = $('sgbar'),
     show = U.tab === 'songs' && !U.view && !split() && U.sFocus && !U.sheet && D.songs.length > 0;
   bar.hidden = !show;
@@ -2353,6 +2510,8 @@ function songsAfter() {
   }
   sgPlace('ctxmenu', '.rowc.lifted', 'row');
   sgPlace('sortmenu', '#hdrsort', 'under');
+  sgPlace('rmenu', '#sgrbtn', 'under');
+  sgPlaceHintMenu();
   if (U.sheet && U.sd && U.sd.focus) {
     const f = U.sd.focus;
     U.sd.focus = null;
@@ -2406,6 +2565,44 @@ function sgPlaceMenu() {
   m.style.left = left + 'px';
   m.style.top = top + window.scrollY + 'px';
   m.style.setProperty('--tx', r.left + r.width / 2 - left + 'px');
+}
+// the hint level menu opens above the hint capsule
+function sgPlaceHintMenu() {
+  const m = $('hmenu'),
+    b = $('sghname');
+  if (!m || !b) return;
+  const r = b.getBoundingClientRect(),
+    vw = document.documentElement.clientWidth;
+  m.style.position = 'fixed';
+  m.style.top = Math.max(12, r.top - m.offsetHeight - 12) + 'px';
+  m.style.left = Math.max(12, Math.min(vw - m.offsetWidth - 12, r.left + r.width / 2 - m.offsetWidth / 2)) + 'px';
+}
+// the hint capsule at the bottom in Recall: show more, the level (tap for the menu), hide more
+function hintCapHTML() {
+  const lv = U.sHint || 0,
+    last = SG_HINTS.length - 1;
+  return (
+    '<div class="hcap glass" role="group" aria-label="Hints"><button class="hb" data-a="sgHint" data-v="-1" aria-label="Show more"' +
+    (lv === 0 ? ' disabled' : '') +
+    '>' +
+    SGI.eye +
+    '</button><button class="hname" id="sghname" data-a="sgHMenu" aria-haspopup="menu" aria-label="Hint level: ' +
+    SG_HINTS[lv] +
+    ', ' +
+    (lv + 1) +
+    ' of ' +
+    SG_HINTS.length +
+    '"><span class="hrow">' +
+    SG_HINTS[lv] +
+    SGI.updown +
+    '</span><span class="hdots" aria-hidden="true">' +
+    SG_HINTS.map((_, i) => '<i class="' + (i === lv ? 'on' : '') + '"></i>').join('') +
+    '</span></button><button class="hb" data-a="sgHint" data-v="1" aria-label="Hide more"' +
+    (lv === last ? ' disabled' : '') +
+    '>' +
+    SGI.eyeOff +
+    '</button></div>'
+  );
 }
 function sgPlace(id, anchor, how) {
   const m = $(id),
@@ -2641,6 +2838,14 @@ document.addEventListener(
       e.stopPropagation();
       return;
     }
+    // Recall: tapping a hidden line shows it for a moment, without selecting its section
+    const rl = hintLv() && !U.sheet && e.target.closest && e.target.closest('.rl');
+    if (rl) {
+      e.preventDefault();
+      e.stopPropagation();
+      peekLine(rl);
+      return;
+    }
     const el = e.target.closest && e.target.closest('[data-a]');
     // iPhone search: tapping empty space ends an empty search, or just puts the keyboard away
     if (!el && U.sFocus && !split() && U.tab === 'songs' && !U.view && !e.target.closest('#sgbar')) {
@@ -2676,6 +2881,14 @@ document.addEventListener(
   },
   true
 );
+
+function peekLine(ln) {
+  ln.classList.remove('peeking');
+  void ln.offsetWidth;
+  ln.classList.add('peeking');
+  clearTimeout(ln._peek);
+  ln._peek = setTimeout(() => ln.classList.remove('peeking'), PEEK_MS);
+}
 
 /* ===== Songs: typing ===== */
 document.addEventListener('input', (e) => {
@@ -2726,7 +2939,7 @@ document.addEventListener(
       (e.key === 'Enter' || e.key === ' ') &&
       !typing &&
       e.target.matches &&
-      e.target.matches('[role=button][data-a],.sgsec[data-a]')
+      e.target.matches('[role=button][data-a],.sgsec[data-a],.rl[role=button]')
     ) {
       e.preventDefault();
       e.target.click();
@@ -2734,9 +2947,9 @@ document.addEventListener(
     }
     if (e.key === 'Escape') {
       if (U.sheet) return;
-      if (SG.ctx || SG.sortMenu) {
+      if (SG.ctx || SG.sortMenu || SG.rMenu || SG.hMenu) {
         SG.ctx = null;
-        SG.sortMenu = false;
+        SG.sortMenu = SG.rMenu = SG.hMenu = false;
         rerender();
       } else if (SG.pend) {
         SG.pend = null;
