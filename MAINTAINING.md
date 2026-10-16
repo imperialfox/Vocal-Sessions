@@ -68,7 +68,7 @@ Everything stays on the device. There is no server.
 | Where | Key | Holds |
 |---|---|---|
 | localStorage | `vocalTracker` | All saved data (`D`): sessions, song practice, months, exercises, songs, words, last backup |
-| localStorage | `vocalDraft` | The session in progress (`X`), so it survives closing the app |
+| localStorage | `vocalDraft` | The session in progress (`X`), so it survives closing the app. Song practice only has a `start` (and a draft) once its first take starts recording |
 | localStorage | `vocalBackupLog` | Backup history for this device |
 | localStorage | `vocalSongPrefs` | This device's song sort order and recent searches (not backed up) |
 | localStorage | `vocalBeforeUpgrade` | The data as it was before the last data upgrade, kept for 30 days |
@@ -104,7 +104,9 @@ Each song in `D.songs` is its own record. Songs from before 3.8 have only `id` a
 
 ### Recall
 
-Recall is a song mode (`U.sMode = 'recall'`) that hides lyrics without changing the layout: `maskText()` wraps hidden letters in `.hx` spans, which are transparent with a faint line underneath, so every word keeps its width. `U.sHint` is the level (0 Full lyrics to 4 Blank) and `U.sOrder` is `start` or `end`. Neither is saved, and entering Recall always resets them. Tapping a `.rl` line adds `.peeking` for `PEEK_MS`; it never re-renders. Nothing about Recall is stored in songs or backups.
+Recall is a song mode (`U.sMode = 'recall'`) that hides lyrics without changing the layout: `maskText()` wraps hidden letters in `.hx` spans (`aria-hidden`), which are transparent with a rounded pill drawn by `.hx::after`, so every word keeps its width. `U.sHint` is the level (0 Full lyrics to 4 Blank) and `U.sOrder` is `start` or `end`. Neither is saved, and entering Recall always resets them. Tapping a `.rl` line adds `.peeking` for `peekSecs()` (only one line at a time); holding one for `HOLD_MS` adds `.peeking.held` until the pointer lifts. Neither re-renders.
+
+The only Recall setting is **Peek length**, `D.prefs.peek` (1, 2, 3 or 5 seconds; missing means 2). `D.prefs` holds settings that travel with backups; `cleanData()` drops values it doesn't know.
 
 ### Recordings
 
@@ -180,6 +182,7 @@ The tests drive the real app in Chromium, served from `localhost` as GitHub Page
 | `test_backup.py` | Export, Check a backup, damaged files, restore comparison, undo, the old-backup fixtures and the exercise-id guard |
 | `test_recording.py` | Recording with a fake microphone, leaving mid-take, keeping 3 takes, and audio in backups |
 | `test_recall.py` | Recall: the five hint levels (checked letter by letter, and that nothing moves), peeking, the hint capsule and its menu, From the start, From the end and Start anywhere |
+| `test_fixes.py` | 3.10.1: sheets keep their scroll to themselves (real touch swipes and the wheel), song practice timed from its first take, the weekly goal opening Progress, Recall's pills (every line's place checked at each level and size), peeking, holding and Peek length in backups |
 | `test_sections.py` | Recording a section: selecting, the lock while recording, takes saved with their place, the review sheet, stars and the keep rule across sections, unlink and reorder, leaving mid-take, and backups with Exclude recordings |
 | `test_layout.py` | Every screen on iPhone, iPhone landscape, iPad and Mac, light and dark, plus pull to refresh |
 | `test_fuzz.py` | Thousands of random taps, checking nothing breaks after each one |

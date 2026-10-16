@@ -258,7 +258,7 @@ async function prepareExport(noRec, quiet) {
         device: deviceName(),
         summary: sm,
         data: D,
-        draft: X || null,
+        draft: X && X.start ? X : null,
       },
       noRec ? { recordingsExcluded: true } : {},
       { takes: out }
@@ -353,7 +353,7 @@ async function restoreImport() {
         id: 'last',
         at: Date.now(),
         data: JSON.parse(JSON.stringify(D)),
-        draft: X ? JSON.parse(JSON.stringify(X)) : null,
+        draft: X && X.start ? JSON.parse(JSON.stringify(X)) : null,
         takes: r.noRec ? [] : await allTakes(),
         restored: p.data.sessions.concat(p.data.songSessions).map((x) => x.id),
         from: r.name || '',

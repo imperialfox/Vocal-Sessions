@@ -57,7 +57,7 @@ function scrToday() {
   }
   const dl = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
   const sw2 = songWeek(),
-    songLive = isSong();
+    songLive = isSong() && !!X.start;
   return (
     '<button class="dateline" data-a="openCal">' +
     dl +
@@ -65,11 +65,11 @@ function scrToday() {
     ICON.down +
     '</button></div>' +
     backupNudge() +
-    '<div class="dash"><div class="d-hero"><div class="arch"><svg viewBox="0 0 300 165" role="img" aria-label="' +
+    '<div class="dash"><div class="d-hero"><button class="arch" data-a="goalOpen" aria-label="This week, ' +
     Math.round(w.mins) +
-    ' of ' +
+    ' of your ' +
     WEEK_TARGET +
-    ' minutes this week"><path d="M24 150 A126 126 0 0 1 276 150" fill="none" stroke="var(--fill)" stroke-width="16" stroke-linecap="round"/>' +
+    '-minute goal. Open Progress"><svg viewBox="0 0 300 165" aria-hidden="true"><path d="M24 150 A126 126 0 0 1 276 150" fill="none" stroke="var(--fill)" stroke-width="16" stroke-linecap="round"/>' +
     (p > 0
       ? '<path d="M24 150 A126 126 0 0 1 276 150" pathLength="100" stroke-dasharray="' +
         p +
@@ -77,11 +77,11 @@ function scrToday() {
         (p >= 100 ? 'var(--good)' : 'var(--accent)') +
         '" stroke-width="16" stroke-linecap="round"/>'
       : '') +
-    '</svg><div class="c"><small>This week</small><b>' +
+    '</svg><div class="c" aria-hidden="true"><small>This week</small><b>' +
     Math.round(w.mins) +
     '</b><small>of your ' +
     WEEK_TARGET +
-    '-minute goal</small></div></div>' +
+    '-minute goal</small></div></button>' +
     '<div style="margin-top:20px">' +
     (X && !songLive
       ? '<button class="cta ink" data-a="resume">Resume session</button><button class="ghost" data-a="sheet" data-v="discard">Discard session</button>'
@@ -983,6 +983,25 @@ function scrSettings() {
     '<button class="row" data-a="saveReadme"><span class="lbl acc">Save a read-me file</span>' +
     ICON.share +
     '</button></div>' +
+    '<div class="hdr">Recall</div><div class="grp"><div class="row"><span class="lbl">Peek length</span>' +
+    '<div class="seg pkseg" role="group" aria-label="Peek length"><span class="knob" aria-hidden="true"></span>' +
+    PEEKS.map(
+      (n) =>
+        '<button data-a="peekLen" data-v="' +
+        n +
+        '" class="' +
+        (peekSecs() === n ? 'on' : '') +
+        '" aria-pressed="' +
+        (peekSecs() === n) +
+        '" aria-label="' +
+        n +
+        (n === 1 ? ' second' : ' seconds') +
+        '">' +
+        n +
+        ' s</button>'
+    ).join('') +
+    '</div></div></div>' +
+    '<p class="foot">How long a hidden line shows when you tap it in Recall. Hold a line to keep it showing until you let go.</p>' +
     '<div class="hdr">Storage</div><div class="grp"><button class="row" data-a="sheet" data-v="storage"><span class="lbl">Recordings</span><span class="mut">' +
     TAKES.length +
     ' · ' +
@@ -1211,6 +1230,8 @@ function scrSong() {
   if (X.song) h += takeRows(X.song);
   return (
     h +
-    '<button class="ghost" data-a="sheet" data-v="discard" style="color:var(--danger);margin-top:14px">Discard song practice</button>'
+    (X.start
+      ? '<button class="ghost" data-a="sheet" data-v="discard" style="color:var(--danger);margin-top:14px">Discard song practice</button>'
+      : '<p class="foot">The clock starts when you record your first take. Choosing a song isn’t counted.</p>')
   );
 }

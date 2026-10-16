@@ -9,6 +9,33 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.10.1 · 16 Oct 2026
+*Steadier sheets, honest timing, softer Recall*
+<!-- area: fixes -->
+
+**Sheets**
+- Scrolling a sheet no longer scrolls the page behind it. When a sheet reaches its top or bottom, or the swipe is on the dimmed page around it, everything behind stays still. This applies to every sheet and to the session clock, with touch and with a mouse or trackpad.
+- Tall sheets still scroll inside themselves, and dragging a sheet down by its top still closes it.
+
+<!-- area: practice -->
+**Song practice**
+- Song practice is timed from your **first take**, not from when it opens. Choosing a song or warming up is never counted.
+- Until then the timer says **Not started**, there's no clock or Pause, and the button at the bottom says **Record a take first**.
+- Leaving before you've recorded anything drops it quietly, with nothing to resume or discard. Today only shows song practice as in progress once it's timed.
+- This works the same from Today, a pinned song or the bottom of a song. Song practice already in progress carries on as before.
+
+<!-- area: progress -->
+**Weekly goal**
+- Tap the weekly goal on Today to open Progress on this week's sessions.
+
+<!-- area: songs -->
+**Recall**
+- Hidden letters are now soft rounded pills instead of thin lines. The letters keep their place, so nothing moves as you change level, and the pills fade in.
+- Tapping a line shows only that line, and tapping it again while it shows starts its time again.
+- **Hold a line** to keep it showing until you let go.
+- **Settings › Recall › Peek length** sets how long a tapped line shows: 1, 2, 3 or 5 seconds (2 to start). It's included in backups.
+- Screen readers no longer read hidden words aloud.
+
 ## 3.10 · 16 Oct 2026
 *Songs: Recall, sing it from memory*
 <!-- area: songs -->

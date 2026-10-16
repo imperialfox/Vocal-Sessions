@@ -43,7 +43,9 @@ function cleanData(d) {
     months: obj(d.months),
     ex: obj(d.ex),
     words: obj(d.words),
+    prefs: obj(d.prefs), // settings that travel with backups (3.10.1: Recall's peek length)
   });
+  if (out.prefs.peek != null && ![1, 2, 3, 5].includes(+out.prefs.peek)) delete out.prefs.peek;
   for (const k in out.months)
     if (!(+out.months[k] >= 0) || !isFinite(+out.months[k])) delete out.months[k];
     else out.months[k] = +out.months[k];
@@ -76,7 +78,7 @@ function loadDraft() {
 }
 function saveDraft() {
   try {
-    X ? localStorage.setItem(DRAFT, JSON.stringify(X)) : localStorage.removeItem(DRAFT);
+    X && X.start ? localStorage.setItem(DRAFT, JSON.stringify(X)) : localStorage.removeItem(DRAFT);
   } catch (e) {}
 }
 /* Data version. When the shape of saved data has to change, add a numbered step to UPGRADES and raise SCHEMA.
@@ -146,6 +148,7 @@ function migrate() {
   D.months = D.months || {};
   D.songSessions = D.songSessions || [];
   D.words = D.words || {};
+  D.prefs = D.prefs && typeof D.prefs === 'object' && !Array.isArray(D.prefs) ? D.prefs : {};
   upgradeData();
 }
 let X = null; // filled in by boot.js

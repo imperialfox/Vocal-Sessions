@@ -29,6 +29,7 @@
   --hl: rgba(0, 122, 255, 0.14);
   --glass-shadow: rgba(20, 20, 40, 0.15);
   --scrim: rgba(0, 0, 0, 0.22);
+  --hx: rgba(120, 120, 128, 0.2);
   --coral: #f0524a;
   --warnbg: #fff4e5;
   --warnfg: #9a5b00;
@@ -69,6 +70,7 @@
     --hl: rgba(10, 132, 255, 0.24);
     --glass-shadow: rgba(0, 0, 0, 0.55);
     --scrim: rgba(0, 0, 0, 0.5);
+    --hx: rgba(152, 152, 160, 0.26);
     color-scheme: dark;
     --coral: #ff6961;
     --warnbg: #3a2a12;
@@ -940,8 +942,27 @@ h1 {
 
 .arch {
   position: relative;
+  display: block;
+  width: 100%;
   max-width: 300px;
   margin: 6px auto 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+  border-radius: 24px;
+  transition: transform 0.5s cubic-bezier(0.3, 1.7, 0.45, 1);
+}
+.arch:active {
+  transform: scale(0.96);
+  transition-duration: 0.12s;
+}
+.arch:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
 }
 .arch svg {
   display: block;
@@ -1337,6 +1358,7 @@ main {
   position: fixed;
   inset: 0;
   z-index: 40;
+  overscroll-behavior: contain;
   background: var(--scrim);
   display: flex;
   align-items: flex-end;
@@ -1348,6 +1370,7 @@ main {
   max-width: 440px;
   max-height: 88vh;
   overflow-y: auto;
+  overscroll-behavior: contain;
   margin: 0 8px calc(8px + env(safe-area-inset-bottom, 0px));
   border-radius: 34px;
   padding: 10px 16px 16px;
@@ -1624,10 +1647,18 @@ button.pill {
 .pill.paused {
   color: var(--pause);
 }
+/* 3.10.1 song practice before its first take: nothing is timed yet */
+.pill.wait {
+  color: var(--fg2);
+}
+.cta.wait {
+  opacity: 0.5;
+}
 .clockscrim {
   position: fixed;
   inset: 0;
   z-index: 44;
+  overscroll-behavior: contain;
   background: rgba(0, 0, 0, 0.12);
   animation: fade 0.2s;
   transition: opacity 0.25s;
@@ -1635,6 +1666,7 @@ button.pill {
 .clock {
   position: fixed;
   z-index: 45;
+  overscroll-behavior: contain;
   top: calc(6px + env(safe-area-inset-top, 0px));
   right: max(12px, env(safe-area-inset-right, 0px));
   width: min(360px, calc(100vw - 24px));
@@ -3628,28 +3660,61 @@ textarea.field.sglyr {
     height: 46px;
   }
 }
-/* 3.10 Recall: hidden letters keep their place */
+/* 3.10 Recall: hidden letters keep their place. 3.10.1: each hidden run is a soft rounded pill; the letters stay
+   in the page (transparent), so every word keeps its exact width at every level */
 .hx {
+  position: relative;
   color: transparent;
-  background: linear-gradient(var(--fg3), var(--fg3)) 0 86% / 100% 1.5px no-repeat;
-  transition:
-    color 0.45s ease,
-    background-size 0.45s ease;
+  transition: color 0.35s ease;
 }
-.w .v .hx {
-  background-position: 0 70%;
+.hx::after {
+  content: '';
+  position: absolute;
+  left: 0.03em;
+  right: 0.03em;
+  top: 50%;
+  height: 0.56em;
+  transform: translateY(-45%);
+  border-radius: 999px;
+  background: var(--hx);
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+}
+.w .v .hx::after {
+  height: 0.62em;
+  transform: translateY(-50%);
+}
+.hxin .hx::after {
+  animation: hxIn 0.25s ease;
+}
+@keyframes hxIn {
+  from {
+    opacity: 0;
+  }
 }
 .rl {
   cursor: pointer;
   border-radius: 8px;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 .rl:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
+/* peeking shows the line quickly, and it fades back a little slower */
 .rl.peeking .hx {
   color: inherit;
-  background-size: 100% 0;
+  transition-duration: 0.22s;
+}
+.rl.peeking .hx::after {
+  opacity: 0;
+  transition-duration: 0.22s;
+}
+.pkseg button {
+  min-width: 48px;
+  padding: 0 6px;
 }
 .sgrbtn {
   width: 36px;

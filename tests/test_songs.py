@@ -173,7 +173,10 @@ def run(b, t):
     # song practice from a song
     pg.click('[data-a=sgPractise]'); pg.wait_for_timeout(300)
     ok(pg.evaluate("U.view") == 'song' and pg.evaluate("X.song") == 'g_1', 'Song practice opens with this song picked')
-    pg.click('[data-a=sheet][data-v=discard]'); pg.wait_for_timeout(300); pg.click('[data-a=discardYes]'); pg.wait_for_timeout(300)
+    # 3.10.1: nothing is timed before the first take, so leaving drops it quietly (there's nothing to discard)
+    ok(pg.locator('[data-a=sheet][data-v=discard]').count() == 0, 'there’s nothing to discard before the first take')
+    pg.click('#bar [data-a=exit]'); pg.wait_for_timeout(300)
+    ok(pg.evaluate("X") is None, 'leaving before a take drops the song practice')
 
     # the list: pins (up to 3), sorting, swipe, press and hold, select
     for n in ['Kitchen radio', 'paper lanterns', 'Morning light']:

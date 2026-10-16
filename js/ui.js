@@ -10,6 +10,7 @@ const VIEWS = {
   song: ['Song practice', '', null],
 };
 function pillText() {
+  if (unstarted()) return 'Not started';
   const st = VIEWS[U.view] && VIEWS[U.view][1];
   return (X && X.paused ? '❚❚ ' : '') + (st ? st + ' · ' : '') + clk(elapsedSec());
 }
@@ -67,11 +68,15 @@ function renderBar() {
           '" target="_blank" rel="noopener" aria-label="Open coach video">' +
           ICON.video +
           '</a>') +
-      '<button class="pill glass' +
-      (X && X.paused ? ' paused' : '') +
-      '" id="timer" data-a="clock" aria-label="Session time. Tap for the clock">' +
-      pillText() +
-      '</button>';
+      (unstarted()
+        ? '<span class="pill glass wait" id="timer" role="status" aria-label="Not started. The clock starts with your first take">' +
+          pillText() +
+          '</span>'
+        : '<button class="pill glass' +
+          (X && X.paused ? ' paused' : '') +
+          '" id="timer" data-a="clock" aria-label="Session time. Tap for the clock">' +
+          pillText() +
+          '</button>');
   } else {
     // Today has Settings at the top right; Settings has a way back; Songs has its buttons on iPhone
     const x =
@@ -170,9 +175,14 @@ function renderDock() {
       found: 'Log foundation',
       rot: n ? 'Log ' + n + ' exercise' + (n > 1 ? 's' : '') : 'Pick an exercise',
       app: 'Finish session',
-      song: 'Save song practice',
+      song: unstarted() ? 'Record a take first' : 'Save song practice',
     }[U.view];
-    $('dock').innerHTML = '<button class="cta glass tinted" data-a="cta">' + lab + '</button>';
+    $('dock').innerHTML =
+      '<button class="cta glass tinted' +
+      (U.view === 'song' && unstarted() ? ' wait" aria-disabled="true' : '') +
+      '" data-a="cta">' +
+      lab +
+      '</button>';
     return;
   }
   if (MQ.reg.matches) {
@@ -566,7 +576,7 @@ function renderSheet() {
     U.sheet = null;
     U.sd = {};
   }
-  if (!h && U.clock && X && isFlow(U.view)) h = clockHTML();
+  if (!h && U.clock && X && X.start && isFlow(U.view)) h = clockHTML();
   const key = h ? (U.sheet ? U.sheet + '|' + (k || '') : 'clock') : '';
   const prev = $('layer').querySelector('.sheet'),
     st = prev ? prev.scrollTop : 0,
@@ -1038,6 +1048,7 @@ function editSheet() {
 /* ===== Render ===== */
 function render(keepScroll) {
   const y = window.scrollY;
+  dropUnstarted();
   closeSwipes();
   // keep what's typed in the lyrics editor, and leave editing when the song is no longer on screen
   if (U.sEdit === 'lyrics' && !SG.noSync && document.querySelector('.lyred')) applyLyrics();

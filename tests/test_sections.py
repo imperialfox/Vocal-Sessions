@@ -132,7 +132,8 @@ def run(b, t):
     rows = pg.evaluate("[...document.querySelectorAll('.tk')].map(x=>x.textContent)")
     ok(len(rows) == 5 and sum('Verse 1 · ' in r for r in rows) == 3 and sum('Chorus 2 · ' in r for r in rows) == 1,
        'song practice lists every take, saying which section each came from')
-    pg.click('[data-a=sheet][data-v=discard]'); pg.wait_for_timeout(250); pg.click('[data-a=discardYes]'); pg.wait_for_timeout(300)
+    pg.click('#bar [data-a=exit]'); pg.wait_for_timeout(300)  # no take yet, so leaving drops it (3.10.1)
+    ok(pg.evaluate("X") is None, 'leaving song practice before a take keeps nothing')
     pg.evaluate(f"openSong('{S['id']}')"); pg.wait_for_timeout(300)
 
     # unlinking and reordering keep takes in place

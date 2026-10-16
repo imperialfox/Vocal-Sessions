@@ -2,9 +2,9 @@
 
 A mobile-first companion for structured vocal practice, styled like a native iOS app. It's a single HTML file with no install, no backend and no account. It's designed to live on your iPhone Home Screen.
 
-![Version 3.10](https://img.shields.io/badge/version-3.10-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
+![Version 3.10.1](https://img.shields.io/badge/version-3.10.1-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
 
-**Current version: 3.10 · 16 Oct 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
+**Current version: 3.10.1 · 16 Oct 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
 
 ---
 
@@ -18,7 +18,7 @@ It guides you through a three-step practice session, keeps a history of every se
 | Rotation | One or more exercises from a pool of 8, plus any you add | ~15 min |
 | Application | Sing a real song or section, record a take, rate it | ~5–10 min |
 
-There's also **Song practice**, for when you just want to sing a song and record it. It's kept separate from the focused stats above.
+There's also **Song practice**, for when you just want to sing a song and record it. Its clock starts with your first take, and it's kept separate from the focused stats above.
 
 And **Songs**, for learning a song: paste the lyrics, and they're split into labelled sections you can mark up with breaths, runs, pitch, vowels, notes and cues.
 
@@ -31,7 +31,7 @@ And **Songs**, for learning a song: paste the lyrics, and they're split into lab
   - Focused sessions are highlighted, and song practice shows as a coral dot.
   - Tap a day to see and open what you did.
 - A reminder to back up if you never have, or if it's been more than two weeks
-- A progress arch showing this week's minutes against a 70-minute goal
+- A progress arch showing this week's minutes against a 70-minute goal. Tap it to open Progress on this week's sessions.
 - A Monday-to-Sunday row that fills in each day you practised
 - A weekly streak: weeks in a row where you hit 70 minutes. The current week never breaks it while it's still in progress.
 - This month's minutes against 280, and the suggested rotation exercise (the one that's gone longest since you last did it)
@@ -72,7 +72,7 @@ And **Songs**, for learning a song: paste the lyrics, and they're split into lab
   - **Search** titles, artists and lyrics. It ignores case, punctuation and accents, finds words in any order, even across lines, and forgives a slipped letter in longer words. Lyric matches show the line with the words highlighted.
 - **A song:** one phrase per line, each section in its own card, with repeats numbered (Chorus 1, Chorus 2) and linked sections marked with a chain.
   - **Practise** shows every mark; **Perform** hides the technical ones and shows only the expressive cues. **Key** explains the marks.
-  - **Recall** hides the lyrics a step at a time to learn them by heart: Full lyrics, Word shapes, First words, Cues only and Blank. Hidden letters become faint lines in place, so nothing moves, and marks stay visible. Tap a line to peek. Work from the start, from the end, or start anywhere.
+  - **Recall** hides the lyrics a step at a time to learn them by heart: Full lyrics, Word shapes, First words, Cues only and Blank. Hidden letters become soft pills in place, so nothing moves, and marks stay visible. Tap a line to peek, or hold it to keep it showing. Work from the start, from the end, or start anywhere.
   - The pencil opens **Annotate**: tap a word for Breath, Run, Higher, Lower, Sing as (a vowel) or a Note. Add a cue to a section, unlink a repeat to give it its own copy, or hold a section to move it. Undo steps back through changes.
   - **Lyrics** edits the words. Marked words are highlighted, marks follow their words, and a mark whose word changed is flagged to check. One whose word was removed waits at the top of its section to be moved or removed.
   - **Record a section:** in Practise or Perform, tap a section, then **Record**. The screen stays on that section while it records, with a recording bar at the bottom (time, level meter, Stop). Stopping opens the takes for that section over the song: the new take, every starred one, and the latest and first. Each repeat keeps its own takes, even when linked.
@@ -86,6 +86,7 @@ And **Songs**, for learning a song: paste the lyrics, and they're split into lab
 - **Undo last restore:** for 30 days after a restore.
 - **Backup history**, **Where backups go** (a set-up guide) and **Save a read-me file**
 - When you last backed up, which turns red after two weeks
+- **Recall › Peek length:** how long a tapped line shows in Recall (1, 2, 3 or 5 seconds)
 - **Storage:** recordings, and **Storage protection**, which shows whether iOS has agreed not to clear the app's data when space runs low
 - Reset this month, and reset all data. Every reset asks first.
 - **Changelog:** every version on a timeline, with a growth chart of improvements by area. It's built from [CHANGELOG.md](CHANGELOG.md), and tapping the version number opens it too.
@@ -100,6 +101,7 @@ And **Songs**, for learning a song: paste the lyrics, and they're split into lab
 - **Notes per exercise:** the pencil opens quick words written for that exercise, your own saved words, and an optional note
 - **Session clock:** a live timer in the top bar
   - Tap it for a larger clock with Pause and a time for each step. Paused time isn't counted.
+  - Song practice's clock starts when you record your first take; until then the timer says **Not started**.
   - Sessions over 90 minutes ask how long you actually practised.
 - **How did it go?** After finishing, tap words that fit (or add your own) and an optional note. You can skip it.
 - **Recordings:**

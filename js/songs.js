@@ -50,7 +50,9 @@ const SGI = {
 };
 // Recall: how much of the lyrics to hide. Letters turn into grey lines in place, so the layout never moves
 const SG_HINTS = ['Full lyrics', 'Word shapes', 'First words', 'Cues only', 'Blank'];
-const PEEK_MS = 2600;
+const PEEKS = [1, 2, 3, 5]; // Settings › Recall › Peek length, in seconds
+const peekSecs = () => (PEEKS.includes(+(D.prefs || {}).peek) ? +D.prefs.peek : 2);
+const HOLD_MS = 350; // holding a line this long keeps it showing until you let go
 // moments on screen that don't need saving: the selected word, undo steps, open menus, a drag in progress
 const SG = {
   word: null,
@@ -111,7 +113,7 @@ function maskText(t, mode) {
     run = '',
     seen = false;
   const flush = () => {
-    if (run) out += '<span class="hx">' + esc(run) + '</span>';
+    if (run) out += '<span class="hx" aria-hidden="true">' + esc(run) + '</span>';
     run = '';
   };
   for (const c of String(t)) {
@@ -2100,6 +2102,7 @@ const SG_ACT = {
     if (n === U.sHint) return;
     U.sHint = n;
     rerender();
+    hxFadeIn();
   },
   sgHMenu() {
     SG.hMenu = true;
@@ -2109,6 +2112,7 @@ const SG_ACT = {
     U.sHint = Math.max(0, Math.min(SG_HINTS.length - 1, +v || 0));
     SG.hMenu = false;
     rerender();
+    hxFadeIn();
   },
   sgRMenu() {
     SG.rMenu = true;
@@ -2843,7 +2847,7 @@ document.addEventListener(
     if (rl) {
       e.preventDefault();
       e.stopPropagation();
-      peekLine(rl);
+      if (Date.now() - holdEnded > 400) peekLine(rl); // letting go of a hold hides the line rather than peeking again
       return;
     }
     const el = e.target.closest && e.target.closest('[data-a]');
@@ -2882,13 +2886,74 @@ document.addEventListener(
   true
 );
 
+// changing hint level fades the pills in; nothing moves, as the letters keep their place
+function hxFadeIn() {
+  document.body.classList.remove('hxin');
+  void document.body.offsetWidth;
+  document.body.classList.add('hxin');
+  clearTimeout(hxFadeIn.t);
+  hxFadeIn.t = setTimeout(() => document.body.classList.remove('hxin'), 400);
+}
+// only the tapped line shows; tapping it again while it shows starts its time again
+function endPeeks(except) {
+  document.querySelectorAll('.rl.peeking').forEach((x) => {
+    if (x === except) return;
+    clearTimeout(x._peek);
+    x.classList.remove('peeking', 'held');
+  });
+}
 function peekLine(ln) {
-  ln.classList.remove('peeking');
-  void ln.offsetWidth;
+  endPeeks(ln);
   ln.classList.add('peeking');
   clearTimeout(ln._peek);
-  ln._peek = setTimeout(() => ln.classList.remove('peeking'), PEEK_MS);
+  ln._peek = setTimeout(() => ln.classList.remove('peeking'), peekSecs() * 1000);
 }
+// hold a line to keep it showing until you let go
+let PH = null,
+  holdEnded = 0;
+document.addEventListener(
+  'pointerdown',
+  (e) => {
+    if (PH) clearTimeout(PH.t);
+    PH = null;
+    if (e.button || !hintLv() || U.sheet) return;
+    const ln = e.target.closest && e.target.closest('.rl');
+    if (!ln) return;
+    PH = { ln, x: e.clientX, y: e.clientY, on: false };
+    PH.t = setTimeout(() => {
+      if (!PH || PH.ln !== ln) return;
+      PH.on = true;
+      endPeeks(ln);
+      clearTimeout(ln._peek);
+      ln.classList.add('peeking', 'held');
+    }, HOLD_MS);
+  },
+  true
+);
+document.addEventListener(
+  'pointermove',
+  (e) => {
+    if (PH && !PH.on && Math.hypot(e.clientX - PH.x, e.clientY - PH.y) > 10) {
+      clearTimeout(PH.t);
+      PH = null;
+    }
+  },
+  true
+);
+function holdEnd() {
+  if (!PH) return;
+  clearTimeout(PH.t);
+  if (PH.on) {
+    PH.ln.classList.remove('peeking', 'held');
+    holdEnded = Date.now();
+  }
+  PH = null;
+}
+['pointerup', 'pointercancel'].forEach((t) => document.addEventListener(t, holdEnd, true));
+// iOS's long-press menu would interrupt a hold
+document.addEventListener('contextmenu', (e) => {
+  if (hintLv() && e.target.closest && e.target.closest('.rl')) e.preventDefault();
+});
 
 /* ===== Songs: typing ===== */
 document.addEventListener('input', (e) => {

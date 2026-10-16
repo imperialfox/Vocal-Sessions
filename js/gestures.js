@@ -160,6 +160,52 @@ document.addEventListener('keydown', (e) => {
     U.view = null;
   });
 });
+/* a sheet or the clock keeps scrolling to itself: when it can't scroll any further that way (or the swipe is on
+   the dimmed page around it), the page behind stays put. iOS ignores overscroll-behavior once nothing inside can
+   scroll, so touches and the mouse wheel are checked here */
+const overlayOpen = () => !!$('layer').firstElementChild;
+// can something between el and the sheet (or clock) still scroll in direction dy (positive = further down)?
+function canScrollIn(el, dy) {
+  for (let n = el; n && n.nodeType === 1; n = n.parentElement) {
+    if (n.classList.contains('scrim') || n.classList.contains('clockscrim') || n.id === 'layer') return false;
+    const oy = getComputedStyle(n).overflowY;
+    if ((oy === 'auto' || oy === 'scroll') && n.scrollHeight > n.clientHeight + 1) {
+      if (dy > 0 ? n.scrollTop + n.clientHeight < n.scrollHeight - 1 : n.scrollTop > 0) return true;
+    }
+    if (n.classList.contains('sheet') || n.classList.contains('clock')) return false;
+  }
+  return false;
+}
+let OT = null;
+document.addEventListener(
+  'touchstart',
+  (e) => {
+    OT = overlayOpen() && e.touches.length === 1 ? { x: e.touches[0].clientX, y: e.touches[0].clientY } : null;
+  },
+  { passive: true }
+);
+document.addEventListener(
+  'touchmove',
+  (e) => {
+    if (!OT || e.touches.length !== 1 || !overlayOpen()) return;
+    const t = e.touches[0],
+      dx = t.clientX - OT.x,
+      dy = OT.y - t.clientY;
+    OT.x = t.clientX;
+    OT.y = t.clientY;
+    if (Math.abs(dy) <= Math.abs(dx) || e.target.closest('input[type=range]')) return; // sideways: swipes and sliders
+    if (!canScrollIn(e.target, dy) && e.cancelable) e.preventDefault();
+  },
+  { passive: false }
+);
+document.addEventListener(
+  'wheel',
+  (e) => {
+    if (!overlayOpen() || !e.deltaY || Math.abs(e.deltaY) < Math.abs(e.deltaX)) return;
+    if (!canScrollIn(e.target, e.deltaY)) e.preventDefault();
+  },
+  { passive: false }
+);
 /* drag a sheet down by its header to dismiss it, like iOS */
 let SD = null;
 document.addEventListener(

@@ -380,6 +380,8 @@ document.addEventListener('click', (e) => {
         stopPlayback();
         startFinish();
       } else if (U.view === 'song') {
+        if (!X.start)
+          return toast(X.song ? 'Your practice starts with your first take' : 'Pick a song, then record a take');
         if (!X.song) return toast('Pick a song first');
         if (rec) return toast('Stop recording first');
         stopPlayback();
@@ -420,7 +422,7 @@ document.addEventListener('click', (e) => {
       finishSession();
       break;
     case 'clock':
-      if (!X) break;
+      if (!X || !X.start) break;
       U.clock = true;
       rerender();
       break;
@@ -439,7 +441,7 @@ document.addEventListener('click', (e) => {
       break;
     }
     case 'pauseToggle':
-      if (!X) break;
+      if (!X || !X.start) break;
       if (X.paused) {
         X.pausedTotal = (X.pausedTotal || 0) + (Date.now() - X.pausedAt);
         X.paused = false;
@@ -578,6 +580,25 @@ document.addEventListener('click', (e) => {
       U.sheet = v;
       U.sd = { k };
       rerender();
+      break;
+    case 'peekLen':
+      segPick(el);
+      D.prefs = D.prefs || {};
+      D.prefs.peek = +v;
+      save();
+      break;
+    case 'goalOpen':
+      // the weekly goal opens Progress on this week's focused sessions (song practice never counts towards it)
+      U.histTab = 'sessions';
+      U.range = 'W';
+      U.roff = 0;
+      U.pick = null;
+      U.sheet = null;
+      U.clock = false;
+      go(() => {
+        U.tab = 'history';
+        U.view = null;
+      });
       break;
     case 'openAll':
       U.histTab = v === 'songs' ? 'songs' : 'sessions';

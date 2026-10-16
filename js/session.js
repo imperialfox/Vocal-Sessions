@@ -25,7 +25,7 @@ function newSong() {
   const last = D.songSessions.length ? D.songSessions[D.songSessions.length - 1].songId : null;
   X = {
     kind: 'song',
-    start: Date.now(),
+    start: null, // set when the first take starts recording
     f: {},
     xn: {},
     rot: {},
@@ -37,6 +37,24 @@ function newSong() {
     pausedTotal: 0,
   };
   saveDraft();
+}
+// leaving song practice before its first take drops it quietly: nothing was timed, so there's nothing to keep
+function dropUnstarted() {
+  if (unstarted() && U.view !== 'song' && !rec) {
+    X = null;
+    saveDraft();
+    U.clock = false;
+  }
+}
+// a first take that came to nothing leaves song practice untimed again
+function unstartIfNoTakes(r) {
+  if (!r.o && isSong() && X.start === r.started && !(X.takes || []).length) {
+    X.start = null;
+    X.paused = false;
+    X.pausedTotal = 0;
+    U.clock = false;
+    saveDraft();
+  }
 }
 function togglLines(ss) {
   const how = howStr(ss);
@@ -315,6 +333,13 @@ async function startRec(target) {
     mr = new MediaRecorder(stream);
   }
   rec = { mr, stream, chunks: [], t: 0, songId: tg.songId, o: tg.o || null, started: Date.now() };
+  // song practice's clock starts with its first take
+  if (!rec.o && unstarted()) {
+    X.start = rec.started;
+    X.paused = false;
+    X.pausedTotal = 0;
+    saveDraft();
+  }
   mr.ondataavailable = (e) => {
     if (e.data && e.data.size) rec && rec.chunks.push(e.data);
   };
@@ -389,6 +414,7 @@ async function saveRec() {
   const blob = new Blob(r.chunks, { type });
   const len = Math.max(1, Math.round((Date.now() - r.started) / 1000));
   if (blob.size < 1000) {
+    unstartIfNoTakes(r);
     toast('That take was empty. Try again.');
     rerender();
     return;
@@ -415,6 +441,7 @@ async function saveRec() {
       saveDraft();
     }
   } catch (e) {
+    unstartIfNoTakes(r);
     toast('Couldn’t save the take. Storage may be full.');
   }
   await prune(r.songId);

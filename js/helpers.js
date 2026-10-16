@@ -64,8 +64,10 @@ function suggested() {
   return r.map((e, i) => ({ e, i, s: score(e) })).sort((a, b) => a.s - b.s || a.i - b.i)[0].e;
 }
 const isSong = () => !!X && X.kind === 'song';
+// song practice is timed from its first take; until then it's only a choice of song and isn't kept
+const unstarted = () => isSong() && !X.start;
 function elapsedSec() {
-  if (!X) return 0;
+  if (!X || !X.start) return 0;
   const now = X.paused ? X.pausedAt : Date.now();
   return Math.max(0, (now - X.start - (X.pausedTotal || 0)) / 1000);
 }
