@@ -7,6 +7,9 @@ from harness import sample, SEED, OLD_DRAFT, ready, url, APP_PATH, UA_IPHONE, fi
 from test_layout import SIZES
 
 MOTION_ON = "try{localStorage.setItem('vocalMotion','1')}catch(e){}"
+# the checks that watch the ripple while it plays run it in slow motion (x4), so a slow machine can't miss it
+SLOW = 4
+MOTION_SLOW = "try{localStorage.setItem('vocalMotion','%d')}catch(e){}" % SLOW
 # the animations running on the bars, Today's blocks and the launch screen, as {delay, frames}
 ANIMS = """sel=>[...document.querySelectorAll(sel)].map(el=>el.getAnimations().map(a=>({d:a.effect.getTiming().delay,
   k:a.effect.getKeyframes().map(f=>Object.keys(f).filter(x=>!['offset','easing','composite','computedOffset'].includes(x)).join()).join('|')})))"""
@@ -40,13 +43,13 @@ def errors(t, pg, tag):
 
 def ripple(b, t):
     ok = t.ok
-    pg = cold(b); errors(t, pg, 'ripple')
+    pg = cold(b, init=MOTION_SLOW); errors(t, pg, 'ripple')
     bars = pg.evaluate(ANIMS, '#splash i')
     ok(len(bars) == 6 and all(len(a) == 1 and a[0]['k'] == 'transform|transform|transform' for a in bars),
        'all six bars of the icon pulse on a cold launch')
-    ok([a[0]['d'] for a in bars] == [120 + 70 * k for k in range(6)], 'they pulse in order, 70 ms apart, starting 120 ms in')
+    ok([a[0]['d'] for a in bars] == [(120 + 70 * k) * SLOW for k in range(6)], 'they pulse in order, 70 ms apart, starting 120 ms in')
     ok(pg.evaluate("LAUNCH.busy()") and pg.evaluate("!FW.shown"), 'the launch is under way')
-    pg.wait_for_function("document.getElementById('splash')&&document.getElementById('splash').dataset.going", timeout=6000)
+    pg.wait_for_function("document.getElementById('splash')&&document.getElementById('splash').dataset.going", timeout=15000)
     sp = pg.evaluate(ANIMS, '#splash, #splash .sp-icon')
     ok(sp[0] and sp[0][0]['k'] == 'opacity|opacity' and sp[1] and sp[1][0]['k'] == 'transform|transform',
        'the launch screen fades with a slight zoom')
@@ -55,12 +58,12 @@ def ripple(b, t):
     order = pg.evaluate(ORDER)
     delays = [rise[i][0]['d'] if rise[i] else None for i in order]
     ok(len(order) >= 8 and all(d is not None for d in delays), f"Today's blocks rise in ({len(order)} on screen)")
-    ok(delays == sorted(delays) and len(set(delays)) == len(delays) and delays[1] - delays[0] == 45,
+    ok(delays == sorted(delays) and len(set(delays)) == len(delays) and delays[1] - delays[0] == 45 * SLOW,
        'top to bottom, 45 ms apart')
     ok(all(rise[i][0]['k'] == 'opacity,transform|opacity,transform' for i in order), 'each one rises and fades in')
     ok(pg.evaluate("[...document.querySelectorAll('#app [data-rise]')].slice(0,3).every(el=>+getComputedStyle(el).opacity<.2)"),
        'blocks waiting their turn are hidden, so nothing shows before it rises')
-    pg.wait_for_function("!LAUNCH.busy()", timeout=6000); pg.wait_for_timeout(100)
+    pg.wait_for_function("!LAUNCH.busy()", timeout=15000); pg.wait_for_timeout(100)
     ok(pg.evaluate(GONE), 'the launch screen is gone afterwards')
     ok(pg.evaluate(SETTLED), 'and nothing is left hidden or offset')
     ok(not pg.evaluate("document.getAnimations().filter(a=>a.playState!=='finished').length"), 'and nothing is still animating')
@@ -78,23 +81,23 @@ def ripple(b, t):
     with pg.expect_file_chooser() as fc: pg.click('[data-a=importPick]')
     fc.value.set_files(fix('backup-3.6.json')); pg.wait_for_function("U.sheet==='bkReport'", timeout=10000); pg.wait_for_timeout(200)
     pg.click('[data-a=importYes]')
-    pg.wait_for_function("!!document.getElementById('splash')", timeout=6000)
+    pg.wait_for_function("!!document.getElementById('splash')", timeout=15000)
     ok(pg.evaluate("U.tab") == 'today' and pg.evaluate("LAUNCH.busy()"), 'importing a backup brings the launch screen back on Today')
-    pg.wait_for_timeout(300)
-    ok(len([a for a in pg.evaluate(ANIMS, '#splash i') if a]) == 6, 'and the bars pulse again')
+    pg.wait_for_function("document.querySelectorAll('#splash i').length===6&&[...document.querySelectorAll('#splash i')].every(i=>i.getAnimations().length)", timeout=15000)
+    ok(True, 'and the bars pulse again')
     ok(pg.locator('.toast').count() == 0, 'the "Backup restored" message waits for the ripple')
-    pg.wait_for_function("document.getElementById('splash')&&document.getElementById('splash').dataset.going", timeout=6000)
+    pg.wait_for_function("document.getElementById('splash')&&document.getElementById('splash').dataset.going", timeout=15000)
     ok(len([a for a in pg.evaluate(ANIMS, '#app [data-rise]') if a]) >= 8, "Today's blocks rise in again")
-    pg.wait_for_function("!LAUNCH.busy()", timeout=6000)
+    ok(pg.locator('.toast').count() == 1 and 'Backup restored' in pg.locator('.toast').inner_text(), 'and the message shows as the screen goes')
+    pg.wait_for_function("!LAUNCH.busy()", timeout=15000)
     ok(pg.evaluate(GONE) and pg.evaluate(SETTLED), 'then the screen is clear and settled')
-    ok(pg.locator('.toast').count() == 1 and 'Backup restored' in pg.locator('.toast').inner_text(), 'and the message shows')
     pg.context.close()
 
 
 def window_waits(b, t):
     ok = t.ok
     d = sample()
-    pg = cold(b, init=MOTION_ON + ";try{localStorage.setItem('vocalDraft'," + json.dumps(json.dumps(OLD_DRAFT)) + ")}catch(e){}", data=d)
+    pg = cold(b, init=MOTION_SLOW + ";try{localStorage.setItem('vocalDraft'," + json.dumps(json.dumps(OLD_DRAFT)) + ")}catch(e){}", data=d)
     errors(t, pg, 'window')
     seen = pg.evaluate("""new Promise(r=>{const out=[];const tick=()=>{out.push([LAUNCH.busy(),!!FW.shown]);
       if(LAUNCH.busy()||out.length<5)requestAnimationFrame(tick);else r(out)};tick()})""")
@@ -106,23 +109,27 @@ def window_waits(b, t):
 
 def reduced(b, t):
     ok = t.ok
-    pg = cold(b, ctx_args={'reduced_motion': 'reduce'}); errors(t, pg, 'reduced')
+    pg = cold(b, init=MOTION_SLOW, ctx_args={'reduced_motion': 'reduce'}); errors(t, pg, 'reduced')
     ok(not any(pg.evaluate(ANIMS, '#splash i')), 'Reduce Motion: the bars stay still')
-    pg.wait_for_function("document.getElementById('splash')&&document.getElementById('splash').dataset.going", timeout=6000)
+    pg.wait_for_function("document.getElementById('splash')&&document.getElementById('splash').dataset.going", timeout=15000)
     sp = pg.evaluate(ANIMS, '#splash, #splash .sp-icon')
     ok(sp[0] and sp[0][0]['k'] == 'opacity|opacity' and not sp[1], 'the launch screen just fades, with no zoom')
     ok(not any(pg.evaluate(ANIMS, '#app [data-rise]')), 'and Today appears without rising')
-    pg.wait_for_function("!LAUNCH.busy()", timeout=6000)
+    pg.wait_for_function("!LAUNCH.busy()", timeout=15000)
     ok(pg.evaluate(GONE) and pg.evaluate(SETTLED), 'then the screen is clear')
     pg.context.close()
 
 
 def motion_off(b, t):
     ok = t.ok
-    pg = cold(b, init=None); errors(t, pg, 'off')
+    # note how the launch screen leaves, from the very start (a slow machine might otherwise miss it)
+    watch = """document.addEventListener('DOMContentLoaded',()=>{const s=document.getElementById('splash');if(!s)return;
+      new MutationObserver(()=>{if(s.classList.contains('out')&&!window.__out)window.__out=s.getAnimations().some(a=>!(a instanceof CSSTransition))?'animated':'out'})
+      .observe(s,{attributes:true})})"""
+    pg = cold(b, init=watch); errors(t, pg, 'off')
     ok(not pg.evaluate("document.getAnimations().length") and not pg.evaluate("LAUNCH.busy()"), 'motion off: no ripple, as before 3.13')
-    pg.wait_for_function("document.getElementById('splash')&&document.getElementById('splash').classList.contains('out')", timeout=6000)
-    ok(True, 'the launch screen goes the way it always has')
+    pg.wait_for_function("!!window.__out", timeout=15000)
+    ok(pg.evaluate("window.__out") == 'out', 'the launch screen goes the way it always has')
     pg.wait_for_function(GONE, timeout=3000)
     ok(pg.evaluate(SETTLED), 'and Today is there, untouched')
     pg.context.close()
