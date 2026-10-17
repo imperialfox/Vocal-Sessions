@@ -2,9 +2,9 @@
 
 A mobile-first companion for structured vocal practice, styled like a native iOS app. It's a single HTML file with no install, no backend and no account. It's designed to live on your iPhone Home Screen.
 
-![Version 3.11](https://img.shields.io/badge/version-3.11-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
+![Version 3.12](https://img.shields.io/badge/version-3.12-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
 
-**Current version: 3.11 · 17 Oct 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
+**Current version: 3.12 · 17 Oct 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
 
 ---
 
@@ -35,7 +35,7 @@ And **Songs**, for learning a song: paste the lyrics, and they're split into lab
 - A Monday-to-Sunday row that fills in each day you practised
 - A weekly streak: weeks in a row where you hit 70 minutes. The current week never breaks it while it's still in progress.
 - This month's minutes against 280, and the suggested rotation exercise (the one that's gone longest since you last did it)
-- Start, resume or discard a session
+- Start, resume or discard a session. A session you've left also shows in the **floating window** (below).
 - A Song practice card with its own weekly stats
 - **Pinned songs:** up to 3 songs you're working on, and **Show all songs**
 - **Settings** is the gear at the top right
@@ -104,6 +104,14 @@ And **Songs**, for learning a song: paste the lyrics, and they're split into lab
   - Tap it for a larger clock with Pause and a time for each step. Paused time isn't counted.
   - Song practice's clock starts when you record your first take; until then the timer says **Not started**.
   - Sessions over 90 minutes ask how long you actually practised.
+- **Floating window:** leave a session, or switch away while a take is playing, and a small window stays on every other screen.
+  - A session shows what's running (for example "Focused session · Rotation"), its live time and a pause button. Paused, it says Paused and the time stops.
+  - A take shows "Playing · Chorus 2" (or the song's name for song practice), its time and progress, and a pause button. It goes when the take ends.
+  - If both are going, the playing take is shown.
+  - Tap it to go back to exactly where you were: the same step at the same scroll, or the song with that section's takes open.
+  - Drag it to any corner and it snaps there. It remembers the corner on this device.
+  - It hides on its own screen, while a sheet is open and while you're recording.
+  - Closing a section's takes sheet lets a playing take carry on, so you can listen while you look at the lyrics.
 - **How did it go?** After finishing, tap words that fit (or add your own) and an optional note. You can skip it.
 - **Recordings:**
   - Mono AAC at about 96 kbps (about 0.7 MB a minute), with the phone's voice processing off, up to 2 minutes per take

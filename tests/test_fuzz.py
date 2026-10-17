@@ -25,6 +25,11 @@ INV=r"""(()=>{const p=[];const L=document.getElementById('layer');
  if(!rec&&(document.querySelector('.sgmodes.locked,.recbar')))p.push('song locked or recording bar shown without recording');
  if(!!document.querySelector('#dock .hcap')!==(recallOn()&&!U.sheet&&!rec))p.push('hint capsule shown when it shouldn\'t be, or missing in Recall');
  if(document.querySelector('.hx')&&!recallOn())p.push('hidden letters outside Recall');
+ const fw=document.getElementById('fw'),ae=document.activeElement,typing=ae&&ae.matches&&ae.matches('input,textarea');
+ if(FW.shown){if(U.sheet||L.firstElementChild)p.push('floating window over a sheet');if(rec)p.push('floating window while recording');
+   if(FW.shown==='session'&&isFlow(U.view))p.push('session window on its own screen');
+   const r=fw.getBoundingClientRect();if(!FW.drag&&!FW.stopSpring&&!fw.getAnimations().length&&(r.left<-1||r.right>innerWidth+1||r.top<-1||r.bottom>innerHeight+1))p.push('floating window off screen');}
+ else if(X&&X.start&&!isFlow(U.view)&&!U.sheet&&!U.clock&&!L.firstElementChild&&!rec&&!U.sFocus&&!typing)p.push('session running but no floating window');
  try{JSON.parse(localStorage.getItem('vocalTracker'))}catch(e){p.push('saved data unreadable')}
  const sumOk=Object.keys(D.months).length>=0;
  return p;})()"""
@@ -35,7 +40,7 @@ VIS=r"""(()=>{const L=document.getElementById('layer');const root=L.querySelecto
 # no microphone here: Record shows on a selected section, but recording itself is covered by test_recording and test_sections
 SKIP = {'importPick', 'checkPick', 'exportSave', 'saveReadme', 'rec', 'sgRec'}
 HEAVY = ('sgOpen','sgSec','sgTakes','playTake','star','sgMode','sgHint','sgHMenu','sgSetHint','sgRMenu','sgOrder','sgAnywhere','sgEdit','sgWord','sgMark','sgEditMode','sgNew','sgSplit','sgSave','sgSearch','sgListEdit','sgToggle','sgCue','sgUnlink','start','songStart','resume','cta','confirmF','tog','rlv','flv','wTog','saveHow','skipHow','editSess','saveEdit','exNote','takeNote','addWord','saveWord',
-         'openNote','longOk','pauseToggle','clock','sheet','calDay','calSession','eflv','input','textarea')
+         'openNote','longOk','pauseToggle','fwOpen','fwToggle','clock','sheet','calDay','calSession','eflv','input','textarea')
 
 def run(b, t):
     found = collections.OrderedDict()

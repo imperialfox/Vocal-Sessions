@@ -442,16 +442,21 @@ document.addEventListener('click', (e) => {
     }
     case 'pauseToggle':
       if (!X || !X.start) break;
-      if (X.paused) {
-        X.pausedTotal = (X.pausedTotal || 0) + (Date.now() - X.pausedAt);
-        X.paused = false;
-      } else {
-        X.paused = true;
-        X.pausedAt = Date.now();
-      }
-      saveDraft();
+      togglePause();
       rerender();
       break;
+    case 'fwOpen': {
+      const fk = fwKindNow();
+      if (fk) fk.open();
+      break;
+    }
+    case 'fwToggle': {
+      const fk = fwKindNow();
+      if (!fk) break;
+      fk.toggle();
+      fwUpdate();
+      break;
+    }
     case 'exNote':
       U.noteOpen = null;
       {

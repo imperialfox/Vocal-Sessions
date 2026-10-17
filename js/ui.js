@@ -933,7 +933,7 @@ function songSessionBody(ss, mode) {
             '<div class="row"><button class="ibtn acc" data-a="playTake" data-k="' +
             t.id +
             '" aria-label="Play take">' +
-            (playingId === t.id ? ICON.pause : ICON.play) +
+            (takePlaying(t.id) ? ICON.pause : ICON.play) +
             '</button><span class="lbl">' +
             timeOf(t.created) +
             ' · ' +
@@ -1088,6 +1088,7 @@ function render(keepScroll) {
   placeKnobs();
   logReveal();
   songsAfter();
+  fwUpdate();
 }
 const rerender = () => render(true);
 function go(fn) {

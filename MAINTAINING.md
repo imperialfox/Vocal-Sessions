@@ -46,7 +46,8 @@ Notes for whoever works on the app next, whether that's Ivan, a new Claude sessi
 | `js/songs.js` | Songs: the list, pasting and labelling lyrics, the lyrics screen, marks and cues, editing, search, pins, and checking saved songs (`cleanSong`) |
 | `js/changelog.js` | Settings › Changelog, built from CHANGELOG.md |
 | `js/ui.js` | Top bar, tab bar, sidebar, sheets, `render()` and the sliding picker knobs |
-| `js/session.js` | Running a session (steps, clock, finishing, editing) and recording takes |
+| `js/session.js` | Running a session (steps, clock, finishing, editing, `togglePause()`) and recording and playing takes |
+| `js/window.js` | **The floating window** (`FW`, `FW_KINDS`): a session or playing take shown on every other screen. See The floating window below |
 | `js/backup.js` | Export, Check a backup, restore, undo, and Copy for Toggl |
 | `js/events.js` | Every button action, swipe to delete, and blocking zoom |
 | `js/gestures.js` | Pull to refresh and the update check, rotating, keyboard shortcuts, dragging sheets, scrolling |
@@ -72,6 +73,7 @@ Everything stays on the device. There is no server.
 | localStorage | `vocalDraft` | The session in progress (`X`), so it survives closing the app. Song practice only has a `start` (and a draft) once its first take starts recording |
 | localStorage | `vocalBackupLog` | Backup history for this device |
 | localStorage | `vocalSongPrefs` | This device's song sort order and recent searches (not backed up) |
+| localStorage | `vocalWindow` | The floating window's corner on this device, `{corner: 'br'}` (not backed up) |
 | localStorage | `vocalBeforeUpgrade` | The data as it was before the last data upgrade, kept for 30 days |
 | IndexedDB `vocalTakes` (version 2) | store `takes` | Recordings, with their audio as Blobs |
 | IndexedDB `vocalTakes` | store `undo` | The copy kept for 30 days after a restore |
@@ -126,6 +128,18 @@ Since 3.11 a song is one continuous page: `.sgsong .sgsec` has no background, ju
 ### Recordings
 
 Each take in IndexedDB is `{id, songId, created, len, size, type, star, blob, note?, o?}`. `o` is the place in the song it was recorded from (an `order` entry); takes without one (song practice, and everything before 3.9) belong to the whole song. `prune()` keeps the last `KEEP_TAKES` (3) unstarred takes per song, whatever their section, plus every starred one. Recording a section uses the same `startRec`/`stopRec`/`saveRec` as song practice, with a `{songId, o}` target; while it runs, `rec.o` locks the song screen to it.
+
+### The floating window
+
+Since 3.12, `js/window.js` shows a small window on every screen outside the thing it's for. It's its own element, `#fw`, added to `<body>` and kept across redraws; **it must never go in `#layer`**, or the sheet scroll guards (`overlayOpen()` in gestures.js) would treat it as an open sheet.
+
+- **Kinds:** `FW_KINDS` lists what can be shown, in the order they win: `take` (a take playing or paused from the window), then `session` (a session with a `start`; untimed song practice has none). Each has `active()`, `own()` (you're on its own screen, so it isn't needed), `info()` (its text, time and progress), `toggle()` (its button) and `open()` (back to where you were). If the winner is on its own screen, the next one is tried. Song Clock's "Playing along" can be added as a third kind.
+- **Updating:** `render()` calls `fwUpdate()` last; a MutationObserver on `#layer` calls it when sheets, the clock or menus come and go; playback's play and pause events call it too. `fwTick()` only changes its text: every second for a session, and from the take's progress loop. It hides whenever there's a sheet, the clock, a recording, song search or a text field in use.
+- **Where you were:** `FW.sess` is `{view, y}`, the session step last shown and its scroll (kept up to date by a scroll listener). `FW.take` is `{id, place}`, set by `playTake()` from `fwHere()`: the tab, view, song, sheet and its `sd`, mode and scroll. Opening restores them through `fwGo()`, which renders and then scrolls.
+- **Takes:** `takePlaying(id)` is true only while a take is actually playing, so its own buttons show Play when it's paused from the window, and tapping them carries on. Closing a section's takes sheet stops a paused take but lets a playing one carry on.
+- **Corners:** `FW.corner` is `tl`, `tr`, `bl` or `br` (default), kept in localStorage `vocalWindow`. `fwBounds()` measures the room each time: right of the sidebar (the `.dock`'s left and padding), below the top bar, above whatever is in the dock (tab bar, the session button or Recall's hint capsule). Dragging follows the finger with pointer events; on release `fwThrow()` picks the corner from where it is plus 0.2 s of its speed, and springs there with `MOTION.spring()` on `nav`, starting at the finger's speed. There's no tucking against the edge.
+- **Motion:** it rises in on `gentle` and shrinks out a little quicker; with motion off or Reduce Motion it just appears. `MOTION.spring(from, to, v, {spring, frame, done})` is a JS spring that starts with a speed, for anything thrown.
+- **Tests:** `tests/test_window.py`, and the random-tap test checks it never shows over a sheet, while recording or on its own screen, never leaves the screen, and is there whenever a session is running elsewhere.
 
 ### Rules that keep old data working
 
@@ -199,6 +213,7 @@ The tests run with motion off (see Motion above), so nothing waits on a spring. 
 | `test_recall.py` | Recall: the five hint levels (checked letter by letter, and that nothing moves), peeking, the hint capsule and its menu, From the start, From the end and Start anywhere |
 | `test_fixes.py` | 3.10.1: sheets keep their scroll to themselves (real touch swipes and the wheel), song practice timed from its first take, the weekly goal opening Progress, Recall's pills (every line's place checked at each level and size), peeking, holding and Peek length in backups |
 | `test_sections.py` | Recording a section: selecting, the lock while recording, takes saved with their place, the review sheet, stars and the keep rule across sections, unlink and reorder, leaving mid-take, and backups with Exclude recordings |
+| `test_window.py` | 3.12: the floating window's clock, pausing from it, going back to the same step and scroll or the same take, a take winning over a session, dragging and flicking to each corner (remembered after a reload), where it hides, and every size in light and dark, including above Recall's hint capsule |
 | `test_lyrics.py` | 3.11: the shared springs, the continuous lyrics page, focusing a section (patch, controls, dim and blur by distance, labels sharp), tapping away, Marks, Recall's label focus, Reduce Motion, easing with motion on, and every size with a section focused |
 | `test_layout.py` | Every screen on iPhone, iPhone landscape, iPad and Mac, light and dark, plus pull to refresh |
 | `test_fuzz.py` | Thousands of random taps, checking nothing breaks after each one |

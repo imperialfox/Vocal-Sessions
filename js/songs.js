@@ -1489,9 +1489,9 @@ function takeRowHTML(t, tag) {
     '<div class="row sgtake"><button class="ibtn acc" data-a="playTake" data-k="' +
     t.id +
     '" aria-label="' +
-    (playingId === t.id ? 'Pause' : 'Play') +
+    (takePlaying(t.id) ? 'Pause' : 'Play') +
     ' take">' +
-    (playingId === t.id ? ICON.pause : ICON.play) +
+    (takePlaying(t.id) ? ICON.pause : ICON.play) +
     '</button><button class="lbl tk" data-a="takeNote" data-k="' +
     t.id +
     '" aria-label="Notes for this take">' +
@@ -1541,9 +1541,9 @@ function takesSheet(sd) {
       '<div class="newtake"><button class="playbig" data-a="playTake" data-k="' +
       fresh.id +
       '" aria-label="' +
-      (playingId === fresh.id ? 'Pause' : 'Play') +
+      (takePlaying(fresh.id) ? 'Pause' : 'Play') +
       ' new take">' +
-      (playingId === fresh.id ? ICON.pause : ICON.play) +
+      (takePlaying(fresh.id) ? ICON.pause : ICON.play) +
       '</button><button class="lbl tk" data-a="takeNote" data-k="' +
       fresh.id +
       '" aria-label="Notes for the new take"><span class="sgtag">New take</span><span class="tkw">Just now · ' +

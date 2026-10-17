@@ -86,6 +86,47 @@ const MOTION = (() => {
     });
   }
 
+  // a spring that starts moving: from and to are {x, y, …} in px, v is the finger's speed in px/s (3.12, the floating
+  // window's corner snap). o: {spring, frame(p), done()}. Returns a function that stops it. With motion off it jumps.
+  function spring(from, to, v, o) {
+    o = o || {};
+    let stop = false;
+    if (!on()) {
+      if (o.frame) o.frame(to);
+      if (o.done) o.done();
+      return () => {};
+    }
+    const s = SPRINGS[o.spring] || SPRINGS.gentle,
+      w = 2 * Math.PI * s.f,
+      wd = w * Math.sqrt(1 - s.z * s.z),
+      T = Math.log(500) / (s.z * w);
+    const ax = Object.keys(to).map((k) => {
+      const A = from[k] - to[k];
+      return { k, A, B: (((v && v[k]) || 0) + s.z * w * A) / wd };
+    });
+    const t0 = performance.now();
+    const step = (now) => {
+      if (stop) return;
+      const t = (now - t0) / 1000 / speed,
+        e = Math.exp(-s.z * w * t),
+        p = {};
+      let left = 0;
+      ax.forEach((a) => {
+        p[a.k] = to[a.k] + e * (a.A * Math.cos(wd * t) + a.B * Math.sin(wd * t));
+        left = Math.max(left, e * (Math.abs(a.A) + Math.abs(a.B)));
+      });
+      if (t >= T || left < 0.3) {
+        if (o.frame) o.frame(to);
+        if (o.done) o.done();
+        return;
+      }
+      if (o.frame) o.frame(p);
+      requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+    return () => (stop = true);
+  }
+
   // distance blur: d is how many lines away from the focus (0 = in focus)
   const blur = (d) => (d <= 0 || reduced() ? 0 : +((BLUR_MAX * Math.min(d, 5)) / 5).toFixed(2));
   const dim = (d) => (d <= 0 ? 1 : +Math.max(0.3, 0.55 - 0.05 * d).toFixed(2));
@@ -108,6 +149,7 @@ const MOTION = (() => {
     ease,
     stagger,
     animate,
+    spring,
     setSpeed,
     speed: () => speed,
     publish,

@@ -1169,7 +1169,7 @@ function takeRows(sid) {
           '<div class="row"><button class="ibtn acc" data-a="playTake" data-k="' +
             t.id +
             '" aria-label="Play take">' +
-            (playingId === t.id ? ICON.pause : ICON.play) +
+            (takePlaying(t.id) ? ICON.pause : ICON.play) +
             '</button><button class="lbl tk" data-a="takeNote" data-k="' +
             t.id +
             '" aria-label="Notes for this take">' +

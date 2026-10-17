@@ -274,7 +274,7 @@ function closeSheet() {
     }
   }
   if (s === 'edit') E = null;
-  if (s === 'sgTakes') stopPlayback();
+  if (s === 'sgTakes' && !takePlaying(playingId)) stopPlayback(); // a playing take carries on, in the floating window
   const r = U.sd && U.sd.ret;
   if (typeof r === 'string') {
     U.sheet = r;
@@ -286,6 +286,19 @@ function closeSheet() {
   U.noteOpen = null;
   pendingImport = null;
   rerender();
+}
+
+// pause or carry on with the session's clock (the clock overlay and the floating window)
+function togglePause() {
+  if (!X || !X.start) return;
+  if (X.paused) {
+    X.pausedTotal = (X.pausedTotal || 0) + (Date.now() - X.pausedAt);
+    X.paused = false;
+  } else {
+    X.paused = true;
+    X.pausedAt = Date.now();
+  }
+  saveDraft();
 }
 
 /* ===== Recording ===== */
@@ -465,16 +478,24 @@ async function prune(songId) {
 }
 function stopPlayback() {
   if (player) {
-    player.pause();
-    URL.revokeObjectURL(player.src);
-    player = null;
+    const p = player;
+    player = null; // first, so its pause doesn't redraw the window
+    p.pause();
+    URL.revokeObjectURL(p.src);
   }
   playingId = null;
+  FW.take = null;
 }
+// a take that's playing now (not paused from the floating window)
+const takePlaying = (id) => !!(id && playingId === id && player && !player.paused);
 function playTake(id) {
-  if (playingId === id) {
-    stopPlayback();
-    rerender();
+  if (playingId === id && player) {
+    // paused from the floating window: carry on from there; playing: stop, as before
+    if (player.paused) FW_KINDS[0].toggle();
+    else {
+      stopPlayback();
+      rerender();
+    }
     return;
   }
   stopPlayback();
@@ -482,6 +503,13 @@ function playTake(id) {
   if (!t) return;
   player = new Audio(URL.createObjectURL(t.blob));
   playingId = id;
+  FW.take = { id, place: fwHere() }; // where to come back to from the floating window
+  player.onplay = player.onpause = () => {
+    if (player !== p) return;
+    // its own play button shows the change; elsewhere only the floating window does
+    if (document.querySelector('[data-a=playTake][data-k="' + id + '"]')) rerender();
+    else fwUpdate();
+  };
   player.onended = () => {
     stopPlayback();
     rerender();
@@ -498,6 +526,7 @@ function playTake(id) {
     const el = $('pg-' + id),
       d = isFinite(p.duration) && p.duration > 0 ? p.duration : t.len || 1;
     if (el) el.style.width = Math.min(100, (p.currentTime / d) * 100) + '%';
+    if (FW.shown === 'take') fwTick();
     requestAnimationFrame(tick);
   };
   requestAnimationFrame(tick);

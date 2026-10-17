@@ -9,6 +9,30 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.12 · 17 Oct 2026
+*A floating window for sessions and takes*
+<!-- area: practice -->
+
+**Floating window**
+- Leave a session and a small window stays on every other screen, showing what's running (like "Focused session · Rotation") and its time.
+- Its button pauses the session without leaving the page. While paused, it says Paused and the time stops.
+- Tap it to go straight back to the same step, scrolled to where you were.
+- Song practice gets the window once its first take starts, since that's when its clock starts.
+- Today's Resume button and the In progress row still work as before.
+
+<!-- area: recordings -->
+**Takes**
+- Switch away while a take is playing and the window shows the take instead: "Playing · Chorus 2" (or the song's name for song practice), its time and progress, and a pause button.
+- Tap it to go back to the song with that section's takes open, or to song practice.
+- If a session and a take are both going, the take is shown. The window goes when the take ends.
+- Closing a section's takes now lets the take carry on playing, with the window there to pause it.
+
+<!-- area: look -->
+**Moving it**
+- Drag it to any corner and it springs there, like picture in picture on iPhone. A quick flick sends it to the corner you throw it towards.
+- It remembers its corner on this device, starting in the bottom right above the tab bar.
+- It stays out of the way: hidden on its own screen, while a sheet is open and while recording, and clear of the tab bar, Recall's hint capsule and the sidebar on iPad and Mac.
+
 ## 3.11 · 17 Oct 2026
 *Lyrics as one page, and the app's own springs*
 <!-- area: songs -->
