@@ -1057,15 +1057,20 @@ function sgSection(sg, idx) {
     });
   });
   h += '</div>';
+  // the focused section's controls sit on its soft patch (3.11): Record, its takes, and Marks
   if (sel && !rec)
     h +=
-      '<div class="sgrecp">' +
-      (n ? '<button class="sgpill" data-a="sgTakes" data-k="' + o + '">' + nTakes(n) + '</button>' : '') +
-      '<button class="sgpill blue" data-a="sgRec" data-k="' +
+      '<div class="sgrecp"><button class="sgpill blue" data-a="sgRec" data-k="' +
       o +
       '">' +
       SGI.mic +
-      'Record</button></div>';
+      'Record</button>' +
+      (n ? '<button class="sgpill" data-a="sgTakes" data-k="' + o + '">' + nTakes(n) + '</button>' : '') +
+      '<button class="sgpill" data-a="sgMarks" data-k="' +
+      o +
+      '">' +
+      SGI.pen +
+      'Marks</button></div>';
   return h + '</section>';
 }
 function lyricsEditHTML(sg) {
@@ -2056,7 +2061,13 @@ const SG_ACT = {
   sgSec(el, v, k) {
     if (rec || U.sEdit) return;
     U.sSec = U.sSec === k ? null : k;
-    rerender();
+    sgRefocus();
+  },
+  // Marks on a focused section: Annotate, scrolled to that section
+  sgMarks(el, v, k) {
+    if (rec) return toast('Stop recording first');
+    SG_ACT.sgEdit();
+    if (U.sEdit) scrollToSec(k);
   },
   sgRec(el, v, k) {
     const sg = songShown();
@@ -2507,6 +2518,7 @@ function songsAfter() {
   if (songShown()) {
     sgFit();
     sgPlaceMenu();
+    sgFocusPaint(false);
   }
   sgPlace('ctxmenu', '.rowc.lifted', 'row');
   sgPlace('sortmenu', '#hdrsort', 'under');
@@ -2525,6 +2537,80 @@ function songsAfter() {
   }
 }
 // one phrase per line: one size for a whole section, shrunk to fit like iOS, wrapping with a hanging indent as a last resort
+/* ===== Songs: focusing a section (3.11) =====
+   The lyrics are one continuous page. Tapping a section gives it a soft patch with its controls,
+   and everything else dims and blurs more the further it is (MOTION.blur, at most 1.5 px).
+   Labels only dim, so every section stays easy to aim at. Focusing updates the page in place
+   rather than redrawing it, so the fade can ease instead of snapping. */
+function sgRefocus() {
+  const sg = songShown(),
+    box = document.querySelector('.sgsong');
+  if (!sg || !box || U.sEdit || SG.drag || !hasLyrics(sg)) return rerender();
+  const t = document.createElement('div');
+  sg.order.forEach((x, i) => {
+    const live = box.querySelector('.sgsec[data-o="' + x.o + '"]');
+    if (!live) return;
+    t.innerHTML = sgSection(sg, i);
+    const nw = t.firstElementChild;
+    [...live.attributes].forEach((a) => !nw.hasAttribute(a.name) && live.removeAttribute(a.name));
+    [...nw.attributes].forEach((a) => live.getAttribute(a.name) !== a.value && live.setAttribute(a.name, a.value));
+    const lh = live.querySelector('.sghead'),
+      nh = nw.querySelector('.sghead');
+    if (lh && nh && lh.innerHTML !== nh.innerHTML) lh.innerHTML = nh.innerHTML;
+    const lc = live.querySelector('.sgrecp'),
+      nc = nw.querySelector('.sgrecp');
+    if (lc) lc.remove();
+    if (nc) {
+      live.appendChild(nc);
+      MOTION.animate(nc, [{ opacity: 0, transform: 'translateY(-4px)' }, { opacity: 1, transform: 'none' }], { fade: true });
+    }
+  });
+  const want = !rec && !hintLv() && !sg.order.some((x) => x.o === U.sSec),
+    nx = box.nextElementSibling,
+    hint = nx && nx.classList.contains('sghint') ? nx : null;
+  if (want && !hint) box.insertAdjacentHTML('afterend', '<p class="sghint">Tap a section to record it</p>');
+  if (!want && hint) hint.remove();
+  sgFocusPaint(true);
+}
+function sgFocusPaint(animate) {
+  const box = document.querySelector('.sgsong');
+  if (!box) return;
+  const sel = box.querySelector('.sgsec.sel'),
+    rows = [];
+  box.querySelectorAll('.sgsec').forEach((sec) =>
+    sec.querySelectorAll('.sghead,.sgcue,.sgl,.sgnote').forEach((el) =>
+      rows.push({ el, own: sec === sel, label: el.classList.contains('sghead') })
+    )
+  );
+  let first = -1,
+    last = -1;
+  rows.forEach((r, i) => {
+    if (r.own) {
+      if (first < 0) first = i;
+      last = i;
+    }
+  });
+  if (!animate) box.classList.add('nofx');
+  box.classList.toggle('focused', !!sel);
+  rows.forEach((r, i) => {
+    const st = r.el.style;
+    if (!sel || r.own) {
+      st.removeProperty('--fo');
+      st.removeProperty('--ff');
+      return;
+    }
+    const d = i < first ? first - i : i - last,
+      b = r.label ? 0 : MOTION.blur(d);
+    st.setProperty('--fo', r.label ? MOTION.dimLabel(d) : MOTION.dim(d));
+    if (b) st.setProperty('--ff', 'blur(' + b + 'px)');
+    else st.removeProperty('--ff');
+  });
+  if (!animate) {
+    void box.offsetWidth;
+    box.classList.remove('nofx');
+  }
+}
+const SG_FS = 17;
 function sgFit() {
   document.querySelectorAll('.sglines').forEach((box) => {
     const ls = [...box.querySelectorAll('.sgl')];
@@ -2532,13 +2618,14 @@ function sgFit() {
       l.classList.remove('wrap');
       l.style.fontSize = '';
     });
-    let size = 19;
+    // lyrics are body size (17px) since 3.11; long lines shrink a little, then wrap
+    let size = SG_FS;
     ls.forEach((l) => {
       if (l.scrollWidth > l.clientWidth + 1)
-        size = Math.min(size, Math.floor(((19 * l.clientWidth) / l.scrollWidth) * 2) / 2 - 0.5);
+        size = Math.min(size, Math.floor(((SG_FS * l.clientWidth) / l.scrollWidth) * 2) / 2 - 0.5);
     });
-    size = Math.max(15, size);
-    if (size < 19)
+    size = Math.max(14, size);
+    if (size < SG_FS)
       ls.forEach((l) => {
         l.style.fontSize = size + 'px';
         if (l.scrollWidth > l.clientWidth + 1) l.classList.add('wrap');
@@ -2847,6 +2934,22 @@ document.addEventListener(
       return;
     }
     const el = e.target.closest && e.target.closest('[data-a]');
+    // tapping away from a focused section lets it melt back into the page (3.11)
+    if (
+      !el &&
+      U.sSec &&
+      !U.sEdit &&
+      !rec &&
+      !U.sheet &&
+      songShown() &&
+      e.target.closest &&
+      e.target.closest('#app') &&
+      !e.target.closest('.sgsec')
+    ) {
+      U.sSec = null;
+      sgRefocus();
+      return;
+    }
     // iPhone search: tapping empty space ends an empty search, or just puts the keyboard away
     if (!el && U.sFocus && !split() && U.tab === 'songs' && !U.view && !e.target.closest('#sgbar')) {
       if (!(U.sq || '').trim()) endSearch();

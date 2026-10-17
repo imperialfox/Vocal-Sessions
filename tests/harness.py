@@ -95,6 +95,8 @@ class T:
         if ua: args['user_agent'] = ua
         args.update(ctx_args or {})
         ctx = b.new_context(**args)
+        # motion off by default, so nothing waits on springs; a test can turn it back on with its own init
+        ctx.add_init_script("try{localStorage.setItem('vocalMotion','0')}catch(e){}")
         if init: ctx.add_init_script(init)
         pg = ctx.new_page()
         tag = f'{self.name} {w}x{h}'

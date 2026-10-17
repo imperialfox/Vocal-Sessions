@@ -39,6 +39,7 @@ Notes for whoever works on the app next, whether that's Ivan, a new Claude sessi
 |---|---|
 | `js/content.js` | **The practice content:** goals, coach video and timings (`VID`), exercises (`FOUND`, `ROT`), write-ups (`DESC`), quick words and Toggl tags. Loaded first |
 | `js/config.js` | App settings and fixed design: limits, focus areas and colours, exercise icons |
+| `js/motion.js` | **The shared springs** (`MOTION`): gentle, nav and ripple springs as CSS `linear()` easings and `--ease-*`/`--dur-*` variables, stagger helpers, Reduce Motion, the speed setting and the distance blur. See Motion below |
 | `js/storage.js` | Loading, checking (`cleanData`) and saving data, data-version upgrades, recordings in IndexedDB |
 | `js/helpers.js` | Small helpers (dates, text, icons, layout) and the on-screen state `U` |
 | `js/screens.js` | Today, Progress, Exercises, Settings and the session steps |
@@ -108,6 +109,20 @@ Recall is a song mode (`U.sMode = 'recall'`) that hides lyrics without changing 
 
 The only Recall setting is **Peek length**, `D.prefs.peek` (1, 2, 3 or 5 seconds; missing means 2). `D.prefs` holds settings that travel with backups; `cleanData()` drops values it doesn't know.
 
+### Motion
+
+Everything that moves uses `MOTION` (`js/motion.js`), so the app feels the same everywhere and later features never add their own easing.
+
+- **Springs:** `gentle` (ζ 0.82, 1.9 Hz: rows, capsules, sheets, fades), `nav` (ζ 0.86, 2.2 Hz: moving between pages, a little quicker) and `ripple` (ζ 0.6, 2.4 Hz: peeks and small pops). CSS uses `var(--dur-gentle)` and `var(--ease-gentle)` (and so on); JS uses `MOTION.animate(el, frames, {spring, delay, ms, fade})`, which does nothing (or a short fade with `fade: true`) when motion is off.
+- **Stagger:** `MOTION.stagger(i, 'word' | 'row' | 'bar')` gives 30, 45 or 30 ms per item.
+- **Reduce Motion** (the iOS setting) and **speed:** `MOTION.on()` is false with Reduce Motion or speed 0. `MOTION.setSpeed(4)` is slow motion for tuning on a device, `setSpeed(1)` puts it back; it's kept in localStorage `vocalMotion`, never in backups. With motion off, every `--dur-*` is `0ms` and `<html>` has `motion-off`.
+- **Distance blur:** `MOTION.blur(d)` (up to `BLUR_MAX`, 1.5 px, and 0 with Reduce Motion), `MOTION.dim(d)` (down to 0.3) and `MOTION.dimLabel(d)` (labels only dim, down to 0.45), where `d` is how many lines away from the focus. Song Clock's Blur ahead should reuse these.
+- **Tests run with motion off:** the harness sets `vocalMotion` to `0` before each page loads. A test that needs real motion passes its own `init` setting it to `1` (see `test_lyrics.py`).
+
+### The lyrics page
+
+Since 3.11 a song is one continuous page: `.sgsong .sgsec` has no background, just its label and space. The lyrics editor (`lyricsEditHTML`) still uses cards. Tapping a section (`sgSec`) or tapping away (the click handler in "taps that aren't on a button") changes `U.sSec` and calls `sgRefocus()`, which **updates the page in place** rather than redrawing it: each section's attributes, header and controls (`.sgrecp`: Record, Takes, Marks) are copied from a fresh `sgSection()`, while the lines stay the same elements so their fade can ease. `sgFocusPaint()` then sets `--fo` (opacity) and `--ff` (blur filter) on every row outside the focused section, by distance in rows; `songsAfter()` calls it after every redraw without easing. In Recall, lines peek, so a section is focused from its label. **Marks** (`sgMarks`) opens Annotate scrolled to that section.
+
 ### Recordings
 
 Each take in IndexedDB is `{id, songId, created, len, size, type, star, blob, note?, o?}`. `o` is the place in the song it was recorded from (an `order` entry); takes without one (song practice, and everything before 3.9) belong to the whole song. `prune()` keeps the last `KEEP_TAKES` (3) unstarred takes per song, whatever their section, plus every starred one. Recording a section uses the same `startRec`/`stopRec`/`saveRec` as song practice, with a `{songId, o}` target; while it runs, `rec.o` locks the song screen to it.
@@ -167,7 +182,7 @@ python tests/run.py --one-at-a-time  # everything, one file after another: about
 VS_FUZZ_STEPS=2000 python tests/run.py fuzz   # a longer random-tap run
 ```
 
-The tests drive the real app in Chromium, served from `localhost` as GitHub Pages would serve it. Screenshots of every screen go to `tests/output/`. On GitHub they're attached to each run as **screenshots**.
+The tests run with motion off (see Motion above), so nothing waits on a spring. The tests drive the real app in Chromium, served from `localhost` as GitHub Pages would serve it. Screenshots of every screen go to `tests/output/`. On GitHub they're attached to each run as **screenshots**.
 
 | File | Covers |
 |---|---|
@@ -184,6 +199,7 @@ The tests drive the real app in Chromium, served from `localhost` as GitHub Page
 | `test_recall.py` | Recall: the five hint levels (checked letter by letter, and that nothing moves), peeking, the hint capsule and its menu, From the start, From the end and Start anywhere |
 | `test_fixes.py` | 3.10.1: sheets keep their scroll to themselves (real touch swipes and the wheel), song practice timed from its first take, the weekly goal opening Progress, Recall's pills (every line's place checked at each level and size), peeking, holding and Peek length in backups |
 | `test_sections.py` | Recording a section: selecting, the lock while recording, takes saved with their place, the review sheet, stars and the keep rule across sections, unlink and reorder, leaving mid-take, and backups with Exclude recordings |
+| `test_lyrics.py` | 3.11: the shared springs, the continuous lyrics page, focusing a section (patch, controls, dim and blur by distance, labels sharp), tapping away, Marks, Recall's label focus, Reduce Motion, easing with motion on, and every size with a section focused |
 | `test_layout.py` | Every screen on iPhone, iPhone landscape, iPad and Mac, light and dark, plus pull to refresh |
 | `test_fuzz.py` | Thousands of random taps, checking nothing breaks after each one |
 

@@ -33,7 +33,7 @@ def run(b, t):
     # tap a section to select it
     ok('Tap a section to record it' in pg.inner_text('main'), 'the song says sections can be recorded')
     pg.click(sec(o4) + ' .sgl >> nth=0'); pg.wait_for_timeout(200)
-    ok(pg.evaluate("U.sSec") == o4 and pg.locator(sec(o4) + '.sel').count() == 1, 'tapping a section selects it, with an outline')
+    ok(pg.evaluate("U.sSec") == o4 and pg.locator(sec(o4) + '.sel').count() == 1, 'tapping a section selects it, with a soft patch')
     ok(pg.locator(sec(o4) + ' [data-a=sgRec]').count() == 1 and pg.locator(sec(o4) + ' [data-a=sgTakes]').count() == 0,
        'a selected section offers Record, and no takes pill before there are takes')
     ok('Tap a section' not in pg.inner_text('main'), 'the hint goes once a section is selected')

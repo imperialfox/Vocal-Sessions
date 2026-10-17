@@ -9,6 +9,24 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.11 · 17 Oct 2026
+*Lyrics as one page, and the app's own springs*
+<!-- area: songs -->
+
+**The lyrics page**
+- A song is now one continuous page. The boxes around each section are gone: small grey labels and a little space separate them, and the lyrics are a comfortable reading size.
+- Tap a section to focus it. A soft patch appears behind just that section, with **Record**, its takes and **Marks**.
+- While a section is focused, the rest of the song dims and softly blurs, more the further away it is. Far lyrics stay recognisable, and the section labels never blur, so it's easy to pick where to go next.
+- Tap the same section again, or anywhere away from the lyrics, and it melts back into the page.
+- **Marks** opens Annotate at that section.
+- In Recall, tapping a line still peeks at it; tap a section's label to focus it.
+- With Reduce Motion on in your iPhone's settings, other sections only dim, with no blur and no easing.
+- The lyrics editor keeps its boxes, since they help while typing.
+
+<!-- area: look -->
+**Motion**
+- The app now has one shared set of springs, so movement can feel the same everywhere: a gentle one for most things, a slightly quicker one for moving between pages, and a livelier one for small pops. The lyrics focus is the first thing to use them, and more will follow.
+
 ## 3.10.2 · 16 Oct 2026
 *Recall stays put*
 <!-- area: songs -->

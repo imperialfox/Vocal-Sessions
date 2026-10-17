@@ -2,9 +2,9 @@
 
 A mobile-first companion for structured vocal practice, styled like a native iOS app. It's a single HTML file with no install, no backend and no account. It's designed to live on your iPhone Home Screen.
 
-![Version 3.10.2](https://img.shields.io/badge/version-3.10.2-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
+![Version 3.11](https://img.shields.io/badge/version-3.11-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
 
-**Current version: 3.10.2 · 16 Oct 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
+**Current version: 3.11 · 17 Oct 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
 
 ---
 
@@ -70,12 +70,13 @@ And **Songs**, for learning a song: paste the lyrics, and they're split into lab
 - **The list:** up to 3 pinned songs at the top, then the rest sorted by Recently practised, Recently added or Title A–Z (tap the heading). Songs you haven't practised yet say **New**.
   - Swipe right to pin, left to delete. Press and hold (or right-click) for Pin, Rename and Delete. **Edit** selects several songs to pin or delete.
   - **Search** titles, artists and lyrics. It ignores case, punctuation and accents, finds words in any order, even across lines, and forgives a slipped letter in longer words. Lyric matches show the line with the words highlighted.
-- **A song:** one phrase per line, each section in its own card, with repeats numbered (Chorus 1, Chorus 2) and linked sections marked with a chain.
+- **A song:** one continuous page, one phrase per line, with a small label above each section, repeats numbered (Chorus 1, Chorus 2) and linked sections marked with a chain.
+  - **Tap a section to focus it:** a soft patch appears behind it with **Record**, its takes and **Marks** (which opens Annotate there). The rest of the song dims and softly blurs with distance, while labels stay sharp. Tap it again, or away from the lyrics, to clear it. With Reduce Motion on, the rest only dims.
   - **Practise** shows every mark; **Perform** hides the technical ones and shows only the expressive cues. **Key** explains the marks.
-  - **Recall** hides the lyrics a step at a time to learn them by heart: Full lyrics, Word shapes, First words, Cues only and Blank. Hidden letters become soft pills in place, so nothing moves, and marks stay visible. Tap a line to peek, or hold it to keep it showing. Work from the start, from the end, or start anywhere.
+  - **Recall** hides the lyrics a step at a time to learn them by heart: Full lyrics, Word shapes, First words, Cues only and Blank. Hidden letters become soft pills in place, so nothing moves, and marks stay visible. Tap a line to peek, or hold it to keep it showing. Tap a section's label to focus it. Work from the start, from the end, or start anywhere.
   - The pencil opens **Annotate**: tap a word for Breath, Run, Higher, Lower, Sing as (a vowel) or a Note. Add a cue to a section, unlink a repeat to give it its own copy, or hold a section to move it. Undo steps back through changes.
   - **Lyrics** edits the words. Marked words are highlighted, marks follow their words, and a mark whose word changed is flagged to check. One whose word was removed waits at the top of its section to be moved or removed.
-  - **Record a section:** in Practise or Perform, tap a section, then **Record**. The screen stays on that section while it records, with a recording bar at the bottom (time, level meter, Stop). Stopping opens the takes for that section over the song: the new take, every starred one, and the latest and first. Each repeat keeps its own takes, even when linked.
+  - **Record a section:** in Practise or Perform, focus a section, then **Record**. The screen stays on that section while it records, with a recording bar at the bottom (time, level meter, Stop). Stopping opens the takes for that section over the song: the new take, every starred one, and the latest and first. Each repeat keeps its own takes, even when linked.
   - **Song practice** at the bottom starts song practice with that song picked.
 - Songs from song practice are here too, and **Add lyrics** gives them lyrics without losing their recordings.
 

@@ -3812,3 +3812,54 @@ textarea.field.sglyr {
     padding: 0 10px;
   }
 }
+
+/* ===== 3.11 lyrics page =====
+   One continuous page: no section cards, just small labels and space. A tapped section gets a soft patch
+   (surface fill, 14px corners, no border) with Record, Takes and Marks; everything else dims and blurs with
+   distance (set by sgFocusPaint as --fo and --ff). Fades use the shared gentle spring; with Reduce Motion
+   or motion off, --dur-gentle is 0 and there's no blur. The lyrics editor keeps its cards. */
+.sgsong .sgsec {
+  background: transparent;
+  border-radius: 14px;
+  padding: 10px 12px 12px;
+  margin-top: 12px;
+  box-shadow: none;
+  transition: background-color var(--dur-gentle, 0.45s) var(--ease-gentle, ease-out);
+}
+.sgsong .sgsec:first-child {
+  margin-top: 4px;
+}
+.sgsong .sgsec.sel {
+  box-shadow: none;
+  background: var(--surface);
+}
+.sgsong .sgl {
+  font-size: 17px;
+  line-height: 1.5;
+}
+.sgsong .sghead,
+.sgsong .sgcue,
+.sgsong .sgl,
+.sgsong .sgnote {
+  transition:
+    opacity var(--dur-gentle, 0.45s) var(--ease-gentle, ease-out),
+    filter var(--dur-gentle, 0.45s) var(--ease-gentle, ease-out);
+}
+.sgsong.focused .sgsec:not(.sel) .sghead,
+.sgsong.focused .sgsec:not(.sel) .sgcue,
+.sgsong.focused .sgsec:not(.sel) .sgl,
+.sgsong.focused .sgsec:not(.sel) .sgnote {
+  opacity: var(--fo, 1);
+  filter: var(--ff, none);
+}
+.sgsong.nofx,
+.sgsong.nofx * {
+  transition: none !important;
+}
+.sgsong .sgrecp {
+  justify-content: flex-start;
+  margin-top: 10px;
+}
+.sgsong .sgsec.flash {
+  animation: sgflash 1.4s ease;
+}
