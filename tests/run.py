@@ -110,6 +110,8 @@ def main():
     print(f'{sum(p for _, p, _ in results)} passed, {len(failed)} failed in {time.time() - t0:.0f}s')
     for n, f in failed:
         print(f'  ✗ {n}: {f}')
+        # on GitHub, each failure also shows as an annotation on the run's summary page
+        if os.environ.get('GITHUB_ACTIONS'): print(f'::error title={n}::{f}'.replace('\n', ' '))
     return 1 if failed else 0
 
 

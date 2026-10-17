@@ -135,6 +135,19 @@ def motion_off(b, t):
     pg.context.close()
 
 
+def pixel(png):
+    """The colour of the first pixel of a small screenshot, read with the standard library (GitHub has no image library)."""
+    import zlib, struct
+    pos, idat, w = 8, b'', 0
+    while pos < len(png):
+        n, kind = struct.unpack('>I4s', png[pos:pos + 8]); data = png[pos + 8:pos + 8 + n]
+        if kind == b'IHDR': w, ch = struct.unpack('>I', data[:4])[0], {2: 3, 6: 4}[data[9]]
+        if kind == b'IDAT': idat += data
+        pos += 12 + n
+    raw = zlib.decompress(idat)
+    return tuple(raw[1:4])  # first row, first pixel (filter type 0 or 1 leaves the first pixel as is)
+
+
 def first_frame(b, t):
     """The 3.4 checks: the first frame is the plain background with the icon, centred on 100lvh, in light and dark."""
     ok = t.ok
@@ -158,8 +171,7 @@ def first_frame(b, t):
                 if g['w'] != 112 or not g['inside']: bad.append(f'{tag}: icon or bars out of place')
                 if not js:
                     px = pg.screenshot(clip={'x': 2, 'y': 2, 'width': 4, 'height': 4})
-                    from PIL import Image; import io
-                    c = Image.open(io.BytesIO(px)).convert('RGB').getpixel((2, 2))
+                    c = pixel(px)
                     if c != tuple(int(x) for x in want[4:-1].split(', ')): bad.append(f'{tag}: first frame corner is {c}')
                     if name == SIZES[0][0]: pg.screenshot(path=f'{__import__("harness").OUT}/launch-first-frame-{sc}.png')
                 ctx.close()
