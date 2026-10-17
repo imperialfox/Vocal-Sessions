@@ -148,6 +148,7 @@ const fwKindNow = () => FW_KINDS.find((k) => k.id === FW.shown);
 // the window that should be on screen now, if any
 function fwPick() {
   if (!D || U.sheet || U.clock || rec || overlayOpen() || U.sFocus) return null;
+  if (typeof LAUNCH !== 'undefined' && LAUNCH.busy()) return null; // appears after the launch ripple (3.13)
   const a = document.activeElement;
   if (a && a.matches && a.matches('input, textarea, [contenteditable="true"]')) return null; // keep the keyboard clear
   for (const k of FW_KINDS) if (k.active() && !k.own()) return k;
@@ -361,7 +362,8 @@ function fwGestures(el) {
     const a = d.pts[0],
       z = d.pts[d.pts.length - 1],
       dt = Math.max(16, z.t - a.t);
-    const v = e.type === 'pointercancel' ? { x: 0, y: 0 } : { x: ((z.x - a.x) / dt) * 1000, y: ((z.y - a.y) / dt) * 1000 };
+    const v =
+      e.type === 'pointercancel' ? { x: 0, y: 0 } : { x: ((z.x - a.x) / dt) * 1000, y: ((z.y - a.y) / dt) * 1000 };
     fwThrow(v);
   };
   el.addEventListener('pointerup', end);

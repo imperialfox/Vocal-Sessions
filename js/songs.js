@@ -899,7 +899,7 @@ function pinnedCard() {
   if (!p.length) return '';
   const pm = practisedMap();
   return (
-    '<div class="hdr">Pinned songs</div><div class="grp">' +
+    '<div class="hdr" data-rise>Pinned songs</div><div class="grp" data-rise>' +
     p
       .map((s) => {
         const lp = lastPractised(s, pm);

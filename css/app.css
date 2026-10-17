@@ -2251,7 +2251,9 @@ body.reg .shead {
   transition: opacity 0.35s ease;
   contain: strict;
 }
-#splash img {
+/* 3.13: the icon is its plain background (img) with the six sound-wave bars on top as their own elements, placed to
+   match the real icon exactly, so the launch ripple (js/launch.js) can pulse them */
+#splash .sp-icon {
   position: absolute;
   left: 50%;
   top: 50%;
@@ -2259,14 +2261,26 @@ body.reg .shead {
   width: 112px;
   height: 112px;
   border-radius: 26px;
+  overflow: hidden;
   box-shadow: 0 10px 30px rgba(226, 36, 64, 0.28);
   transition: transform 0.45s cubic-bezier(0.3, 0.9, 0.4, 1);
+}
+#splash img {
+  display: block;
+  width: 112px;
+  height: 112px;
+}
+#splash i {
+  position: absolute;
+  width: 9.32px;
+  border-radius: 4.66px;
+  box-shadow: 0 3.6px 7px rgba(116, 0, 11, 0.36);
 }
 #splash.out {
   opacity: 0;
   pointer-events: none;
 }
-#splash.out img {
+#splash.out .sp-icon {
   transform: scale(1.18);
 }
 /* 3.5 Progress */

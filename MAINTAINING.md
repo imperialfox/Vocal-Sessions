@@ -51,6 +51,7 @@ Notes for whoever works on the app next, whether that's Ivan, a new Claude sessi
 | `js/backup.js` | Export, Check a backup, restore, undo, and Copy for Toggl |
 | `js/events.js` | Every button action, swipe to delete, and blocking zoom |
 | `js/gestures.js` | Pull to refresh and the update check, rotating, keyboard shortcuts, dragging sheets, scrolling |
+| `js/launch.js` | **The launch ripple** (`LAUNCH`): the icon's bars pulsing, the launch screen fading and Today rising in. See Motion below |
 | `js/boot.js` | Starts the app: loads saved data, then draws the first screen. Always last |
 
 They're plain scripts, not modules: they share one global scope, and a file can use anything from the files before it. Nothing runs while the files load except in `boot.js`, so the order only matters for `boot.js` being last. Inside each file, sections are still marked `/* ===== Name ===== */`.
@@ -116,10 +117,16 @@ The only Recall setting is **Peek length**, `D.prefs.peek` (1, 2, 3 or 5 seconds
 Everything that moves uses `MOTION` (`js/motion.js`), so the app feels the same everywhere and later features never add their own easing.
 
 - **Springs:** `gentle` (ζ 0.82, 1.9 Hz: rows, capsules, sheets, fades), `nav` (ζ 0.86, 2.2 Hz: moving between pages, a little quicker) and `ripple` (ζ 0.6, 2.4 Hz: peeks and small pops). CSS uses `var(--dur-gentle)` and `var(--ease-gentle)` (and so on); JS uses `MOTION.animate(el, frames, {spring, delay, ms, fade})`, which does nothing (or a short fade with `fade: true`) when motion is off.
-- **Stagger:** `MOTION.stagger(i, 'word' | 'row' | 'bar')` gives 30, 45 or 30 ms per item.
+- **Stagger:** `MOTION.stagger(i, 'word' | 'row' | 'bar')` gives 30, 45 or 30 ms per item, for `MOTION.animate`'s `delay` (which applies the speed, so the stagger itself doesn't, since 3.13).
 - **Reduce Motion** (the iOS setting) and **speed:** `MOTION.on()` is false with Reduce Motion or speed 0. `MOTION.setSpeed(4)` is slow motion for tuning on a device, `setSpeed(1)` puts it back; it's kept in localStorage `vocalMotion`, never in backups. With motion off, every `--dur-*` is `0ms` and `<html>` has `motion-off`.
 - **Distance blur:** `MOTION.blur(d)` (up to `BLUR_MAX`, 1.5 px, and 0 with Reduce Motion), `MOTION.dim(d)` (down to 0.3) and `MOTION.dimLabel(d)` (labels only dim, down to 0.45), where `d` is how many lines away from the focus. Song Clock's Blur ahead should reuse these.
 - **Tests run with motion off:** the harness sets `vocalMotion` to `0` before each page loads. A test that needs real motion passes its own `init` setting it to `1` (see `test_lyrics.py`).
+- **The launch ripple (3.13, `js/launch.js`, `LAUNCH`):** the app's signature moment. On a cold launch the icon's six sound-wave bars pulse in turn (`BAR`: 520 ms each, 70 ms apart, from 120 ms), the launch screen fades with a slight zoom (`FADE`: 300 ms, at 860 ms), then Today's blocks rise in, top to bottom, on `gentle` 45 ms apart (`RISE`). `boot.js` calls `LAUNCH.start()` before the first draw and `LAUNCH.finish()` once recordings have loaded and `LAUNCH.minWait()` has passed (at most `LAUNCH.capWait()`). `restoreImport()` calls `LAUNCH.replay(then)` to replay it on Today, with the toast in `then`. Tab switches and coming back to the app never replay it; an update reload is a cold launch, so it plays.
+  - **Where the bars live:** `#splash` in `index.html` is the icon's plain background (an inline WebP, `<img>`) inside `.sp-icon`, with the six bars as `<i>` elements placed over it. Their positions, sizes, colours and shadow were measured from `splash/logo.png` so the icon looks the same at rest as the real one; `css/app.css` (`#splash i`) has their width and shadow. If the icon changes, regenerate the background and re-measure the bars.
+  - **Today's blocks** are the elements marked `data-rise` in `scrToday()` (and `pinnedCard()`, `backupNudge()`); they're risen in the order they sit on screen, so the iPad dashboard works too. Add `data-rise` to a new Today block to include it.
+  - **Reduce Motion:** no pulses or rises, the launch screen fades in 200 ms. **Motion off** (the tests): it uses the old `.out` class exactly as before 3.13.
+  - **`LAUNCH.busy()`** is true from launch until Today has risen; `fwPick()` returns nothing meanwhile, so the floating window appears after the rise.
+  - Tests: `tests/test_launch.py` (motion on, Reduce Motion, motion off, import replay, the floating window, and the 3.4 first-frame checks at every size).
 
 ### The lyrics page
 

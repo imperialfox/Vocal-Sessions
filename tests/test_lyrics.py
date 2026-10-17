@@ -35,10 +35,10 @@ def run(b, t):
     ok(m['nav'] < m['gentle'], 'the navigation spring is a little quicker than the gentle one')
     ok(m['cap'] == 1.5, 'distance blur is capped at 1.5 px')
     ok(m['speed'] == 0 and m['off'] and m['dur'] == '0ms', 'tests run with motion off, so nothing waits on a spring')
-    ok(m['stag'] == [0, 0], 'staggers collapse to nothing with motion off')
+    ok(m['stag'] == [60, 90], 'staggers are 30 ms a word and 45 ms a row (MOTION.animate applies the speed, 3.13)')
     pg.evaluate("MOTION.setSpeed(4)")
     m2 = pg.evaluate("[localStorage.getItem('vocalMotion'),MOTION.dur('gentle')===MOTION.curve(.82,1.9).ms*4,MOTION.stagger(1,'word')]")
-    ok(m2 == ['4', True, 120], 'slow motion multiplies every spring and stagger, and is kept on this device')
+    ok(m2 == ['4', True, 30], 'slow motion multiplies every spring (staggers through MOTION.animate), and is kept on this device')
     pg.evaluate("MOTION.setSpeed(0)")
     ok(pg.evaluate("MOTION.blur(0)===0&&MOTION.blur(1)<MOTION.blur(3)&&MOTION.blur(9)===1.5&&MOTION.dim(1)>MOTION.dim(4)&&MOTION.dim(20)===.3"),
        'blur grows and opacity falls with distance, within their limits')

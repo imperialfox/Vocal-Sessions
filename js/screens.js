@@ -9,7 +9,7 @@ function backupNudge() {
     age = lb ? Math.floor((Date.now() - new Date(lb)) / 864e5) : null;
   if (lb && age <= 14) return '';
   return (
-    '<button class="nudge" data-a="exportPrep">' +
+    '<button class="nudge" data-rise data-a="exportPrep">' +
     ICON.save +
     '<span style="flex:1"><b>' +
     (lb ? 'Last backup ' + age + ' days ago.' : 'Not backed up yet.') +
@@ -59,13 +59,13 @@ function scrToday() {
   const sw2 = songWeek(),
     songLive = isSong() && !!X.start;
   return (
-    '<button class="dateline" data-a="openCal">' +
+    '<button class="dateline" data-rise data-a="openCal">' +
     dl +
-    '</button><div class="titlerow"><h1><button class="tbtn" data-a="openCal">Today</button></h1><button class="calbtn" data-a="openCal" aria-label="Open practice calendar">' +
+    '</button><div class="titlerow" data-rise><h1><button class="tbtn" data-a="openCal">Today</button></h1><button class="calbtn" data-a="openCal" aria-label="Open practice calendar">' +
     ICON.down +
     '</button></div>' +
     backupNudge() +
-    '<div class="dash"><div class="d-hero"><button class="arch" data-a="goalOpen" aria-label="This week, ' +
+    '<div class="dash"><div class="d-hero"><button class="arch" data-rise data-a="goalOpen" aria-label="This week, ' +
     Math.round(w.mins) +
     ' of your ' +
     WEEK_TARGET +
@@ -82,20 +82,20 @@ function scrToday() {
     '</b><small>of your ' +
     WEEK_TARGET +
     '-minute goal</small></div></button>' +
-    '<div style="margin-top:20px">' +
+    '<div data-rise style="margin-top:20px">' +
     (X && !songLive
       ? '<button class="cta ink" data-a="resume">Resume session</button><button class="ghost" data-a="sheet" data-v="discard">Discard session</button>'
       : '<button class="cta ink" data-a="start">Start session</button>') +
     '</div></div><div class="d-side"><div class="d-week">' +
-    '<div class="week" role="list" aria-label="This week">' +
+    '<div class="week" data-rise role="list" aria-label="This week">' +
     days +
     '</div>' +
-    '<div class="streak">' +
+    '<div class="streak" data-rise>' +
     st +
     '<small>' +
     sub +
     '</small></div></div>' +
-    '<div class="grp" style="margin-top:22px"><div class="row" style="display:block;padding:14px 16px"><div style="display:flex;justify-content:space-between;gap:8px"><span>This month</span><span class="mut">' +
+    '<div class="grp" data-rise style="margin-top:22px"><div class="row" style="display:block;padding:14px 16px"><div style="display:flex;justify-content:space-between;gap:8px"><span>This month</span><span class="mut">' +
     Math.round(mm) +
     ' of ' +
     TARGET +
@@ -115,7 +115,7 @@ function scrToday() {
     '</small></span>' +
     chev +
     '</button></div>' +
-    '<div class="hdr">Just singing</div><div class="grp tiled"><button class="row" data-a="songStart">' +
+    '<div class="hdr" data-rise>Just singing</div><div class="grp tiled" data-rise><button class="row" data-a="songStart">' +
     songTile +
     '<span class="lbl">Song practice<small>' +
     (songLive ? 'In progress · tap to carry on' : 'Record a take and note how it went') +
@@ -126,7 +126,7 @@ function scrToday() {
     '</span>' +
     chev +
     '</button></div>' +
-    '<p class="foot">Song practice has its own stats. It never counts towards your weekly goal, streak or monthly minutes.</p>' +
+    '<p class="foot" data-rise>Song practice has its own stats. It never counts towards your weekly goal, streak or monthly minutes.</p>' +
     pinnedCard() +
     '</div></div>'
   );

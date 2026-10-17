@@ -380,13 +380,12 @@ async function restoreImport() {
     U = freshU();
     window.scrollTo(0, 0);
     render();
-    toast(
-      !undoOK
-        ? 'Backup restored. Undo isn’t available: not enough space.'
-        : r.noRec
-          ? 'Backup restored. Your recordings were kept.'
-          : 'Backup restored'
-    );
+    const msg = !undoOK
+      ? 'Backup restored. Undo isn’t available: not enough space.'
+      : r.noRec
+        ? 'Backup restored. Your recordings were kept.'
+        : 'Backup restored';
+    LAUNCH.replay(() => toast(msg)); // Today replays the launch ripple (3.13), then the toast shows
   } catch (e) {
     U.sheet = null;
     rerender();

@@ -47,7 +47,8 @@ const MOTION = (() => {
   const on = () => speed > 0 && !reduced();
   const dur = (name) => (C[name] ? C[name].ms : C.gentle.ms) * speed;
   const ease = (name) => (C[name] || C.gentle).ease;
-  const stagger = (i, kind) => i * (STAGGER[kind] || STAGGER.row) * speed;
+  // the delay for item i, for MOTION.animate's delay (which applies the speed itself, so this doesn't)
+  const stagger = (i, kind) => i * (STAGGER[kind] || STAGGER.row);
 
   // CSS variables, so stylesheets use the same springs: transition: opacity var(--dur-gentle) var(--ease-gentle)
   function publish() {

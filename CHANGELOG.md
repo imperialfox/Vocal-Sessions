@@ -9,6 +9,19 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.13 · 17 Oct 2026
+*The launch ripple*
+<!-- area: look -->
+
+**Opening the app**
+- When the app opens fresh, the sound-wave bars on the icon pulse one after another, like a ripple.
+- The launch screen then fades away with a slight zoom, and Today's blocks rise in from top to bottom.
+- It only plays when the app opens fresh, or reloads after an update. Switching tabs or coming back to the app doesn't replay it.
+- After importing a backup, the ripple plays again on Today, then "Backup restored" shows.
+- The first moment looks the same as before: the plain background with the icon, with no white flash or jump.
+- If a session is running, its floating window appears once Today has risen in.
+- With Reduce Motion on (Settings › Accessibility › Motion), nothing pulses or rises: the launch screen just fades.
+
 ## 3.12 · 17 Oct 2026
 *A floating window for sessions and takes*
 <!-- area: practice -->

@@ -2,9 +2,9 @@
 
 A mobile-first companion for structured vocal practice, styled like a native iOS app. It's a single HTML file with no install, no backend and no account. It's designed to live on your iPhone Home Screen.
 
-![Version 3.12](https://img.shields.io/badge/version-3.12-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
+![Version 3.13](https://img.shields.io/badge/version-3.13-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
 
-**Current version: 3.12 · 17 Oct 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
+**Current version: 3.13 · 17 Oct 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
 
 ---
 
@@ -145,7 +145,7 @@ The layout follows the device, like a native Apple app:
 | iPad, or a narrower Mac window | Tabs at the top, a dashboard on Today, and split views for History, Exercises and Songs |
 | Mac, or iPad in landscape | A sidebar |
 
-Opening the app shows a short launch screen with the app icon, in light or dark to match your phone. The launch images for each device are in the `splash` folder.
+Opening the app shows a short launch screen with the app icon, in light or dark to match your phone. On a fresh open, the icon's sound-wave bars pulse one after another (the launch ripple), then the screen fades with a slight zoom and Today's blocks rise in from top to bottom. It plays again after an update loads or a backup is imported, but not when switching tabs or coming back to the app. With Reduce Motion on, the launch screen just fades. The launch images iOS shows before the app starts are in the `splash` folder.
 
 Sheets open as centred cards on bigger screens. With a mouse or trackpad, rows highlight on hover. Keyboard shortcuts (Cmd on a Mac, Ctrl elsewhere):
 

@@ -10,23 +10,18 @@ tidyPreUpgrade();
 X = loadDraft();
 normX();
 layout();
+LAUNCH.start(); // before the first draw, so the floating window waits for the launch ripple
 render();
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost'))
   navigator.serviceWorker.register('sw.js').catch(() => {});
-/* launch screen: stay up until recordings are loaded (at least 0.6 s, at most 2.5 s), then fade */
-function hideSplash() {
-  const sp = $('splash');
-  if (!sp || sp.classList.contains('out')) return;
-  sp.classList.add('out');
-  setTimeout(() => sp.remove(), 500);
-}
-const splashMin = new Promise((r) => setTimeout(r, Math.max(0, 600 - performance.now())));
-setTimeout(hideSplash, 2500);
+/* launch screen: stays up until recordings are loaded (at least 0.6 s, at most about 2.5 s), then goes.
+   With motion on, the launch ripple plays meanwhile and the screen goes once it has (js/launch.js). */
+setTimeout(LAUNCH.finish, LAUNCH.capWait());
 checkPersist(true).then(() => {
   if (U.tab === 'settings' && !U.view) rerender();
 });
 Promise.all([refreshTakes(), refreshUndo()])
   .then(rerender)
   .catch(() => {})
-  .then(() => splashMin)
-  .then(hideSplash);
+  .then(() => new Promise((r) => setTimeout(r, LAUNCH.minWait())))
+  .then(LAUNCH.finish);
