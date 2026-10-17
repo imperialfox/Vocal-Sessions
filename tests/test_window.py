@@ -117,7 +117,7 @@ def session(b, t):
     ok(pg.evaluate(CLEAR) == [], 'in the top corner it stays below the top bar')
     t.shot(pg, 'top-left')
     pg.reload()
-    pg.wait_for_function("!document.getElementById('splash')", timeout=6000); pg.wait_for_timeout(300)
+    pg.wait_for_function("!document.getElementById('splash')&&!LAUNCH.busy()", timeout=8000); pg.wait_for_timeout(300)
     ok(pg.evaluate("FW.corner") == 'tl' and pg.evaluate(SHOWN) and at_corner(pg, 'tl'), 'the corner is remembered after a reload')
     ok('vocalWindow' not in pg.evaluate("JSON.stringify(Object.keys(D))"), 'and it isn’t part of the saved data')
     pg.click('#fw .fwopen'); pg.wait_for_timeout(300)

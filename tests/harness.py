@@ -116,8 +116,8 @@ class T:
 
 
 def ready(pg):
-    """Wait for the launch screen to finish."""
-    pg.wait_for_function("!document.getElementById('splash')", timeout=6000)
+    """Wait for the launch screen to finish (and, with motion on, Today's launch ripple: 3.13)."""
+    pg.wait_for_function("!document.getElementById('splash')&&!(typeof LAUNCH!=='undefined'&&LAUNCH.busy())", timeout=8000)
     pg.wait_for_timeout(150)
 
 def fix(name): return os.path.join(FIX, name)
