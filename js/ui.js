@@ -580,7 +580,9 @@ function renderSheet() {
   const key = h ? (U.sheet ? U.sheet + '|' + (k || '') : 'clock') : '';
   const prev = $('layer').querySelector('.sheet'),
     st = prev ? prev.scrollTop : 0,
-    same = !!key && key === lastLayerKey;
+    swap = DET.inPlace(lastLayerKey, key), // Preparing backup becomes Backup ready in the same sheet
+    oldH = swap && prev ? prev.getBoundingClientRect().height : 0,
+    same = !!key && (key === lastLayerKey || swap);
   lastLayerKey = key;
   $('layer').innerHTML = h;
   if (same) {
@@ -589,6 +591,7 @@ function renderSheet() {
       .forEach((x) => x.classList.add('still'));
     const ns = $('layer').querySelector('.sheet');
     if (ns) ns.scrollTop = st;
+    if (swap) DET.sheetSwap(oldH);
   }
   const open = !!h && !!U.sheet;
   if (open && !document.body.classList.contains('sheet-open'))
@@ -1082,6 +1085,7 @@ function render(keepScroll) {
     (isFlow(v) || (!v && U.tab === 'settings') || v === 'log' || (v === 'ex' && !split()) ? ' narrow' : '');
   renderBar();
   renderSheet();
+  const dk = DET.dockKids();
   renderDock();
   renderSide();
   if (keepScroll) window.scrollTo(0, y);
@@ -1089,6 +1093,9 @@ function render(keepScroll) {
   logReveal();
   songsAfter();
   fwUpdate();
+  DET.dockSwap(dk);
+  DET.play();
+  DET.after();
 }
 const rerender = () => render(true);
 function go(fn) {
@@ -1100,6 +1107,7 @@ function go(fn) {
   }
   window.scrollTo(0, 0);
   render();
+  DET.stepIn(DET.stepDir(was, U.view)); // moving between the session's steps: the new one slides in from the side you're heading
 }
 var toastT = null;
 function toast(t) {

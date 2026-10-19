@@ -9,6 +9,46 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.14 · 19 Oct 2026
+*Motion details*
+<!-- area: look -->
+
+**Lists**
+- Deleting a session, song practice, exercise or song: the row shrinks away and the rows below slide up to close the gap.
+- A new exercise slides into its place in the list.
+- Pinning a song makes it travel up into Pinned (and back down when you unpin it). Songs you pin elsewhere slide into Today's pinned list.
+- Changing how songs are sorted slides each song to its new place, one after another.
+- In All sessions, switching between Sessions and Song practice brings the new rows in one after another.
+
+**Progress**
+- Changing the range (D, W, M…) makes the bars ripple to their new heights, left to right.
+- The arrows send the ripple the way time goes: earlier runs right to left, later left to right. The total slides the same way, without rolling digits.
+- The breakdown bars grow from the left, one row after another.
+- Tapping or sliding across the bars still follows your finger instantly.
+
+**Today**
+- Once the app has opened, the weekly goal arc fills to this week's minutes and the Monday to Sunday circles ripple in.
+- After finishing a session, today's circle pops in once you close the summary.
+- After you back up, the backup reminder shrinks away and the page closes the gap.
+- The practice calendar's days ripple in when it opens and when you change month.
+
+**Recall**
+- Stepping down a hint level hides the lyrics word by word, in reading order. Stepping back up shows them again from the end backwards.
+- A line you peek at settles in with a small spring.
+
+**Sessions and songs**
+- Next brings the next step in from the right, and Back brings the earlier one in from the left.
+- Switching between Practise, Recall and Perform brings the bottom buttons in with a spring. Changing the hint level leaves them still.
+- A new take slides in at the top of the takes sheet, and starring a take gives the star a small pop.
+- An exercise's level chart draws from left to right, ending on the latest level.
+
+**Backup**
+- "Preparing backup" turns into "Backup ready" in the same sheet, which grows to fit instead of rising again.
+- After backing up, the red "Last backed up" line fades to its normal colour.
+
+**Reduce Motion**
+- With Reduce Motion on (Settings › Accessibility › Motion), nothing slides, pops or ripples. Changes now fade in and out over about a fifth of a second instead of snapping. Before this, every animation was simply switched off.
+
 ## 3.13 · 17 Oct 2026
 *The launch ripple*
 <!-- area: look -->

@@ -495,7 +495,9 @@ function sessRow(s) {
   const sp = splitOf(s),
     rots = Object.keys(s.rot || {}).map((id) => (exById(id) || { name: (s.rotNames || {})[id] || 'Exercise' }).name);
   return (
-    '<button class="row" data-a="sheet" data-v="session" data-k="' +
+    '<button class="row" data-fk="rs:' +
+    s.id +
+    '" data-a="sheet" data-v="session" data-k="' +
     s.id +
     '"><span class="lbl">' +
     dayLabel(s.date) +
@@ -518,7 +520,9 @@ function songRow(s, a) {
   const n = (s.takes || []).length,
     how = howStr(s);
   return (
-    '<button class="row" data-a="' +
+    '<button class="row" data-fk="rp:' +
+    s.id +
+    '" data-a="' +
     (a || 'sheet') +
     '" data-v="songSession" data-k="' +
     s.id +
@@ -551,7 +555,7 @@ function scrHistory() {
     }).length;
   const { card, brk } = pcardHTML();
   const recentB =
-    '<div class="hdr">Recent</div><div class="grp">' +
+    '<div class="hdr">Recent</div><div class="grp" data-gk="recent">' +
     (recent.length
       ? recent.map(sessRow).join('')
       : '<div class="empty">Your finished sessions will appear here.</div>') +
@@ -579,7 +583,7 @@ function scrHistory() {
     brk +
     '</div>';
   const songB =
-    '<div class="hdr">Song practice</div><div class="grp"><div class="stat3"><div><b>' +
+    '<div class="hdr">Song practice</div><div class="grp" data-gk="songrecent"><div class="stat3"><div><b>' +
     sw2.n +
     '</b>This week</div><div><b>' +
     hm(sw2.m) +
@@ -658,7 +662,9 @@ function sessionHistory(selId) {
         lab +
         ' · <span style="text-transform:none">' +
         hm(D.months[k] || 0) +
-        '</span></div><div class="grp">';
+        '</span></div><div class="grp" data-gk="sm:' +
+        k +
+        '">';
     }
     const rots = Object.keys(s.rot || {}).map(
       (id) => (exById(id) || { name: (s.rotNames || {})[id] || 'Exercise' }).name
@@ -709,7 +715,9 @@ function songHistory(selId) {
         lab +
         ' · <span style="text-transform:none">' +
         hm(sums[k]) +
-        '</span></div><div class="grp">';
+        '</span></div><div class="grp" data-gk="pm:' +
+        k +
+        '">';
     }
     const n = (s.takes || []).length,
       how = howStr(s);
@@ -767,7 +775,7 @@ function scrExercises() {
     '<div class="hdr">Rotation</div><div class="grp tiled">' +
     ROT.map(row).join('') +
     '</div>' +
-    '<div class="hdr">Your exercises</div><div class="grp tiled">' +
+    '<div class="hdr">Your exercises</div><div class="grp tiled" data-gk="custom">' +
     D.custom.map((e) => sw(row(e), 'delEx', e.id)).join('') +
     '<button class="row acc" data-a="sheet" data-v="addEx"><span class="lbl">Add exercise</span>' +
     ICON.plus +

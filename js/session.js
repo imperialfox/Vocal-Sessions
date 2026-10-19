@@ -171,6 +171,7 @@ function finishSession() {
         }
   );
   D.sessions.push(ss);
+  DET.finished();
   const k = monthKey(new Date(X.start));
   D.months[k] = (D.months[k] || 0) + mins;
   exIds(ss).forEach((id) => {
@@ -471,6 +472,7 @@ async function saveRec() {
     U.sd = { k: r.songId, o: r.o, fresh: t.id };
   }
   rerender();
+  if (U.sd && U.sd.fresh === t.id) DET.takeIn();
 }
 async function prune(songId) {
   const loose = (await allTakes()).filter((t) => t.songId === songId && !t.star).sort((a, b) => b.created - a.created);

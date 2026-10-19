@@ -305,7 +305,9 @@ function noteBlock(id, val, ph) {
 }
 // swipe-to-delete row wrapper
 const sw = (inner, sheet, k) =>
-  '<div class="sw" data-sw="1"><button class="swdel" data-a="sheet" data-v="' +
+  '<div class="sw" data-sw="1" data-fk="' +
+  esc(sheet + ':' + k) +
+  '"><button class="swdel" data-a="sheet" data-v="' +
   sheet +
   '" data-k="' +
   esc(k) +

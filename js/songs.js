@@ -761,7 +761,7 @@ function songListHTML() {
   let h = '';
   if (pinned.length)
     h +=
-      '<div class="hdr">Pinned</div><div class="grp sgrp">' +
+      '<div class="hdr">Pinned</div><div class="grp sgrp" data-gk="pinned">' +
       pinned.map((s) => songRowHTML(s, null, null, pm)).join('') +
       '</div>';
   if (rest.length)
@@ -769,7 +769,7 @@ function songListHTML() {
       '<div class="hdr"><button class="hdrsort" id="hdrsort" data-a="sgSortMenu" aria-haspopup="menu">' +
       SG_SORTS[sgp().sort] +
       SGI.down +
-      '</button></div><div class="grp sgrp">' +
+      '</button></div><div class="grp sgrp" data-gk="songs">' +
       rest.map((s) => songRowHTML(s, null, null, pm)).join('') +
       '</div>';
   if (!U.sList)
@@ -808,7 +808,9 @@ function songRowHTML(s, hit, toks, pm) {
         SGI.trash +
         'Delete</button></div>';
   return (
-    '<div class="srow">' +
+    '<div class="srow" data-fk="sg:' +
+    s.id +
+    '">' +
     acts +
     '<div class="rowc' +
     (open ? ' sel' : '') +
@@ -899,12 +901,14 @@ function pinnedCard() {
   if (!p.length) return '';
   const pm = practisedMap();
   return (
-    '<div class="hdr" data-rise>Pinned songs</div><div class="grp" data-rise>' +
+    '<div class="hdr" data-rise>Pinned songs</div><div class="grp" data-rise data-gk="todaypins">' +
     p
       .map((s) => {
         const lp = lastPractised(s, pm);
         return (
-          '<button class="row" data-a="sgOpen" data-k="' +
+          '<button class="row" data-fk="tp:' +
+          s.id +
+          '" data-a="sgOpen" data-k="' +
           s.id +
           '" data-v="today"><span class="lbl">' +
           esc(songTitle(s)) +
@@ -1764,6 +1768,7 @@ function togglePin(id) {
     rerender();
     return;
   }
+  DET.arm();
   s.pinned = !s.pinned;
   save();
   rerender();
@@ -1771,6 +1776,7 @@ function togglePin(id) {
 }
 async function deleteSongs(ids) {
   stopPlayback();
+  DET.arm();
   D.songs = D.songs.filter((x) => !ids.includes(x.id));
   save();
   for (const t of TAKES.filter((t) => ids.includes(t.songId))) await delTake(t.id);
@@ -1915,6 +1921,7 @@ const SG_ACT = {
   sgSwapPin(el, v, k) {
     const a = songById(k),
       b = songById(U.sd && U.sd.k);
+    DET.arm();
     if (a) a.pinned = false;
     if (b) b.pinned = true;
     save();
@@ -1969,6 +1976,7 @@ const SG_ACT = {
     rerender();
   },
   sgSetSort(el, v) {
+    DET.arm({ stagger: true });
     if (SG_SORTS[v]) {
       sgp().sort = v;
       saveSGP();
@@ -2107,19 +2115,23 @@ const SG_ACT = {
   sgHint(el, v) {
     const n = Math.max(0, Math.min(SG_HINTS.length - 1, (U.sHint || 0) + +v));
     if (n === U.sHint) return;
+    const was = DET.hxSnap();
     U.sHint = n;
     rerender();
     hxFadeIn();
+    DET.hxWave(was);
   },
   sgHMenu() {
     SG.hMenu = true;
     rerender();
   },
   sgSetHint(el, v) {
+    const was = DET.hxSnap();
     U.sHint = Math.max(0, Math.min(SG_HINTS.length - 1, +v || 0));
     SG.hMenu = false;
     rerender();
     hxFadeIn();
+    DET.hxWave(was);
   },
   sgRMenu() {
     SG.rMenu = true;
@@ -2991,7 +3003,7 @@ function hxFadeIn() {
   void document.body.offsetWidth;
   document.body.classList.add('hxin');
   clearTimeout(hxFadeIn.t);
-  hxFadeIn.t = setTimeout(() => document.body.classList.remove('hxin'), 400);
+  hxFadeIn.t = setTimeout(() => document.body.classList.remove('hxin'), 400 + 60 * MOTION.STAGGER.word * MOTION.speed());
 }
 // only the tapped line shows; tapping it again while it shows starts its time again
 function endPeeks(except) {
@@ -3003,6 +3015,7 @@ function endPeeks(except) {
 }
 function peekLine(ln) {
   endPeeks(ln);
+  if (!ln.classList.contains('peeking')) DET.peek(ln);
   ln.classList.add('peeking');
   clearTimeout(ln._peek);
   ln._peek = setTimeout(() => ln.classList.remove('peeking'), peekSecs() * 1000);
@@ -3024,6 +3037,7 @@ document.addEventListener(
       PH.on = true;
       endPeeks(ln);
       clearTimeout(ln._peek);
+      if (!ln.classList.contains('peeking')) DET.peek(ln);
       ln.classList.add('peeking', 'held');
     }, HOLD_MS);
   },

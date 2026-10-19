@@ -132,12 +132,14 @@ document.addEventListener('click', (e) => {
       U.sheet = 'calendar';
       U.sd = {};
       rerender();
+      DET.calendarIn();
       break;
     case 'calMove': {
       const m = U.calMonth;
       U.calMonth = new Date(m.getFullYear(), m.getMonth() + +v, 1);
       U.calDay = null;
       rerender();
+      DET.calendarIn();
       break;
     }
     case 'calDay':
@@ -285,12 +287,18 @@ document.addEventListener('click', (e) => {
     case 'exTab':
       segPick(el);
       U.exTab = v;
-      setTimeout(rerender, 180);
+      setTimeout(() => {
+        rerender();
+        if (v === 'history') DET.exLine();
+      }, 180);
       break;
     case 'histTab':
       segPick(el);
       U.histTab = v;
-      setTimeout(rerender, 180);
+      setTimeout(() => {
+        rerender();
+        DET.listIn();
+      }, 180);
       break;
     case 'flv':
       X.f[k] = +v;
@@ -358,6 +366,7 @@ document.addEventListener('click', (e) => {
         if (!t.star) await prune(t.songId);
         await refreshTakes();
         rerender();
+        if (t.star) DET.starPop(document.querySelector('#layer .ibtn.star.on[data-k="' + k + '"], .ibtn.star.on[data-k="' + k + '"]'));
       })();
       break;
     case 'cta':
@@ -626,12 +635,12 @@ document.addEventListener('click', (e) => {
       U.range = v;
       U.roff = 0;
       U.pick = null;
-      setTimeout(updatePcard, 150);
+      setTimeout(() => updatePcard({ dir: 0 }), 150);
       break;
     case 'pnav':
       U.roff = Math.min(0, (U.roff || 0) + +v);
       U.pick = null;
-      updatePcard();
+      updatePcard({ dir: +v < 0 ? -1 : 1 });
       break;
     case 'esplit':
       if (E) {
@@ -662,6 +671,7 @@ document.addEventListener('click', (e) => {
       }
       const f = (document.querySelector('#focusChips .chip.on') || {}).dataset;
       const id = 'c_' + Date.now().toString(36);
+      DET.arm();
       D.custom.push({ id, name: n, focus: f ? f.v : 'custom', what: ($('exWhat').value || '').trim() });
       save();
       if (X && U.view === 'rot') {
@@ -704,6 +714,7 @@ document.addEventListener('click', (e) => {
       break;
     }
     case 'delEx':
+      DET.arm();
       D.custom = D.custom.filter((x) => x.id !== k);
       save();
       if (X && k in X.rot) {
@@ -743,12 +754,14 @@ document.addEventListener('click', (e) => {
       })();
       break;
     case 'delSession':
+      DET.arm();
       deleteSession(k);
       U.sheet = null;
       rerender();
       toast('Session deleted');
       break;
     case 'delSongSess':
+      DET.arm();
       D.songSessions = D.songSessions.filter((x) => x.id !== k);
       save();
       U.sheet = null;
@@ -848,13 +861,16 @@ document.addEventListener('click', (e) => {
       if (SG_ACT[a]) SG_ACT[a](el, v, k, e);
   }
 });
-function updatePcard() {
+// anim ({dir}) is passed only when the range or period changes, so the bars ripple; scrubbing never passes it
+function updatePcard(anim) {
   const a = $('pcard'),
     b = $('pbrk');
   if (!a && !b) return;
+  const was = anim ? DET.bars() : null;
   const c = pcardHTML();
   if (a) a.innerHTML = c.card;
   if (b) b.innerHTML = c.brk;
+  if (anim) DET.pcardIn(was, anim.dir);
 }
 // tap a bar, or slide a finger across them like Health
 function pickAt(x, y) {

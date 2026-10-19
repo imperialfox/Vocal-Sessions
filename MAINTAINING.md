@@ -51,6 +51,7 @@ Notes for whoever works on the app next, whether that's Ivan, a new Claude sessi
 | `js/backup.js` | Export, Check a backup, restore, undo, and Copy for Toggl |
 | `js/events.js` | Every button action, swipe to delete, and blocking zoom |
 | `js/gestures.js` | Pull to refresh and the update check, rotating, keyboard shortcuts, dragging sheets, scrolling |
+| `js/details.js` | **Motion details** (`DET`): rows leaving, arriving and moving, Progress bar ripples, Today's arch fill and week wave, calendar days, session step slides, the Recall wave, sheets that change in place. See Motion below |
 | `js/launch.js` | **The launch ripple** (`LAUNCH`): the icon's bars pulsing, the launch screen fading and Today rising in. See Motion below |
 | `js/boot.js` | Starts the app: loads saved data, then draws the first screen. Always last |
 
@@ -127,6 +128,16 @@ Everything that moves uses `MOTION` (`js/motion.js`), so the app feels the same 
   - **Reduce Motion:** no pulses or rises, the launch screen fades in 200 ms. **Motion off** (the tests): it uses the old `.out` class exactly as before 3.13.
   - **`LAUNCH.busy()`** is true from launch until Today has risen; `fwPick()` returns nothing meanwhile, so the floating window appears after the rise.
   - Tests: `tests/test_launch.py` (motion on, Reduce Motion, motion off, import replay, the floating window, and the 3.4 first-frame checks at every size).
+- **Motion details (3.14, `js/details.js`, `DET`):** everything only animates elements already in their final place, so nothing ever blocks a tap. With motion off or Reduce Motion every function returns straight away.
+  - **Lists:** call `DET.arm()` just before a change that redraws (`DET.arm({stagger: true})` for a re-sort), and `render()` calls `DET.play()` afterwards. Rows opt in with `data-fk` (a stable key, e.g. `sg:<id>`; `sw()` rows get one automatically) and their group with `data-gk`. Removed rows leave a `.det-ghost` copy that shrinks away (pointer-events none); groups ease to their new height; rows that move slide (a ripple when staggered); a row that moves into another group (a pin) travels as a copy so the group's `overflow:hidden` doesn't clip it. Today's `data-rise` blocks take part too (the backup reminder leaving). Add `DET.arm()` before any new delete, add, pin or reorder.
+  - **Progress:** `updatePcard({dir})` is the animated version (range: `dir 0`, arrows: `-1`/`1`); `updatePcard()` with no argument (scrubbing) never animates. `DET.bars()` reads heights before the redraw, `DET.pcardIn(was, dir)` ripples from them (scaleY from the baseline, `BASE` in details.js must match `H - B` in `chartSVG`).
+  - **Today:** `LAUNCH`'s `done()` calls `DET.todayIn()` (arch `stroke-dashoffset` fill, week row wave). `finishSession()` calls `DET.finished()`, and `DET.after()` (end of `render()`) pops today's circle once Today shows with no sheet. It also slides in pinned songs that weren't on Today last time (`data-fk="tp:<id>"`).
+  - **Elsewhere:** `DET.calendarIn()` after opening or changing month; `go()` calls `DET.stepIn(DET.stepDir(from, to))` between Foundation, Rotation and Application; `DET.listIn()` after the All sessions switch; `DET.exLine()` after switching an exercise to History; `DET.takeIn()` / `DET.starPop()` for takes; `DET.dockSwap()` brings the song's bottom capsules in on a mode change only (never on a hint step or redraw).
+  - **Recall wave:** `DET.hxSnap()` before a hint change, `DET.hxWave(was)` after: newly hidden words get `--hxd` delays (30 ms a word, in reading order, used by `.hxin .hx` / `::after` in app.css), newly shown words fade from the end backwards. `peekLine()` and the hold call `DET.peek(line)` for a small `ripple` spring.
+  - **Sheets changing in place:** `renderSheet()` treats `exporting` → `exportReady` as the same sheet (`DET.inPlace`), so it doesn't rise again; `DET.sheetSwap(oldH)` eases its height and fades the content.
+  - **Reduce Motion in CSS (3.14):** the old blanket `* { animation: none; transition: none }` is gone. Under `prefers-reduced-motion` every transition is limited to opacity and colours over 0.2 s, and the keyframes that moved things (`up`, `pop`, `grow`, `clockIn`, `clockOut`, `squish`, `lgdraw`) are redefined as plain fades. New CSS motion gets this for free; don't add `!important` rules that switch fades off.
+  - **Not built yet (left for later):** Annotate's marks menu blooming from the word and the section lift while reordering, Perform's larger text scaling (FLIP), the recording bar rising, a take dropping off under the keep rule shrinking away, the progress dashes filling and the step pill moving onto the shared springs. Card zoom, swipe back and the zoom-style details are Render 4c.
+  - Tests: `tests/test_details.py` (motion on in slow motion, Reduce Motion, motion off). `daily()` seeds a session on each of the last 15 days so the checks don't depend on the day of the week.
 
 ### The lyrics page
 

@@ -121,8 +121,9 @@ def run(b, t):
     pg.click(f'.sgsec[data-o="{S["o"][3]}"] .sglab'); pg.wait_for_timeout(100)
     rows = pg.evaluate(ROWS)
     ok(all(r['blur'] == 0 for r in rows) and any(r['op'] < 1 for r in rows), 'with Reduce Motion, other sections dim but never blur')
-    ok(pg.evaluate("getComputedStyle(document.querySelector('.sgsong .sgl')).transitionDuration.split(',').every(x=>parseFloat(x)===0)"),
-       'with Reduce Motion, the focus changes without easing')
+    # 3.14: Reduce Motion no longer switches transitions off; changes fade over about 0.2 s and nothing moves or blurs
+    ok(pg.evaluate("(()=>{const c=getComputedStyle(document.querySelector('.sgsong .sgl'));const d=c.transitionDuration.split(',').map(parseFloat),p=c.transitionProperty.split(',').map(x=>x.trim());return d.every(x=>x>0&&x<=0.25)&&p.includes('opacity')&&!p.includes('filter')&&!p.includes('transform')})()"),
+       'with Reduce Motion, the focus changes with a short fade, no blur or movement')
     pg.context.close()
 
     # motion on: the focus eases on the gentle spring

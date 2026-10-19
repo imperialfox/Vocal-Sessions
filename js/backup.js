@@ -297,6 +297,9 @@ async function saveExport() {
     toast('Backup not saved');
     return;
   }
+  const warn = document.querySelector('p.foot.warn');
+  const warnColour = warn ? getComputedStyle(warn).color : '';
+  DET.arm(); // the backup reminder on Today shrinks away and the page closes the gap
   D.lastBackup = p.at;
   save();
   addLog({
@@ -314,6 +317,7 @@ async function saveExport() {
   pendingExport = null;
   U.sheet = null;
   rerender();
+  if (warnColour) DET.colourEase(warnColour, document.querySelector('p.foot'));
   toast(r === 'shared' ? 'Backup saved' : 'Backup downloaded');
 }
 let pickMode = 'import';

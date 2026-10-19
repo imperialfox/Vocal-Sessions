@@ -73,6 +73,7 @@ const LAUNCH = (() => {
     clearTimeout(endT);
     endT = null;
     if (typeof fwUpdate === 'function') fwUpdate(); // the floating window can appear now
+    if (typeof DET !== 'undefined') DET.todayIn(); // the arch fills and the week row ripples
   }
 
   // the launch screen goes and Today rises in

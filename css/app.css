@@ -683,9 +683,6 @@ h1 {
     opacity: 1;
     transform: none;
   }
-  .lgdraw {
-    animation: none;
-  }
   .tl-item.now .tl-node::after {
     animation: none;
   }
@@ -2516,10 +2513,59 @@ body.reg .pgrid > div > .hdr:first-child {
     opacity: 0;
   }
 }
+/* 3.14 Reduce Motion: nothing moves, but changes still fade in and out over about 0.2 s (it used to switch every
+   animation and transition off, so things snapped). Only fades and colour changes are allowed to ease; anything that
+   used to slide, scale or pop now fades in its place. Timers, the level meter and the recording dot stay live. */
 @media (prefers-reduced-motion: reduce) {
-  * {
-    animation: none !important;
-    transition: none !important;
+  *,
+  *::before,
+  *::after {
+    transition-property: opacity, color, background-color, border-color, box-shadow, fill, stroke !important;
+    transition-duration: 0.2s !important;
+    transition-delay: 0s !important;
+    transition-timing-function: ease-out !important;
+  }
+  @keyframes up {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  @keyframes grow {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes pop {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes clockIn {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes clockOut {
+    to {
+      opacity: 0;
+    }
+  }
+  @keyframes squish {
+    0%,
+    100% {
+      scale: 1 1;
+    }
+  }
+  @keyframes lgdraw {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
   }
 }
 /* 3.8 Songs */
@@ -3803,8 +3849,18 @@ textarea.field.sglyr {
   height: 0.62em;
   transform: translateY(-50%);
 }
+.hxin .hx {
+  animation: hxText 0.25s ease backwards;
+  animation-delay: var(--hxd, 0ms);
+}
 .hxin .hx::after {
-  animation: hxIn 0.25s ease;
+  animation: hxIn 0.25s ease backwards;
+  animation-delay: var(--hxd, 0ms);
+}
+@keyframes hxText {
+  from {
+    color: inherit;
+  }
 }
 @keyframes hxIn {
   from {
