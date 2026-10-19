@@ -9,6 +9,34 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.15 · 19 Oct 2026
+*Card zoom and swipe back*
+<!-- area: look -->
+
+**Opening and closing pages**
+- Tapping a card that opens a page now zooms into it: exercises (in Exercises and Today's suggested rotation), songs (in Songs and Today's pinned songs), Show all sessions, Show all song practice, Show all songs, Changelog and the song page's Song practice.
+- The page grows out of the card with its title starting where the card's name is, beginning in the card's colour so dark mode never shows an empty dark box.
+- Back shrinks the page back into the card it came from, and the list is where you left it, not back at the top.
+- If the card has scrolled out of sight, the page just fades and shrinks a little.
+- Tapping Back in the middle of a zoom turns it round from wherever it is. Nothing ever waits for a zoom to finish before you can tap.
+
+**Swipe back**
+- On any page with a Back button, swipe right from anywhere (not just the edge). The page follows your finger and shrinks a little, with the screen you came from underneath.
+- Let go past about a fifth of the screen, or flick, and it goes back into its card. Let go before that and it settles back.
+- Whatever your finger lands on comes first: swiping a row to pin or delete it, the level buttons, charts you slide across, sliders and anything that scrolls sideways never start a swipe back.
+- On Rotation and Application it goes back a step, like Back.
+
+**Sessions**
+- Start session (and Resume session) expands from the button into the session. Song practice expands from its card, on Today or on a song.
+- Back from Foundation shrinks the session back into Resume session.
+- Finishing shrinks the session back into Start session on Today, behind the summary. Song practice shrinks back into its card.
+
+**Also**
+- The weekly goal arc zooms into Progress.
+- Tapping a day in the practice calendar grows that day's sessions out of the day.
+- Saving a new song shrinks the paste sheet into the song's new row in Songs, then the row opens the song.
+- With Reduce Motion on, zooms become a short fade, and a swipe back moves the page sideways without shrinking it.
+
 ## 3.14 · 19 Oct 2026
 *Motion details*
 <!-- area: look -->

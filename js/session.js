@@ -118,6 +118,7 @@ function startFinish() {
   rerender();
 }
 function finishSession() {
+  const zc = ZOOM.finishing(); // a still of the session, to shrink back into Start session once Today is drawn
   const end = Date.now(),
     mins = finalMins();
   const song = D.songs.find((s) => s.id === X.song);
@@ -145,6 +146,7 @@ function finishSession() {
     U.sd = { k: ss.id };
     window.scrollTo(0, 0);
     render();
+    ZOOM.finished(zc, 'songStart');
     return;
   }
   const rotNames = {};
@@ -190,6 +192,7 @@ function finishSession() {
   U.sd = { k: ss.id };
   window.scrollTo(0, 0);
   render();
+  ZOOM.finished(zc, 'start');
 }
 function deleteSession(id) {
   const ss = D.sessions.find((x) => x.id === id);

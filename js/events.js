@@ -80,6 +80,10 @@ $('importIn').addEventListener('change', (e) => {
   if (f) readBackupFile(f);
 });
 document.addEventListener('click', (e) => {
+  if (ZOOM.swallow(e)) {
+    e.preventDefault();
+    return;
+  }
   const el = e.target.closest('[data-a]');
   if (Date.now() - swJustMoved < 350 && !(el && el.classList.contains('swdel'))) {
     e.preventDefault();
@@ -95,6 +99,7 @@ document.addEventListener('click', (e) => {
   }
   if (!el) return;
   if (el.classList.contains('scrim') && e.target !== el) return;
+  ZOOM.tap(el); // a card (data-zk) zooms into the page it opens; a Back button shrinks the page back into its card
   const a = el.dataset.a,
     v = el.dataset.v,
     k = el.dataset.k;
@@ -142,10 +147,13 @@ document.addEventListener('click', (e) => {
       DET.calendarIn();
       break;
     }
-    case 'calDay':
+    case 'calDay': {
+      const r = el.getBoundingClientRect();
       U.calDay = U.calDay === +v ? null : +v;
       rerender();
+      if (U.calDay) ZOOM.dayIn(r); // the day's sessions grow out of the day
       break;
+    }
     case 'calSession':
       U.sheet = D.songSessions.some((x) => x.id === k) ? 'songSession' : 'session';
       U.sd = { k, ret: 'calendar' };

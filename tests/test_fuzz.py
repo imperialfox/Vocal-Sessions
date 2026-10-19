@@ -31,6 +31,8 @@ INV=r"""(()=>{const p=[];const L=document.getElementById('layer');
    const r=fw.getBoundingClientRect();if(!FW.drag&&!FW.stopSpring&&!fw.getAnimations().length&&(r.left<-1||r.right>innerWidth+1||r.top<-1||r.bottom>innerHeight+1))p.push('floating window off screen');}
  else if(X&&X.start&&!LAUNCH.busy()&&!isFlow(U.view)&&!U.sheet&&!U.clock&&!L.firstElementChild&&!rec&&!U.sFocus&&!typing)p.push('session running but no floating window');
  if(LAUNCH.busy()){window.__lb=window.__lb||performance.now();if(performance.now()-window.__lb>8000)p.push('launch ripple stuck')}else window.__lb=0;
+ if(ZOOM.busy()){window.__zb=window.__zb||performance.now();if(performance.now()-window.__zb>5000)p.push('card zoom stuck')}else{window.__zb=0;
+   if(document.querySelector('.zm'))p.push('a zoom layer left behind');if(document.querySelector('.zm-src'))p.push('a card left hidden after a zoom');}
  try{JSON.parse(localStorage.getItem('vocalTracker'))}catch(e){p.push('saved data unreadable')}
  const sumOk=Object.keys(D.months).length>=0;
  return p;})()"""

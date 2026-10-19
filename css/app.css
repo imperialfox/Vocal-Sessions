@@ -4038,3 +4038,94 @@ textarea.field.sglyr {
 .sgsong .sgsec.flash {
   animation: sgflash 1.4s ease;
 }
+
+/* ===== Card zoom (3.15, js/zoom.js) =====
+   A still copy of the screens, drawn over the real app while a card grows into its page (or the page shrinks back).
+   Nothing in it can be tapped. The window is four nested boxes, each clipping one rounded corner (.zm-c), moved with
+   transforms only. */
+.zm {
+  position: fixed;
+  inset: 0;
+  z-index: 24;
+  pointer-events: none;
+  overflow: hidden;
+  contain: strict;
+}
+.zm.top {
+  z-index: 41;
+}
+.zm * {
+  pointer-events: none !important;
+}
+.zm-under,
+.zm-win,
+.zm-c,
+.zm-ci,
+.zm-bg,
+.zm-tint,
+.zm-content,
+.zm-body,
+.zm-shot {
+  position: absolute;
+  inset: 0;
+}
+.zm-under,
+.zm-bg {
+  background: var(--bg);
+}
+/* each part is its own layer, so nothing inside the copies (a row with a z-index) can paint over the window */
+.zm-under {
+  z-index: 0;
+}
+.zm-win {
+  z-index: 1;
+}
+.zm-ghost {
+  z-index: 2;
+}
+/* a page lifted by a swipe back has a soft edge against the screen under it */
+.zm.lift .zm-win {
+  border-radius: 22px;
+  box-shadow: 0 0 36px rgba(0, 0, 0, 0.22);
+}
+.zm-c {
+  overflow: hidden;
+}
+.zm-content {
+  transform-origin: 0 0;
+}
+.zm .wrap {
+  transition: none !important;
+}
+.zm-edge {
+  opacity: 0.9 !important;
+  transition: none !important;
+}
+.zm-title {
+  position: absolute;
+  margin: 0 !important;
+}
+.zm-ghost {
+  position: absolute;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden;
+  transform-origin: 0 0;
+  box-shadow: none !important;
+}
+.zm-ghost > * {
+  margin: 0 !important;
+  width: 100%;
+  height: 100%;
+}
+.zm-hid,
+.zm-src {
+  visibility: hidden !important;
+}
+.zm-day {
+  position: absolute;
+  margin: 0;
+  z-index: 5;
+  pointer-events: none;
+  transform-origin: 0 0;
+}

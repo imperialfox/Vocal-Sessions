@@ -65,7 +65,7 @@ function scrToday() {
     ICON.down +
     '</button></div>' +
     backupNudge() +
-    '<div class="dash"><div class="d-hero"><button class="arch" data-rise data-a="goalOpen" aria-label="This week, ' +
+    '<div class="dash"><div class="d-hero"><button class="arch" data-rise data-zk="goal" data-a="goalOpen" aria-label="This week, ' +
     Math.round(w.mins) +
     ' of your ' +
     WEEK_TARGET +
@@ -84,8 +84,8 @@ function scrToday() {
     '-minute goal</small></div></button>' +
     '<div data-rise style="margin-top:20px">' +
     (X && !songLive
-      ? '<button class="cta ink" data-a="resume">Resume session</button><button class="ghost" data-a="sheet" data-v="discard">Discard session</button>'
-      : '<button class="cta ink" data-a="start">Start session</button>') +
+      ? '<button class="cta ink" data-zk="start" data-a="resume">Resume session</button><button class="ghost" data-a="sheet" data-v="discard">Discard session</button>'
+      : '<button class="cta ink" data-zk="start" data-a="start">Start session</button>') +
     '</div></div><div class="d-side"><div class="d-week">' +
     '<div class="week" data-rise role="list" aria-label="This week">' +
     days +
@@ -104,7 +104,9 @@ function scrToday() {
     '" style="width:' +
     mp +
     '%"></i></div></div>' +
-    '<button class="row" data-a="openEx" data-k="' +
+    '<button class="row" data-zk="ex:' +
+    s.id +
+    '" data-a="openEx" data-k="' +
     s.id +
     '">' +
     tile(s) +
@@ -115,7 +117,7 @@ function scrToday() {
     '</small></span>' +
     chev +
     '</button></div>' +
-    '<div class="hdr" data-rise>Just singing</div><div class="grp tiled" data-rise><button class="row" data-a="songStart">' +
+    '<div class="hdr" data-rise>Just singing</div><div class="grp tiled" data-rise><button class="row" data-zk="songStart" data-a="songStart">' +
     songTile +
     '<span class="lbl">Song practice<small>' +
     (songLive ? 'In progress · tap to carry on' : 'Record a take and note how it went') +
@@ -559,7 +561,7 @@ function scrHistory() {
     (recent.length
       ? recent.map(sessRow).join('')
       : '<div class="empty">Your finished sessions will appear here.</div>') +
-    '<button class="row acc" data-a="openAll" data-v="sessions"><span class="lbl">Show all sessions</span>' +
+    '<button class="row acc" data-zk="all:sessions" data-a="openAll" data-v="sessions"><span class="lbl">Show all sessions</span>' +
     chev +
     '</button></div>';
   const timeB =
@@ -594,7 +596,7 @@ function scrHistory() {
       .slice(0, 3)
       .map((x) => songRow(x))
       .join('') +
-    '<button class="row acc" data-a="openAll" data-v="songs"><span class="lbl">Show all song practice</span>' +
+    '<button class="row acc" data-zk="all:songs" data-a="openAll" data-v="songs"><span class="lbl">Show all song practice</span>' +
     chev +
     '</button></div>' +
     '<p class="foot">Kept apart from your focused practice time. You can also get here from Today, the calendar and each song in Exercises.</p>';
@@ -750,6 +752,8 @@ function scrExercises() {
   const row = (e) =>
     '<button class="row' +
     (sp && e.id === U.exId ? ' sel' : '') +
+    '" data-zk="ex:' +
+    e.id +
     '" data-a="openEx" data-k="' +
     e.id +
     '">' +
@@ -1033,7 +1037,7 @@ function scrSettings() {
     '<div class="hdr">Reset</div><div class="grp">' +
     '<button class="row" data-a="sheet" data-v="resetMonth"><span class="lbl dng">Reset this month’s minutes</span></button>' +
     '<button class="row" data-a="sheet" data-v="resetAll"><span class="lbl dng">Reset all data</span></button></div>' +
-    '<div class="hdr">About</div><div class="grp"><button class="row" data-a="openLog"><span class="lbl">Changelog<small>What’s new in ' +
+    '<div class="hdr">About</div><div class="grp"><button class="row" data-zk="log" data-a="openLog"><span class="lbl">Changelog<small>What’s new in ' +
     APP_VERSION +
     ', and every version before it</small></span>' +
     chev +

@@ -815,7 +815,9 @@ function songRowHTML(s, hit, toks, pm) {
     '<div class="rowc' +
     (open ? ' sel' : '') +
     (SG.ctx === s.id ? ' lifted' : '') +
-    '" data-a="' +
+    '"' +
+    (ed ? '' : ' data-zk="sg:' + s.id + '"') +
+    ' data-a="' +
     (ed ? 'sgToggle' : 'sgOpen') +
     '" data-k="' +
     s.id +
@@ -908,6 +910,8 @@ function pinnedCard() {
         return (
           '<button class="row" data-fk="tp:' +
           s.id +
+          '" data-zk="sg:' +
+          s.id +
           '" data-a="sgOpen" data-k="' +
           s.id +
           '" data-v="today"><span class="lbl">' +
@@ -921,7 +925,7 @@ function pinnedCard() {
         );
       })
       .join('') +
-    '<button class="row" data-a="sgAll"><span class="lbl acc">Show all songs</span>' +
+    '<button class="row" data-zk="songs" data-a="sgAll"><span class="lbl acc">Show all songs</span>' +
     chev +
     '</button></div>'
   );
@@ -1305,7 +1309,9 @@ function songBody(sg, inPane) {
 function practiceRow(sg) {
   const n = takesOf(sg.id);
   return (
-    '<div class="hdr">Practice</div><div class="grp"><button class="row" data-a="sgPractise" data-k="' +
+    '<div class="hdr">Practice</div><div class="grp"><button class="row" data-zk="sgp:' +
+    sg.id +
+    '" data-a="sgPractise" data-k="' +
     sg.id +
     '">' +
     songTile +
@@ -1751,11 +1757,27 @@ function sgSaveDraft() {
     D.songs.push(sg);
   }
   save();
+  // 3.15: a new song's paste sheet shrinks into its row in Songs, then the row opens the song (iPhone, motion on)
+  const sh = !d.forId && !split() ? ZOOM.sheetShot() : null;
   U.sDraft = null;
   U.sheet = null;
   U.sd = {};
   U.sFocus = false;
   U.sq = '';
+  if (sh) {
+    go(() => {
+      U.tab = 'songs';
+      U.view = null;
+    });
+    toast('Song saved');
+    const id = sg.id;
+    ZOOM.sheetInto(sh, 'sg:' + id, () => {
+      if (U.sheet || U.view || U.tab !== 'songs') return; // something else happened meanwhile
+      ZOOM.arm(document.querySelector('#app [data-zk="sg:' + id + '"]'));
+      openSong(id);
+    });
+    return;
+  }
   openSong(sg.id);
   toast(d.forId ? 'Lyrics added' : 'Song saved');
 }

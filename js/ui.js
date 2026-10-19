@@ -729,7 +729,7 @@ function calendarSheet() {
   const sel = U.calDay && ((byDay[U.calDay] || []).length || (songDay[U.calDay] || []).length);
   if (sel) {
     b +=
-      '<div class="hdr">' +
+      '<div class="calday" data-zday><div class="hdr">' +
       new Date(y, mo, U.calDay).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }) +
       '</div><div class="grp">' +
       (byDay[U.calDay] || [])
@@ -768,7 +768,7 @@ function calendarSheet() {
             '</button>'
         )
         .join('') +
-      '</div>';
+      '</div></div>';
   } else
     b +=
       '<p class="foot">' +
@@ -1099,7 +1099,8 @@ function render(keepScroll) {
 }
 const rerender = () => render(true);
 function go(fn) {
-  const was = U.view;
+  const was = U.view,
+    z = ZOOM.before(); // 3.15: a card tapped (or Back) zooms between the screens
   fn();
   if (rec && U.view !== was) {
     stopRec();
@@ -1107,7 +1108,9 @@ function go(fn) {
   }
   window.scrollTo(0, 0);
   render();
-  DET.stepIn(DET.stepDir(was, U.view)); // moving between the session's steps: the new one slides in from the side you're heading
+  // a card zoom or Back into a card (zoom.js); otherwise, moving between the session's steps slides the new one in
+  // from the side you're heading
+  if (!ZOOM.after(z)) DET.stepIn(DET.stepDir(was, U.view));
 }
 var toastT = null;
 function toast(t) {
