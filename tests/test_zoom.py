@@ -147,8 +147,8 @@ def swipes(b, t):
     for i in range(1, 7):
         cdp.send('Input.dispatchTouchEvent', {'type': 'touchMove', 'touchPoints': [{'x': 120 + 10 * i, 'y': 502}]})
         pg.wait_for_timeout(16)
-    lifted = pg.evaluate("(()=>{const w=document.querySelector('.zm.lift .zm-win');return w?getComputedStyle(w).transform:''})()")
-    ok(lifted.startswith('matrix(0.9'), 'mid-swipe the page follows the finger, a little smaller')
+    lifted = pg.evaluate("(()=>{const w=document.querySelector('.zm .zm-win');return w&&document.querySelector('.zm .zm-shade')?getComputedStyle(w).transform:''})()")
+    ok(lifted.startswith('matrix(0.9'), 'mid-swipe the page follows the finger, a little smaller, with a soft shadow')
     ok(pg.locator('.zm .zm-under .zm-shot').count() == 1, 'with the screen it came from shown underneath')
     cdp.send('Input.dispatchTouchEvent', {'type': 'touchEnd', 'touchPoints': []})
     cdp.detach()
@@ -221,6 +221,70 @@ def swipes(b, t):
     pg.evaluate("window._zm=0;new MutationObserver(m=>m.forEach(r=>r.addedNodes.forEach(n=>{if(n.classList&&n.classList.contains('zm'))window._zm++}))).observe(document.body,{childList:true})")
     drag(pg, 60, 500, 300, 505)
     ok(where(pg) == 'exercises|' and pg.evaluate("window._zm") == 0, 'motion off: the swipe goes back with nothing drawn')
+    pg.context.close()
+
+
+# the page's visible window (where its four corner boxes overlap) and its shadow layer, on screen
+SHADE = """()=>{const z=document.querySelector('.zm'),sh=z&&z.querySelector('.zm-shade');if(!sh)return null;
+  const rs=[...z.querySelectorAll('.zm-c')].map(e=>e.getBoundingClientRect());
+  const w={l:Math.max(...rs.map(r=>r.left)),t:Math.max(...rs.map(r=>r.top)),r:Math.min(...rs.map(r=>r.right)),b:Math.min(...rs.map(r=>r.bottom))};
+  const s=sh.getBoundingClientRect();return {w,s:{l:s.left,t:s.top,r:s.right,b:s.bottom},o:+getComputedStyle(sh).opacity}}"""
+
+
+def shadow(b, t):
+    """3.15.1 (Ivan's report): after a swipe back, the page's shadow shrinks with it into its card, frame by frame,
+    instead of staying the size of the screen."""
+    ok = t.ok
+    pg = page(b, t, init="try{localStorage.setItem('vocalMotion','1')}catch(e){}")
+    quiet(pg)
+    pg.evaluate("go(()=>{U.tab='exercises';U.view=null})")
+    quiet(pg)
+    pg.click('[data-zk="ex:slides"]')
+    quiet(pg)
+    for label, release in (('a swipe past the threshold', 30), ('a swipe let go early (springs back)', 7)):
+        cdp = pg.context.new_cdp_session(pg)
+        cdp.send('Input.dispatchTouchEvent', {'type': 'touchStart', 'touchPoints': [{'x': 60, 'y': 500}]})
+        for i in range(1, release // 3 + 2):
+            cdp.send('Input.dispatchTouchEvent', {'type': 'touchMove', 'touchPoints': [{'x': 60 + 10 * i, 'y': 502}]})
+            pg.wait_for_timeout(16)
+        held = pg.evaluate(SHADE)
+        ok(held and all(abs(held['w'][k] - held['s'][k]) < 2 for k in 'ltrb'), f'{label}: while held, the shadow is the page\'s size')
+        cdp.send('Input.dispatchTouchEvent', {'type': 'touchEnd', 'touchPoints': []})
+        cdp.detach()
+        pg.evaluate("()=>{window._an=document.getAnimations().filter(a=>a.effect.getTiming().iterations!==Infinity);window._an.forEach(a=>a.pause())}")
+        d = pg.evaluate("MOTION.dur('nav')")
+        off = []
+        for f in (0, 0.05, 0.1, 0.2, 0.3, 0.45, 0.6, 0.8, 1.0):
+            pg.evaluate(AT, round(d * f))
+            r = pg.evaluate(SHADE)
+            if r and r['o'] > 0.02:
+                gap = max(abs(r['w'][k] - r['s'][k]) for k in 'ltrb')
+                if gap > 2: off.append((round(f, 2), round(gap)))
+        pg.evaluate(PLAY)
+        quiet(pg)
+        ok(not off, f'{label}: once let go, the shadow stays the size of the page at every frame' + (f' (off by px at {off})' if off else ''))
+        if release == 30:
+            ok(where(pg) == 'exercises|' and pg.evaluate(CLEAN), 'and it lands in its card with nothing left over')
+            pg.click('[data-zk="ex:slides"]')
+            quiet(pg)
+        else:
+            ok(where(pg) == 'exercises|ex' and pg.evaluate(CLEAN), 'and it settles back on the page with nothing left over')
+    # catching a page while it's still opening: the shadow starts at the page's size there and then
+    pg.click(BACK)
+    quiet(pg)
+    pg.click('[data-zk="ex:slides"]')
+    pg.wait_for_timeout(90)
+    cdp = pg.context.new_cdp_session(pg)
+    cdp.send('Input.dispatchTouchEvent', {'type': 'touchStart', 'touchPoints': [{'x': 200, 'y': 600}]})
+    for i in range(1, 4):
+        cdp.send('Input.dispatchTouchEvent', {'type': 'touchMove', 'touchPoints': [{'x': 200 + 8 * i, 'y': 601}]})
+        pg.wait_for_timeout(16)
+    r = pg.evaluate(SHADE)
+    ok(r is None or all(abs(r['w'][k] - r['s'][k]) < 2 for k in 'ltrb'), 'catching a page mid-open: its shadow matches the part-open page')
+    cdp.send('Input.dispatchTouchEvent', {'type': 'touchEnd', 'touchPoints': []})
+    cdp.detach()
+    quiet(pg)
+    ok(pg.evaluate(CLEAN), 'and nothing is left over')
     pg.context.close()
 
 
@@ -424,6 +488,7 @@ def run(b, t):
     cards(b, t)
     interrupt(b, t)
     swipes(b, t)
+    shadow(b, t)
     frames(b, t)
     capsules(b, t)
     calendar(b, t)

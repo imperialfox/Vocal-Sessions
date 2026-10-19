@@ -239,6 +239,16 @@ const ZOOM = (() => {
       to(z, z.cs[i][0], 'transform', T2(x, y), t);
       to(z, z.cs[i][1], 'transform', T2(-x, -y), t);
     });
+    // a lifted page's shadow has the window's size and place, always (3.15.1)
+    if (z.shade) to(z, z.shade, 'transform', T2(R.l, R.t) + ' scale(' + R.w / w + ',' + (R.b - R.t) / h + ')', t);
+  }
+  // the window's rectangle right now, read from its corner boxes
+  function winNow(z) {
+    const w = vw(),
+      h = vh(),
+      a = new DOMMatrix(getComputedStyle(z.cs[0][0]).transform),
+      b = new DOMMatrix(getComputedStyle(z.cs[1][0]).transform);
+    return { l: a.m41, t: a.m42, r: b.m41 + w, b: b.m42 + h, w: b.m41 + w - a.m41, h: b.m42 + h - a.m42 };
   }
   const FULL = () => ({ l: 0, t: 0, r: vw(), b: vh(), w: vw(), h: vh() });
   // where the page sits when it's the size of the card: its title where the card's label is (wide cards), or the
@@ -396,6 +406,7 @@ const ZOOM = (() => {
     if (sm) z.ghost.style.transform = big(R);
     z.layer.appendChild(z.ghost);
     win(z, R, { spring: 'nav' });
+    if (z.shade) to(z, z.shade, 'opacity', '0', { ms: d * 0.5 }); // the lifted shadow settles as the page lands
     to(z, z.win, 'transform', 'none', { spring: 'nav' }); // after a swipe, the page's own shrink eases away too
     to(z, z.win, 'opacity', '1', { ms: 120 });
     to(z, z.content, 'transform', anchor(R, z.titleR, lb), { spring: 'nav' });
@@ -647,7 +658,13 @@ const ZOOM = (() => {
     }
     z.kind = 'swipe';
     z.drag = true;
-    z.layer.classList.add('lift');
+    // the lifted page's soft shadow: its own layer, the size of the window (which may still be part way open), so it
+    // shrinks with the page into its card instead of staying screen-sized
+    if (!z.shade) {
+      z.shade = div('zm-shade');
+      z.win.insertBefore(z.shade, z.win.firstChild);
+      win(z, winNow(z));
+    }
     z.d = { x: 0, y: 0, s: 1 };
     Z = z;
   }

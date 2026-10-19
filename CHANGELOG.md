@@ -9,6 +9,13 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.15.1 · 19 Oct 2026
+*Swipe back shadow*
+<!-- area: look -->
+
+**Fixes**
+- After swiping back, the page's soft shadow now shrinks with it into its card. Before, it stayed the size of the screen while the page shrank.
+
 ## 3.15 · 19 Oct 2026
 *Card zoom and swipe back*
 <!-- area: look -->

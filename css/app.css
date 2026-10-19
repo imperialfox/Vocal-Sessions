@@ -4083,8 +4083,15 @@ textarea.field.sglyr {
 .zm-ghost {
   z-index: 2;
 }
-/* a page lifted by a swipe back has a soft edge against the screen under it */
-.zm.lift .zm-win {
+/* a page lifted by a swipe back has a soft edge against the screen under it. The shadow is its own layer that
+   zoom.js keeps the size of the window, so it shrinks with the page into its card (3.15.1) */
+.zm-shade {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  transform-origin: 0 0;
   border-radius: 22px;
   box-shadow: 0 0 36px rgba(0, 0, 0, 0.22);
 }
