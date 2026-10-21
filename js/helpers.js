@@ -328,6 +328,7 @@ const freshU = () => ({
   view: null,
   exId: null,
   exTab: 'summary',
+  coachBack: null, // where the coach video player's Back goes (3.16)
   sheet: null,
   sd: {},
   histTab: 'sessions',

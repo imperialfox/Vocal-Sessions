@@ -1,7 +1,7 @@
 """Random-tap tester: taps, types, scrolls, resizes and reloads at random, checking after every step that nothing is broken.
 Each seed is a repeatable run. More steps:  VS_FUZZ_STEPS=2000 python tests/run.py fuzz"""
 import os, json, random, collections
-from harness import with_song_practice, OUT, ready, now, iso, url, APP_PATH
+from harness import with_song_practice, OUT, ready, now, iso, url, APP_PATH, fix
 
 STEPS = int(os.environ.get('VS_FUZZ_STEPS', '200'))
 SEEDS = [int(s) for s in os.environ.get('VS_FUZZ_SEEDS', '11,12,13,14').split(',')]
@@ -30,6 +30,11 @@ INV=r"""(()=>{const p=[];const L=document.getElementById('layer');
    if(FW.shown==='session'&&isFlow(U.view))p.push('session window on its own screen');
    const r=fw.getBoundingClientRect();if(!FW.drag&&!FW.stopSpring&&!fw.getAnimations().length&&(r.left<-1||r.right>innerWidth+1||r.top<-1||r.bottom>innerHeight+1))p.push('floating window off screen');}
  else if(X&&X.start&&!LAUNCH.busy()&&!isFlow(U.view)&&!U.sheet&&!U.clock&&!L.firstElementChild&&!rec&&!U.sFocus&&!typing)p.push('session running but no floating window');
+ const cv=document.getElementById('cv'),cvs=document.querySelector('#app .cv-slot');
+ if(document.querySelectorAll('video').length>1)p.push('more than one video element');
+ if(cv&&cvs&&!cvs.contains(cv))p.push('coach video not in its slot');
+ if(FW.shown==='video'&&(cvs||U.view==='coach'))p.push('video window on its own screen');
+ if(FW.shown==='video'&&cv&&!fw.contains(cv))p.push('video window without the video');
  if(LAUNCH.busy()){window.__lb=window.__lb||performance.now();if(performance.now()-window.__lb>8000)p.push('launch ripple stuck')}else window.__lb=0;
  if(ZOOM.busy()){window.__zb=window.__zb||performance.now();if(performance.now()-window.__zb>5000)p.push('card zoom stuck')}else{window.__zb=0;
    if(document.querySelector('.zm'))p.push('a zoom layer left behind');if(document.querySelector('.zm-src'))p.push('a card left hidden after a zoom');}
@@ -41,7 +46,7 @@ VIS=r"""(()=>{const L=document.getElementById('layer');const root=L.querySelecto
    const cx=Math.min(innerWidth-1,Math.max(0,r.left+r.width/2)),cy=Math.min(innerHeight-1,Math.max(0,r.top+r.height/2));const t=document.elementFromPoint(cx,cy);return t&&(t===e||e.contains(t)||t.closest('[data-a]')===e);});
  return els.map((e,i)=>{e.setAttribute('data-fz',i);return {i,a:e.dataset.a||e.tagName.toLowerCase(),v:e.dataset.v||'',k:e.dataset.k||'',id:e.id||'',type:e.type||''};});})()"""
 # no microphone here: Record shows on a selected section, but recording itself is covered by test_recording and test_sections
-SKIP = {'importPick', 'checkPick', 'exportSave', 'saveReadme', 'rec', 'sgRec'}
+SKIP = {'importPick', 'checkPick', 'exportSave', 'saveReadme', 'rec', 'sgRec', 'coachAdd', 'coachFS'}
 HEAVY = ('sgOpen','sgSec','sgTakes','playTake','star','sgMode','sgHint','sgHMenu','sgSetHint','sgRMenu','sgOrder','sgAnywhere','sgEdit','sgWord','sgMark','sgEditMode','sgNew','sgSplit','sgSave','sgSearch','sgListEdit','sgToggle','sgCue','sgUnlink','start','songStart','resume','cta','confirmF','tog','rlv','flv','wTog','saveHow','skipHow','editSess','saveEdit','exNote','takeNote','addWord','saveWord',
          'openNote','longOk','pauseToggle','fwOpen','fwToggle','clock','sheet','calDay','calSession','eflv','input','textarea')
 
@@ -65,6 +70,9 @@ def run(b, t):
         pg.evaluate("putTake({id:'tA',songId:'g_1',created:Date.now()-864e5,len:30,size:5000,type:'audio/mp4',star:false,blob:new Blob([new Uint8Array(5000)],{type:'audio/mp4'})}).then(refreshTakes).then(rerender)")
         # a take from the river song's first chorus, so a section has takes and its sheet can open
         pg.evaluate("(()=>{const s=D.songs.find(x=>x.name==='River Song');return putTake({id:'tB',songId:s.id,o:s.order[1].o,created:Date.now()-2*864e5,len:14,size:5000,type:'audio/mp4',star:true,blob:new Blob([new Uint8Array(5000)],{type:'audio/mp4'})}).then(refreshTakes).then(rerender)})()")
+        # 3.16: the coach video added, so its player, doors and window are in the random taps too
+        pg.set_input_files('#coachIn', fix('coach-chapters.webm'))
+        pg.wait_for_function("COACH.has()&&!COACH.busy()", timeout=15000)
         pg.wait_for_timeout(200)
         trace = collections.deque(maxlen=20); trace.append(f'seed {seed}, {w}x{h}')
         for step in range(STEPS):

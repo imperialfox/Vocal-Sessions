@@ -324,6 +324,7 @@ let recBusy = false;
 async function startRec(target) {
   const tg = target || { songId: X && X.song };
   if (rec || recBusy) return;
+  COACH.pause(); // the coach video stops before a recording starts
   if (!navigator.mediaDevices || !window.MediaRecorder) {
     toast('Recording isn’t supported in this browser');
     return;
@@ -494,6 +495,7 @@ function stopPlayback() {
 // a take that's playing now (not paused from the floating window)
 const takePlaying = (id) => !!(id && playingId === id && player && !player.paused);
 function playTake(id) {
+  COACH.pause(); // one sound at a time
   if (playingId === id && player) {
     // paused from the floating window: carry on from there; playing: stop, as before
     if (player.paused) FW_KINDS[0].toggle();

@@ -35,6 +35,14 @@ function renderBar() {
     } else $('barT').textContent = 'Changelog';
     $('barL').innerHTML = '<button class="circ glass" data-a="logBack" aria-label="Back">' + ICON.back + '</button>';
     $('barR').innerHTML = '';
+  } else if (U.view === 'coach') {
+    if (tabsMode) {
+      bar.classList.add('tabsmode');
+      $('barT').classList.add('tabs');
+      $('barT').innerHTML = topTabs();
+    } else $('barT').textContent = 'Coach video';
+    $('barL').innerHTML = '<button class="circ glass" data-a="coachBack" aria-label="Back">' + ICON.back + '</button>';
+    $('barR').innerHTML = '';
   } else if (U.view === 'ex') {
     const e = exById(U.exId);
     $('barT').textContent = e ? e.name : '';
@@ -459,6 +467,13 @@ function renderSheet() {
       'Every saved take on this phone will be deleted. This can’t be undone.',
       'Delete all recordings',
       'clearRec'
+    );
+  else if (s === 'coachDel')
+    h = confirmSheet(
+      'Remove the coach video?',
+      'It’s removed from this ' + deviceName() + '. Your file in Files stays, so you can add it again any time.',
+      'Remove video',
+      'coachDel'
     );
   else if (s === 'resetMonth')
     h = confirmSheet(
@@ -1062,9 +1077,12 @@ function render(keepScroll) {
     SG.drag = null;
   }
   const v = U.view;
+  COACH.park(); // the coach video waits outside #app while it's redrawn, so it keeps playing (coach.js)
   $('app').innerHTML =
     v === 'log'
       ? scrLog()
+      : v === 'coach'
+        ? COACH.page()
       : v === 'ex'
         ? scrEx()
         : v === 'all'
@@ -1082,7 +1100,9 @@ function render(keepScroll) {
                 }[U.tab]();
   $('app').className =
     (isFlow(v) ? 'flow' : 'tabv') +
-    (isFlow(v) || (!v && U.tab === 'settings') || v === 'log' || (v === 'ex' && !split()) ? ' narrow' : '');
+    (isFlow(v) || (!v && U.tab === 'settings') || v === 'log' || v === 'coach' || (v === 'ex' && !split())
+      ? ' narrow'
+      : '');
   renderBar();
   renderSheet();
   const dk = DET.dockKids();
@@ -1108,6 +1128,7 @@ function go(fn) {
   }
   window.scrollTo(0, 0);
   render();
+  COACH.stepped(was); // Next / Back in a session cue the coach video to the new step, paused
   // a card zoom or Back into a card (zoom.js); otherwise, moving between the session's steps slides the new one in
   // from the side you're heading
   if (!ZOOM.after(z)) DET.stepIn(DET.stepDir(was, U.view));

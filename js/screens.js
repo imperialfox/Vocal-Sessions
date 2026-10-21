@@ -768,11 +768,7 @@ function scrExercises() {
     chev +
     '</button>';
   const list =
-    '<div class="grp" style="margin-top:8px"><a class="row acc" href="' +
-    VIDEO +
-    '" target="_blank" rel="noopener"><span class="lbl">Coach video<small>Opens in YouTube</small></span>' +
-    ICON.video +
-    '</a></div>' +
+    COACH.exercisesRow() + // 3.16: the coach video on this device (coach.js)
     '<div class="hdr">Foundation</div><div class="grp tiled">' +
     FOUND.map(row).join('') +
     '</div>' +
@@ -835,6 +831,7 @@ function scrEx() {
         '<div class="hdr">Why it helps</div><div class="grp"><div class="prose">' +
         d.why +
         '</div></div>' +
+        COACH.exerciseRow(e.id) +
         '<div class="hdr">In a song</div><div class="grp"><div class="prose"><ul>' +
         d.song.map((x) => '<li><b>' + x[0] + '.</b> ' + x[1] + '</li>').join('') +
         '</ul></div></div>';
@@ -1014,6 +1011,7 @@ function scrSettings() {
     ).join('') +
     '</div></div></div>' +
     '<p class="foot">How long a hidden line shows when you tap it in Recall. Hold a line to keep it showing until you let go.</p>' +
+    COACH.settings() +
     '<div class="hdr">Storage</div><div class="grp"><button class="row" data-a="sheet" data-v="storage"><span class="lbl">Recordings</span><span class="mut">' +
     TAKES.length +
     ' · ' +
@@ -1021,6 +1019,7 @@ function scrSettings() {
     ' MB</span>' +
     chev +
     '</button>' +
+    COACH.storageRow() +
     '<button class="row" data-a="sheet" data-v="persist"><span class="lbl">Storage protection<small>' +
     (PERSIST === true
       ? 'iOS won’t clear the app’s data to free up space'
@@ -1081,7 +1080,9 @@ function exBlock(e, a, v, skip, T, src) {
 }
 function scrFound() {
   return (
-    '<h1>Foundation</h1><p class="note">Set how many levels you got through, or Skip. Tap the pencil for quick notes.</p><div class="grp tiled">' +
+    '<h1>Foundation</h1><p class="note">Set how many levels you got through, or Skip. Tap the pencil for quick notes.</p>' +
+    COACH.stepHTML('found') +
+    '<div class="grp tiled">' +
     FOUND.map((e) => exBlock(e, 'flv', X.f[e.id], true, X)).join('') +
     '</div>' +
     '<p class="foot">Tap the time at the top to see the full clock or pause it. With YouTube Premium, the coach video keeps playing in picture-in-picture while you use this app.</p>'
@@ -1129,7 +1130,9 @@ function scrRot() {
   const s = suggested();
   const rest = allRot().filter((e) => e.id !== s.id);
   return (
-    '<h1>Rotation</h1><p class="note">Pick as many as you like. Each one gets its own level.</p><div class="hdr">Suggested</div><div class="grp tiled">' +
+    '<h1>Rotation</h1><p class="note">Pick as many as you like. Each one gets its own level.</p>' +
+    COACH.stepHTML('rot') +
+    '<div class="hdr">Suggested</div><div class="grp tiled">' +
     rotRow(s, true) +
     '</div>' +
     '<div class="hdr">More exercises</div><div class="grp tiled">' +

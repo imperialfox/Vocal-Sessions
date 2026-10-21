@@ -70,7 +70,8 @@ function fwTakeInfo() {
 
 // Each kind of window, in the order they win when more than one is going. active(): it's going; own(): you're on
 // its own screen, so it isn't needed; info(): what it shows; toggle(): its button; open(): back to where you were.
-// Song Clock's "Playing along" can be added as another kind.
+// Song Clock's "Playing along" can be added as another kind. 3.16's coach video (coach.js) is put in between take
+// and session; it has its own draw(), since its window holds the real video.
 const FW_KINDS = [
   {
     id: 'take',
@@ -173,6 +174,7 @@ function fwDraw(k, i) {
     b = k.id + '|' + i.on + '|' + (i.p != null);
   el.setAttribute('aria-label', i.label);
   el.dataset.kind = k.id;
+  if (k.draw) return k.draw(el, i); // a kind with its own look (3.16: the coach video holds the real video)
   if (FW.build !== b) {
     FW.build = b;
     el.innerHTML =
@@ -193,6 +195,10 @@ function fwDraw(k, i) {
 }
 // redraw after every render, sheet change or playback change
 function fwUpdate() {
+  fwPickAndDraw();
+  if (typeof COACH !== 'undefined') COACH.place(); // the coach video goes where it's shown now (coach.js)
+}
+function fwPickAndDraw() {
   // remember the session step you're on (and its scroll, from the scroll listener)
   if (!X) FW.sess = null;
   else if (isFlow(U.view) && (!FW.sess || FW.sess.view !== U.view)) FW.sess = { view: U.view, y: window.scrollY };

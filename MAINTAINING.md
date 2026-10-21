@@ -48,6 +48,7 @@ Notes for whoever works on the app next, whether that's Ivan, a new Claude sessi
 | `js/ui.js` | Top bar, tab bar, sidebar, sheets, `render()` and the sliding picker knobs |
 | `js/session.js` | Running a session (steps, clock, finishing, editing, `togglePause()`) and recording and playing takes |
 | `js/window.js` | **The floating window** (`FW`, `FW_KINDS`): a session or playing take shown on every other screen. See The floating window below |
+| `js/coach.js` | **The coach video** (`COACH`, `COACH_CH`): storing it, the one `<video id="cv">`, the player page, its doors, and its floating window kind. See The coach video below |
 | `js/backup.js` | Export, Check a backup, restore, undo, and Copy for Toggl |
 | `js/events.js` | Every button action, swipe to delete, and blocking zoom |
 | `js/gestures.js` | Pull to refresh and the update check, rotating, keyboard shortcuts, dragging sheets, scrolling |
@@ -80,6 +81,8 @@ Everything stays on the device. There is no server.
 | localStorage | `vocalBeforeUpgrade` | The data as it was before the last data upgrade, kept for 30 days |
 | IndexedDB `vocalTakes` (version 2) | store `takes` | Recordings, with their audio as Blobs |
 | IndexedDB `vocalTakes` | store `undo` | The copy kept for 30 days after a restore |
+| IndexedDB `vocalCoach` (version 1) | store `video`, key `v` | The coach video: `{name, size, type, dur, added, blob}`. Never in backups; Reset all data leaves it |
+| localStorage | `vocalCoach` | The coach video's place, speed and Loop on this device, `{t, speed, loop}` (not backed up) |
 
 `cleanData()` checks anything loaded or restored and drops what's malformed, so damaged data can't stop the app starting. `migrate()` fills in defaults and then runs `upgradeData()`; `normX()` upgrades older drafts.
 
@@ -168,6 +171,20 @@ Since 3.12, `js/window.js` shows a small window on every screen outside the thin
 - **Motion:** it rises in on `gentle` and shrinks out a little quicker; with motion off or Reduce Motion it just appears. `MOTION.spring(from, to, v, {spring, frame, done})` is a JS spring that starts with a speed, for anything thrown.
 - **Tests:** `tests/test_window.py`, and the random-tap test checks it never shows over a sheet, while recording or on its own screen, never leaves the screen, and is there whenever a session is running elsewhere.
 
+### The coach video
+
+Since 3.16, `js/coach.js` plays the coach's video from a copy on the device. The repo is public: **never commit the real video or any course media.** Tests use synthetic WebM files in `tests/fixtures/` (Playwright's Chromium can't play H.264).
+
+- **One video element.** `<video id="cv" playsinline>` is made once, with its `src` an object URL of the stored Blob. `render()` replaces `#app` with innerHTML, so the video must never stay in `#app`: `render()` calls `COACH.park()` first (into `#cvHold`, off screen on `<body>`), and `fwUpdate()` calls `COACH.place()` last, which moves it into the screen's `.cv-slot`, else into the floating window's `.cv-fw`, else back to the holder. Moving it within the same task doesn't pause it (checked in test_coach). Zoom copies swap any `<video>` for a dark box (`scrub()` in zoom.js).
+- **Chapters:** `COACH_CH` holds each level's start (exercises 1–12 × L1–L3, from the project's chapter map); `COACH_END` is 4773 s. A video within `COACH_SLACK` (10 s) of that length uses them; anything else is a plain video. `COACH_MAP` matches the app's exercises to chapters by `DESC[id].n` (their number in the video), not by name: "Upper to lower voice" is "Upper voice to lower voice" in the video. `COACH.at(t)` gives `{n, id, l, s, e}`.
+- **Current level:** `COACH.level(id)` is this session's level for it, else the latest logged level, else 1.
+- **Player page:** `U.view = 'coach'`, Back goes to `U.coachBack` (the exercise page or the tab it was opened from). While playing nothing is redrawn: `paint()` updates the scrubber, times, title and level picker in place (motion rule 8); crossing into another exercise redraws the page once. The scrubber (`#cvScrub`, `data-own-gesture`) follows the finger at once and maps segment by segment, gaps included.
+- **Loop** jumps back to the level's start when playback reaches the next level's start. **Speed** cycles `COACH_SPEEDS` with `preservesPitch`.
+- **Doors:** `COACH.exercisesRow()` (Exercises tab, `data-zk="coach"`), `COACH.exerciseRow(id)` (Summary tab, `data-zk="coach:<id>"`), `COACH.stepHTML(view)` (Foundation and Rotation). In a session the slot shows once tapped, flagged by `X.cv` on the draft. `go()` calls `COACH.stepped(was)`: moving between steps cues the new step's first exercise (`stepEx`), paused; Application has no chapter, so the video pauses there.
+- **Floating window:** the kind `video` sits between `take` and `session` in `FW_KINDS`. It has its own `draw()` (fwDraw hands over to it), holding the real video. `active()` needs a play since the app opened (so last time's paused video doesn't pop up after a reload) and no ✕ since. `own()` is the player page or a screen with a `.cv-slot`.
+- **One sound at a time:** `playTake()` and `startRec()` pause the video; playing the video stops a take.
+- **Tests:** `tests/test_coach.py`; the random-tap test runs with the video added and checks there's only ever one `<video>`, that it's in its slot, and that its window never shows on its own screen.
+
 ### Rules that keep old data working
 
 - **Never rename or remove an exercise id** (`slides`, `humming`, `lip`, `straw`, `falsetto`, `upperlower`, `rung`, `hinge`, `half`, `vertical`, `nasal`, `flex`). Sessions store levels by these ids. The backup tests fail if they change.
@@ -243,6 +260,7 @@ The tests run with motion off (see Motion above), so nothing waits on a spring. 
 | `test_window.py` | 3.12: the floating window's clock, pausing from it, going back to the same step and scroll or the same take, a take winning over a session, dragging and flicking to each corner (remembered after a reload), where it hides, and every size in light and dark, including above Recall's hint capsule |
 | `test_lyrics.py` | 3.11: the shared springs, the continuous lyrics page, focusing a section (patch, controls, dim and blur by distance, labels sharp), tapping away, Marks, Recall's label focus, Reduce Motion, easing with motion on, and every size with a section focused |
 | `test_zoom.py` | 3.15: card zoom into each kind of page and back into the same card (scroll put back), Back mid-zoom, swipe back (follow, threshold, flick, spring back, gesture priority), dark-mode frames never an empty box, Start session and Finish, the calendar day, the new song, Reduce Motion and motion off |
+| `test_coach.py` | 3.16: adding, replacing and removing the coach video (and reloads), never in backups and kept through restore and Reset all, chapters and No chapters, L1–L3, Loop, Speed with pitch kept, the scrubber, the exercise list, the doors (Exercises, an exercise's page, session steps hidden until tapped and cued on Next and Back), redraws not pausing it, the video window and its ✕, take → video → session, the zoom, and every size in light and dark |
 | `test_layout.py` | Every screen on iPhone, iPhone landscape, iPad and Mac, light and dark, plus pull to refresh |
 | `test_fuzz.py` | Thousands of random taps, checking nothing breaks after each one |
 

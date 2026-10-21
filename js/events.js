@@ -462,6 +462,53 @@ document.addEventListener('click', (e) => {
       togglePause();
       rerender();
       break;
+    /* 3.16 the coach video (coach.js) */
+    case 'openCoach':
+      COACH.open(k);
+      break;
+    case 'coachBack':
+      COACH.back();
+      break;
+    case 'coachSettings':
+      COACH.toSettings();
+      break;
+    case 'coachAdd':
+      $('coachIn').click();
+      break;
+    case 'coachDel':
+      COACH.remove();
+      break;
+    case 'coachPlay':
+      COACH.toggle();
+      break;
+    case 'coachFS':
+      COACH.fullscreen();
+      break;
+    case 'coachSkip':
+      COACH.skip(+v);
+      break;
+    case 'coachLv':
+      segPick(el);
+      COACH.setLevel(+v);
+      break;
+    case 'coachLoop':
+      COACH.toggleLoop();
+      break;
+    case 'coachSpeed':
+      COACH.cycleSpeed();
+      break;
+    case 'coachEx':
+      COACH.cue(k, COACH.level(k), true);
+      break;
+    case 'coachShow':
+      COACH.show();
+      break;
+    case 'coachStepEx':
+      COACH.stepMove(+v);
+      break;
+    case 'coachX':
+      COACH.dismiss();
+      break;
     case 'fwOpen': {
       const fk = fwKindNow();
       if (fk) fk.open();

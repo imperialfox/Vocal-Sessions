@@ -9,6 +9,29 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.16 · 21 Oct 2026
+*Coach video in the app*
+<!-- area: practice -->
+
+**Adding it**
+- Settings › Coach video › **Add coach video…** picks the video from Files. It stays on this iPhone: it's never put online and isn't in your backups, so keep the file in Files to add it again (after re-adding the app, for example).
+- Once added, Settings shows its name, its 12 exercises and 36 levels, and its size, with **Replace video…** and **Remove video**. Reset all data leaves it alone; only Remove removes it.
+
+**The player**
+- Exercises › **Coach video** opens it. The row says where you paused, so it doubles as Resume.
+- The bar under the video covers only the exercise you're on, as its three levels, so dragging is precise.
+- **L1 · L2 · L3** jumps to the start of that level. **Loop** repeats the level you're on. **Speed** goes 0.75× · 1× · 1.25× without changing the pitch.
+- Tap any exercise in the list to play it from your current level. The one playing shows small wave bars.
+- Back and forward 10 seconds, full screen, and play and pause from the lock screen.
+
+**Other ways in**
+- Each exercise's page (1 to 12) has **Play with coach**, starting it at your current level.
+- In a session, Foundation and Rotation have a **Coach video** row. It stays hidden until you tap it; then the video sits under the step's title for the rest of the session, playing that step's first exercise at your level. ‹ and › move to the step's other exercises. Next and Back cue the next step's exercise, paused. The session clock carries on separately.
+
+**While you're elsewhere**
+- Leave the player (or the session step) while the video plays and it carries on in a small window you can drag to any corner, with a play/pause button. Paused, a small ✕ closes it. Tap it to go back.
+- A playing take still wins the window. Playing a take or starting a recording pauses the coach video, and playing the video stops a take.
+
 ## 3.15.1 · 19 Oct 2026
 *Swipe back shadow*
 <!-- area: look -->

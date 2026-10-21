@@ -4136,3 +4136,400 @@ textarea.field.sglyr {
   pointer-events: none;
   transform-origin: 0 0;
 }
+
+/* 3.16 the coach video (coach.js): one <video id="cv"> moved between the player page, a session step and the
+   floating window. It waits in #cvHold (off screen, still in the document) while no screen shows it. */
+#cvHold {
+  position: fixed;
+  left: -10000px;
+  top: 0;
+  width: 16px;
+  height: 9px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+#cv {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #000;
+}
+.cv-slot {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #000;
+  touch-action: manipulation;
+  transform: translateZ(0); /* keeps the rounded corners on the video in Safari */
+}
+.cv-still {
+  width: 100%;
+  height: 100%;
+  background: #000;
+}
+.cvfs {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  z-index: 2;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+}
+.cvfs::before {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.45);
+}
+.cvfs svg.i {
+  position: relative;
+  width: 16px;
+  height: 16px;
+}
+.cvbig {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 2;
+  width: 56px;
+  height: 56px;
+  margin: -28px 0 0 -28px;
+  border-radius: 50%;
+  display: none;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.88);
+  color: #000;
+}
+.cv-slot.paused .cvbig {
+  display: grid;
+}
+.cvbig svg.i {
+  width: 24px;
+  height: 24px;
+  margin-left: 3px;
+}
+.cvnow {
+  margin: 14px 4px 8px;
+}
+.cvnow b {
+  display: block;
+  font-size: 17px;
+  font-weight: 600;
+}
+.cvnow small {
+  display: block;
+  font-size: 13px;
+  color: var(--fg2);
+  margin-top: 2px;
+}
+.cvscrub {
+  position: relative;
+  height: 28px;
+  margin: 4px 4px 0;
+  touch-action: none;
+  cursor: pointer;
+  outline-offset: 4px;
+}
+.cvsegs {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 11px;
+  height: 6px;
+  display: flex;
+  gap: 4px;
+}
+.cvsegs i {
+  position: relative;
+  height: 6px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: rgba(118, 118, 128, 0.26);
+}
+.cvsegs b {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  background: var(--fg2);
+}
+.cvthumb2 {
+  position: absolute;
+  top: 6px;
+  left: 0;
+  width: 16px;
+  height: 16px;
+  margin-left: -8px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s;
+}
+.cvscrub.drag .cvthumb2 {
+  transform: scale(1.2);
+}
+.cvtimes {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--fg2);
+  font-variant-numeric: tabular-nums;
+  margin: 2px 4px 0;
+}
+.cvtrans {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 32px;
+  margin: 6px 0 14px;
+}
+.cvskip svg.i {
+  width: 28px;
+  height: 28px;
+}
+.cvpp {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--fg);
+  color: var(--bg);
+  transition: transform 0.5s cubic-bezier(0.3, 1.7, 0.45, 1);
+}
+.cvpp:active {
+  transform: scale(0.93);
+  transition-duration: 0.12s;
+}
+.cvpp svg.i {
+  width: 26px;
+  height: 26px;
+  stroke-width: 2.6;
+}
+.cvpp[data-on='false'] svg.i {
+  margin-left: 3px;
+}
+.cvctl {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.cvlv button {
+  min-width: 50px;
+}
+.cvpill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: var(--fill);
+  color: var(--fg);
+  font-size: 15px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  transition: transform 0.5s cubic-bezier(0.3, 1.7, 0.45, 1);
+}
+.cvpill:active {
+  transform: scale(0.93);
+  transition-duration: 0.12s;
+}
+.cvpill svg.i {
+  width: 16px;
+  height: 16px;
+}
+.cvpill.on {
+  background: var(--accent);
+  color: #fff;
+}
+.cvctl .cvlv + .cvpill {
+  margin-left: auto;
+}
+.cvthumb {
+  width: 54px;
+  height: 34px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  color: #fff;
+  background: linear-gradient(160deg, #48484a, #1c1c1e);
+}
+.cvthumb.big {
+  width: 80px;
+  height: 45px;
+  border-radius: 9px;
+}
+.cvthumb svg.i {
+  width: 14px;
+  height: 14px;
+  margin-left: 2px;
+}
+.row.cvrow {
+  justify-content: flex-start;
+  gap: 12px;
+  min-height: 60px;
+}
+.row.cvrow.tall {
+  min-height: 76px;
+}
+.row.cvon .lbl {
+  font-weight: 600;
+}
+.cvwave {
+  width: 18px;
+  height: 14px;
+  fill: var(--accent);
+  flex-shrink: 0;
+}
+.cvstep {
+  margin-bottom: 14px;
+}
+.cvcapr {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+.cvcap {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--fg2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cvnav svg.i {
+  width: 20px;
+  height: 20px;
+  color: var(--fg2);
+}
+/* the floating window holding the coach video */
+.fw[data-kind='video'] {
+  display: block;
+  width: 176px;
+  height: 99px;
+  min-height: 0;
+  padding: 0;
+  border-radius: 14px;
+  background: #000;
+}
+.fw[data-kind='video'] .fwvopen {
+  position: absolute;
+  inset: 0;
+  min-height: 0;
+  padding: 0;
+  border-radius: 0;
+  display: block;
+}
+.fw .cv-fw {
+  position: absolute;
+  inset: 0;
+}
+.fw .cv-fw #cv {
+  object-fit: cover;
+}
+.fw .fwvb {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  padding: 0 0 0 10px;
+  background: var(--glass-strong);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  backdrop-filter: blur(16px) saturate(180%);
+}
+.fw .fwvb .fwk {
+  flex: 1;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--fg);
+}
+.fw .fwvb .fwbtn {
+  position: relative;
+  width: 40px;
+  height: 32px;
+  border-radius: 0;
+  background: none;
+  color: var(--bg);
+}
+.fw .fwvb .fwbtn::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--fg);
+}
+.fw .fwvb .fwbtn svg.i {
+  position: relative;
+  width: 12px;
+  height: 12px;
+  stroke-width: 3;
+}
+.fw .fwx {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 36px;
+  height: 36px;
+  display: none;
+  place-items: center;
+  color: #fff;
+}
+.fw .fwx::before {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+}
+.fw .fwx svg.i {
+  position: relative;
+  width: 13px;
+  height: 13px;
+  stroke-width: 2.6;
+}
+.fw.paused .fwx {
+  display: grid;
+}
+.fw .fwvp {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  pointer-events: none;
+}
+.fw .fwvp i {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: var(--fg);
+}
+@media (max-width: 359px) {
+  /* the smallest phones: Loop keeps its icon, so levels, Loop and Speed stay on one line */
+  .cvpill .cvlt {
+    display: none;
+  }
+  .cvlv button {
+    min-width: 44px;
+  }
+}

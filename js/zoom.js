@@ -100,6 +100,12 @@ const ZOOM = (() => {
     };
     strip(n);
     n.querySelectorAll('*').forEach(strip);
+    // the coach video: a plain dark box in the copy (a copied video would load the file again)
+    n.querySelectorAll('video').forEach((v) => {
+      const d = document.createElement('div');
+      d.className = 'cv-still';
+      v.replaceWith(d);
+    });
     n.setAttribute('aria-hidden', 'true');
     n.inert = true;
     return n;
