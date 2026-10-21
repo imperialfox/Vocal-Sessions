@@ -2,9 +2,9 @@
 
 A mobile-first companion for structured vocal practice, styled like a native iOS app. It's a single HTML file with no install, no backend and no account. It's designed to live on your iPhone Home Screen.
 
-![Version 3.16](https://img.shields.io/badge/version-3.16-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
+![Version 3.16.1](https://img.shields.io/badge/version-3.16.1-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
 
-**Current version: 3.16 · 21 Oct 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
+**Current version: 3.16.1 · 21 Oct 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
 
 ---
 
@@ -196,7 +196,7 @@ Since 3.16 the coach video can play inside the app, from a copy kept on your iPh
 - **Add it:** Settings › Coach video › Add coach video… and pick the video from Files (about 57 MB). It's stored on this device only. It isn't put online, and it isn't in your backups.
 - **Keep the file in Files.** After re-adding the app or moving to a new phone, restore your backup, then add the video again the same way.
 - **Replace or remove it:** Settings › Coach video › Replace video… or Remove video. Reset all data doesn't remove it.
-- **Chapters:** a video the length of the coach video (79:33) gets its 12 exercises and 3 levels each. Any other video plays as a plain video, without levels or the exercise list.
+- **Chapters:** a video the length of the coach video (79:33) gets its 12 exercises, starting at the YouTube timestamps (`COACH_TIMES` in `js/content.js`). Give an exercise three times there (Level 1, 2 and 3) and it gets the L1 · L2 · L3 picker too. Any other video plays as a plain video, without the exercise list.
 - **Where it plays:** the player (Exercises › Coach video), Play with coach on an exercise's page, and a Coach video row in Foundation and Rotation that shows the video when you tap it. Leaving while it plays keeps it going in a small window.
 - A Home Screen web app may pause when the phone locks. That's iOS, not the app.
 

@@ -4,39 +4,42 @@
    inside a session step, and the floating window. render() replaces #app with innerHTML, so the video never lives
    in #app for good: it's parked in a hidden holder on <body> before each redraw and moved into the new screen's
    .cv-slot afterwards (or into the floating window). Moving it within the same task doesn't pause it.
-   Chapters: the video is exercises 1–12 of the course, three levels each. Their start times are below (COACH_CH);
-   a video whose length isn't within 10 s of COACH_END is treated as a plain video with no chapters.
+   Chapters: the video is exercises 1–12 of the course. Where each starts comes from COACH_TIMES in content.js (the
+   YouTube timestamps); an exercise given three times there also has levels. A video whose length isn't within 10 s
+   of COACH_END is treated as a plain video with no chapters.
    Plain script (not a module): files share one global scope and load in the order listed in index.html. */
 
 /* ===== Chapters ===== */
-// start of each level in seconds, by exercise number in the coach video (from claude/coach-video-chapters.md)
-const COACH_CH = {
-  1: [0, 126, 373],
-  2: [441, 578, 683],
-  3: [793, 940, 1056],
-  4: [1172, 1271, 1382],
-  5: [1487, 1540, 1571],
-  6: [1608, 1718, 1834],
-  7: [1965, 2160, 2333],
-  8: [2485, 2627, 2758],
-  9: [2921, 3121, 3278],
-  10: [3415, 3625, 3756],
-  11: [3872, 3972, 4093],
-  12: [4261, 4418, 4539],
+// '1:04:30' or '7:15' in seconds (NaN if it isn't a time)
+const coachSecs = (x) => {
+  const p = String(x).trim().split(':');
+  if (p.length < 2 || p.length > 3 || p.some((v) => !/^\d+$/.test(v))) return NaN;
+  return p.reduce((a, v) => a * 60 + +v, 0);
 };
-const COACH_END = 4773,
-  COACH_SLACK = 10;
-// the app's exercises by their number in the coach video (DESC[id].n in content.js). Matched by number, not name:
-// two names differ ("Upper to lower voice" is "Upper voice to lower voice" in the video).
-const COACH_MAP = (() => {
-  const m = {};
-  FOUND.concat(ROT).forEach((e) => {
-    const d = DESC[e.id];
-    if (d && COACH_CH[d.n]) m[e.id] = d.n;
+// the chapters, numbered in the order they start: COACH_CH[n] is [start] or [Level 1, Level 2, Level 3] in seconds;
+// COACH_MAP[id] is the exercise's number. Built from COACH_TIMES (content.js), skipping anything that doesn't parse.
+const COACH_CH = {},
+  COACH_MAP = {};
+(() => {
+  const rows = Object.keys(typeof COACH_TIMES === 'object' ? COACH_TIMES : {})
+    .filter((id) => FOUND.concat(ROT).some((e) => e.id === id))
+    .map((id) => {
+      let t = (Array.isArray(COACH_TIMES[id]) ? COACH_TIMES[id] : [COACH_TIMES[id]]).map(coachSecs);
+      // levels only when there are three times, all valid and in order
+      if (!(t.length === 3 && t.every((v, i) => isFinite(v) && (!i || v > t[i - 1])))) t = [t[0]];
+      return { id, t };
+    })
+    .filter((r) => isFinite(r.t[0]))
+    .sort((a, b) => a.t[0] - b.t[0]);
+  rows.forEach((r, i) => {
+    COACH_CH[i + 1] = r.t;
+    COACH_MAP[r.id] = i + 1;
   });
-  return m;
 })();
+const COACH_N = Object.keys(COACH_CH).length; // 12
 const COACH_IDS = Object.keys(COACH_MAP).sort((a, b) => COACH_MAP[a] - COACH_MAP[b]);
+const COACH_END = 4773, // 79:33, the length of the coach video Ivan keeps in Files
+  COACH_SLACK = 10;
 // short names for the floating window's slim bar
 const COACH_SHORT = {
   slides: 'Slides',
@@ -242,16 +245,29 @@ const COACH = (() => {
   const chapters = () => !!(meta && meta.chapters);
   const end = () => (el && isFinite(el.duration) && el.duration > 0 ? el.duration : (meta && meta.dur) || COACH_END);
   const idOf = (n) => COACH_IDS.find((id) => COACH_MAP[id] === n);
-  const exEnd = (n) => (n < 12 ? COACH_CH[n + 1][0] : Math.max(COACH_CH[12][2] + 1, Math.min(end(), COACH_END)));
-  // the exercise and level at a time: {n, id, l, s, e} (level start and end)
+  const exEnd = (n) => {
+    if (n < COACH_N) return COACH_CH[n + 1][0];
+    const c = COACH_CH[n];
+    return Math.max(c[c.length - 1] + 1, Math.min(end(), COACH_END));
+  };
+  // the exercise (and level, when it has levels) at a time: {n, id, l, lv, s, e}. lv is how many levels it has
+  // (3, or 1 when only its start is known); s and e are where that level, or the whole exercise, starts and ends
   function at(t) {
     let n = 1;
-    for (let i = 1; i <= 12; i++) if (t >= COACH_CH[i][0] - 0.25) n = i;
-    const c = COACH_CH[n];
+    for (let i = 1; i <= COACH_N; i++) if (t >= COACH_CH[i][0] - 0.25) n = i;
+    const c = COACH_CH[n],
+      lv = c.length;
     let l = 1;
-    for (let i = 1; i <= 3; i++) if (t >= c[i - 1] - 0.25) l = i;
-    return { n, id: idOf(n), l, s: c[l - 1], e: l < 3 ? c[l] : exEnd(n) };
+    for (let i = 1; i <= lv; i++) if (t >= c[i - 1] - 0.25) l = i;
+    return { n, id: idOf(n), l, lv, s: c[l - 1], e: l < lv ? c[l] : exEnd(n) };
   }
+  const hasLevels = (id) => !!(COACH_MAP[id] && COACH_CH[COACH_MAP[id]].length === 3);
+  // what the chapters hold, e.g. "12 exercises" or "12 exercises · 3 levels each"
+  const sumTxt = () => {
+    const nl = Object.values(COACH_CH).filter((c) => c.length === 3).length;
+    return COACH_N + ' exercises' + (nl === COACH_N ? ' · 3 levels each' : nl ? ' · ' + nl + ' with levels' : '');
+  };
+  const lvTxt = (a, short) => (a && a.lv === 3 ? (short ? ' · L' : ' · Level ') + a.l : '');
   const now = () => (drag ? drag.t : el && el.readyState >= 1 ? el.currentTime : prefs.t) || 0;
   const here = () => (chapters() ? at(now()) : null);
   // the level Ivan is on for an exercise: what this session has set, else his latest logged level, else 1
@@ -296,7 +312,8 @@ const COACH = (() => {
   function cue(id, lv, andPlay) {
     const n = COACH_MAP[id];
     if (!n || !chapters()) return false;
-    seek(COACH_CH[n][Math.max(1, Math.min(3, lv || level(id))) - 1]);
+    const c = COACH_CH[n];
+    seek(c.length === 3 ? c[Math.max(1, Math.min(3, lv || level(id))) - 1] : c[0]);
     if (andPlay) play();
     else pause();
     changed();
@@ -354,7 +371,7 @@ const COACH = (() => {
     const a = here();
     try {
       navigator.mediaSession.metadata = new MediaMetadata({
-        title: a ? exName(a.id) + ' · Level ' + a.l : (meta && meta.name) || 'Coach video',
+        title: a ? exName(a.id) + lvTxt(a) : (meta && meta.name) || 'Coach video',
         artist: 'Coach video',
         album: 'Vocal Sessions',
       });
@@ -379,8 +396,9 @@ const COACH = (() => {
     if (!chapters()) return { s: 0, e: end(), segs: [end()] };
     const a = here(),
       c = COACH_CH[a.n],
-      e = exEnd(a.n);
-    return { s: c[0], e, segs: [c[1] - c[0], c[2] - c[1], e - c[2]], a };
+      e = exEnd(a.n),
+      b = c.concat([e]);
+    return { s: c[0], e, segs: c.map((v, i) => b[i + 1] - v), a };
   }
   function paint() {
     const v = el,
@@ -426,7 +444,7 @@ const COACH = (() => {
     const cap = $('cvCap');
     if (cap) {
       const a = here();
-      cap.textContent = a ? 'Exercise ' + a.n + ' · ' + exName(a.id) + ' · Level ' + a.l : '';
+      cap.textContent = a ? 'Exercise ' + a.n + ' · ' + exName(a.id) + lvTxt(a) : '';
     }
   }
   function paintLevel() {
@@ -435,7 +453,7 @@ const COACH = (() => {
     const tt = $('cvTitle'),
       lt = $('cvLevel');
     if (tt) tt.textContent = 'Exercise ' + a.n + ' · ' + exName(a.id);
-    if (lt) lt.textContent = 'Level ' + a.l + ' of 3';
+    if (lt) lt.textContent = a.lv === 3 ? 'Level ' + a.l + ' of 3' : '';
     const sg = document.querySelector('#app .cvlv');
     if (sg) {
       const on = sg.querySelector('button.on');
@@ -478,8 +496,8 @@ const COACH = (() => {
     const sub = !chapters()
       ? (playing ? 'Playing' : now() > 0.5 ? 'Paused at ' + fmt(now()) : 'No chapters')
       : now() > 0.5 || playing
-        ? (playing ? 'Playing ' : 'Paused at ') + exName(a.id) + ' · Level ' + a.l
-        : '12 exercises';
+        ? (playing ? 'Playing ' : 'Paused at ') + exName(a.id) + lvTxt(a)
+        : COACH_N + ' exercises';
     return (
       '<div class="grp" style="margin-top:8px"><button class="row cvrow" data-zk="coach" data-a="openCoach">' +
       thumb() +
@@ -500,8 +518,8 @@ const COACH = (() => {
       id +
       '">' +
       thumb(true) +
-      '<span class="lbl">Play with coach<small>Level ' +
-      level(id) +
+      '<span class="lbl">Play with coach<small>' +
+      (hasLevels(id) ? 'Level ' + level(id) : 'From the start of the exercise') +
       '</small></span>' +
       chev +
       '</button></div>'
@@ -537,8 +555,8 @@ const COACH = (() => {
       return (
         '<div class="grp cvstep"><button class="row cvrow" data-a="coachShow">' +
         thumb() +
-        '<span class="lbl">Coach video · Level ' +
-        level(id) +
+        '<span class="lbl">Coach video' +
+        (hasLevels(id) ? ' · Level ' + level(id) : '') +
         '<small>' +
         esc(exName(id)) +
         ' · tap to show</small></span></button></div>'
@@ -561,7 +579,9 @@ const COACH = (() => {
     if (!has())
       return (
         h +
-        '<p class="note">12 exercises · 3 levels each</p><div class="grp"><div class="empty">Add the coach video from Files to watch it here. It stays on this ' +
+        '<p class="note">' +
+        sumTxt() +
+        '</p><div class="grp"><div class="empty">Add the coach video from Files to watch it here. It stays on this ' +
         deviceName() +
         ' and isn’t put online.</div><button class="row acc" data-a="coachSettings"><span class="lbl">Add coach video…</span>' +
         chev +
@@ -575,7 +595,7 @@ const COACH = (() => {
     const on = !!(el && !el.paused);
     h +=
       '<p class="note">' +
-      (ch ? '12 exercises · 3 levels each' : esc(meta.name) + ' · No chapters') +
+      (ch ? sumTxt() : esc(meta.name) + ' · No chapters') +
       '</p><div class="cvpage">' +
       '<div class="cv-slot" data-a="coachPlay"><button class="cvfs" data-a="coachFS" aria-label="Full screen">' +
       FS +
@@ -585,9 +605,9 @@ const COACH = (() => {
           a.n +
           ' · ' +
           esc(exName(a.id)) +
-          '</b><small id="cvLevel">Level ' +
-          a.l +
-          ' of 3</small></div>'
+          '</b><small id="cvLevel">' +
+          (a.lv === 3 ? 'Level ' + a.l + ' of 3' : '') +
+          '</small></div>'
         : '') +
       '<div class="cvscrub" id="cvScrub" data-own-gesture role="slider" tabindex="0" aria-label="' +
       (ch ? 'Position in this exercise' : 'Position in the video') +
@@ -609,7 +629,7 @@ const COACH = (() => {
       F10 +
       '</button></div>' +
       '<div class="cvctl">' +
-      (ch
+      (ch && a.lv === 3
         ? '<div class="seg cvlv" role="group" aria-label="Level"><span class="knob" aria-hidden="true"></span>' +
           [1, 2, 3]
             .map(
@@ -625,14 +645,20 @@ const COACH = (() => {
                 '</button>'
             )
             .join('') +
-          '</div><button class="cvpill' +
+          '</div>'
+        : '<span style="flex:1"></span>') +
+      // Loop repeats the level you're on, or the whole exercise when its levels aren't known
+      (ch
+        ? '<button class="cvpill' +
           (prefs.loop ? ' on' : '') +
           '" data-a="coachLoop" aria-pressed="' +
           prefs.loop +
-          '" aria-label="Loop this level">' +
+          '" aria-label="Loop this ' +
+          (a.lv === 3 ? 'level' : 'exercise') +
+          '">' +
           LOOP +
           '<span class="cvlt">Loop</span></button>'
-        : '<span style="flex:1"></span>') +
+        : '') +
       '<button class="cvpill" data-a="coachSpeed" aria-label="Speed ' +
       speedTxt() +
       '. Tap to change">' +
@@ -676,7 +702,7 @@ const COACH = (() => {
         '<span class="lbl">' +
         esc(meta.name) +
         '<small>' +
-        (meta.chapters ? '12 exercises · 36 levels · ' : 'No chapters · ') +
+        (meta.chapters ? sumTxt() + ' · ' : 'No chapters · ') +
         mb(meta.size) +
         '</small></span></div>' +
         '<button class="row" data-a="coachAdd"><span class="lbl acc">Replace video…</span>' +
@@ -871,7 +897,7 @@ const COACH = (() => {
   function setLevel(l) {
     const a = here();
     if (!a) return;
-    seek(COACH_CH[a.n][l - 1]);
+    if (a.lv === 3) seek(COACH_CH[a.n][l - 1]);
   }
   function toggleLoop() {
     prefs.loop = !prefs.loop;
@@ -969,7 +995,7 @@ const COACH = (() => {
       const a = here(),
         on = !el.paused;
       return {
-        k: a ? (COACH_SHORT[a.id] || exName(a.id)) + ' · L' + a.l : 'Coach video',
+        k: a ? (COACH_SHORT[a.id] || exName(a.id)) + lvTxt(a, true) : 'Coach video',
         t: fmt(now()),
         p: Math.min(1, now() / Math.max(1, end())),
         on,

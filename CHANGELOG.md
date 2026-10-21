@@ -9,6 +9,15 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.16.1 · 21 Oct 2026
+*Coach video chapters from YouTube*
+<!-- area: fixes -->
+
+**Fixes**
+- Each exercise in the coach video now starts at its YouTube timestamp (Humming at 7:15, Falsetto voice at 19:30, and so on). The times read from the video's slides were a few seconds late, and the level times were off.
+- YouTube only marks where each exercise starts, so tapping an exercise plays it from the top, and Loop repeats the whole exercise. The L1 · L2 · L3 picker is gone for now.
+- The times live in one list in the app's content file. If you add level times there later (three per exercise), the level picker comes back for those exercises.
+
 ## 3.16 · 21 Oct 2026
 *Coach video in the app*
 <!-- area: practice -->

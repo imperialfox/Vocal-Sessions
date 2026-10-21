@@ -1,17 +1,24 @@
-"""3.16 the coach video: added on the device from Files (never in backups), its 36 chapters, the player page (levels,
+"""3.16 the coach video: added on the device from Files (never in backups), its chapters, the player page (levels,
 Loop, Speed, the scrubber, the exercise list), its doors (Exercises tab, an exercise's page, a session step), the one
 <video> kept playing across redraws, the floating window holding it, and every size in light and dark.
 The fixtures are synthetic WebM files (Playwright's Chromium can't play H.264): one as long as the real video
-(4773 s, so it has chapters) and one of 60 s (no chapters). The real video is never in the repo."""
+(4773 s, so it has chapters) and one of 60 s (no chapters). The real video is never in the repo.
+3.16.1: the chapters are the YouTube timestamps in content.js (COACH_TIMES), one start per exercise, so the real app
+has no level jumps. youtube() checks that. The level tests put in made-up level times (LEVELS) to check the level
+picker, Loop of a level and the level segments still work for exercises given three times."""
 import json
 from harness import fix, OUT
 from test_layout import SIZES, FITS
 
 LAUNCH_ARGS = ['--autoplay-policy=no-user-gesture-required']
 LONG, SHORT = fix('coach-chapters.webm'), fix('coach-short.webm')
-CH = {1: [0, 126, 373], 2: [441, 578, 683], 3: [793, 940, 1056], 4: [1172, 1271, 1382], 5: [1487, 1540, 1571],
-      6: [1608, 1718, 1834], 7: [1965, 2160, 2333], 8: [2485, 2627, 2758], 9: [2921, 3121, 3278],
-      10: [3415, 3625, 3756], 11: [3872, 3972, 4093], 12: [4261, 4418, 4539]}
+# the YouTube timestamps (content.js COACH_TIMES), in seconds
+YT = {1: 0, 2: 435, 3: 790, 4: 1170, 5: 1485, 6: 1605, 7: 1960, 8: 2480, 9: 2917, 10: 3410, 11: 3870, 12: 4260}
+# made-up level times on top of them, only for the level tests
+CH = {1: [0, 126, 373], 2: [435, 578, 683], 3: [790, 940, 1056], 4: [1170, 1271, 1382], 5: [1485, 1540, 1571],
+      6: [1605, 1718, 1834], 7: [1960, 2160, 2333], 8: [2480, 2627, 2758], 9: [2917, 3121, 3278],
+      10: [3410, 3625, 3756], 11: [3870, 3972, 4093], 12: [4260, 4418, 4539]}
+LEVELS = "o=>{Object.keys(o).forEach(k=>COACH_CH[k]=o[k]);rerender()}"
 T = "COACH.el().currentTime"
 PAUSED = "COACH.el().paused"
 IN_SLOT = "(()=>{const s=document.querySelector('#app .cv-slot'),v=document.getElementById('cv');return !!s&&!!v&&s.contains(v)})()"
@@ -58,7 +65,7 @@ def storage(b, t):
 
     settings(pg); add(pg)
     txt = settings(pg)
-    ok('coach-chapters.webm' in txt and '12 exercises · 36 levels' in txt, 'once added, Settings shows its name and 12 exercises · 36 levels')
+    ok('coach-chapters.webm' in txt and '12 exercises · 0.1 MB' in txt, 'once added, Settings shows its name, 12 exercises and its size')
     ok(pg.locator('#app [data-a=coachAdd] .lbl').inner_text().strip() == 'Replace video…' and pg.locator('#app [data-v=coachDel]').count() == 1,
        'with Replace video… and Remove video')
     ok('Coach video' in pg.locator('#app .grp').filter(has_text='Recordings').inner_text(), 'the Storage group counts the video')
@@ -117,12 +124,17 @@ def backups(b, t):
     pg.context.close()
 
 
+def levels(pg):
+    pg.evaluate(LEVELS, {str(k): v for k, v in CH.items()}); pg.wait_for_timeout(100)
+
+
 def player(b, t):
     ok = t.ok
     pg = t.page(b)
-    settings(pg); add(pg)
+    settings(pg); add(pg); levels(pg)
     pg.evaluate("go(()=>{U.tab='exercises';U.view=null})"); pg.wait_for_timeout(200)
     ok('12 exercises' in pg.locator('#app [data-a=openCoach]').inner_text(), 'the Exercises row says 12 exercises before it’s played')
+    ok('3 levels each' in pg.evaluate("COACH.page()"), 'with level times for every exercise, the player says 3 levels each')
     pg.click('#app [data-a=openCoach]'); pg.wait_for_timeout(300)
     ok(pg.evaluate("U.view") == 'coach' and pg.evaluate(IN_SLOT) and pg.evaluate(PAUSED), 'it opens the player, with the video in its slot, paused')
     ok(pg.locator('#barL [data-a=coachBack][aria-label=Back]').count() == 1, 'with a Back button')
@@ -197,6 +209,7 @@ def player(b, t):
     pg.wait_for_function("COACH.el()&&COACH.el().readyState>=1", timeout=10000); pg.wait_for_timeout(300)
     ok(near(pg, where) and pg.evaluate("COACH.el().playbackRate") == 1.25, 'after a reload it’s where you left it, at the same speed')
     ok(not pg.evaluate("FW.shown"), 'and no window pops up on its own after a reload')
+    levels(pg)
     pg.evaluate("go(()=>{U.tab='exercises';U.view=null})"); pg.wait_for_timeout(200)
     ok('Paused at Falsetto voice · Level' in pg.locator('#app [data-a=openCoach]').inner_text(), 'the Exercises row says where it’s paused')
     ok(not pg.evaluate("'vocalCoach' in (JSON.parse(localStorage.getItem('vocalTracker'))||{})"), 'its settings aren’t in the app data (so never in backups)')
@@ -206,7 +219,7 @@ def player(b, t):
 def doors(b, t):
     ok = t.ok
     pg = t.page(b)
-    settings(pg); add(pg)
+    settings(pg); add(pg); levels(pg)
     # an exercise page
     pg.evaluate("go(()=>{U.tab='exercises';U.view='ex';U.exId='rung';U.exTab='summary'})"); pg.wait_for_timeout(200)
     row = pg.locator('#app [data-a=openCoach][data-k=rung]')
@@ -256,6 +269,62 @@ def doors(b, t):
     pg.context.close()
 
 
+def youtube(b, t):
+    """The real chapters: one start per exercise, from the YouTube timestamps. No level jumps."""
+    ok = t.ok
+    pg = t.page(b, touch=True)
+    ok(pg.evaluate("Object.keys(COACH_CH).map(k=>COACH_CH[k])") == [[YT[n]] for n in range(1, 13)],
+       'the chapters are exactly the YouTube timestamps, one per exercise')
+    ok(pg.evaluate("[coachSecs('1:04:30'),coachSecs('7:15'),coachSecs('0:00'),isNaN(coachSecs('7.15')),isNaN(coachSecs(''))]") == [3870, 435, 0, True, True],
+       'times read as h:mm:ss or m:ss; anything else is ignored')
+    ok(pg.evaluate("COACH_MAP.falsetto===4&&COACH_MAP.upperlower===5&&COACH_MAP.straw===6&&COACH_IDS.length===12"),
+       'every exercise is matched to its place in the video (Upper to lower voice included)')
+    settings(pg); add(pg)
+    txt = settings(pg)
+    ok('12 exercises · 0.1 MB' in txt and 'levels' not in txt.split('Coach video')[1][:200], 'Settings says 12 exercises, no levels')
+    pg.evaluate("go(()=>{U.tab='exercises';U.view='coach'})"); pg.wait_for_timeout(200)
+    ok('12 exercises' in pg.inner_text('#app .note') and 'levels' not in pg.inner_text('#app .note'), 'the player says 12 exercises')
+    for n, id in enumerate(pg.evaluate("COACH_IDS"), 1):
+        pg.click(f'#app [data-a=coachEx][data-k={id}]'); pg.wait_for_timeout(250)
+        ok(near(pg, YT[n], 0.6), f'exercise {n} ({id}) starts at its YouTube time')
+    pg.click('#app [data-a=coachEx][data-k=falsetto]'); pg.wait_for_timeout(500)
+    ok(not pg.evaluate(PAUSED) and pg.inner_text('#cvTitle') == 'Exercise 4 · Falsetto voice', 'Falsetto voice plays from 19:30')
+    ok(pg.locator('#app .cvlv').count() == 0 and not pg.locator('#cvLevel').is_visible(), 'no level picker or level line without level times')
+    ok(pg.locator('#app .cvsegs i').count() == 1, 'the scrubber is the whole exercise')
+    ok(pg.evaluate("navigator.mediaSession.metadata.title") == 'Falsetto voice', 'the lock screen shows the exercise, no level')
+    pg.click('#app [data-a=coachLoop]'); pg.wait_for_timeout(100)
+    ok(pg.locator('#app [data-a=coachLoop][aria-label="Loop this exercise"][aria-pressed=true]').count() == 1, 'Loop repeats the exercise')
+    pg.evaluate(f"COACH.el().currentTime={YT[5] - 1}"); pg.wait_for_timeout(2600)
+    tt = pg.evaluate(T)
+    ok(YT[4] - 0.5 <= tt < YT[4] + 4, f'at the end of Falsetto voice, Loop goes back to its start (at {tt:.1f})')
+    pg.click('#app [data-a=coachLoop]'); pg.wait_for_timeout(100)
+    pg.evaluate(f"COACH.el().currentTime={YT[5] - 1}"); pg.wait_for_timeout(2200)
+    ok(pg.evaluate(T) > YT[5] and pg.inner_text('#cvTitle') == 'Exercise 5 · Upper to lower voice', 'with Loop off it carries on into Upper to lower voice')
+    pg.evaluate("COACH.cue('falsetto',1,false);scrollTo(0,0)"); pg.wait_for_timeout(300)
+    sg = pg.evaluate("(()=>{const r=document.querySelector('#app .cvsegs i').getBoundingClientRect();return [r.left,r.width,r.top+r.height/2]})()")
+    pg.mouse.move(sg[0] + 2, sg[2]); pg.mouse.down(); pg.mouse.move(sg[0] + sg[1] / 2, sg[2], steps=5); pg.mouse.up(); pg.wait_for_timeout(200)
+    ok(abs(pg.evaluate(T) - (YT[4] + YT[5]) / 2) < 6, 'dragging to the middle of the bar goes to the middle of the exercise')
+
+    pg.evaluate("go(()=>{U.view='ex';U.exId='rung';U.exTab='summary'})"); pg.wait_for_timeout(200)
+    row = pg.locator('#app [data-a=openCoach][data-k=rung]')
+    ok(row.count() == 1 and 'From the start of the exercise' in row.inner_text() and 'Level' not in row.inner_text(), 'Play with coach says it starts from the top')
+    row.click(); pg.wait_for_timeout(500)
+    ok(near(pg, YT[7], 0.6) and not pg.evaluate(PAUSED), 'and plays Singing on the rung from 32:40')
+    pg.evaluate("COACH.pause()")
+
+    pg.evaluate("go(()=>{U.tab='today';U.view=null})"); pg.wait_for_timeout(150)
+    pg.click('[data-a=start]'); pg.wait_for_timeout(300)
+    r = pg.inner_text('#app [data-a=coachShow]')
+    ok('Coach video' in r and 'Vocal slides' in r and 'Level' not in r, 'the session row names the exercise, no level')
+    pg.click('#app [data-a=coachShow]'); pg.wait_for_timeout(500)
+    ok(near(pg, 0, 0.8) and not pg.evaluate(PAUSED), 'tapping it plays Vocal slides from 0:00')
+    pg.click('#app [data-a=coachStepEx][data-v="1"]'); pg.wait_for_timeout(400)
+    ok(near(pg, YT[2], 0.8) and pg.inner_text('#cvCap') == 'Exercise 2 · Humming', '› goes to Humming at 7:15')
+    pg.evaluate(LEAVE); pg.wait_for_timeout(400)
+    ok(pg.inner_text('#fw .fwk') == 'Humming', 'the window says Humming')
+    pg.context.close()
+
+
 def window(b, t):
     ok = t.ok
     pg = t.page(b, touch=True)
@@ -268,7 +337,7 @@ def window(b, t):
     ok(pg.evaluate("FW.shown") == 'video' and pg.evaluate(IN_FW), 'leaving while it plays shows the video window, holding the video itself')
     t1 = pg.evaluate(T); pg.wait_for_timeout(700)
     ok(not pg.evaluate(PAUSED) and pg.evaluate(T) > t1, 'and it keeps playing')
-    ok(pg.inner_text('#fw .fwk') == 'Falsetto · L1', 'its bar says Falsetto · L1')
+    ok(pg.inner_text('#fw .fwk') == 'Falsetto', 'its bar says Falsetto')
     r = pg.evaluate("(()=>{const r=document.getElementById('fw').getBoundingClientRect();return [r.width,r.height]})()")
     ok(abs(r[0] - 176) < 1 and abs(r[1] - 99) < 1, 'it’s a 16:9 window, 176×99')
     t.shot(pg, 'window')
@@ -366,6 +435,7 @@ def layout(b, t):
 
 
 def run(b, t):
+    youtube(b, t)
     storage(b, t)
     backups(b, t)
     player(b, t)

@@ -4223,6 +4223,9 @@ textarea.field.sglyr {
   font-size: 17px;
   font-weight: 600;
 }
+.cvnow small:empty {
+  display: none;
+}
 .cvnow small {
   display: block;
   font-size: 13px;

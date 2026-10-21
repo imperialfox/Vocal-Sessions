@@ -35,6 +35,25 @@ const VID = {
   flex: 420,
 };
 
+// COACH_TIMES: where each exercise starts in the coach video on your phone (Settings › Coach video), from the
+// YouTube video's timestamps. Write times as 'm:ss' or 'h:mm:ss'. To jump straight to levels too, give three times
+// instead of one, Level 1 first: falsetto: ['19:30', '21:10', '23:05']. Exercises with three times get the
+// L1 · L2 · L3 picker in the player; the rest start from the top of the exercise.
+const COACH_TIMES = {
+  slides: ['0:00'],
+  humming: ['7:15'],
+  lip: ['13:10'],
+  falsetto: ['19:30'],
+  upperlower: ['24:45'],
+  straw: ['26:45'],
+  rung: ['32:40'],
+  hinge: ['41:20'],
+  half: ['48:37'],
+  vertical: ['56:50'],
+  nasal: ['1:04:30'],
+  flex: ['1:11:00'],
+};
+
 /* ===== Exercises ===== */
 // focus is one of: 'cord-closure', 'register', 'resonance', 'agility', 'blend'. It sets the icon colour and a Toggl tag.
 const FOUND = [
