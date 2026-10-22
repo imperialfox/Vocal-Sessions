@@ -9,6 +9,27 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.17 · 22 Oct 2026
+*Tab order, new icons and tidier lyrics*
+<!-- area: look -->
+
+**Tabs**
+- The tabs are now in the order Today, Progress, Songs, Exercises: in the tab bar, the iPad's top capsule and the Mac's sidebar. Cmd/Ctrl + 3 opens Songs and Cmd/Ctrl + 4 opens Exercises.
+- New icons: Progress is a ring about three quarters full, like Today's goal arch, and Exercises is a small deck of cards.
+
+**Today's title**
+- "Today" now sits at exactly the same height as the titles on Progress, Songs and Exercises, so the header no longer jumps when you switch tabs. On iPad and Mac the Songs title lines up too.
+- The date sits just above the title, tight to its letters, and still opens the practice calendar.
+- The chevron beside "Today" is centred on its letters.
+
+**Sing-as labels**
+- A word with a sing-as label now makes room for it, like chords over lyrics: the label sits above its word and the gap after the word grows, so labels never overlap each other, the lyrics or the line above.
+- Only lines with a label get taller. The note marker always sits beside its word.
+- Recall still hides the labels in place, and Perform still leaves them out.
+
+**Fixes**
+- Closing the coach video's small window with ✕ now always hides it. On iPhone it could stay on screen on every page, showing a black box, the exercise name and Play. Only playing the video again brings it back.
+
 ## 3.16.1 · 21 Oct 2026
 *Coach video chapters from YouTube*
 <!-- area: fixes -->

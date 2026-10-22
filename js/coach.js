@@ -141,7 +141,10 @@ const COACH = (() => {
     pitch();
     el.addEventListener('play', () => {
       woke = true;
-      dismissed = false;
+      // 3.17: after ✕, only a play you asked for brings the window back: COACH.play() (Play, a "Play with coach" row,
+      // the window's button) clears dismissed itself, and so does playing the video where it's on screen (its slot,
+      // or full screen from there). A play event while it waits in the holder (iOS can fire one when it's moved) never does
+      if (el.closest && el.closest('#app')) dismissed = false;
       // one sound at a time: a take stops when the coach starts
       if (typeof player !== 'undefined' && player) {
         stopPlayback();

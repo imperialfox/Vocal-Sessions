@@ -59,11 +59,13 @@ function scrToday() {
   const sw2 = songWeek(),
     songLive = isSong() && !!X.start;
   return (
-    '<button class="dateline" data-rise data-a="openCal">' +
+    // 3.17: "Today" sits where every other main page's title sits; the date shares its row, tucked just above the
+    // letters, and the chevron sits in the title's line, centred on its capital letters
+    '<div class="titlerow"><button class="dateline" data-rise data-a="openCal">' +
     dl +
-    '</button><div class="titlerow" data-rise><h1><button class="tbtn" data-a="openCal">Today</button></h1><button class="calbtn" data-a="openCal" aria-label="Open practice calendar">' +
+    '</button><h1 data-rise><button class="tbtn" data-a="openCal">Today</button><button class="calbtn" data-a="openCal" aria-label="Open practice calendar">' +
     ICON.down +
-    '</button></div>' +
+    '</button></h1></div>' +
     backupNudge() +
     '<div class="dash"><div class="d-hero"><button class="arch" data-rise data-zk="goal" data-a="goalOpen" aria-label="This week, ' +
     Math.round(w.mins) +

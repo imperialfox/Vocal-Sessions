@@ -1236,32 +1236,54 @@ main {
 .grp.tiled > * + *::before {
   left: 62px;
 }
+/* 3.17: Today's title sits exactly where every other main page's title sits (no line of its own for the date above).
+   The date shares the title's row and baseline, then is lifted by the title's cap height plus a small gap, so it sits
+   just above the letters at any size and with any font. The chevron is in the title's line, centred on its capital
+   letters (cap height) rather than the line box */
+.titlerow {
+  display: grid;
+  justify-items: start;
+  align-items: baseline;
+}
+.titlerow > * {
+  grid-area: 1 / 1;
+}
+.titlerow h1 {
+  margin-bottom: 6px;
+}
 .dateline {
   font-size: 13px;
   font-weight: 600;
   color: var(--fg2);
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  margin: 4px 4px 0;
+  line-height: 13px;
+  margin: 0 4px;
+  position: relative;
+  /* 34 / 13: the title's cap height, worked out in the date's own font */
+  top: calc(-1cap * 34 / 13 - 3px);
+  z-index: 1;
 }
-.titlerow {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-.titlerow h1 {
-  margin-bottom: 6px;
+/* the date reaches a few pixels into the top bar's space: while the bar is clear, the date takes the tap */
+.bar:not(.scrolled) ~ #app .dateline {
+  z-index: 21;
 }
 .calbtn {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
+  display: inline-block;
+  position: relative;
+  font: inherit;
+  line-height: 0;
+  margin-left: 12px;
   color: var(--accent);
-  margin-bottom: 2px;
+  /* its bottom (the svg's) would sit on the title's baseline: lift it so its middle is half the cap height up */
+  vertical-align: calc(0.5cap - 12px);
 }
-.calbtn svg {
+.calbtn::after {
+  content: '';
+  position: absolute;
+  inset: -10px; /* a 44 px target around the 24 px chevron */
+}
+.calbtn svg.i {
   width: 24px;
   height: 24px;
   stroke-width: 2.6;
@@ -1583,9 +1605,6 @@ textarea.field {
   font: inherit;
   color: inherit;
   letter-spacing: inherit;
-}
-.dateline {
-  display: inline-block;
 }
 .nudge {
   display: flex;
@@ -3164,9 +3183,6 @@ body.wide .etool {
   white-space: nowrap;
   position: relative;
 }
-.sgl.hasv {
-  padding-top: 15px;
-}
 .sgl.wrap {
   white-space: normal;
   padding-left: 1.1em;
@@ -3202,13 +3218,23 @@ body.wide .etool {
   border-radius: 4px;
   padding: 1px 4px;
 }
-.w .v {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  top: -15px;
+/* 3.17: a word with a sing-as label is a little column, like a chord sheet or ruby text: the label sits above the word
+   and the word's box is as wide as the wider of the two, so the gap after the word grows instead of the label spilling
+   onto its neighbours. The box's baseline is the word's, so only lines (and wrapped parts of lines) with a label
+   get taller */
+.w.hv {
+  text-align: center;
+  margin: 0 1px;
 }
-.w.run {
+.w .v {
+  display: table;
+  margin: 0 auto 3px;
+}
+.w.hv .wt {
+  display: inline;
+}
+.w.run:not(.hv),
+.w.run .wt {
   text-decoration: underline wavy var(--accent);
   text-underline-offset: 5px;
   text-decoration-thickness: 1.5px;
@@ -3243,11 +3269,9 @@ body.wide .etool {
 .perform .sgnote {
   display: none;
 }
-.perform .w.run {
+.perform .w.run,
+.perform .w.run .wt {
   text-decoration: none;
-}
-.perform .sgl.hasv {
-  padding-top: 0;
 }
 .editing .sgsec {
   -webkit-user-select: none;
@@ -3258,9 +3282,6 @@ body.wide .etool {
   cursor: pointer;
   padding: 8px 3px;
   margin: -8px -2px;
-}
-.editing .w .v {
-  top: -7px;
 }
 .editing .sgl {
   cursor: pointer;
@@ -3594,11 +3615,15 @@ textarea.field.sglyr {
 }
 .sgsplit .sgcol {
   position: sticky;
-  top: calc(64px + env(safe-area-inset-top, 0px));
-  max-height: calc(100vh - 80px - env(safe-area-inset-top, 0px));
+  /* 3.17: right under the top bar, so the Songs title sits at the same height as every other main page's */
+  top: calc(56px + env(safe-area-inset-top, 0px));
+  max-height: calc(100vh - 72px - env(safe-area-inset-top, 0px));
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 4px 2px 32px;
+  padding: 0 2px 32px;
+}
+.sgsplit .sgcol > .sgph:first-child {
+  min-height: 44px;
 }
 .sgsplit .sgcol .hdr:first-of-type {
   margin-top: 14px;

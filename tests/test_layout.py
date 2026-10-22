@@ -27,6 +27,31 @@ TAKES = """(async()=>{const s=songById(U.songId),o=s.order[1].o,b=new Blob([new 
 TOUCH = """(a)=>{const [type,y]=a;const t=new Touch({identifier:1,target:document.body,clientX:200,clientY:y});
   const e=new TouchEvent(type,{touches:type==='touchend'?[]:[t],changedTouches:[t],bubbles:true,cancelable:true});document.body.dispatchEvent(e);return e.defaultPrevented}"""
 
+# 3.17 Today's header: where the title's baseline and capital letters are (a zero-size probe sits on the baseline;
+# the cap height comes from the title's own font)
+HEAD = """()=>{const h=document.querySelector('#app h1'),pr=document.createElement('span');pr.style.cssText='display:inline-block;width:0;height:0';
+  h.appendChild(pr);const base=pr.getBoundingClientRect().top+scrollY;pr.remove();
+  const c=document.createElement('canvas').getContext('2d');c.font=getComputedStyle(h).font;const cap=c.measureText('H').actualBoundingBoxAscent;
+  const o={top:h.getBoundingClientRect().top+scrollY,capTop:base-cap,capMid:base-cap/2};
+  const d=document.querySelector('#app .dateline');if(d){const q=document.createElement('span');q.style.cssText='display:inline-block;width:0;height:0';
+   d.appendChild(q);o.dBase=q.getBoundingClientRect().top+scrollY;q.remove();o.dBottom=d.getBoundingClientRect().bottom+scrollY}
+  const v=document.querySelector('#app .calbtn svg');if(v){const r=v.getBoundingClientRect();o.chev=(r.top+r.bottom)/2+scrollY}return o}"""
+
+
+def titles(t, pg, name):
+    ok = t.ok
+    pg.evaluate("scrollTo(0,0)")
+    td = pg.evaluate(HEAD)
+    for tab, label in [('history', 'Progress'), ('songs', 'Songs'), ('exercises', 'Exercises')]:
+        pg.evaluate(f"U.tab='{tab}';U.view=null;U.songId=null;render()"); pg.wait_for_timeout(150)
+        o = pg.evaluate(HEAD)
+        ok(abs(o['top'] - td['top']) <= 1, f'{name}: Today’s title sits at the same height as {label}’s ({td["top"]:.1f} vs {o["top"]:.1f})')
+    ok(td['dBase'] < td['capTop'] and abs(td['dBottom'] - td['capTop']) <= 6,
+       f'{name}: the date sits just above the title’s letters (gap {td["capTop"] - td["dBase"]:.1f} px)')
+    ok(abs(td['chev'] - td['capMid']) <= 1, f'{name}: the chevron is centred on the title’s capital letters ({td["chev"] - td["capMid"]:+.1f} px)')
+    pg.evaluate("U.tab='today';U.view=null;render()"); pg.wait_for_timeout(150)
+
+
 def run(b, t):
     ok = t.ok
     data = with_song_practice()
@@ -40,6 +65,7 @@ def run(b, t):
                 if not pg.evaluate(BAR_IN): bad.append(screen + ' tabs off screen')
                 t.shot(pg, f'{tag}-{screen}')
             check('today')
+            if sc == 'light': titles(t, pg, name)
             for tab in ['history', 'exercises', 'settings', 'songs']:
                 pg.evaluate(f"U.tab='{tab}';U.view=null;render()"); pg.wait_for_timeout(250); check(tab)
             pg.evaluate(SONG); pg.wait_for_timeout(300); check('song')

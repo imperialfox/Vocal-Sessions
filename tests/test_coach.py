@@ -388,6 +388,61 @@ def window(b, t):
     pg.context.close()
 
 
+# 3.17: Ivan's iPhone kept the window on screen after ✕ (black video area, the exercise name and Play). With motion on,
+# ✕ must always end with #fw hidden within the fade's time, even if the fade never finishes, and only a play you
+# asked for brings it back (a stray media play event doesn't)
+FADE = "(()=>{const a=FW.hideAnim;try{return a?+a.effect.getTiming().duration:0}catch(e){return 0}})()"
+GONE = "(()=>{const f=document.getElementById('fw');return !FW.shown&&!!f&&f.hidden})()"
+
+
+def dismiss(b, t):
+    ok = t.ok
+    pg = t.page(b, touch=True, init="try{localStorage.setItem('vocalMotion','1')}catch(e){}")
+    settings(pg); add(pg)
+    pg.evaluate("go(()=>{U.tab='exercises';U.view=null})"); pg.wait_for_timeout(1300)
+    pg.click('#app [data-a=openCoach]'); pg.wait_for_timeout(1300)
+    pg.click('#app [data-a=coachEx][data-k=slides]'); pg.wait_for_timeout(400)
+    pg.evaluate(LEAVE); pg.wait_for_timeout(1300)
+    ok(pg.evaluate(IN_FW), 'motion on: leaving the player shows the video window')
+    pg.click('#fw [data-a=fwToggle]'); pg.wait_for_timeout(400)
+    pg.click('#fw [data-a=coachX]')
+    d = pg.evaluate(FADE)
+    ok(0 < d < 700, f'✕ fades the window out quickly ({d:.0f} ms)')
+    pg.wait_for_timeout(int(d) + 200)
+    ok(pg.evaluate(GONE) and pg.evaluate(PAUSED), '✕ hides the window within the fade’s time, and the video stays paused')
+    # a media play event the app didn't ask for (iOS can fire one when the video is moved) doesn't bring it back
+    pg.evaluate("COACH.el().dispatchEvent(new Event('play'))"); pg.wait_for_timeout(300)
+    for name, js in [('Songs', "go(()=>{U.tab='songs';U.view=null})"), ('Progress', "go(()=>{U.tab='history';U.view=null})"),
+                     ('Today', LEAVE)]:
+        pg.evaluate(js); pg.wait_for_timeout(700)
+        ok(pg.evaluate(GONE), f'after ✕ it stays hidden on {name}')
+    pg.evaluate("COACH.play()"); pg.wait_for_timeout(900)
+    ok(pg.evaluate(IN_FW) and pg.locator('#fw').is_visible(), 'only Play brings it back, holding the video')
+
+    # the fade never finishing (as on iOS): the window still hides once its time is up
+    pg.click('#fw [data-a=fwToggle]'); pg.wait_for_timeout(400)
+    pg.evaluate("window._ma=MOTION.animate;MOTION.animate=function(){const a=window._ma.apply(this,arguments);if(a)a.pause();return a}")
+    pg.click('#fw [data-a=coachX]')
+    d = pg.evaluate(FADE)
+    pg.wait_for_timeout(60)
+    ok(not pg.evaluate("document.getElementById('fw').hidden"), 'a fade that never finishes leaves the window up at first (the iPhone bug)')
+    pg.wait_for_timeout(int(d) + 250)
+    ok(pg.evaluate(GONE), 'but it’s hidden once the fade’s time is up anyway')
+    pg.evaluate(LEAVE); pg.wait_for_timeout(500)
+    ok(pg.evaluate(GONE), 'and it stays hidden after moving on')
+    # the take window uses the same hiding
+    pg.evaluate(WAV_TAKE, 'tx'); pg.wait_for_timeout(200)
+    pg.evaluate("playTake('tx')"); pg.wait_for_timeout(300)
+    pg.evaluate("go(()=>{U.tab='history';U.view=null})"); pg.wait_for_timeout(700)
+    ok(pg.evaluate("FW.shown") == 'take' and not pg.evaluate("document.getElementById('fw').hidden"), 'a playing take has the window')
+    pg.evaluate("stopPlayback();rerender()")
+    d = pg.evaluate(FADE)
+    pg.wait_for_timeout(int(d) + 250)
+    ok(pg.evaluate(GONE), 'stopping the take hides its window, even if the fade never finishes')
+    pg.evaluate("MOTION.animate=window._ma")
+    pg.context.close()
+
+
 def zoom(b, t):
     ok = t.ok
     pg = t.page(b, init="try{localStorage.setItem('vocalMotion','1')}catch(e){}")
@@ -441,5 +496,6 @@ def run(b, t):
     player(b, t)
     doors(b, t)
     window(b, t)
+    dismiss(b, t)
     zoom(b, t)
     layout(b, t)

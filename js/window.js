@@ -17,6 +17,7 @@ const FW = {
   drag: null,
   stopSpring: null,
   hideAnim: null,
+  hideTimer: 0, // 3.17: the fallback that hides the window if its fade never finishes
   moved: 0,
 };
 try {
@@ -223,6 +224,7 @@ function fwShow() {
     FW.hideAnim.cancel();
     FW.hideAnim = null;
   }
+  clearTimeout(FW.hideTimer);
   el.hidden = false;
   fwPlace(true);
   const base = el.style.transform;
@@ -236,12 +238,16 @@ function fwShow() {
   );
 }
 function fwHide() {
-  if (!FW.shown) return;
+  const el = FW.el;
+  if (!FW.shown) {
+    // 3.17: a window left on screen with nothing in it (a fade that never finished) goes now
+    if (el && !el.hidden && !FW.hideAnim) el.hidden = true;
+    return;
+  }
   FW.shown = null;
   FW.drag = null;
   if (FW.stopSpring) FW.stopSpring();
   FW.stopSpring = null;
-  const el = FW.el;
   el.classList.remove('dragging');
   if (!MOTION.on()) {
     el.hidden = true;
@@ -258,14 +264,27 @@ function fwHide() {
     { ms: Math.round((MOTION.dur('gentle') / MOTION.speed()) * 0.45), easing: MOTION.ease('gentle'), fill: 'forwards' }
   );
   FW.hideAnim = a;
-  if (a)
-    a.onfinish = () => {
-      if (FW.hideAnim !== a) return;
-      FW.hideAnim = null;
-      if (!FW.shown) el.hidden = true;
+  if (!a) {
+    el.hidden = true;
+    return;
+  }
+  const done = () => {
+    if (FW.hideAnim !== a) return; // shown again since, or already done
+    FW.hideAnim = null;
+    clearTimeout(FW.hideTimer);
+    if (!FW.shown) el.hidden = true;
+    try {
       a.cancel();
-    };
-  else el.hidden = true;
+    } catch (e) {}
+  };
+  a.onfinish = done;
+  // 3.17: hidden once the fade's time is up even if it never finishes (iOS could leave the window on screen)
+  let d = 0;
+  try {
+    d = +a.effect.getTiming().duration || 0;
+  } catch (e) {}
+  clearTimeout(FW.hideTimer);
+  FW.hideTimer = setTimeout(done, (d || 400) + 120);
 }
 
 /* ===== Where it sits ===== */

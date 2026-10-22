@@ -253,7 +253,9 @@ def run(b, t):
     pg.click('#barR [data-a=openSettings]'); pg.wait_for_timeout(250)
     ok(pg.evaluate("U.tab") == 'settings' and pg.locator('#dock .tabbar button.on').get_attribute('data-v') == 'today', 'the gear opens Settings, under Today')
     pg.click('[data-a=setBack]'); pg.wait_for_timeout(250); ok(pg.evaluate("U.tab") == 'today', 'Back returns to Today')
-    ok(pg.locator('#dock .tabbar [data-a=tab]').count() == 4 and pg.locator('#dock .tabbar [data-v=settings]').count() == 0, 'the tab bar is Today, Progress, Exercises, Songs')
+    ok(pg.locator('#dock .tabbar [data-a=tab]').count() == 4 and pg.locator('#dock .tabbar [data-v=settings]').count() == 0, 'the tab bar has four tabs and no Settings')
+    ok(pg.evaluate("[...document.querySelectorAll('#dock .tabbar [data-a=tab]')].map(b=>b.dataset.v)") == ['today', 'history', 'songs', 'exercises'],
+       'the tab bar is Today, Progress, Songs, Exercises (3.17)')
 
     # backup round trip
     pg.evaluate("U.tab='settings';render()")
@@ -332,7 +334,8 @@ def run(b, t):
         pg.locator('body').click(position={'x': w - 40, 'y': h - 40}); pg.wait_for_timeout(100)
         cur = pg.evaluate("U.songId"); pg.keyboard.press('ArrowDown'); pg.wait_for_timeout(250)
         ok(pg.evaluate("U.songId") != cur, f'{name}: arrow keys move between songs')
-        pg.keyboard.press('Control+4'); pg.wait_for_timeout(200); ok(pg.evaluate("U.tab") == 'songs', f'{name}: Cmd+4 opens Songs')
+        pg.keyboard.press('Control+4'); pg.wait_for_timeout(200); ok(pg.evaluate("U.tab") == 'exercises', f'{name}: Cmd+4 opens Exercises (3.17 tab order)')
+        pg.keyboard.press('Control+3'); pg.wait_for_timeout(200); ok(pg.evaluate("U.tab") == 'songs', f'{name}: Cmd+3 opens Songs')
         pg.keyboard.press('Control+,'); pg.wait_for_timeout(200); ok(pg.evaluate("U.tab") == 'settings', f'{name}: Cmd+, opens Settings')
         pg.context.close()
 

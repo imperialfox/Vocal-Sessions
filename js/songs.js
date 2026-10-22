@@ -950,6 +950,7 @@ function sgWord(o, sid, li, wi, w, sec, mask) {
   const pl = SG.pulse && SG.pulse.sid === sid && SG.pulse.li === li && SG.pulse.wi === wi && SG.pulse.o !== o;
   return (
     '<span class="w' +
+    (a.v ? ' hv' : '') +
     (a.run ? ' run' : '') +
     (a.check && ed ? ' chk' : '') +
     (on ? ' on' : '') +
@@ -969,8 +970,16 @@ function sgWord(o, sid, li, wi, w, sec, mask) {
         '"'
       : '') +
     '>' +
-    (a.v ? '<span class="v">' + (mask === 'all' ? maskText(a.v, 'all') : esc(a.v)) + '</span>' : '') +
-    (mask ? maskText(w, mask) : esc(w)) +
+    // 3.17: a word with a sing-as label is a little column, the label above the word (like a chord sheet)
+    (a.v
+      ? '<span class="v">' +
+        (mask === 'all' ? maskText(a.v, 'all') : esc(a.v)) +
+        '</span><span class="wt">' +
+        (mask ? maskText(w, mask) : esc(w)) +
+        '</span>'
+      : mask
+        ? maskText(w, mask)
+        : esc(w)) +
     '</span>' +
     marksHTML(a)
   );

@@ -147,3 +147,90 @@ def run(b, t):
             ok(not ov and pat and pg.locator('.sgsec.sel [data-a=sgRec]').count() == 1, f'{name} {sc}: focused page fits, with its controls')
             t.shot(pg, f'{name}-{sc}')
             pg.context.close()
+
+    singas(b, t)
+
+
+# 3.17 sing-as labels: a labelled word is a little column, the label above it, so labels never overlap the lyrics,
+# each other or the line above, and only lines with a label get taller (Ivan's When I Was Your Man screenshot)
+SING_LYR = ("[Verse]\nSaid our song on the radio\nBut it don't sound the same\nWhen our friends talk about you\n\n"
+            "[Chorus]\nToo young too dumb to realise that I should have bought you flowers and held your hand\n"
+            "Should have gave you all my hours when I had the chance\nNow my baby's dancing")
+SING_ANN = """()=>{const s=songById(U.songId),a=s.sections[s.order[0].sid].ann,c=s.sections[s.order[1].sid].ann;
+  a['0:0']={v:'sss-heyyyym'};a['0:1']={v:'aaaw'};a['0:2']={v:'sooong',nt:'Soft on the vowel'};
+  a['1:3']={v:'doooo-n'};a['1:4']={v:'saaa-wnd'};
+  c['0:0']={v:'tuuuu'};c['0:1']={v:'yuh-ng'};c['0:13']={v:'bi-'};c['0:14']={v:'bigge'};c['0:15']={v:'naaa-w'};
+  c['2:0']={v:'naaa-w'};c['2:1']={v:'mah'};
+  save();rerender();return s.order.map(x=>x.o)}"""
+# every label, every word's own text and every mark, then any two that overlap
+CLASH = """()=>{const R=e=>{const r=e.getBoundingClientRect();return {l:r.left,r:r.right,t:r.top,b:r.bottom,w:r.width}};
+  const labs=[...document.querySelectorAll('#app .sgl .w .v')].filter(e=>getComputedStyle(e).display!=='none').map(e=>({k:'label '+e.textContent,...R(e)}));
+  const words=[...document.querySelectorAll('#app .sgl .w')].map(w=>({k:'word '+w.textContent,...R(w.querySelector('.wt')||w)}));
+  const marks=[...document.querySelectorAll('#app .sgl .m')].map(e=>({k:'mark',...R(e)}));
+  const hit=(a,b)=>a.w>0&&b.w>0&&a.l<b.r-.5&&b.l<a.r-.5&&a.t<b.b-.5&&b.t<a.b-.5,out=[];
+  labs.forEach((a,i)=>labs.slice(i+1).concat(words,marks).forEach(b=>{if(hit(a,b))out.push(a.k+' × '+b.k)}));
+  return {n:labs.length,out}}"""
+LINES = """()=>[...document.querySelectorAll('#app .sgl')].map(l=>({v:l.classList.contains('hasv'),h:l.getBoundingClientRect().height,
+  fs:getComputedStyle(l).fontSize,wrap:l.classList.contains('wrap')}))"""
+
+
+def singas(b, t):
+    ok = t.ok
+    for w, h, name in [(375, 667, '375'), (390, 844, '390'), (852, 393, 'landscape'), (820, 1180, 'ipad')]:
+        pg = t.page(b, w=w, h=h, touch=True, data=with_song_practice())
+        pg.evaluate("U.tab='songs';render()")
+        pg.evaluate(ADD, SING_LYR); pg.wait_for_timeout(200)
+        pg.evaluate(SING_ANN); pg.wait_for_timeout(250)
+        c = pg.evaluate(CLASH)
+        ok(c['n'] == 12 and not c['out'], f'sing-as {name}: Practise, no label overlaps a lyric, a mark or another label {c["out"][:3]}')
+        ls = pg.evaluate(LINES)
+        plain = [x['h'] for x in ls if not x['v'] and not x['wrap']]
+        ok(plain and max(plain) - min(plain) < 1 and all(x['h'] > max(plain) + 8 for x in ls if x['v']),
+           f'sing-as {name}: only lines with a label get taller')
+        if name == '375':
+            ok(any(x['wrap'] and x['v'] for x in ls), 'sing-as 375: the long chorus line wraps, labels and all')
+            # the word sits under its label, centred, and the line's other words keep their baseline
+            al = pg.evaluate("""()=>{const l=document.querySelector('#app .sgl'),w=l.querySelector('.w.hv'),v=w.querySelector('.v').getBoundingClientRect(),
+              x=w.querySelector('.wt').getBoundingClientRect(),p=[...l.querySelectorAll('.w:not(.hv)')].pop(),r=document.createRange();
+              r.selectNodeContents(p);const y=r.getBoundingClientRect();
+              return [Math.abs((v.left+v.right)/2-(x.left+x.right)/2),v.bottom<=x.top+.5,Math.abs(y.bottom-x.bottom)]}""")
+            ok(al[0] < 1.5 and al[1] and al[2] < 1.5, 'sing-as 375: the label sits centred above its word, and the words share a baseline')
+            # the note marker sits beside its word, never under a label
+            nt = pg.evaluate("""()=>{const m=document.querySelector('#app .sgl .m.nt'),w=m.previousElementSibling.querySelector('.wt');
+              const a=m.getBoundingClientRect(),b=w.getBoundingClientRect();return [a.left>=b.right-.5,a.top<b.bottom&&a.bottom>b.top]}""")
+            ok(nt[0] and nt[1], 'sing-as 375: the note marker sits next to its word')
+            t.shot(pg, 'singas-practise')
+        # Recall level 1: labels masked in place, nothing moves
+        before = pg.evaluate(LINES)
+        pg.evaluate("U.sMode='recall';U.sHint=1;rerender()"); pg.wait_for_timeout(250)
+        c = pg.evaluate(CLASH)
+        ok(c['n'] == 12 and not c['out'], f'sing-as {name}: Recall level 1, still no overlaps')
+        # (a long wrapped line can re-break by a fraction of a pixel when letters are hidden, so those are left out)
+        ok([round(x['h']) for x in pg.evaluate(LINES) if not x['wrap']] == [round(x['h']) for x in before if not x['wrap']],
+           f'sing-as {name}: Recall keeps every unwrapped line where it was')
+        pg.evaluate("U.sHint=4;rerender()"); pg.wait_for_timeout(250)
+        c = pg.evaluate(CLASH)
+        ok(pg.locator('#app .sgl .w .v:has(.hx)').count() == 12 and not c['out'], f'sing-as {name}: Recall level 4 masks the labels in place, no overlaps')
+        if name == '375': t.shot(pg, 'singas-recall')
+        # Perform: bigger text, no labels, no extra height
+        pg.evaluate("U.sMode='perform';U.sHint=0;rerender()"); pg.wait_for_timeout(250)
+        c = pg.evaluate(CLASH)
+        ls = pg.evaluate(LINES)
+        ok(c['n'] == 0 and not c['out'], f'sing-as {name}: Perform hides the labels')
+        if name == '375':
+            by = {}
+            for x in ls:
+                if not x['wrap']: by.setdefault(x['fs'], []).append(x['h'])
+            ok(by and all(max(v) - min(v) < 1.5 for v in by.values()), 'sing-as 375: in Perform, labelled lines are no taller than the rest')
+        pg.evaluate("U.sMode='practise';rerender()"); pg.wait_for_timeout(200)
+        # tap to focus still works on the new words, and keeps them in place
+        pg.click('#app .sgsec:nth-of-type(2) .sglab'); pg.wait_for_timeout(200)
+        c = pg.evaluate(CLASH)
+        ok(pg.locator('#app .sgsec.sel').count() == 1 and not c['out'], f'sing-as {name}: focusing a section keeps the labels clear')
+        pg.context.close()
+    # dark mode at 375
+    pg = t.page(b, w=375, h=667, sc='dark', touch=True, data=with_song_practice())
+    pg.evaluate("U.tab='songs';render()"); pg.evaluate(ADD, SING_LYR); pg.wait_for_timeout(200); pg.evaluate(SING_ANN); pg.wait_for_timeout(250)
+    ok(not pg.evaluate(CLASH)['out'], 'sing-as 375 dark: no overlaps')
+    t.shot(pg, 'singas-dark')
+    pg.context.close()

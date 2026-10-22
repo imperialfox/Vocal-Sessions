@@ -92,6 +92,9 @@ def ripple(b, t):
     ok(len([a for a in pg.evaluate(ANIMS, '#app [data-rise]') if a]) >= 8, "Today's blocks rise in again")
     ok(pg.locator('.toast').count() == 1 and 'Backup restored' in pg.locator('.toast').inner_text(), 'and the message shows as the screen goes')
     pg.wait_for_function("!LAUNCH.busy()", timeout=15000)
+    # 3.17: under a heavily loaded machine the last rise can be a frame or two behind LAUNCH ending, so allow 1.5 s
+    try: pg.wait_for_function(SETTLED, timeout=1500)
+    except Exception: pass
     ok(pg.evaluate(GONE) and pg.evaluate(SETTLED), 'then the screen is clear and settled')
     pg.context.close()
 

@@ -172,6 +172,10 @@ const ICON = {
   clock: '<svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
   chart: '<svg class="i" viewBox="0 0 24 24"><path d="M5 20V11M10.5 20V5M16 20v-6M21.5 20H2.5"/></svg>',
   list: '<svg class="i" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"/></svg>',
+  // 3.17 tab icons: Progress is a ring about three quarters full (like Today's goal arch), Exercises a deck of cards
+  ring: '<svg class="i" viewBox="0 0 24 24"><path d="M3.5 12A8.5 8.5 0 0 1 12 3.5" opacity=".3"/><path d="M12 3.5A8.5 8.5 0 1 1 3.5 12"/></svg>',
+  library:
+    '<svg class="i" viewBox="0 0 24 24"><rect x="3" y="9.5" width="12.5" height="11.5" rx="2.5"/><path d="M6 6.5h10a2.5 2.5 0 0 1 2.5 2.5v9M9 3.5h10A2.5 2.5 0 0 1 21.5 6v9"/></svg>',
   gear: '<svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
   back: '<svg class="i" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg>',
   down: '<svg class="i" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>',
@@ -210,11 +214,12 @@ function layout() {
   b.toggle('wide', MQ.wide.matches);
   b.toggle('land', MQ.land.matches && !MQ.reg.matches);
 }
+// 3.17: Today, Progress, Songs, Exercises (the tab bar, iPad's top capsule, the sidebar and Cmd/Ctrl + 1–4)
 const TABS = () => [
   ['today', 'Today', ICON.mic],
-  ['history', 'Progress', ICON.chart],
-  ['exercises', 'Exercises', ICON.list],
+  ['history', 'Progress', ICON.ring],
   ['songs', 'Songs', SGI.music],
+  ['exercises', 'Exercises', ICON.library],
 ];
 // Settings opens from the gear on Today, so it belongs to Today
 const tabOf = (t) => (t === 'settings' ? 'today' : t);
