@@ -38,6 +38,12 @@ INV=r"""(()=>{const p=[];const L=document.getElementById('layer');
  if(LAUNCH.busy()){window.__lb=window.__lb||performance.now();if(performance.now()-window.__lb>8000)p.push('launch ripple stuck')}else window.__lb=0;
  if(ZOOM.busy()){window.__zb=window.__zb||performance.now();if(performance.now()-window.__zb>5000)p.push('card zoom stuck')}else{window.__zb=0;
    if(document.querySelector('.zm'))p.push('a zoom layer left behind');if(document.querySelector('.zm-src'))p.push('a card left hidden after a zoom');}
+ const ck=CLOCK.state();
+ if(ck.wake&&!((ck.run&&songShown()&&songShown().id===ck.songId)||(ck.syncRun&&U.view==='ckSync')))p.push('wake lock held while not timing');
+ if(FW.shown==='clock'&&FW_KINDS.find(k=>k.id==='clock').own())p.push('play-along window on its own screen');
+ if(U.view!=='ckSync'&&(ck.syncing||ck.syncRun))p.push('Sync clock running after leaving Sync');
+ if(!document.getElementById('ckpa').hidden&&!(ck.on&&songShown()&&!U.sEdit))p.push('play-along view shown without play-along');
+ if(document.documentElement.classList.contains('ckplay')&&document.getElementById('ckpa').hidden)p.push('page scrolling locked without play-along');
  try{JSON.parse(localStorage.getItem('vocalTracker'))}catch(e){p.push('saved data unreadable')}
  const sumOk=Object.keys(D.months).length>=0;
  return p;})()"""
@@ -48,7 +54,9 @@ VIS=r"""(()=>{const L=document.getElementById('layer');const root=L.querySelecto
 # no microphone here: Record shows on a selected section, but recording itself is covered by test_recording and test_sections
 SKIP = {'importPick', 'checkPick', 'exportSave', 'saveReadme', 'rec', 'sgRec', 'coachAdd', 'coachFS'}
 HEAVY = ('sgOpen','sgSec','sgTakes','playTake','star','sgMode','sgHint','sgHMenu','sgSetHint','sgRMenu','sgOrder','sgAnywhere','sgEdit','sgWord','sgMark','sgEditMode','sgNew','sgSplit','sgSave','sgSearch','sgListEdit','sgToggle','sgCue','sgUnlink','start','songStart','resume','cta','confirmF','tog','rlv','flv','wTog','saveHow','skipHow','editSess','saveEdit','exNote','takeNote','addWord','saveWord',
-         'openNote','longOk','pauseToggle','fwOpen','fwToggle','clock','sheet','calDay','calSession','eflv','input','textarea')
+         'openNote','longOk','pauseToggle','fwOpen','fwToggle','clock','sheet','calDay','calSession','eflv','input','textarea',
+         # 3.18 Song Clock
+         'ckGrid','ckTile','ckPad','ckLine','ckPP','ckNudge','ckRedo','ckSyncPause','ckSyncUndo','ckFinish','ckSyncX','ckCheckDone','ckSyncAgain','ckLen','ckPickSet','ckPencil','ckHeadDone')
 
 def run(b, t):
     found = collections.OrderedDict()
@@ -68,6 +76,8 @@ def run(b, t):
         pg.evaluate("l=>{U.sDraft={step:1,title:'river song',artist:'',text:l};U.sDraft.blocks=splitBlocks(l);U.sDraft.step=2;sgSaveDraft();U.view=null;U.tab='today';render()}",
                     "[Verse]\nPaper boats along the gutter\n\n[Chorus]\nCarry me over\nLet the river know\n\n[Chorus]\nCarry me over\nLet the river know")
         pg.evaluate("putTake({id:'tA',songId:'g_1',created:Date.now()-864e5,len:30,size:5000,type:'audio/mp4',star:false,blob:new Blob([new Uint8Array(5000)],{type:'audio/mp4'})}).then(refreshTakes).then(rerender)")
+        # 3.18: the river song is synced, so play-along, Check timing and Sync are all in reach of the random taps
+        pg.evaluate("(()=>{const s=D.songs.find(x=>x.name==='River Song'),L=ckLines(s);ckStore(s,L,ckSpread(s,L,[0,10,20]),[true,true,true],L.map(()=>false),{est:true})})()")
         # a take from the river song's first chorus, so a section has takes and its sheet can open
         pg.evaluate("(()=>{const s=D.songs.find(x=>x.name==='River Song');return putTake({id:'tB',songId:s.id,o:s.order[1].o,created:Date.now()-2*864e5,len:14,size:5000,type:'audio/mp4',star:true,blob:new Blob([new Uint8Array(5000)],{type:'audio/mp4'})}).then(refreshTakes).then(rerender)})()")
         # 3.16: the coach video added, so its player, doors and window are in the random taps too

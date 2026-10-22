@@ -209,6 +209,12 @@ function cleanSong(x) {
       if (b.length) Object.assign(s, buildLyrics(b));
     }
   }
+  // 3.18 Song Clock: timing is its own layer, checked against the running order; anything malformed is dropped
+  if ('timing' in s) {
+    const t = cleanTiming(s.timing, s);
+    if (t) s.timing = t;
+    else delete s.timing;
+  }
   return s;
 }
 function cleanLyrics(secs, order) {
@@ -505,6 +511,7 @@ function applyLyrics() {
       sgSnap();
       changed = true;
     }
+    CLOCK.lyricsChanged(sg, ed.dataset.k, sec.lines, nl);
     flagged += relink(sec, nl);
   });
   if (changed) save();
@@ -631,6 +638,11 @@ function sgp() {
     sort: SG_SORTS[o.sort] ? o.sort : 'recent',
     recent: Array.isArray(o.recent) ? o.recent.filter((x) => typeof x === 'string').slice(0, 5) : [],
   };
+  // 3.18 Song Clock's settings live here too (checked in clock.js): Marks while playing, Blur ahead, Snapping,
+  // Stay awake and the pinned icons
+  ['marksPlaying', 'blurAhead', 'snapping', 'stayAwake', 'pins'].forEach((k) => {
+    if (k in o) SGP[k] = o[k];
+  });
   return SGP;
 }
 function saveSGP() {
@@ -1164,8 +1176,9 @@ function songControls(sg) {
   return {
     l: '',
     t: '',
-    r: hasLyrics(sg)
-      ? '<button class="circ glass" data-a="sgEdit" aria-label="Edit' +
+    r:
+      hasLyrics(sg) && !CLOCK.editingHead()
+      ? '<button class="circ glass" data-a="ckPencil" aria-label="Edit' +
         (cc ? ', ' + cc + ' mark' + (cc > 1 ? 's' : '') + ' to check' : '') +
         '">' +
         SGI.pen +
@@ -1214,19 +1227,21 @@ function scrSongView() {
   return songBody(sg, false);
 }
 function songBody(sg, inPane) {
-  const ed = U.sEdit;
+  const ed = U.sEdit,
+    head = !ed && hasLyrics(sg) && CLOCK.editingHead();
   let h = '';
   if (inPane) {
     const c = songControls(sg);
     h += ed
       ? '<div class="sgph sgedit">' + c.l + '<span class="sgphc">' + c.t + '</span>' + c.r + '</div>'
-      : '<div class="sgph"><h1>' +
-        esc(songTitle(sg)) +
-        '</h1>' +
+      : '<div class="sgph">' +
+        (head ? CLOCK.titleInput(sg) : '<h1>' + esc(songTitle(sg)) + '</h1>') +
         (c.rec ? '<span class="rechead">' + esc(c.rec) + '</span>' : c.r) +
         '</div>';
-  } else h += '<h1>' + esc(songTitle(sg)) + '</h1>';
-  if (sg.artist && !ed) h += '<p class="sgart">' + esc(sg.artist) + '</p>';
+  } else h += head ? CLOCK.titleInput(sg) : '<h1>' + esc(songTitle(sg)) + '</h1>';
+  // 3.18: "Artist · 3:58", the pinned icons and ⋯ (Song Clock, clock.js); songs without lyrics keep the plain line
+  if (!ed && hasLyrics(sg)) h += CLOCK.headHTML(sg);
+  else if (sg.artist && !ed) h += '<p class="sgart">' + esc(sg.artist) + '</p>';
   if (!hasLyrics(sg))
     return (
       h +
@@ -1261,7 +1276,6 @@ function songBody(sg, inPane) {
         )
         .join('') +
       '</div>' +
-      (U.sMode === 'practise' ? '<button class="sgpill" data-a="sgKey">Key</button>' : '') +
       (U.sMode === 'recall'
         ? '<button class="circ glass sgrbtn" id="sgrbtn" data-a="sgRMenu" aria-label="Recall options" aria-haspopup="menu">' +
           SGI.more +

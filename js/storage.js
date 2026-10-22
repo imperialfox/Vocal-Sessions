@@ -83,7 +83,7 @@ function saveDraft() {
 }
 /* Data version. When the shape of saved data has to change, add a numbered step to UPGRADES and raise SCHEMA.
    Steps may only add things, so older backups and the previous version of the app keep working. */
-const SCHEMA = 2,
+const SCHEMA = 3,
   PRE_UPGRADE = 'vocalBeforeUpgrade';
 const UPGRADES = {
   1: (d) => {}, // 3.7: saved data gets a version number. Nothing else changes.
@@ -102,6 +102,9 @@ const UPGRADES = {
       }
     });
   },
+  // 3.18: songs can carry timing (Song Clock), checked by cleanSong(). Songs from before have none, which means
+  // not synced, so nothing changes in them.
+  3: (d) => {},
 };
 function upgradeData() {
   const from = +D.schema || 0;

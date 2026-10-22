@@ -9,6 +9,39 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.18 · 22 Oct 2026
+*Song Clock: sync a song and sing along*
+<!-- area: songs -->
+
+**Timing a song**
+- New: Sync. Play the song on another device or in your music app, and tap the big pad as each section starts. Your first tap starts the clock, and every tap allows a little for your finger.
+- While you sync you see the clock, which section you're on, what you just marked and what's next. Undo takes back the last tap, and tapping a section you've done redoes from there.
+- Pause works on one phone: scrub the song back a little, then tap as the section starts, and the clock carries on from there.
+- After the last tap, each section's lines are spread evenly by their syllables, so the whole song moves straight away.
+
+**Playing along**
+- Turn on Timing and tap the first line as it's sung. The lyrics turn big, the line you're singing sits about a third of the way down, and its words fill as they're sung.
+- Lines you've sung dim, and the ones coming up blur a little more the further away they are (Blur ahead).
+- Tap any line to jump there. −0.2 and +0.2 move all the lyrics earlier or later, saved, with Undo.
+- Pause shows the normal lyrics page with the line you were on highlighted, right where your eye was. Tapping a section still focuses it.
+- The screen stays awake while you're timing (Stay awake).
+- Leave the song while it plays and a small window says "Playing along" with the time and section. Its button pauses, and tapping it takes you back in step.
+
+**Marks while playing**
+- Breaths only (the default): your own breath marks show, and lines with a long gap after them and no breath mark of yours get a small breath dot. Everything else (sing-as labels, runs, higher and lower, notes) is hidden while you sing.
+- Off hides breath marks and dots too.
+
+**Check timing**
+- A list of every section and line with a bar for how long it lasts. Very short and very long lines are flagged, and so are lines to look at again.
+- It shows the song length and how many section starts are set, and Sync again from the start.
+
+**The song's header**
+- The artist line now shows the song's length ("Artist · 3:58"). Tap it to change it on clock-style wheels.
+- Beside it are up to three pinned buttons (Timing and Key to start with) and ⋯, which opens Song controls: Timing, Check timing, Key, Marks while playing, Blur ahead, Snapping, Stay awake, Sync again and Lyrics. Blue means on. Edit chooses which ones are pinned.
+- The pencil now edits the title, artist and length in place, with Edit lyrics, Marks and Done.
+- Changing a line of lyrics only clears that line's timing, and marks it to look at again.
+- Timing is saved with the song and included in backups. Settings like Blur ahead stay on this device.
+
 ## 3.17 · 22 Oct 2026
 *Tab order, new icons and tidier lyrics*
 <!-- area: look -->

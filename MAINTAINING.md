@@ -49,6 +49,7 @@ Notes for whoever works on the app next, whether that's Ivan, a new Claude sessi
 | `js/session.js` | Running a session (steps, clock, finishing, editing, `togglePause()`) and recording and playing takes |
 | `js/window.js` | **The floating window** (`FW`, `FW_KINDS`): a session or playing take shown on every other screen. See The floating window below |
 | `js/coach.js` | **The coach video** (`COACH`, `COACH_CH`): storing it, the one `<video id="cv">`, the player page, its doors, and its floating window kind. See The coach video below |
+| `js/clock.js` | **Song Clock** (`CLOCK`, `CK`): timing a song's lyrics (Sync), play-along, Check timing, the song header's length and pinned icons, the ⋯ controls grid, the length picker and its floating window kind. See Song Clock below |
 | `js/backup.js` | Export, Check a backup, restore, undo, and Copy for Toggl |
 | `js/events.js` | Every button action, swipe to delete, and blocking zoom |
 | `js/gestures.js` | Pull to refresh and the update check, rotating, keyboard shortcuts, dragging sheets, scrolling |
@@ -76,7 +77,7 @@ Everything stays on the device. There is no server.
 | localStorage | `vocalTracker` | All saved data (`D`): sessions, song practice, months, exercises, songs, words, last backup |
 | localStorage | `vocalDraft` | The session in progress (`X`), so it survives closing the app. Song practice only has a `start` (and a draft) once its first take starts recording |
 | localStorage | `vocalBackupLog` | Backup history for this device |
-| localStorage | `vocalSongPrefs` | This device's song sort order and recent searches (not backed up) |
+| localStorage | `vocalSongPrefs` | This device's song sort order and recent searches, and Song Clock's settings: `marksPlaying`, `blurAhead`, `snapping`, `stayAwake`, `pins` (not backed up) |
 | localStorage | `vocalWindow` | The floating window's corner on this device, `{corner: 'br'}` (not backed up) |
 | localStorage | `vocalBeforeUpgrade` | The data as it was before the last data upgrade, kept for 30 days |
 | IndexedDB `vocalTakes` (version 2) | store `takes` | Recordings, with their audio as Blobs |
@@ -88,7 +89,7 @@ Everything stays on the device. There is no server.
 
 ### Data version
 
-Saved data carries `schema` (currently 2, from 3.8; 1 was 3.7). To change the shape of saved data:
+Saved data carries `schema` (currently 3, from 3.18; 2 was 3.8, 1 was 3.7). Step 3 changes nothing: it marks data that may hold song timing. To change the shape of saved data:
 
 1. Add a numbered step to `UPGRADES` that changes `D` in place, and raise `SCHEMA` to match.
 2. Steps run in order the first time the new version opens, and whenever an older backup is restored. Before they run, the data is copied to `vocalBeforeUpgrade`.
@@ -107,6 +108,7 @@ Each song in `D.songs` is its own record. Songs from before 3.8 have only `id` a
 | `practised` | When a take of it was last recorded (ms), set when a take is saved |
 | `original` | The lyrics exactly as pasted. Never edited, so damaged lyrics can be rebuilt from it |
 | `sections` | `{sid: {label, cue, lines, ann, orphans}}`. `lines` is an array of lines, each an array of words. `ann` maps `"line:word"` to marks: `br`, `run`, `up`, `dn` (1), `v` (vowel), `nt` (note), and `check` + `was` when the word changed. `orphans` are marks whose word was removed |
+| `timing` | Song Clock (3.18), optional; none means not synced. `{len, real, est, slots: {o: {lines: [[start, end\|null], …], anch, marks: [line…]}}}` in seconds. See Song Clock below |
 | `order` | The running order `[{o, sid}]`. Linked repeats share a `sid`; each `o` is one place in the song, and takes recorded from a section carry it. Unlinking and moving sections never change an `o` |
 
 `cleanSong()` checks each song on its own when data loads or a backup is read: bad values are dropped, marks on missing words and order entries for missing sections are removed, fields it doesn't know are kept, and if the lyrics are unusable but `original` is there, they're rebuilt from it. Practised dates come from recordings (`TAKES`) and `practised`, whichever is later.
@@ -188,6 +190,25 @@ Since 3.16, `js/coach.js` plays the coach's video from a copy on the device. The
 - **One sound at a time:** `playTake()` and `startRec()` pause the video; playing the video stops a take.
 - **Tests:** `tests/test_coach.py`; the random-tap test runs with the video added and checks there's only ever one `<video>`, that it's in its slot, and that its window never shows on its own screen.
 
+### Song Clock
+
+Since 3.18, `js/clock.js` times a song's lyrics. **Timing says when; marks say how:** timing is its own layer on the song (`sg.timing`) and never changes the lyrics, sections, marks or takes. Built so far: phase A1 (Sync by sections, play-along, Check timing, the header and grid). A2 (line pass, punch-in, flags), B (Timeline) and C (paced Recall) build on it; their design is in the project's `song-clock-handoff.md`.
+
+- **Data:** `timing = {len, real, est, slots}`. Times belong to **places in the running order** (`o`), not sections, since Chorus 2 is sung at a different time from Chorus 1 (marks are the opposite: once per section). Each slot has one `[start, end]` per line of its section (`end` may be `null`), `anch` (the section's start is set: true for every section tapped in Sync) and `marks` (to-do markers, line numbers). `len` is the song's length (whole seconds, up to 20:59). `est`: lines were spread evenly from section taps only. `real`: the clock matches the music app's song time (used from phase B).
+- **Checking:** `cleanTiming(t, sg)`, called from `cleanSong()`. It drops slots for places no longer in the order, extra lines, junk, bad markers and set starts, and any line that starts less than 0.1 s after the one before (an end that overlaps the next start is trimmed). Nothing in it can break the song.
+- **The maths** (all in clock.js): `ckLines(sg)` lists every line in running order with its syllables (vowel groups) and whether it has a breath mark of Ivan's. `ckRaw()` reads the saved times; `ckFill()` gives every line a time to play from (lines without one are spread between their neighbours) and `ckOrder()` keeps them in order (each starts ≥ 0.1 s after the last, the last one's end is trimmed, and every line lasts ≥ 0.1 s). `ckEnd()`: a missing end is the next line's start or 0.3 s a syllable, at least 1.2 s. `ckSpread()` spreads each section's lines by syllables between section taps, ending a second before the next tapped section. `ckWarp()` stretches piecewise-linearly through set points (a plain shift outside them). `ckModel(sg)` bundles all of it. Taps have `CK_LAG` (0.15 s) taken off.
+- **Sync** (`U.view = 'ckSync'`): `CK.P` is the pass (`raw` start per place in the order, `idx`, `pending` = where the clock waits after a pause or redo). The pad (`#ckpad`, in `#dock`) works on `pointerdown` (and the space bar). The live list repaints in place (`ckSyncPaint()`), never the whole screen. Finishing on an unsynced song spreads the lines (`est`); on a synced one it stretches the existing times through the taps. Leaving Sync any other way drops the pass and stops its clock (`CLOCK.after()`).
+- **Play-along:** `CK.on` for `CK.songId`, clock `CK.pc`. The big view is its own fixed layer, `#ckpa` on `<body>`, placed over the song's column below the header row (so Timing and ⋯ stay in reach); the page goes to the top and can't scroll while it shows (`html.ckplay`). Pausing hides the layer, so the real lyrics page is underneath, with the current line `.sgl.ckcur` scrolled to where the layer's line was. `ckTick()` (every frame while a clock runs) sets past/now/future, the word fill (`--p` on `.ckw`, by syllables), Blur ahead (`MOTION.blur`, `MOTION.dim`, `MOTION.dimLabel`), the automatic dots and the transport's time (text only: digits never animate). The view is rebuilt only when the song, its timing or the settings change (`ckSig`). The transport capsule (`.cktr`) is in `#dock`, so `fwBounds()` already avoids it, and Render 10's search circle can sit beside it.
+- **Marks while playing** (`vocalSongPrefs.marksPlaying`): `'off'` or `'breaths'` (default); Marks 1 adds `'active'` (already accepted when stored). Breaths only shows Ivan's breath marks (`.ckbr`) and an automatic dot (`.ckdot`) only on a line with a gap over 1.2 s after it and no breath mark of his. The view never draws sing-as labels, runs, pitch or notes, so line heights never change while playing.
+- **Stay awake:** `ckWake()` holds `navigator.wakeLock` only while play-along runs on its song or Sync's clock runs; released on pause, leaving and when the page is hidden. `CK.wlWant` is what the random taps check.
+- **The header and grid:** `ckHeadHTML()` (artist · length, pinned icons from `pins`, ⋯), `ckGridSheet()` (sheet `ckGrid`), `ckTileAct()`. The pencil is `ckPencil` (`CK.head`: title and artist fields, length, Edit lyrics, Marks, Done). `sgEdit` still opens Annotate directly (the focused section's Marks and Cmd/Ctrl+E). **Marks 1** replaces the Edit lyrics / Marks pills in `ckHeadHTML()` with its Marks · Lyrics switch.
+- **The length picker:** `ckPick(anchor, value, onSet)`, `#ckpk` on `<body>`: two scroll-snap wheels (36 px rows), marked `data-own-gesture`.
+- **Lyric edits:** `applyLyrics()` calls `CLOCK.lyricsChanged()` before `relink()`: lines whose text changed (by the same `align()`) lose their time and get a to-do marker; the rest keep theirs.
+- **Floating window:** kind `clock` in `FW_KINDS`: take → video → playing along → session. `own()` is the song it plays from. `ckTick()` calls `fwTick()` when its text changes.
+- **Undo:** `ckSnap(sg)` before a change, `ckToast(text, ckUndo)` for a toast with an Undo button.
+- **Test clock:** `CLOCK.fake(ms)` stops the clock reading `performance.now()`; `CLOCK.advance(sec)` moves it and draws. `CLOCK.state()`, `CLOCK.model()` and `CLOCK.now()` let tests look inside. Tests: `tests/test_clock.py`.
+- **For A2 and Marks 1:** the line pass goes in the Sync screen (`CK.P` gains a mode); punch-in and the Flag go on `#ckpa` and `CLOCK.dock()`; suggested breaths are stored with the timing per section line; Marks 1's Active layer is a third `marksPlaying` value handled in `ckBuild()`.
+
 ### Rules that keep old data working
 
 - **Never rename or remove an exercise id** (`slides`, `humming`, `lip`, `straw`, `falsetto`, `upperlower`, `rung`, `hinge`, `half`, `vertical`, `nasal`, `flex`). Sessions store levels by these ids. The backup tests fail if they change.
@@ -263,6 +284,7 @@ The tests run with motion off (see Motion above), so nothing waits on a spring. 
 | `test_window.py` | 3.12: the floating window's clock, pausing from it, going back to the same step and scroll or the same take, a take winning over a session, dragging and flicking to each corner (remembered after a reload), where it hides, and every size in light and dark, including above Recall's hint capsule |
 | `test_lyrics.py` | 3.11: the shared springs, the continuous lyrics page, focusing a section (patch, controls, dim and blur by distance, labels sharp), tapping away, Marks, Recall's label focus, Reduce Motion, easing with motion on, and every size with a section focused |
 | `test_zoom.py` | 3.15: card zoom into each kind of page and back into the same card (scroll put back), Back mid-zoom, swipe back (follow, threshold, flick, spring back, gesture priority), dark-mode frames never an empty box, Start session and Finish, the calendar day, the new song, Reduce Motion and motion off |
+| `test_clock.py` | 3.18 Song Clock: the header's length and picker, the grid and pinning, Sync with a test clock (taps, Undo, redo, Pause re-anchoring), spreading by syllables, the timing maths, play-along (current line, word fill, Blur ahead, jumping, ±0.2 with Undo, pausing onto the page), Marks while playing, Check timing, the pencil, lyric edits, the floating window, the wake lock, data upgrades, damaged timing, backups, and six sizes in light and dark |
 | `test_coach.py` | 3.16: adding, replacing and removing the coach video (and reloads), never in backups and kept through restore and Reset all, chapters and No chapters, L1–L3, Loop, Speed with pitch kept, the scrubber, the exercise list, the doors (Exercises, an exercise's page, session steps hidden until tapped and cued on Next and Back), redraws not pausing it, the video window and its ✕, take → video → session, the zoom, and every size in light and dark |
 | `test_layout.py` | Every screen on iPhone, iPhone landscape, iPad and Mac, light and dark, plus pull to refresh |
 | `test_fuzz.py` | Thousands of random taps, checking nothing breaks after each one |

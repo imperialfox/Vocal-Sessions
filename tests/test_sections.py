@@ -56,7 +56,7 @@ def run(b, t):
     ok(pg.evaluate("rec.o") == o4 and pg.evaluate("rec.songId") == S['id'], 'Record starts straight away, for that place in the song')
     ok(pg.inner_text('#barT').strip() == 'Recording Chorus 2', 'the top bar says what’s recording: ' + pg.inner_text('#barT').strip())
     ok(pg.locator('.sgmodes.locked').count() == 1 and pg.locator('[data-a=sgSec]').count() == 0, 'the mode switch dims and sections can’t be tapped')
-    ok(pg.locator('#barL [data-a=sgBack]').count() == 0 and pg.locator('[data-a=sgEdit]').count() == 0, 'no back or edit while recording')
+    ok(pg.locator('#barL [data-a=sgBack]').count() == 0 and pg.locator('[data-a=sgEdit],[data-a=ckPencil]').count() == 0, 'no back or edit while recording')
     ok(pg.locator('#dock .recbar').count() == 1 and pg.locator('#dock .tabbar').count() == 0 and pg.locator('#recMeter i').count() == 14,
        'the recording bar, with the timer and a level meter, takes the place of the tab bar')
     ok(pg.locator(sec(o4) + '.recording').count() == 1 and pg.locator('[data-a=sgRec]').count() == 0, 'the section being recorded is marked, without its pills')

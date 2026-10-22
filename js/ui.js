@@ -48,6 +48,13 @@ function renderBar() {
     $('barT').textContent = e ? e.name : '';
     $('barL').innerHTML = '<button class="circ glass" data-a="exBack" aria-label="Back">' + ICON.back + '</button>';
     $('barR').innerHTML = '';
+  } else if (U.view === 'ckSync' || U.view === 'ckCheck') {
+    // 3.18 Song Clock: Sync (closes with ✕) and Check timing (Back, so swipe back works)
+    const b = CLOCK.bar();
+    $('barL').innerHTML = b.l;
+    $('barT').innerHTML = b.t;
+    $('barR').innerHTML = b.r;
+    bar.classList.add('always');
   } else if (U.view === 'lyr') {
     const b = songViewBar();
     if (b.tabs) {
@@ -172,6 +179,12 @@ function renderDock() {
       '</span><button class="stopb" data-a="sgStop" aria-label="Stop recording"><i></i></button></div>';
     return;
   }
+  // 3.18 Song Clock: the play-along transport, or Sync's pad, takes the place of the tab bar
+  const ck = CLOCK.dock();
+  if (ck) {
+    $('dock').innerHTML = ck;
+    return;
+  }
   // Recall: the hint capsule takes the place of the tab bar
   if (recallOn()) {
     $('dock').innerHTML = hintCapHTML();
@@ -294,6 +307,7 @@ function renderSheet() {
     k = U.sd.k;
   let h = '';
   if (s && /^sg[A-Z]/.test(s)) h = songSheet(s);
+  else if (s === 'ckGrid') h = CLOCK.gridSheet();
   else if (s === 'confirmF')
     h = sheetWrap(
       'Confirm foundation',
@@ -1066,6 +1080,7 @@ function editSheet() {
 /* ===== Render ===== */
 function render(keepScroll) {
   const y = window.scrollY;
+  CLOCK.before(); // keeps what's typed in the song's title and artist fields (3.18)
   dropUnstarted();
   closeSwipes();
   // keep what's typed in the lyrics editor, and leave editing when the song is no longer on screen
@@ -1089,6 +1104,8 @@ function render(keepScroll) {
           ? scrAll()
           : v === 'lyr'
             ? scrSongView()
+            : v === 'ckSync' || v === 'ckCheck'
+              ? CLOCK.page()
             : v
               ? { found: scrFound, rot: scrRot, app: scrApp, song: scrSong }[v]()
               : {
@@ -1100,7 +1117,13 @@ function render(keepScroll) {
                 }[U.tab]();
   $('app').className =
     (isFlow(v) ? 'flow' : 'tabv') +
-    (isFlow(v) || (!v && U.tab === 'settings') || v === 'log' || v === 'coach' || (v === 'ex' && !split())
+    (isFlow(v) ||
+    (!v && U.tab === 'settings') ||
+    v === 'log' ||
+    v === 'coach' ||
+    v === 'ckSync' ||
+    v === 'ckCheck' ||
+    (v === 'ex' && !split())
       ? ' narrow'
       : '');
   renderBar();
@@ -1112,6 +1135,7 @@ function render(keepScroll) {
   placeKnobs();
   logReveal();
   songsAfter();
+  CLOCK.after(); // 3.18 Song Clock: the play-along view, the current line when paused, the wake lock
   fwUpdate();
   DET.dockSwap(dk);
   DET.play();
