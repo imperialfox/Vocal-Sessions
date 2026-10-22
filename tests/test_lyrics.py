@@ -184,14 +184,18 @@ def singas(b, t):
         c = pg.evaluate(CLASH)
         ok(c['n'] == 12 and not c['out'], f'sing-as {name}: Practise, no label overlaps a lyric, a mark or another label {c["out"][:3]}')
         ls = pg.evaluate(LINES)
-        plain = [x['h'] for x in ls if not x['v'] and not x['wrap']]
-        ok(plain and max(plain) - min(plain) < 1 and all(x['h'] > max(plain) + 8 for x in ls if x['v']),
+        # compared within one text size: each section's long lines can shrink its text (sgFit), and how much depends on the font
+        by = {}
+        for x in ls:
+            if not x['wrap']: by.setdefault(x['fs'], {'p': [], 'v': []})['v' if x['v'] else 'p'].append(x['h'])
+        grp = [g for g in by.values() if g['p']]
+        ok(grp and all(max(g['p']) - min(g['p']) < 1 and all(h > max(g['p']) + 8 for h in g['v']) for g in grp),
            f'sing-as {name}: only lines with a label get taller')
         if name == '375':
             ok(any(x['wrap'] and x['v'] for x in ls), 'sing-as 375: the long chorus line wraps, labels and all')
             # the word sits under its label, centred, and the line's other words keep their baseline
             al = pg.evaluate("""()=>{const l=document.querySelector('#app .sgl'),w=l.querySelector('.w.hv'),v=w.querySelector('.v').getBoundingClientRect(),
-              x=w.querySelector('.wt').getBoundingClientRect(),p=[...l.querySelectorAll('.w:not(.hv)')].pop(),r=document.createRange();
+              x=w.querySelector('.wt').getBoundingClientRect(),p=[...l.querySelectorAll('.w:not(.hv)')].find(q=>{const b=q.getBoundingClientRect();return b.top<x.bottom&&b.bottom>x.top}),r=document.createRange();
               r.selectNodeContents(p);const y=r.getBoundingClientRect();
               return [Math.abs((v.left+v.right)/2-(x.left+x.right)/2),v.bottom<=x.top+.5,Math.abs(y.bottom-x.bottom)]}""")
             ok(al[0] < 1.5 and al[1] and al[2] < 1.5, 'sing-as 375: the label sits centred above its word, and the words share a baseline')
