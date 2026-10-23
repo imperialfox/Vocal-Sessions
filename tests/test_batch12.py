@@ -836,19 +836,14 @@ PARTS = ['add_sheet', 'rows', 'one_sound', 'x_closes', 'length', 'one_list', 'ta
 
 
 def run(b, t):
+    import traceback
     only = os.environ.get('VS_B12')
-    if only:
-        for n in only.split(','): globals()[n](b, t)
-        return
-    add_sheet(b, t)
-    rows(b, t)
-    one_sound(b, t)
-    x_closes(b, t)
-    length(b, t)
-    one_list(b, t)
-    takes(b, t)
-    keep_all(b, t)
-    replay(b, t)
-    both_ears(b, t)
-    markers(b, t)
-    layout(b, t)
+    for n in (only.split(',') if only else PARTS):
+        # each part on its own, so one that crashes doesn't hide the rest (and says which it was)
+        try:
+            globals()[n](b, t)
+        except Exception as ex:
+            tb = traceback.extract_tb(ex.__traceback__)
+            line = next((f.lineno for f in reversed(tb) if f.filename.endswith('test_batch12.py')), '?')
+            t.fails.append(f'{n} crashed at line {line}: ' + str(ex).split(chr(10))[0][:160])
+            print(f'  FAIL  {n} crashed at line {line}: {ex}')

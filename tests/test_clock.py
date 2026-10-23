@@ -285,12 +285,14 @@ def run(b, t):
     # pause shows the song page with the current line highlighted, where the eye was
     pg.evaluate("document.querySelector('#ckpa .ckl[data-i=\"2\"]').click()"); pg.evaluate("CLOCK.advance(1)"); pg.wait_for_timeout(100)
     y0 = pg.evaluate("document.querySelector('#ckpa .ckl.now').getBoundingClientRect().top")
+    print('  info  playing at', y0, pg.evaluate("[scrollY,document.querySelector('#ckpa').getBoundingClientRect().top,document.querySelector('#ckpa .ckview').clientHeight]"))
     rel0 = pg.evaluate("window.__wl.rel")
     pg.click('.cktr [data-a=ckPP]'); pg.wait_for_timeout(300)
     ok(pg.locator('#ckpa:not([hidden])').count() == 0 and not pg.evaluate("CLOCK.state().run"), 'Pause shows the song page')
     cur = pg.evaluate("(()=>{const l=document.querySelector('.sgl.ckcur');return l&&[l.textContent,l.getBoundingClientRect().top]})()")
     ok(cur and cur[0] == 'Hold on hold on to the sound', f'the current line is highlighted on the song page ({cur})')
-    ok(cur and abs(cur[1] - y0) < 4, f'and kept where the eye was ({y0:.0f} → {cur[1]:.0f})')
+    ok(cur and abs(cur[1] - y0) < 4, f'and kept where the eye was ({y0:.0f} → {cur[1]:.0f}; scrollY, page, window, ckplay: ' +
+       str(pg.evaluate("[scrollY,document.documentElement.scrollHeight,innerHeight,document.documentElement.classList.contains('ckplay')]")) + ')')
     ok(pg.evaluate("window.__wl.rel") == rel0 + 1 and not pg.evaluate("CLOCK.state().wake"), 'the wake lock is released on pause')
     t.shot(pg, 'paused')
     pg.click('.sgsec[data-o] >> nth=1'); pg.wait_for_timeout(250)
