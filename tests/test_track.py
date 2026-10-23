@@ -3,7 +3,7 @@ on open), the four zoom levels (segmented control and pinch), rows that zoom int
 Set end, dragging and swapping handles, the 0.5 s minimum, double-tap outside to clear), the loop wrapping while it
 plays, speed with the pitch kept, the jog wheel, the floating window and one sound at a time, the song's data
 (sg.track and sg.loop in backups; the audio in vocalTracks, which backups, restores and Reset never touch), a
-restored song without its track, New song from track, deleting, and every size in light and dark.
+restored song without its track, deleting, and every size in light and dark.
 The fixtures are synthetic: tones with gaps, written by the test as WAV files. Nothing copyrighted is ever used."""
 import os, wave, struct, math, json
 from harness import OUT, ready, fix
@@ -156,15 +156,17 @@ def levels(b, t):
     ok(pg.locator('#trkC').count() == 0 and pg.locator('#trkJog').count() == 0 and pg.locator('#app .trkrow').count() == 3,
        'Section shows the whole song in rows of 20 s (3 for 60 s), and the jog wheel hides')
     ok(pg.locator('#app .trkrow .trkg').all_inner_texts() == ['0:00', '0:20', '0:40'], 'each row has its time in the gutter')
-    ok('Tap a row' in pg.inner_text('#trkHint'), 'the hint says to tap a row')
+    ok('Tap to move the playhead' in pg.inner_text('#trkHint'), 'the hint says a tap moves the playhead')
     pg.click('#app .trklv button[data-v="3"]'); pg.wait_for_timeout(150)
     ok(pg.locator('#app .trkrow').count() == 2, 'Song shows rows of 30 s (2 for 60 s)')
     t.shot(pg, 'rows')
-    # tapping a row zooms into Line view at that spot
+    # 3.20: tapping a row places the playhead there and stays in that view (zoom changes with the pills or a pinch)
     pg.click('#app .trklv button[data-v="2"]'); pg.wait_for_timeout(150)
     r = pg.evaluate("(()=>{const c=document.querySelectorAll('#app .trkrow canvas')[1].getBoundingClientRect();return [c.left+c.width/2,c.top+c.height/2]})()")
     pg.mouse.click(r[0], r[1]); pg.wait_for_timeout(250)
-    ok(pg.evaluate("TRACK.level()") == 1 and abs(pg.evaluate("TRACK.now()") - 30) < 0.6, f'tapping the middle of the second row lands in Line view at 0:30 ({pg.evaluate("TRACK.now()")})')
+    ok(pg.evaluate("TRACK.level()") == 2 and abs(pg.evaluate("TRACK.now()") - 30) < 0.6, f'tapping the middle of the second row puts the playhead at 0:30 and stays in Section ({pg.evaluate("TRACK.now()")})')
+    pg.click('#app .trklv button[data-v="1"]'); pg.wait_for_timeout(150)
+    ok(pg.evaluate("TRACK.level()") == 1, 'the Line pill zooms in')
     # pinch
     cdp = pg.context.new_cdp_session(pg)
 
@@ -409,8 +411,10 @@ def data(b, t):
     fc.value.set_files(F('Paper Boats long.wav', 63)); pg.wait_for_function("id=>!TRACK.busy()&&TRACK.state().id===id&&TRACK.state().dur>62", arg=sid, timeout=15000)
     pg.wait_for_timeout(200)
     ok('different length, so timings may be off' in pg.inner_text('.toast'), 'replacing with a track of another length says timings may be off')
-    ok(pg.evaluate("id=>JSON.stringify(songById(id).timing)", sid) == timing and pg.evaluate("id=>songById(id).loop.end", sid) == 7.5,
+    SLOTS = "id=>JSON.stringify(songById(id).timing.slots)"
+    ok(pg.evaluate(SLOTS, sid) == json.dumps(json.loads(timing)['slots'], separators=(',', ':')) and pg.evaluate("id=>songById(id).loop.end", sid) == 7.5,
        'Replace keeps the loop and timings')
+    ok(pg.evaluate("id=>[songById(id).timing.len,songById(id).timing.lenLink]", sid) == [63, True], '3.20: a linked length follows the new file')
     ok(abs(pg.evaluate("id=>songById(id).track.dur", sid) - 63) < 0.05, 'and the song knows the new length')
     # Remove track
     pg.click('#barR [data-a=trkMenu]'); pg.wait_for_timeout(250)
@@ -419,8 +423,9 @@ def data(b, t):
     pg.click('.sheet [data-a=trkRemove]'); pg.wait_for_timeout(500)
     ok(not pg.evaluate("id=>TRACK.has(id)", sid) and not pg.evaluate("id=>songById(id).track", sid) and pg.evaluate(NIDB) == [0, 0],
        'Remove deletes the audio and peaks and clears the song’s track')
-    ok(pg.evaluate("id=>songById(id).loop.end", sid) == 7.5 and pg.evaluate("id=>JSON.stringify(songById(id).timing)", sid) == timing,
+    ok(pg.evaluate("id=>songById(id).loop.end", sid) == 7.5 and pg.evaluate(SLOTS, sid) == json.dumps(json.loads(timing)['slots'], separators=(',', ':')),
        'but the loop and timings stay')
+    ok(pg.evaluate("id=>[songById(id).timing.len,!!songById(id).timing.lenLink]", sid) == [63, False], '3.20: the length is kept, no longer linked')
     ok(pg.evaluate("U.view") == 'lyr', 'and goes back to the song')
     # cleanSong checks loops and tracks
     res = pg.evaluate("""[
@@ -443,27 +448,15 @@ def data(b, t):
 
 
 def new_song(b, t):
+    # 3.20: New song from track is replaced by the + sheet's Add media (test_batch12 covers it); the old door is gone
     ok = t.ok
     pg = t.page(b)
     pg.evaluate("go(()=>{U.tab='songs';U.view=null})"); pg.wait_for_timeout(250)
-    ok(pg.locator('#barR [data-a=trkNew]').count() == 1 and pg.locator('#barR [data-a=sgNew]').count() == 1,
-       'Songs has New song from track next to New song')
-    with pg.expect_file_chooser() as fc: pg.click('#barR [data-a=trkNew]')
-    fc.value.set_files(track())
-    pg.wait_for_function("!TRACK.busy()&&TRACK.state().loaded&&U.view==='trk'", timeout=15000); pg.wait_for_timeout(300)
-    sid = pg.evaluate("U.songId")
-    sg = pg.evaluate("id=>songById(id)", sid)
-    ok(sg['name'] == 'Paper Boats' and sg['track']['name'] == 'Paper Boats.wav', f'it makes a song titled from the file name, with the track attached: {sg["name"]}')
-    ok(pg.evaluate("TRACK.has(U.songId)") and pg.locator('#trkPP').count() == 1, 'and opens the player')
-    pg.click('#barL [data-a=trkBack]'); pg.wait_for_timeout(300)
-    ok(pg.evaluate("U.view") == 'lyr' and 'No lyrics yet' in pg.inner_text('#app') and pg.locator('#app [data-a=trkOpen]').count() == 1,
-       'Back is its song page: no lyrics yet (paste them later), and the Track row')
-    pg.evaluate("id=>deleteSongs([id])", sid); pg.wait_for_timeout(500)
-    ok(not pg.evaluate("id=>TRACK.has(id)", sid) and pg.evaluate(NIDB) == [0, 0] and not pg.evaluate("TRACK.state().loaded"),
-       'deleting the song deletes its track entries')
-    # the empty Songs list also offers it
+    ok(pg.locator('[data-a=trkNew]').count() == 0 and pg.locator('#barR [data-a=sgNew]').count() == 1,
+       'Songs has one + (New song from track is gone)')
     pg.evaluate("D.songs=[];save();go(()=>{U.tab='songs';U.view=null})"); pg.wait_for_timeout(250)
-    ok(pg.locator('#app .sgempty [data-a=trkNew]').count() == 1, 'with no songs, the empty Songs list offers New song from track too')
+    ok(pg.locator('[data-a=trkNew]').count() == 0 and pg.locator('#app .sgempty [data-a=sgNew]').count() == 1,
+       'the empty Songs list offers the same New song')
     pg.context.close()
 
 

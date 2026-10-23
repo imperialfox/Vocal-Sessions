@@ -62,7 +62,6 @@ def cards(b, t):
         ('Show all sessions on Progress', "go(()=>{U.tab='history';U.view=null})", '[data-zk="all:sessions"]', 'history|all'),
         ('Changelog in Settings', "go(()=>{U.tab='settings';U.view=null})", '[data-zk="log"]', 'settings|log'),
         ('the Start session capsule', "go(()=>{U.tab='today';U.view=null})", '[data-zk="start"]', 'today|found'),
-        ('the Song practice card', "X=null;saveDraft();go(()=>{U.tab='today';U.view=null})", '[data-zk="songStart"]', 'today|song'),
     ]
     for name, to, card, dest in CASES:
         pg.evaluate(to)
@@ -359,17 +358,17 @@ def capsules(b, t):
     ok(pg.evaluate(CLEAN) and pg.evaluate("U.sheet") == 'done' and where(pg) == 'today|', 'then the summary sheet is up over Today, nothing left over')
     pg.evaluate("closeSheet()")
     quiet(pg)
-    # song practice from its card, then finishing shrinks into the same card
-    pg.click('[data-zk=songStart]')
+    # 3.20: the Song practice card switches to the Songs tab (a tab switch, no zoom; its capsule-expand is retired)
+    pg.click('[data-a=songStart]')
     quiet(pg)
-    ok(where(pg) == 'today|song', 'the Song practice card zooms into song practice')
-    pg.evaluate("X.song='g_1';X.start=Date.now()-6e5;X.takes=['t1'];saveDraft();rerender()")
+    ok(where(pg) == 'songs|' and pg.evaluate(CLEAN), 'the Song practice card switches to Songs, with no zoom left over')
+    pg.evaluate("newSong();X.song='g_1';X.start=Date.now()-6e5;X.takes=['t1'];saveDraft();go(()=>{U.tab='today';U.view='song'})")
+    quiet(pg)
     pg.click('#dock .cta')
     quiet(pg)
     pg.click('[data-a=saveHow]')
-    ok(pg.locator('#app [data-zk=songStart].zm-src').count() == 1, 'finishing song practice shrinks back into its card')
     quiet(pg)
-    ok(pg.evaluate(CLEAN) and pg.evaluate("U.sheet") == 'songDone', 'then its summary sheet shows')
+    ok(pg.evaluate(CLEAN) and pg.evaluate("U.sheet") == 'songDone', 'finishing song practice still shows its summary sheet')
     pg.context.close()
 
 
@@ -395,6 +394,8 @@ def new_song(b, t):
     pg.evaluate("go(()=>{U.tab='songs';U.view=null})")
     quiet(pg)
     pg.click('[data-a=sgNew]')
+    quiet(pg)
+    pg.click('.sheet [data-a=sgAddMode][data-v=manual]')  # 3.20: Add media is the default
     quiet(pg)
     pg.fill('#sgTitle', 'River song')
     pg.fill('#sgLyr', LYR)

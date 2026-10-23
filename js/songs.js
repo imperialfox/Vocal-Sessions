@@ -226,10 +226,24 @@ function cleanSong(x) {
       s.track = { name: typeof k.name === 'string' ? k.name.slice(0, 200) : '', dur: Math.round(k.dur * 100) / 100 };
     else delete s.track;
   }
+  // 3.20 markers (chips on the track player), kept with the song like its loop (cleanMarkers in track.js)
+  if ('markers' in s) {
+    const m = cleanMarkers(s.markers, s.track && s.track.dur);
+    if (m) s.markers = m;
+    else delete s.markers;
+  }
   if ('loop' in s) {
     const l = cleanLoop(s.loop, s.track && s.track.dur);
     if (l) s.loop = l;
     else delete s.loop;
+  }
+  // the chip a loop belongs to must still be a marker with that range's end
+  if (s.loop && s.loop.mk && !(s.markers || []).some((m) => m.id === s.loop.mk && m.end != null)) delete s.loop.mk;
+  // 3.20 takes' names and timestamped comments live with the song, so they're in every backup (cleanTakeNotes, takes.js)
+  if ('takeNotes' in s) {
+    const n = cleanTakeNotes(s.takeNotes);
+    if (n) s.takeNotes = n;
+    else delete s.takeNotes;
   }
   return s;
 }
@@ -758,9 +772,6 @@ function songListCol() {
         '</b><button class="txtbtn glass tinted" data-a="sgListDone">Done</button></div>'
       : '<div class="sgph"><h1>Songs</h1>' +
         (D.songs.length ? '<button class="txtbtn glass" data-a="sgListEdit">Edit</button>' : '') +
-        '<button class="circ glass" data-a="trkNew" aria-label="New song from track">' +
-        SGI.trackNew +
-        '</button>' +
         '<button class="circ glass" data-a="sgNew" aria-label="New song">' +
         ICON.plus +
         '</button></div>';
@@ -781,7 +792,7 @@ function songListCol() {
       h +
       '<div class="sgempty">' +
       SGI.wave +
-      '<b>Add your first song</b>Paste the lyrics and the sections are labelled for you.<div style="margin-top:18px"><button class="cta ink" data-a="sgNew" style="max-width:260px;margin:0 auto">New song</button><button class="ghost" data-a="trkNew" style="max-width:260px;margin:4px auto 0">New song from track</button></div></div>'
+      '<b>Add your first song</b>Add its audio from Files, or paste the lyrics and the sections are labelled for you.<div style="margin-top:18px"><button class="cta ink" data-a="sgNew" style="max-width:260px;margin:0 auto">New song</button></div></div>'
     );
   return h + '<div id="slist">' + songListHTML() + '</div>';
 }
@@ -823,7 +834,9 @@ function songRowHTML(s, hit, toks, pm) {
     ? '<span class="hitline"><i>' + esc(hit.label) + ' ·</i> ' + hlWords(hit.line, toks) + '</span>'
     : '<span class="rmeta">' +
       (s.artist ? '<span>' + hlWords(s.artist, toks) + '</span><span>·</span>' : '') +
-      (lp ? '<span>' + practisedText(lp) + '</span>' : '<span class="newtag">New</span>') +
+      // 3.20: practice shown automatically, never graded
+      (lp ? '<span>' + practisedText(lp) + '</span>' : '<span>Not practised yet</span>') +
+      (n ? '<span>·</span><span>' + nTakes(n) + '</span>' : '') +
       (hasLyrics(s) ? '' : '<span>·</span><span>No lyrics</span>') +
       '</span>';
   const acts =
@@ -863,8 +876,7 @@ function songRowHTML(s, hit, toks, pm) {
     '</b>' +
     meta +
     '</span>' +
-    (n && !ed && !hit ? '<span class="rright" aria-label="' + n + ' takes">' + ICON.mic + n + '</span>' : '') +
-    (ed ? '' : chev) +
+    (ed ? '' : TRACK.rowPlay(s)) + // 3.20: play the song's track from the list
     '</div></div>'
   );
 }
@@ -940,20 +952,21 @@ function pinnedCard() {
       .map((s) => {
         const lp = lastPractised(s, pm);
         return (
-          '<button class="row" data-fk="tp:' +
+          '<div class="row sgtprow" data-fk="tp:' +
           s.id +
           '" data-zk="sg:' +
           s.id +
           '" data-a="sgOpen" data-k="' +
           s.id +
-          '" data-v="today"><span class="lbl">' +
+          '" data-v="today" role="button" tabindex="0"><span class="lbl">' +
           esc(songTitle(s)) +
           '<small>' +
           (s.artist ? esc(s.artist) + ' · ' : '') +
           (lp ? practisedText(lp) : 'Not practised yet') +
+          (takesOf(s.id) ? ' · ' + nTakes(takesOf(s.id)) : '') +
           '</small></span>' +
-          chev +
-          '</button>'
+          TRACK.rowPlay(s) +
+          '</div>'
         );
       })
       .join('') +
@@ -1236,9 +1249,6 @@ function songListBar() {
     t: 'Songs',
     r:
       (D.songs.length ? '<button class="txtbtn glass" data-a="sgListEdit">Edit</button>' : '') +
-      '<button class="circ glass" data-a="trkNew" aria-label="New song from track">' +
-      SGI.trackNew +
-      '</button>' +
       '<button class="circ glass" data-a="sgNew" aria-label="New song">' +
       ICON.plus +
       '</button>',
@@ -1259,12 +1269,25 @@ function songBody(sg, inPane) {
       ? '<div class="sgph sgedit">' + c.l + '<span class="sgphc">' + c.t + '</span>' + c.r + '</div>'
       : '<div class="sgph">' +
         (head ? CLOCK.titleInput(sg) : '<h1>' + esc(songTitle(sg)) + '</h1>') +
-        (c.rec ? '<span class="rechead">' + esc(c.rec) + '</span>' : c.r) +
+        (c.rec ? '<span class="rechead">' + esc(c.rec) + '</span>' : (head || ed ? '' : TAKE.headBtn(sg)) + c.r) +
         '</div>';
-  } else h += head ? CLOCK.titleInput(sg) : '<h1>' + esc(songTitle(sg)) + '</h1>';
+  } else
+    h += head
+      ? CLOCK.titleInput(sg)
+      : // 3.20: the Takes button sits beside the title, so takes are one tap away without scrolling
+        '<div class="sgtrow"><h1>' + esc(songTitle(sg)) + '</h1>' + (ed || recHere(sg) ? '' : TAKE.headBtn(sg)) + '</div>';
   // 3.18: "Artist · 3:58", the pinned icons and ⋯ (Song Clock, clock.js); songs without lyrics keep the plain line
   if (!ed && hasLyrics(sg)) h += CLOCK.headHTML(sg);
-  else if (sg.artist && !ed) h += '<p class="sgart">' + esc(sg.artist) + '</p>';
+  else if (!ed && (sg.artist || (sg.timing && sg.timing.len))) {
+    const lb = CLOCK.lenHTML(sg);
+    h +=
+      '<p class="sgart">' +
+      esc(sg.artist || '') +
+      (sg.artist && lb ? '<span aria-hidden="true"> · </span>' : '') +
+      lb +
+      '</p>' +
+      CLOCK.lenFoot(sg);
+  }
   if (!hasLyrics(sg))
     return (
       h +
@@ -1441,7 +1464,33 @@ function songSheet(s) {
         '</div><p class="foot">Add or change marks with the pencil.</p>'
     );
   }
-  if (s === 'sgTakes') return takesSheet(sd);
+  if (s === 'sgTakes') return TAKE.sheet(sd);
+  if (s === 'sgTakeMenu' || s === 'sgTakeDel' || s === 'sgReview' || s === 'sgCmtMenu') return TAKE.sheet(sd, s);
+  // 3.20 the length linked to the song's track
+  if (s === 'sgLenUnlink')
+    return confirmSheet(
+      'Unlink from track?',
+      'The length will stop matching the uploaded audio. You can relink it later.',
+      'Unlink',
+      'sgLenUnlinkYes',
+      sd.k || ''
+    );
+  if (s === 'sgLenRelink') {
+    const d = U.sDraft,
+      w = sd.draft ? d && d.media && d.len : sg && sg.timing && sg.timing.len,
+      L = sd.draft ? d && d.media && Math.round(d.media.r.dur) : sg && sg.track && Math.round(sg.track.dur);
+    if (!w || !L) return '';
+    return sheetWrap(
+      'Relink to track?',
+      '<p class="note">Your custom length ' +
+        fmtLen(w) +
+        ' will be replaced with ' +
+        fmtLen(L) +
+        '.</p><button class="cta" data-a="sgLenRelinkYes" data-k="' +
+        esc(sd.k || '') +
+        '">Relink</button><button class="ghost" data-a="close">Cancel</button>'
+    );
+  }
   if (!sg && s !== 'sgDel' && s !== 'sgPinFull' && s !== 'sgRename') return '';
   if (s === 'sgCue') {
     const sec = hasLyrics(sg) && sg.sections[sd.k];
@@ -1540,123 +1589,53 @@ function songSheet(s) {
   }
   return '';
 }
-// the takes for one place in the song: straight after recording, or from its "N takes" pill
-function takeRowHTML(t, tag) {
-  const n = noteStr(t.note);
-  return (
-    '<div class="row sgtake"><button class="ibtn acc" data-a="playTake" data-k="' +
-    t.id +
-    '" aria-label="' +
-    (takePlaying(t.id) ? 'Pause' : 'Play') +
-    ' take">' +
-    (takePlaying(t.id) ? ICON.pause : ICON.play) +
-    '</button><button class="lbl tk" data-a="takeNote" data-k="' +
-    t.id +
-    '" aria-label="Notes for this take">' +
-    (tag ? '<span class="sgtag">' + tag + '</span>' : '') +
-    '<span class="tkw">' +
-    takeWhen(t.created) +
-    ' · ' +
-    mmss(t.len) +
-    '</span>' +
-    '<small class="' +
-    (n ? 'acc' : '') +
-    '">' +
-    (n ? esc(n) : 'Add a note') +
-    '</small><span class="prog"><i id="pg-' +
-    t.id +
-    '"></i></span></button>' +
-    starBtn(t) +
-    '</div>'
-  );
-}
-const starBtn = (t) =>
-  '<button class="ibtn star' +
-  (t.star ? ' on' : '') +
-  '" data-a="star" data-k="' +
-  t.id +
-  '" aria-label="' +
-  (t.star ? 'Unstar' : 'Star') +
-  ' take" aria-pressed="' +
-  !!t.star +
-  '" style="' +
-  (t.star ? '' : 'color:var(--fg3)') +
-  '">' +
-  ICON.star +
-  '</button>';
-function takesSheet(sd) {
-  const sg = songById(sd.k),
-    i = hasLyrics(sg) ? occIdx(sg, sd.o) : -1;
-  if (i < 0) return '';
-  const list = takesAt(sg.id, sd.o),
-    fresh = sd.fresh && list.find((t) => t.id === sd.fresh),
-    first = list[0],
-    latest = list[list.length - 1];
-  let h = '';
-  if (fresh) {
-    const n = noteStr(fresh.note);
+// 3.20 the + sheet: Add media (a song's audio from Files, then the form) or Manually (the form as before). The
+// picked file stays with the draft until Save, so cancelling leaves nothing behind
+const sgBase = (n) =>
+  String(n || '')
+    .replace(/\.[^./]{1,5}$/, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 80);
+const SG_LNK =
+  '<svg class="i" viewBox="0 0 24 24"><path d="M10 14a4 4 0 005.66 0l3-3a4 4 0 00-5.66-5.66l-1 1"/><path d="M14 10a4 4 0 00-5.66 0l-3 3a4 4 0 005.66 5.66l1-1"/></svg>';
+const SG_UNLNK =
+  '<svg class="i" viewBox="0 0 24 24"><path d="M15.5 13.5l3-3a4 4 0 00-5.66-5.66l-1 1"/><path d="M8.5 10.5l-3 3a4 4 0 005.66 5.66l1-1"/><path d="M4 4l3 3M20 20l-3-3M9 3.5V5M3.5 9H5M15 20.5V19M20.5 15H19"/></svg>';
+function sgLenRow(d) {
+  const m = d.media,
+    len = d.len,
+    t = len ? fmtLen(len) : 'Add';
+  let h = '<label class="sglab2">Length</label><div class="sglenrow">';
+  if (m && d.lenLink && len)
     h +=
-      '<div class="newtake"><button class="playbig" data-a="playTake" data-k="' +
-      fresh.id +
-      '" aria-label="' +
-      (takePlaying(fresh.id) ? 'Pause' : 'Play') +
-      ' new take">' +
-      (takePlaying(fresh.id) ? ICON.pause : ICON.play) +
-      '</button><button class="lbl tk" data-a="takeNote" data-k="' +
-      fresh.id +
-      '" aria-label="Notes for the new take"><span class="sgtag">New take</span><span class="tkw">Just now · ' +
-      mmss(fresh.len) +
-      '</span>' +
-      '<small class="' +
-      (n ? 'acc' : '') +
-      '">' +
-      (n ? esc(n) : 'Add a note') +
-      '</small><span class="prog"><i id="pg-' +
-      fresh.id +
-      '"></i></span></button>' +
-      starBtn(fresh) +
-      '</div><p class="foot sgfresh">Fresh ears help. Try listening again tomorrow.</p>';
+      '<button class="sglenv" data-a="sgAddLen" aria-label="Length ' +
+      t +
+      ', linked to the track. Tap to unlink">' +
+      t +
+      '<span class="lnk on">' +
+      SG_LNK +
+      '</span></button>';
+  else {
+    h += '<button class="sglenv" data-a="sgAddLen" aria-label="Length ' + t + '">' + t + '</button>';
+    if (m && len)
+      h +=
+        '<button class="lnk off" data-a="sgAddRelink" aria-label="Relink to the track">' +
+        SG_UNLNK +
+        '</button><span class="sglenc">Custom · track is ' +
+        fmtLen(Math.round(m.r.dur)) +
+        '</span>';
   }
-  // every starred take, then the latest and the first while they're still kept
-  const rows = [];
-  const add = (t) => t && t !== fresh && !rows.includes(t) && rows.push(t);
-  list
-    .filter((t) => t.star)
-    .reverse()
-    .forEach(add);
-  add(latest);
-  add(first);
-  const tagOf = (t) =>
-    [t === latest ? 'Latest' : '', t === first && list.length > 1 ? 'First' : '', t.star ? 'Starred' : '']
-      .filter(Boolean)
-      .join(' · ');
-  if (rows.length)
-    h +=
-      (fresh ? '<div class="hdr">Earlier takes</div>' : '') +
-      '<div class="grp">' +
-      rows.map((t) => takeRowHTML(t, tagOf(t))).join('') +
-      '</div>';
-  if (!list.length) h += '<p class="note">No takes for this section yet.</p>';
-  const more = list.length - rows.length - (fresh ? 1 : 0);
-  h +=
-    '<p class="foot">' +
-    (more ? (more === 1 ? '1 more take' : more + ' more takes') + ' in Song practice. ' : '') +
-    'Keeps the last ' +
-    KEEP_TAKES +
-    ' takes of this song, from any section, plus every take you star.</p><div class="sgagain"><button class="sgpill" data-a="sgRec" data-k="' +
-    sd.o +
-    '">' +
-    SGI.mic +
-    (list.length ? 'Record again' : 'Record') +
-    '</button></div>';
-  return sheetWrap(esc(occLabel(sg, i)), h, 'Takes for ' + occLabel(sg, i));
+  h += '</div>';
+  if (!m) h += '<p class="foot sglenf">Add a track later and its length can link to it.</p>';
+  return h;
 }
+const fmtLen = (s) => Math.floor(s / 60) + ':' + String(Math.round(s) % 60).padStart(2, '0');
 function newSongSheet() {
   const d = U.sDraft;
   if (!d) return '';
-  if (d.step === 1)
+  if (d.step === 1 && d.forId)
     return sheetWrap(
-      d.forId ? 'Add lyrics' : 'New song',
+      'Add lyrics',
       sgField('sgTitle', 'Title', d.title, 'Song title', 'maxlength="80" autocapitalize="words"') +
         sgField('sgArtist', 'Artist (optional)', d.artist, 'Who sings it', 'maxlength="80" autocapitalize="words"') +
         '<label class="sglab2" for="sgLyr">Lyrics</label><textarea class="field sglyr" id="sgLyr" placeholder="Paste lyrics here. Leave a blank line between sections.">' +
@@ -1665,6 +1644,77 @@ function newSongSheet() {
         (d.err ? '<p class="err">' + esc(d.err) + '</p>' : '') +
         '<div style="margin-top:14px"><button class="cta" data-a="sgSplit">Next</button></div>'
     );
+  if (d.step === 1) {
+    const media = d.mode !== 'manual';
+    let h =
+      '<div class="seg wide sgaddseg" role="tablist" aria-label="How to add the song"><span class="knob" aria-hidden="true"></span>' +
+      [
+        ['media', 'Add media'],
+        ['manual', 'Manually'],
+      ]
+        .map(
+          (x) =>
+            '<button role="tab" data-a="sgAddMode" data-v="' +
+            x[0] +
+            '" class="' +
+            ((x[0] === 'media') === media ? 'on' : '') +
+            '" aria-selected="' +
+            ((x[0] === 'media') === media) +
+            '">' +
+            x[1] +
+            '</button>'
+        )
+        .join('') +
+      '</div>';
+    if (media && d.reading)
+      return sheetWrap(
+        'New song',
+        h +
+          '<div class="sgdrop busy" role="status" aria-busy="true">' +
+          SGI.wave +
+          '<b>Reading the track…</b><span>' +
+          esc(d.reading) +
+          '</span></div>'
+      );
+    if (media && !d.media)
+      return sheetWrap(
+        'New song',
+        h +
+          '<button class="sgdrop" data-a="sgAddPick">' +
+          SGI.wave +
+          '<b>Choose audio file</b><span>MP3, M4A or WAV from Files</span></button>' +
+          '<p class="foot">The track stays on this ' +
+          deviceName() +
+          ' and isn’t included in backups. You can paste the lyrics next, or later.</p>'
+      );
+    if (media)
+      h +=
+        '<p class="sgadded">' +
+        ICON.check +
+        '<span>' +
+        esc(d.media.name) +
+        ' added</span></p><button class="lnkbtn sgswap" data-a="sgAddPick">Choose a different file</button>';
+    h +=
+      sgField(
+        'sgTitle',
+        'Title',
+        d.title,
+        media ? sgBase(d.media.name) || 'Song title' : 'Song title',
+        'maxlength="80" autocapitalize="words"'
+      ) +
+      sgField('sgArtist', 'Artist (optional)', d.artist, 'Who sings it', 'maxlength="80" autocapitalize="words"') +
+      sgLenRow(media ? d : Object.assign({}, d, { media: null })) +
+      '<label class="sglab2" for="sgLyr">Lyrics' +
+      (media ? ' (optional)' : '') +
+      '</label><textarea class="field sglyr" id="sgLyr" placeholder="Paste lyrics here. Leave a blank line between sections.">' +
+      esc(d.text) +
+      '</textarea><p class="foot">Labels like [Chorus] or Verse 2: start a new section. Blank lines split sections too.</p>' +
+      (d.err ? '<p class="err">' + esc(d.err) + '</p>' : '') +
+      '<div style="margin-top:14px"><button class="cta" data-a="sgSplit">' +
+      (media && !(d.text || '').trim() ? 'Save song' : 'Next') +
+      '</button></div>';
+    return sheetWrap('New song', h);
+  }
   const gc = d.blocks.filter((b) => b.guessed).length;
   let h =
     '<p class="note">Tap a label to change it. Exact repeats are linked so marks only need adding once.' +
@@ -1789,24 +1839,75 @@ function sgEndEdit(quiet) {
   }
   return f;
 }
-function sgSaveDraft() {
+// the + sheet's typed fields, kept in the draft before it's drawn again
+function sgReadDraft() {
   const d = U.sDraft;
-  if (!d || !d.blocks || !d.blocks.length) return;
-  const lyr = buildLyrics(d.blocks),
-    title = titleCase(d.title) || 'Untitled song',
+  if (!d) return;
+  const v = (id) => ($(id) ? $(id).value : null);
+  if (v('sgTitle') != null) d.title = v('sgTitle');
+  if (v('sgArtist') != null) d.artist = v('sgArtist');
+  if (v('sgLyr') != null) d.text = v('sgLyr');
+}
+// 3.20: relink a song's length to its track (asking first if they differ)
+function sgRelink(sg, ok) {
+  if (!sg || !sg.track) return;
+  const L = Math.round(sg.track.dur);
+  if (!(L > 0) || L > CK_MAXLEN) return;
+  const len = sg.timing && sg.timing.len;
+  if (!ok && len && len !== L) {
+    U.sheet = 'sgLenRelink';
+    U.sd = { k: sg.id };
+    return rerender();
+  }
+  if (!sg.timing) sg.timing = { len: null, real: false, est: false, slots: {} };
+  sg.timing.len = L;
+  sg.timing.lenLink = true;
+  save();
+  rerender();
+  toast('Relinked to track');
+}
+async function sgSaveDraft() {
+  const d = U.sDraft;
+  if (!d || !d.blocks || (!d.blocks.length && !(d.media && d.mode !== 'manual'))) return;
+  if (d.saving) return;
+  const lyr = d.blocks.length ? buildLyrics(d.blocks) : {},
+    media = !d.forId && d.mode !== 'manual' ? d.media : null,
+    // 3.20: a blank title uses the file's name, so a song is never nameless
+    title = titleCase(d.title) || (media && sgBase(media.name)) || 'Untitled song',
     artist = titleCase(d.artist);
   let sg = d.forId && songById(d.forId);
+  const fresh = !sg;
   if (sg) Object.assign(sg, { name: title, artist, original: d.text }, lyr);
   else {
     sg = Object.assign(
-      { id: 'g_' + Date.now().toString(36), name: title, artist, added: Date.now(), pinned: false, original: d.text },
+      { id: 'g_' + Date.now().toString(36), name: title, artist, added: Date.now(), pinned: false },
+      d.text && d.blocks.length ? { original: d.text } : {},
       lyr
     );
+    // the picked audio goes into vocalTracks only now, on Save
+    if (media) {
+      d.saving = true;
+      try {
+        await TRACK.attach(sg, media.file, media.r);
+      } catch (e) {
+        d.saving = false;
+        return toast('Couldn’t save the track. Storage may be full.');
+      }
+      d.saving = false;
+      if (U.sDraft !== d) return; // closed meanwhile: nothing is kept
+    }
+    // the length as set on the sheet: linked to the track, or the song's own
+    if (d.len) {
+      if (!sg.timing) sg.timing = { len: null, real: false, est: false, slots: {} };
+      sg.timing.len = d.len;
+      if (media && d.lenLink && d.len === Math.round(media.r.dur)) sg.timing.lenLink = true;
+      else delete sg.timing.lenLink;
+    } else if (sg.timing) delete sg.timing.lenLink;
     D.songs.push(sg);
   }
   save();
-  // 3.15: a new song's paste sheet shrinks into its row in Songs, then the row opens the song (iPhone, motion on)
-  const sh = !d.forId && !split() ? ZOOM.sheetShot() : null;
+  // 3.15: a new song's sheet shrinks into its row in Songs, then the row opens the song (iPhone, motion on)
+  const sh = fresh && !split() ? ZOOM.sheetShot() : null;
   U.sDraft = null;
   U.sheet = null;
   U.sd = {};
@@ -2088,11 +2189,117 @@ const SG_ACT = {
     updateSongList();
   },
   sgNew() {
-    U.sDraft = { step: 1, title: '', artist: '', text: '' };
+    // 3.20: one door, two ways in: Add media (the default) or Manually
+    U.sDraft = { step: 1, mode: 'media', title: '', artist: '', text: '', len: null, lenLink: false, media: null };
     U.sheet = 'sgNew';
-    U.sd = { focus: 'sgTitle' };
+    U.sd = {};
     SG.ctx = null;
     rerender();
+  },
+  sgAddMode(el, v) {
+    const d = U.sDraft;
+    if (!d || d.mode === v) return;
+    sgReadDraft();
+    d.mode = v === 'manual' ? 'manual' : 'media';
+    if (d.mode === 'manual' && d.lenLink) d.lenLink = false; // Manually has no track to follow
+    if (d.mode === 'media' && d.media && d.len === Math.round(d.media.r.dur)) d.lenLink = true;
+    segPick(el);
+    rerender();
+  },
+  sgAddPick() {
+    sgReadDraft();
+    if (rec) return toast('Stop recording first');
+    TRACK.pick('draft');
+  },
+  // a file read for the draft: the form opens with the length linked to it. Metadata isn't trusted, so the title
+  // and artist stay as they were (empty to start); a blank title becomes the file's name on Save
+  sgMedia(file, r) {
+    const d = U.sDraft;
+    if (!d) return;
+    const L = Math.round(r.dur);
+    d.media = { file, r, name: String(file.name || 'Track') };
+    d.mode = 'media';
+    if (L > 0 && L <= CK_MAXLEN) {
+      d.len = L;
+      d.lenLink = true;
+    }
+    d.err = '';
+    U.sheet = 'sgNew';
+    rerender();
+  },
+  sgAddLen(el) {
+    const d = U.sDraft;
+    if (!d) return;
+    sgReadDraft();
+    if (d.mode !== 'manual' && d.media && d.lenLink) {
+      U.sheet = 'sgLenUnlink';
+      U.sd = { draft: true, ret: { sheet: 'sgNew', sd: {} } };
+      return rerender();
+    }
+    ckPick(el, d.len || (d.media ? Math.round(d.media.r.dur) : 210), (v) => {
+      d.len = v > 0 ? v : null;
+      d.lenLink = !!(d.media && d.mode !== 'manual' && d.len === Math.round(d.media.r.dur));
+      rerender();
+    });
+  },
+  sgAddRelink() {
+    const d = U.sDraft;
+    if (!d || !d.media) return;
+    sgReadDraft();
+    const L = Math.round(d.media.r.dur);
+    if (d.len && d.len !== L) {
+      U.sheet = 'sgLenRelink';
+      U.sd = { draft: true, ret: { sheet: 'sgNew', sd: {} } };
+      return rerender();
+    }
+    d.len = L;
+    d.lenLink = true;
+    rerender();
+    toast('Relinked to track');
+  },
+  // 3.20 the length linked to the track: unlink (then the picker), or relink
+  sgLenUnlinkYes() {
+    const sd = U.sd || {};
+    if (sd.draft) {
+      const d = U.sDraft;
+      if (!d) return;
+      d.lenLink = false;
+      U.sheet = 'sgNew';
+      U.sd = {};
+      rerender();
+      const b = document.querySelector('#layer [data-a=sgAddLen]');
+      ckPick(b, d.len || 210, (v) => {
+        d.len = v > 0 ? v : null;
+        rerender();
+      });
+      return;
+    }
+    const sg = songById(sd.k);
+    U.sheet = null;
+    U.sd = {};
+    if (!sg || !sg.timing) return rerender();
+    delete sg.timing.lenLink;
+    save();
+    rerender();
+    const b = document.querySelector('#app .cklen, #app [data-a=ckLen]');
+    ckPick(b, sg.timing.len || 210, (v) => ckSetLen(sg, v));
+  },
+  sgLenRelinkYes() {
+    const sd = U.sd || {};
+    if (sd.draft) {
+      const d = U.sDraft;
+      if (d && d.media) {
+        d.len = Math.round(d.media.r.dur);
+        d.lenLink = true;
+      }
+      U.sheet = 'sgNew';
+      U.sd = {};
+      rerender();
+      return toast('Relinked to track');
+    }
+    U.sheet = null;
+    U.sd = {};
+    sgRelink(songById(sd.k), true);
   },
   sgAddLyrics(el, v, k) {
     const s = songById(k);
@@ -2105,10 +2312,13 @@ const SG_ACT = {
   sgSplit() {
     const d = U.sDraft;
     if (!d) return;
-    d.title = ($('sgTitle') || {}).value || '';
-    d.artist = ($('sgArtist') || {}).value || '';
-    d.text = ($('sgLyr') || {}).value || '';
+    sgReadDraft();
     const b = splitBlocks(d.text);
+    // 3.20: a song added from its audio can be saved without lyrics, to paste later
+    if (!b.length && !d.forId && d.mode !== 'manual' && d.media) {
+      d.blocks = [];
+      return sgSaveDraft();
+    }
     if (!b.length) {
       d.err = 'Paste some lyrics first.';
       return rerender();

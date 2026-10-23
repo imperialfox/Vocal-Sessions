@@ -168,10 +168,15 @@ document.addEventListener('click', (e) => {
       });
       break;
     case 'songStart':
-      if (X && !isSong()) return toast('Finish or discard your session first');
-      if (!X) newSong();
+      // 3.20 one song list: Today's Song practice card switches to the Songs tab itself (a tab switch, no zoom).
+      // Song practice in progress carries on from its song's page
+      if (isSong() && X.start && songById(X.song)) {
+        openSong(X.song);
+        break;
+      }
       go(() => {
-        U.view = 'song';
+        U.tab = 'songs';
+        U.view = null;
       });
       break;
     case 'resume':
@@ -371,7 +376,6 @@ document.addEventListener('click', (e) => {
         if (!t) return;
         t.star = !t.star;
         await putTake(t);
-        if (!t.star) await prune(t.songId);
         await refreshTakes();
         rerender();
         if (t.star) DET.starPop(document.querySelector('#layer .ibtn.star.on[data-k="' + k + '"], .ibtn.star.on[data-k="' + k + '"]'));
@@ -507,7 +511,8 @@ document.addEventListener('click', (e) => {
       COACH.stepMove(+v);
       break;
     case 'coachX':
-      COACH.dismiss();
+    case 'fwX':
+      fwClose(); // 3.20: ✕ on the floating window, for every kind of sound
       break;
     case 'fwOpen': {
       const fk = fwKindNow();
@@ -517,6 +522,7 @@ document.addEventListener('click', (e) => {
     case 'fwToggle': {
       const fk = fwKindNow();
       if (!fk) break;
+      FW.winAt = Date.now(); // 3.20: paused from the window, so the window stays
       fk.toggle();
       fwUpdate();
       break;
@@ -800,8 +806,7 @@ document.addEventListener('click', (e) => {
       break;
     case 'delTake':
       (async () => {
-        if (playingId === k) stopPlayback();
-        await delTake(k);
+        await TAKE.del(k); // 3.20: its name, comments and waveform go with it
         await refreshTakes();
         U.sheet = null;
         rerender();

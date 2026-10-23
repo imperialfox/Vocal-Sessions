@@ -36,7 +36,36 @@ function cleanLoop(l, dur) {
     e = l.end;
   if (dur > 0 && e > dur) e = dur;
   if (e - s < TRK_MIN - 1e-6) return null;
-  return { start: Math.round(s * 100) / 100, end: Math.round(e * 100) / 100, on: l.on === true };
+  const o = { start: Math.round(s * 100) / 100, end: Math.round(e * 100) / 100, on: l.on === true };
+  if (typeof l.mk === 'string' && l.mk) o.mk = l.mk; // 3.20: the chip this loop belongs to (checked in cleanSong)
+  return o;
+}
+
+/* ===== 3.20 markers ("chips"): sg.markers = [{id, t, end?, name?}], saved with the song and in backups =====
+   Numbers 0 or more, an end at least TRK_MIN after its start, clamped to the track's length when it's known, sorted by
+   time, unique ids. A marker is unnamed for now; Track 2 can promote one into a section start. */
+function cleanMarkers(list, dur) {
+  if (!Array.isArray(list)) return null;
+  const num = (x) => typeof x === 'number' && isFinite(x) && x >= 0,
+    seen = new Set(),
+    out = [];
+  list.forEach((m) => {
+    if (!m || typeof m !== 'object' || Array.isArray(m) || typeof m.id !== 'string' || !m.id || seen.has(m.id)) return;
+    if (!num(m.t)) return;
+    let t = m.t;
+    if (dur > 0 && t > dur) return;
+    const o = { id: m.id.slice(0, 40), t: Math.round(t * 100) / 100 };
+    if (num(m.end)) {
+      let e = m.end;
+      if (dur > 0 && e > dur) e = dur;
+      if (e > t + TRK_MIN - 1e-6) o.end = Math.round(e * 100) / 100;
+    }
+    if (typeof m.name === 'string' && m.name.trim()) o.name = m.name.trim().slice(0, 60);
+    seen.add(o.id);
+    out.push(o);
+  });
+  out.sort((a, b) => a.t - b.t);
+  return out.length ? out : null;
 }
 
 const TRACK = (() => {
@@ -57,6 +86,8 @@ const TRACK = (() => {
   let wheelAcc = 0;
   let C = null; // colours, read from the CSS tokens
   const pos = {}; // where each track was left, this time the app is open
+  let mkCur = null; // 3.20: the chip last tapped, outlined: {id: song id, mk: marker id}
+  let mkHold = null; // holding a chip for its menu
 
   /* ----- this device's settings: zoom level and speed (vocalSongPrefs, never backed up) ----- */
   function prefs() {
@@ -215,12 +246,15 @@ const TRACK = (() => {
       woke = true;
       media();
       frames();
+      paintRows();
       changed();
     });
     el.addEventListener('pause', () => {
       if (cur) pos[cur.id] = el.currentTime;
       // paused on its own screen: you meant to stop, so no window follows you out
       if (here()) woke = false;
+      if (!el.ended) fwPaused('track'); // 3.20: paused anywhere but the window: no window either
+      paintRows();
       changed();
     });
     el.addEventListener('ended', () => {
@@ -230,6 +264,8 @@ const TRACK = (() => {
         el.play().catch(() => {});
         return;
       }
+      NOW.ended('track');
+      paintRows();
       changed();
     });
     el.addEventListener('seeked', () => {
@@ -325,23 +361,16 @@ const TRACK = (() => {
   }
 
   /* ----- playing ----- */
-  // one sound at a time: the coach video, a take and Song Clock's play-along stop when the track plays
-  function quiet() {
-    if (typeof COACH !== 'undefined') COACH.pause();
-    if (typeof player !== 'undefined' && player) {
-      stopPlayback();
-      if (U.view !== 'trk') rerender();
-    }
-    if (typeof CK !== 'undefined' && CK.pc.run) ckPause();
-  }
   function play() {
     if (!cur) return;
     const v = audio();
-    quiet();
-    // with the loop on, play starts in the loop
+    // one sound at a time (3.20): whatever else plays stops
+    NOW.start('track', cur.id, () => pause());
+    // with the loop on, play starts in the loop; a track that had finished starts again from 0:00 (3.20)
     const L = loopNow(),
       t = now();
     if (L && L.on && (t < L.start - 0.01 || t >= L.end - 0.01)) seek(L.start);
+    else if (v.ended || (len() > 0 && t >= len() - 0.05)) seek(0);
     v.playbackRate = speed();
     pitch();
     v.play().catch(() => {
@@ -399,7 +428,7 @@ const TRACK = (() => {
 
   /* ----- the loop ----- */
   const r2 = (x) => Math.round(x * 100) / 100;
-  function setLoop(s, e, on) {
+  function setLoop(s, e, on, mk) {
     const sg = song();
     if (!sg) return;
     const d = len();
@@ -407,6 +436,7 @@ const TRACK = (() => {
     e = Math.max(0, Math.min(d, e));
     if (e - s < TRK_MIN) return false;
     sg.loop = { start: r2(s), end: r2(e), on: on !== false };
+    if (mk) sg.loop.mk = mk;
     return true;
   }
   // Set start / Set end at the playhead (FCP's In and Out): a start with no end runs to the song's end; an end with no
@@ -429,10 +459,11 @@ const TRACK = (() => {
       if (e - s < TRK_MIN) e = Math.min(d, s + TRK_MIN);
     }
     if (setLoop(s, e, true)) {
-      save();
+      save(); // 3.20: Set start / Set end make a loop of their own; a chip keeps its range
       prevT = now();
       draw();
       paint();
+      chips();
     }
   }
   function toggleLoop() {
@@ -445,6 +476,7 @@ const TRACK = (() => {
     prevT = now();
     paint();
     draw();
+    chips();
   }
   function clearLoop() {
     const sg = song();
@@ -453,6 +485,7 @@ const TRACK = (() => {
     save();
     paint();
     draw();
+    chips();
     toast('Loop cleared');
   }
   function toStart() {
@@ -513,6 +546,7 @@ const TRACK = (() => {
     if (h) h.textContent = hint();
     draw();
     paint();
+    showHead();
     // eases on gentle (Reduce Motion: a short fade; motion off: a jump). Never while playing: stillness while singing
     if (anim === false || playing()) return;
     const A = TRK_LEVELS[was],
@@ -546,7 +580,14 @@ const TRACK = (() => {
   function colours() {
     const cs = getComputedStyle(document.documentElement),
       g = (k, d) => cs.getPropertyValue(k).trim() || d;
-    C = { fg: g('--fg', '#000'), dim: g('--trk-dim', '#bbb'), loop: g('--trk-loop', '#ff9500'), head: g('--trk-head', '#d65a00') };
+    C = {
+      fg: g('--fg', '#000'),
+      dim: g('--trk-dim', '#bbb'),
+      loop: g('--trk-loop', '#ff9500'),
+      head: g('--trk-head', '#d65a00'),
+      mk: g('--trk-mk', '#8e44ec'),
+      mkfg: g('--trk-mkfg', '#fff'),
+    };
   }
   function fit(c) {
     const r = c.getBoundingClientRect(),
@@ -593,6 +634,35 @@ const TRACK = (() => {
       g.fillRect(x, mid - h / 2, bw, h);
     }
   }
+  // 3.20 markers: purple lines (never orange, which is the loop) with a small numbered tab; a range's end is a thin line
+  function marks(g, X, w, h, tab) {
+    const M = mks();
+    if (!M.length) return;
+    g.save();
+    g.font = '600 ' + (tab <= 11 ? 8 : 10) + 'px ' + (getComputedStyle(document.body).fontFamily || 'sans-serif');
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    M.forEach((m, i) => {
+      const x = X(m.t);
+      if (m.end != null) {
+        const xe = X(m.end);
+        if (xe > -20 && xe < w + 20) {
+          g.fillStyle = C.mk;
+          g.globalAlpha = 0.7;
+          g.fillRect(xe - 0.75, tab, 1.5, h - tab);
+          g.globalAlpha = 1;
+        }
+      }
+      if (x < -20 || x > w + 20) return;
+      g.fillStyle = C.mk;
+      g.fillRect(x - 1, 0, 2, h);
+      const tw = tab + (i >= 9 ? 4 : 0);
+      rr(g, x - 1, 0, tw, tab, 3);
+      g.fillStyle = C.mkfg;
+      g.fillText(String(i + 1), x - 1 + tw / 2, tab / 2 + 0.5);
+    });
+    g.restore();
+  }
   function draw() {
     if (U.view !== 'trk' || !cur || U.songId !== cur.id) return;
     if (!C) colours();
@@ -614,6 +684,7 @@ const TRACK = (() => {
           g.fillRect(x - 1.5, 0, 3, h);
           rr(g, x - 6.5, h - 17, 13, 17, 4);
         });
+      marks(g, (v) => x0 + v * pps, w, h, 14);
       // the playhead: the darker orange, with a small dot above
       g.fillStyle = C.head;
       g.fillRect(hx - 1, 8, 2, h - 8);
@@ -641,6 +712,7 @@ const TRACK = (() => {
           g.fillRect(x - 1, 0, 2, h);
           rr(g, x - 4.5, h - 9, 9, 9, 3);
         });
+      marks(g, (v) => (v < a || v > b ? -999 : x0 + v * pps), w, h, 11);
       if (t >= a && (t < b || (b >= len() && t <= b))) {
         g.fillStyle = C.head;
         g.fillRect(x0 + t * pps - 1, 0, 2, h);
@@ -663,6 +735,23 @@ const TRACK = (() => {
         pp.setAttribute('aria-label', on ? 'Pause' : 'Play');
       }
     }
+    const eh = $('trkEndH');
+    if (eh) {
+      const m = curMk(),
+        ok = !!m && now() >= m.t + TRK_MIN - 1e-6;
+      if (eh.classList.contains('wait') === ok) {
+        eh.classList.toggle('wait', !ok);
+        eh.setAttribute('aria-disabled', !ok);
+      }
+    }
+    document.querySelectorAll('#trkMk .trkchl').forEach((b) => {
+      const m = mkById(b.dataset.k),
+        on = !!(m && chipLoopOn(m));
+      if (b.classList.contains('on') !== on) {
+        b.classList.toggle('on', on);
+        b.setAttribute('aria-pressed', on);
+      }
+    });
     const lb = $('trkLoopB');
     if (lb) {
       const L = loopNow(),
@@ -671,6 +760,265 @@ const TRACK = (() => {
       lb.setAttribute('aria-pressed', on);
       lb.setAttribute('aria-label', L ? 'Loop ' + fmt1(L.start) + ' to ' + fmt1(L.end) : 'Loop (set a start and end first)');
     }
+  }
+
+  /* ----- 3.20 a song row's play button ----- */
+  // a tiny silent sound played first, in the tap, so iPhone lets the track start once it has loaded
+  const HUSH = 'data:audio/wav;base64,UklGRiwAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YQgAAAAAAAAAAAAAAA==';
+  async function playSong(id) {
+    if (!songById(id)) return;
+    if (!have.has(id)) return toast('Upload a track to play', 1100);
+    if (rec) return toast('Stop recording first');
+    if (cur && cur.id === id) return toggle();
+    const v = audio();
+    unload();
+    try {
+      v.src = HUSH;
+      const p = v.play();
+      if (p && p.catch) p.catch(() => {});
+    } catch (e) {}
+    paintRows(id);
+    await open1(id);
+    if (!cur || cur.id !== id) return paintRows();
+    play();
+  }
+  const rowIsOn = (id) => !!(cur && cur.id === id && playing());
+  function rowPlay(sg) {
+    const on = have.has(sg.id),
+      p = rowIsOn(sg.id);
+    return (
+      '<button class="sgplay' +
+      (on ? '' : ' off') +
+      (p ? ' on' : '') +
+      '" data-a="sgRowPlay" data-k="' +
+      sg.id +
+      '" aria-label="' +
+      (p ? 'Pause ' : 'Play ') +
+      esc(songTitle(sg)) +
+      '"' +
+      (on ? '' : ' aria-disabled="true"') +
+      '>' +
+      (p ? ICON.pause : ICON.play) +
+      '</button>'
+    );
+  }
+  // the rows' buttons, in place: pause on the playing song's row, play on the others
+  function paintRows(loadingId) {
+    document.querySelectorAll('[data-a=sgRowPlay]').forEach((b) => {
+      const id = b.dataset.k,
+        p = rowIsOn(id) || loadingId === id;
+      if (b.classList.contains('on') === p) return;
+      const sg = songById(id);
+      b.classList.toggle('on', p);
+      b.innerHTML = p ? ICON.pause : ICON.play;
+      b.setAttribute('aria-label', (p ? 'Pause ' : 'Play ') + (sg ? songTitle(sg) : 'song'));
+    });
+  }
+
+  /* ----- 3.20 markers and chips ----- */
+  const MKI =
+    '<svg class="i" viewBox="0 0 24 24"><path d="M7 3.5v17"/><path d="M7 4h9.5l-2.5 3.5 2.5 3.5H7" fill="currentColor" fill-opacity=".18"/></svg>';
+  const mks = () => {
+    const sg = song();
+    return sg && Array.isArray(sg.markers) ? sg.markers : [];
+  };
+  const mkById = (id) => mks().find((m) => m.id === id) || null;
+  function sortMks() {
+    const sg = song();
+    if (sg && sg.markers) sg.markers.sort((a, b) => a.t - b.t);
+  }
+  const curMk = () => (mkCur && cur && mkCur.id === cur.id ? mkById(mkCur.mk) : null);
+  const chipLoopOn = (m) => {
+    const L = loopNow();
+    return !!(L && L.on && L.mk === m.id);
+  };
+  function chipsHTML() {
+    const M = mks(),
+      c = curMk();
+    if (!M.length) return '';
+    return M.map((m, i) => {
+      const n = i + 1,
+        lab = m.end != null ? fmt1(m.t) + '–' + fmt1(m.end) : fmt1(m.t),
+        on = chipLoopOn(m);
+      return (
+        '<span class="trkchip' +
+        (c && c.id === m.id ? ' cur' : '') +
+        '" data-mk="' +
+        m.id +
+        '"><button class="trkchb" data-a="trkChip" data-k="' +
+        m.id +
+        '" aria-label="Marker ' +
+        n +
+        ', ' +
+        lab +
+        (m.name ? ', ' + esc(m.name) : '') +
+        '. Tap to jump there, hold for more"><b>' +
+        n +
+        '</b>' +
+        (m.name ? '<span class="trkchn">' + esc(m.name) + '</span>' : '') +
+        '<span>' +
+        lab +
+        '</span></button>' +
+        (m.end != null
+          ? '<button class="trkchl' +
+            (on ? ' on' : '') +
+            '" data-a="trkChipLoop" data-k="' +
+            m.id +
+            '" aria-pressed="' +
+            on +
+            '" aria-label="Loop marker ' +
+            n +
+            '">' +
+            LOOP +
+            '</button>'
+          : '') +
+        '</span>'
+      );
+    }).join('');
+  }
+  // "End n here": sets the current chip's end at the playhead (greyed while the playhead is before its start)
+  function endHereHTML() {
+    const m = curMk();
+    if (!m) return '';
+    const n = mks().indexOf(m) + 1,
+      ok = now() >= m.t + TRK_MIN - 1e-6;
+    return (
+      '<button class="cvpill trkendh' +
+      (ok ? '' : ' wait') +
+      '" id="trkEndH" data-a="trkEndHere" aria-disabled="' +
+      !ok +
+      '">End ' +
+      n +
+      ' here</button>'
+    );
+  }
+  // the chip row and the buttons row, in place (the page itself isn't redrawn)
+  function chips(added) {
+    const box = $('trkMk');
+    if (!box) return;
+    const sl = box.scrollLeft;
+    box.innerHTML = chipsHTML();
+    box.scrollLeft = sl;
+    endHere();
+    if (added && !playing()) {
+      const c = box.querySelector('.trkchip[data-mk="' + added + '"]');
+      if (c) {
+        const r = c.getBoundingClientRect(),
+          br = box.getBoundingClientRect();
+        if (r.left < br.left || r.right > br.right) box.scrollLeft += r.left - br.left - 16;
+        MOTION.animate(c, [{ opacity: 0, transform: 'scale(.8)' }, { opacity: 1, transform: 'none' }], {
+          spring: 'gentle',
+          fade: true,
+        });
+      }
+    }
+  }
+  function endHere() {
+    const b = $('trkBtns');
+    if (!b) return;
+    const old = $('trkEndH'),
+      h = endHereHTML();
+    if (!h) {
+      if (old) old.remove();
+      return;
+    }
+    const m = curMk(),
+      ok = now() >= m.t + TRK_MIN - 1e-6,
+      want = 'End ' + (mks().indexOf(m) + 1) + ' here';
+    if (old && old.textContent === want) {
+      old.classList.toggle('wait', !ok);
+      old.setAttribute('aria-disabled', !ok);
+      return;
+    }
+    if (old) old.remove();
+    b.querySelector('.trkaddmk').insertAdjacentHTML('afterend', h);
+  }
+  function addMarker() {
+    const sg = song();
+    if (!sg || !cur) return;
+    const t = r2(Math.min(now(), Math.max(0, len() - 0.01)));
+    if (mks().some((m) => Math.abs(m.t - t) < 0.05)) return toast('There’s a marker here already');
+    const m = { id: 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), t };
+    sg.markers = mks().concat([m]);
+    sortMks();
+    mkCur = { id: sg.id, mk: m.id };
+    save();
+    draw();
+    chips(m.id);
+  }
+  function jump(id) {
+    const m = mkById(id);
+    if (!m) return;
+    mkCur = { id: cur.id, mk: id };
+    seek(m.t); // playing carries on from there; paused stays paused
+    prevT = m.t;
+    document.querySelectorAll('#trkMk .trkchip').forEach((c) => c.classList.toggle('cur', c.dataset.mk === id));
+    endHere();
+  }
+  function endAt(id) {
+    const m = mkById(id || (curMk() || {}).id);
+    if (!m) return;
+    const t = r2(Math.min(now(), len()));
+    if (t < m.t + TRK_MIN - 1e-6) return toast('Move the playhead past marker ' + (mks().indexOf(m) + 1) + ' first');
+    m.end = t;
+    const L = loopNow();
+    if (L && L.mk === m.id) {
+      L.start = m.t;
+      L.end = m.end;
+    }
+    save();
+    draw();
+    chips();
+  }
+  function chipLoop(id) {
+    const m = mkById(id),
+      sg = song();
+    if (!m || m.end == null || !sg) return;
+    if (chipLoopOn(m)) sg.loop.on = false;
+    else setLoop(m.t, m.end, true, m.id); // only one loop: this one takes over
+    mkCur = { id: sg.id, mk: m.id };
+    save();
+    prevT = now();
+    paint();
+    draw();
+    chips();
+  }
+  function moveMk(id) {
+    const m = mkById(id);
+    if (!m) return;
+    const t = r2(now()),
+      d = m.end != null ? m.end - m.t : 0;
+    m.t = t;
+    if (m.end != null) {
+      m.end = r2(Math.min(len(), t + d));
+      if (m.end < t + TRK_MIN) delete m.end;
+    }
+    const L = loopNow();
+    if (L && L.mk === m.id) {
+      if (m.end != null) {
+        L.start = m.t;
+        L.end = m.end;
+      } else delete L.mk;
+    }
+    sortMks();
+    save();
+  }
+  function delMk(id) {
+    const sg = song();
+    if (!sg) return;
+    sg.markers = mks().filter((m) => m.id !== id);
+    if (!sg.markers.length) delete sg.markers;
+    if (sg.loop && sg.loop.mk === id) delete sg.loop.mk;
+    if (mkCur && mkCur.mk === id) mkCur = null;
+    save();
+  }
+  function clearMks() {
+    const sg = song();
+    if (!sg) return;
+    delete sg.markers;
+    if (sg.loop) delete sg.loop.mk;
+    mkCur = null;
+    save();
   }
 
   /* ----- screens ----- */
@@ -682,7 +1030,7 @@ const TRACK = (() => {
   const LOOP =
     '<svg class="i" viewBox="0 0 24 24"><path d="M17 2l3 3-3 3M4 11V9a4 4 0 0 1 4-4h12M7 22l-3-3 3-3M20 13v2a4 4 0 0 1-4 4H4"/></svg>';
   const JOG = '<svg class="trkjogi" viewBox="0 0 12 20" aria-hidden="true"><path d="M2 7l4-4 4 4M2 13l4 4 4-4"/></svg>';
-  const hint = () => (strip() ? 'Drag the jog wheel · double-tap outside the loop to clear' : 'Tap a row to zoom in there');
+  const hint = () => (strip() ? 'Drag the jog wheel · double-tap outside the loop to clear' : 'Tap to move the playhead there');
   const mb = (b) => (b / 1048576).toFixed(b >= 10 * 1048576 ? 0 : 1) + ' MB';
 
   function waveHTML() {
@@ -705,7 +1053,7 @@ const TRACK = (() => {
         fmt(r * rs) +
         ' to ' +
         fmt(Math.min(len(), (r + 1) * rs)) +
-        '. Zoom in here"><span class="trkg">' +
+        '. Move the playhead here"><span class="trkg">' +
         fmt(r * rs) +
         '</span><canvas aria-hidden="true"></canvas></button>';
     return h + '</div>';
@@ -755,7 +1103,13 @@ const TRACK = (() => {
       fmt1(now()) +
       '</span><span class="trkhint" id="trkHint">' +
       hint() +
-      '</span></div><div class="trkchips"><button class="cvpill" data-a="trkSet" data-v="start">Set start</button><button class="cvpill" data-a="trkSet" data-v="end">Set end</button><span class="sp"></span><button class="cvpill" id="trkSpd" data-a="trkSpeed" aria-label="Speed ' +
+      '</span></div><div class="trkmk" id="trkMk" data-own-gesture>' +
+      chipsHTML() +
+      '</div><div class="trkchips" id="trkBtns"><button class="cvpill" data-a="trkSet" data-v="start">Set start</button><button class="cvpill" data-a="trkSet" data-v="end">Set end</button><button class="cvpill trkaddmk" data-a="trkMkAdd" aria-label="Add marker at the playhead">' +
+      MKI +
+      'Marker</button>' +
+      endHereHTML() +
+      '<span class="sp"></span><button class="cvpill" id="trkSpd" data-a="trkSpeed" aria-label="Speed ' +
       spTxt(speed()) +
       '. Tap to change">' +
       spTxt(speed()) +
@@ -859,7 +1213,11 @@ const TRACK = (() => {
           chev +
           '</button><button class="row" data-a="sheet" data-v="trkDel" data-k="' +
           sg.id +
-          '"><span class="lbl dng">Remove track</span></button></div><p class="foot">Stays on this ' +
+          '"><span class="lbl dng">Remove track</span></button></div>' +
+          (sg.markers && sg.markers.length
+            ? '<div class="grp"><button class="row" data-a="sheet" data-v="trkMkClear"><span class="lbl dng">Clear all markers…</span></button></div>'
+            : '') +
+          '<p class="foot">Stays on this ' +
           deviceName() +
           ' and isn’t included in backups. The loop and the song’s timings stay with the song.</p>'
       );
@@ -872,6 +1230,44 @@ const TRACK = (() => {
         'Remove track',
         'trkRemove',
         (U.sd && U.sd.k) || U.songId
+      );
+    const sd = U.sd || {};
+    if (s === 'trkMkMenu' && sg) {
+      const m = (sg.markers || []).find((x) => x.id === sd.k);
+      if (!m) return '';
+      const n = sg.markers.indexOf(m) + 1;
+      const row = (a, l, cls) =>
+        '<button class="row" data-a="' + a + '" data-k="' + m.id + '"><span class="lbl' + (cls ? ' ' + cls : '') + '">' + l + '</span></button>';
+      return sheetWrap(
+        'Marker ' + n,
+        '<div class="grp">' +
+          row('trkMkRename', 'Rename', 'acc') +
+          row('trkMkMove', 'Move to playhead', 'acc') +
+          (m.end != null ? row('trkMkNoEnd', 'Remove end', 'acc') : row('trkMkEnd', 'Set end here', 'acc')) +
+          row('trkMkDel', 'Delete marker', 'dng') +
+          '</div><div class="grp"><button class="row" data-a="sheet" data-v="trkMkClear"><span class="lbl dng">Clear all markers…</span></button></div>',
+        'Marker ' + n
+      );
+    }
+    if (s === 'trkMkName' && sg) {
+      const m = (sg.markers || []).find((x) => x.id === sd.k);
+      if (!m) return '';
+      return sheetWrap(
+        'Rename marker',
+        '<input class="field" id="trkMkIn" maxlength="60" placeholder="Run into the chorus" autocomplete="off" value="' +
+          esc(m.name || '') +
+          '"><div style="margin-top:14px"><button class="cta" data-a="trkMkSaveName" data-k="' +
+          m.id +
+          '">Save</button></div>'
+      );
+    }
+    if (s === 'trkMkClear' && sg)
+      return confirmSheet(
+        'Clear all markers?',
+        'All ' + ((sg.markers || []).length || '') + ' markers on this song are removed. The loop stays.',
+        'Clear all markers',
+        'trkMkClearYes',
+        sg.id
       );
     if (s === 'trkBig' && big)
       return sheetWrap(
@@ -894,7 +1290,7 @@ const TRACK = (() => {
   /* ----- adding, replacing and removing ----- */
   function pick(id) {
     if (busy) return toast('Still reading the last track');
-    want = id ? { id } : { fresh: true };
+    want = id === 'draft' ? { draft: true } : { id };
     big = null;
     $('trackIn').click();
   }
@@ -918,33 +1314,30 @@ const TRACK = (() => {
       busyEl = null;
     }
   }
-  async function add(file, target, ok) {
-    if (!file || busy || !target) return;
-    if (!ok && file.size > TRK_BIG) {
-      big = { file, want: target };
-      U.sheet = 'trkBig';
-      U.sd = {};
-      return rerender();
-    }
-    busy = { id: target.id || null };
-    showBusy(true);
-    rerender();
-    let r = null;
+  // read a picked file: its length and waveform (the Add sheet keeps this until Save, so nothing is left behind)
+  async function read(file) {
     try {
-      r = await analyse(await file.arrayBuffer());
-    } catch (e) {}
-    const fail = (msg) => {
-      busy = null;
-      showBusy(false);
-      rerender();
-      toast(msg);
-    };
-    if (!r) return fail(TRK_BAD);
-    let sg = target.id ? songById(target.id) : null;
-    if (target.id && !sg) return fail('That song was deleted');
-    const fresh = !sg;
-    if (fresh)
-      sg = { id: 'g_' + Date.now().toString(36), name: nameOf(file), artist: '', added: Date.now(), pinned: false };
+      return await analyse(await file.arrayBuffer());
+    } catch (e) {
+      return null;
+    }
+  }
+  // 3.20: Song Clock's length follows the track. A song with no length (or the same one) links to it; a different
+  // length stays the song's own (shown with a broken link). Replacing: a linked length follows the new file
+  function linkLen(sg, dur, replacing) {
+    const L = Math.round(dur);
+    if (!(L > 0) || L > CK_MAXLEN) return;
+    const t = sg.timing;
+    if (replacing && t && t.lenLink) t.len = L;
+    else if (!t || !t.len) {
+      if (!sg.timing) sg.timing = { len: null, real: false, est: false, slots: {} };
+      sg.timing.len = L;
+      sg.timing.lenLink = true;
+    } else if (t.len === L) t.lenLink = true;
+    else delete t.lenLink;
+  }
+  // store a read file as a song's track (the audio and its peaks, in vocalTracks)
+  async function attach(sg, file, r) {
     const rec = {
       name: String(file.name || 'Track').slice(0, 200),
       size: file.size,
@@ -953,34 +1346,82 @@ const TRACK = (() => {
       added: Date.now(),
       blob: file,
     };
-    try {
-      await tx(['audio', 'peaks'], 'readwrite', (a, p) => {
-        a.put(rec, sg.id);
-        p.put({ p: r.peaks, rate: TRK_RATE, dur: r.dur }, sg.id);
-      });
-    } catch (e) {
-      return fail('Couldn’t save the track. Storage may be full.');
-    }
-    if (fresh) D.songs.push(sg);
+    await tx(['audio', 'peaks'], 'readwrite', (a, p) => {
+      a.put(rec, sg.id);
+      p.put({ p: r.peaks, rate: TRK_RATE, dur: r.dur }, sg.id);
+    });
     const old = sg.track && sg.track.dur;
     if (cur && cur.id === sg.id) unload(); // replaced: the new audio and peaks load fresh
     delete pos[sg.id];
     sg.track = { name: rec.name, dur: r2(r.dur) };
-    // the loop and timings stay; a loop past the new end is trimmed (or dropped if nothing's left)
+    linkLen(sg, r.dur, !!old);
+    // the loop, markers and timings stay; anything past the new end is trimmed (or dropped if nothing's left)
     if (sg.loop) {
       const l = cleanLoop(sg.loop, r.dur);
       if (l) sg.loop = l;
       else delete sg.loop;
     }
-    save();
+    if (sg.markers) {
+      const m = cleanMarkers(sg.markers, r.dur);
+      if (m) sg.markers = m;
+      else delete sg.markers;
+    }
     have.set(sg.id, metaOf(rec));
+    return old;
+  }
+  async function add(file, target, ok) {
+    if (!file || busy || !target) return;
+    if (!ok && file.size > TRK_BIG) {
+      big = { file, want: target };
+      U.sheet = 'trkBig';
+      U.sd = target.draft ? { ret: { sheet: 'sgNew', sd: {} } } : {};
+      return rerender();
+    }
+    busy = { id: target.id || null, draft: !!target.draft };
+    showBusy(!target.draft);
+    if (target.draft) {
+      // 3.20 the Add sheet: read the file, keep it with the draft, and show the form
+      const d = U.sDraft;
+      if (d) d.reading = file.name || 'track';
+      U.sheet = 'sgNew';
+      rerender();
+      const r = await read(file);
+      busy = null;
+      const d2 = U.sDraft;
+      if (d2) delete d2.reading;
+      if (!r) {
+        rerender();
+        return toast(TRK_BAD);
+      }
+      if (d2) SG_ACT.sgMedia(file, r);
+      else rerender();
+      return;
+    }
+    rerender();
+    const r = await read(file);
+    const fail = (msg) => {
+      busy = null;
+      showBusy(false);
+      rerender();
+      toast(msg);
+    };
+    if (!r) return fail(TRK_BAD);
+    const sg = songById(target.id);
+    if (!sg) return fail('That song was deleted');
+    let old;
+    try {
+      old = await attach(sg, file, r);
+    } catch (e) {
+      return fail('Couldn’t save the track. Storage may be full.');
+    }
+    save();
     busy = null;
     showBusy(false);
     if (U.view === 'trk' && U.songId === sg.id) {
       U.sheet = null;
       rerender();
     } else open(sg.id);
-    toast(old && Math.abs(old - r.dur) > 1 ? TRK_LENGTH : fresh ? 'New song from the track' : old ? 'Track added' : 'Track added');
+    toast(old && Math.abs(old - r.dur) > 1 ? TRK_LENGTH : 'Track added');
   }
   // forget a song's track on this device (deleting the song, or Remove track)
   async function forget(ids) {
@@ -1005,7 +1446,8 @@ const TRACK = (() => {
     const sg = songById(id);
     await forget([id]);
     if (sg) {
-      delete sg.track; // the loop and timings stay with the song
+      delete sg.track; // the loop, markers and timings stay with the song
+      if (sg.timing) delete sg.timing.lenLink; // 3.20: the length is kept, no longer linked
       save();
     }
     U.sheet = null;
@@ -1055,6 +1497,58 @@ const TRACK = (() => {
     showBusy(!!busy);
   }
   window.addEventListener('resize', () => draw());
+
+  /* ----- 3.20 holding a chip opens its menu ----- */
+  document.addEventListener('pointerdown', (e) => {
+    const c = e.target.closest && e.target.closest('#trkMk .trkchb');
+    if (!c || e.button > 0) return;
+    const id = c.dataset.k,
+      x = e.clientX,
+      y = e.clientY;
+    clearTimeout(mkHold && mkHold.t);
+    mkHold = {
+      id,
+      x,
+      y,
+      done: false,
+      t: setTimeout(() => {
+        if (!mkHold || mkHold.id !== id) return;
+        mkHold.done = true;
+        U.sheet = 'trkMkMenu';
+        U.sd = { k: id };
+        rerender();
+      }, 500),
+    };
+  });
+  document.addEventListener('pointermove', (e) => {
+    if (mkHold && !mkHold.done && Math.hypot(e.clientX - mkHold.x, e.clientY - mkHold.y) > 10) {
+      clearTimeout(mkHold.t);
+      mkHold = null;
+    }
+  });
+  let mkHeldAt = 0;
+  ['pointerup', 'pointercancel'].forEach((t) =>
+    document.addEventListener(t, () => {
+      if (!mkHold) return;
+      if (mkHold.done) mkHeldAt = Date.now();
+      else clearTimeout(mkHold.t);
+      mkHold = null;
+    })
+  );
+  // a hold that opened the menu isn't also a tap (on the chip, or on the menu that rose under the finger)
+  document.addEventListener(
+    'click',
+    (e) => {
+      if (Date.now() - mkHeldAt < 400) {
+        e.stopPropagation();
+        e.preventDefault();
+      }
+    },
+    true
+  );
+  document.addEventListener('contextmenu', (e) => {
+    if (e.target.closest && e.target.closest('#trkMk')) e.preventDefault();
+  });
 
   /* ----- fingers: the strip (scrub, handles, double-tap), the jog wheel, rows, pinch ----- */
   const stripX = (e) => {
@@ -1120,6 +1614,15 @@ const TRACK = (() => {
     drag = null;
     document.querySelectorAll('#trkStrip.drag, #trkJog.drag').forEach((x) => x.classList.remove('drag'));
     if (d.kind === 'handle') {
+      // 3.20: a chip's loop being fine-tuned: the chip follows the handles
+      const L = loopNow(),
+        m = L && L.mk ? mkById(L.mk) : null;
+      if (m) {
+        m.t = L.start;
+        m.end = L.end;
+        sortMks();
+        chips();
+      }
       save(); // a handle saves once, on release
       prevT = now();
       paint();
@@ -1140,7 +1643,7 @@ const TRACK = (() => {
   };
   document.addEventListener('pointerup', endDrag);
   document.addEventListener('pointercancel', endDrag);
-  // a row: zoom into Line view at that spot
+  // a row: the playhead goes there, and the view stays as it is (3.20: zoom changes with the level pills, or a pinch)
   function rowTap(btn, e) {
     const cv = btn.querySelector('canvas');
     if (!cv) return;
@@ -1148,8 +1651,18 @@ const TRACK = (() => {
       rs = TRK_LEVELS[lv()].row,
       x = e && e.clientX ? Math.max(0, Math.min(r.width, e.clientX - r.left)) : 0;
     seek(+btn.dataset.r * rs + (x / Math.max(1, r.width)) * rs);
-    setLevel(1);
-    window.scrollTo(0, 0);
+  }
+  // after a change of level, the playhead's time is in view (the strips put it at the 40% playhead anyway)
+  function showHead() {
+    if (strip()) return;
+    const rs = TRK_LEVELS[lv()].row,
+      row = document.querySelector('#app .trkrow[data-r="' + Math.floor(now() / rs) + '"]');
+    if (!row) return;
+    const r = row.getBoundingClientRect(),
+      top = Math.max(0, $('bar').getBoundingClientRect().bottom),
+      dk = $('dock').firstElementChild,
+      bot = dk ? dk.getBoundingClientRect().top : window.innerHeight;
+    if (r.top < top || r.bottom > bot) window.scrollTo(0, Math.max(0, window.scrollY + r.top - (top + bot) / 2 + r.height / 2));
   }
   // pinch on the waveform: a step per TRK_PINCH px. Spread to zoom in (towards Phrase), pinch to zoom out.
   // Changing level replaces the waveform under the fingers, and a removed element's touches no longer reach the
@@ -1247,6 +1760,11 @@ const TRACK = (() => {
       };
     },
     toggle: () => toggle(),
+    close() {
+      pause();
+      woke = false;
+      paintRows();
+    },
     open() {
       if (!cur) return;
       const id = cur.id;
@@ -1271,10 +1789,6 @@ const TRACK = (() => {
     },
     trkAdd(el, v, k) {
       pick(k || U.songId);
-    },
-    trkNew() {
-      if (rec) return toast('Stop recording first');
-      pick(null);
     },
     trkBack() {
       back();
@@ -1322,6 +1836,80 @@ const TRACK = (() => {
     trkRow(el, v, k, e) {
       rowTap(el, e);
     },
+    trkMkAdd() {
+      addMarker();
+    },
+    trkChip(el, v, k) {
+      jump(k);
+    },
+    trkChipLoop(el, v, k) {
+      chipLoop(k);
+    },
+    trkEndHere() {
+      endAt();
+    },
+    trkMkRename(el, v, k) {
+      U.sheet = 'trkMkName';
+      U.sd = { k };
+      rerender();
+      setTimeout(() => {
+        const i = $('trkMkIn');
+        if (i) i.focus();
+      }, 60);
+    },
+    trkMkSaveName(el, v, k) {
+      const m = mkById(k),
+        i = $('trkMkIn');
+      if (m && i) {
+        const n = i.value.trim().slice(0, 60);
+        if (n) m.name = n;
+        else delete m.name;
+        save();
+      }
+      U.sheet = null;
+      U.sd = {};
+      rerender();
+    },
+    trkMkMove(el, v, k) {
+      moveMk(k);
+      U.sheet = null;
+      U.sd = {};
+      rerender();
+    },
+    trkMkEnd(el, v, k) {
+      U.sheet = null;
+      U.sd = {};
+      rerender();
+      endAt(k);
+    },
+    trkMkNoEnd(el, v, k) {
+      const m = mkById(k),
+        sg = song();
+      if (m) delete m.end;
+      if (sg && sg.loop && sg.loop.mk === k) delete sg.loop.mk;
+      save();
+      U.sheet = null;
+      U.sd = {};
+      rerender();
+    },
+    trkMkDel(el, v, k) {
+      delMk(k);
+      U.sheet = null;
+      U.sd = {};
+      rerender();
+      toast('Marker deleted');
+    },
+    trkMkClearYes() {
+      clearMks();
+      U.sheet = null;
+      U.sd = {};
+      rerender();
+      toast('Markers cleared');
+    },
+    // 3.20 a song row's play button: the song's track through the player's audio
+    sgRowPlay(el, v, k) {
+      playSong(k);
+    },
   });
 
   return {
@@ -1346,7 +1934,7 @@ const TRACK = (() => {
     frame,
     // tests: where the next file given to #trackIn goes, without opening the picker
     expect(id) {
-      want = id ? { id } : { fresh: true };
+      want = id === 'draft' ? { draft: true } : { id };
     },
     has: (id) => have.has(id),
     meta: (id) => (have.get(id) ? Object.assign({}, have.get(id)) : null),
@@ -1356,6 +1944,17 @@ const TRACK = (() => {
     len,
     level: lv,
     speed,
+    markers: () => mks().map((m) => Object.assign({}, m)),
+    addMarker,
+    jump,
+    endAt,
+    chipLoop,
+    playSong,
+    rowPlay,
+    paintRows,
+    read,
+    attach,
+    linkLen,
     peaks: () => (cur ? cur.peaks : null),
     state: () => ({
       id: cur ? cur.id : null,

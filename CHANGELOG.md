@@ -9,6 +9,43 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.20 · 23 Oct 2026
+*Songs, takes and markers: one place for every take, and a ✕ that always closes*
+<!-- area: songs -->
+
+**Adding a song**
+- The Songs list has one +. It opens with a switch: **Add media** (the default) or **Manually**. This replaces New song and New song from track.
+- Add media: choose the song's audio from Files. Once it's read, the form opens with its length filled in and linked to the track. The title and artist start empty, since a file's details often aren't right; leave the title blank and the file's name is used. Lyrics are optional.
+- Manually is the same form as before, now with a Length.
+- Save opens the song. Nothing is kept if you cancel or choose a different file.
+
+**The song list**
+- Every song has a play button that plays its track, here and in Today's pinned songs. Without a track on this phone it's greyed, and says "Upload a track to play".
+- Each song shows when you last practised it and how many takes it has, recent first, with nothing to grade.
+- Today's Song practice card now opens the Songs tab. Recording a take on any song's page starts (or carries on) song practice for that song, timed from the first take. Your past song practice is all still there.
+
+**Takes**
+- **Takes** beside the song's title opens every take. From a section, a switch moves between that section's takes and All takes.
+- Tap a take to play it and open it out: a waveform you drag to scrub, back and forward 5 seconds, and its name, which you can tap to change.
+- Comments at a moment in the take: the time is set the moment you start typing (tap it to nudge it). While the take plays, each comment pops up as it's reached, and dots under the waveform jump to them.
+- Swipe right to star a take, left to delete it (it always asks), or hold it for Star, Rename and Delete.
+- Every take is kept now, not just the last three. Settings › Storage shows how many there are and has Review old takes, to clear unstarred takes with no comments by hand.
+- Names and comments are always in backups, even with Exclude recordings, and the backup sheet shows the size with and without recordings.
+
+**The track player**
+- Markers: Marker drops one at the playhead, playing or not. They show in purple on the waveform and as numbered chips under it: tap one to jump there. Give one an end with End here, and it gets its own loop button. Drag the orange handles to fine-tune it.
+- Hold a chip to rename, move, change its end or delete it, or clear them all.
+- Tapping in Section and Song views moves the playhead and keeps the view. The level buttons (or a pinch) change the zoom.
+
+**Song length**
+- With a track, the song's length follows it, shown with a link. Changing it asks "Unlink from track?" first. A length of your own shows a broken link and the track's length beside it; tap it to relink.
+
+**Playing**
+- One sound at a time: a take, a recording, the coach video, a song's track or play-along. Starting one stops the others, and the lock screen follows the one playing.
+- The floating window's ✕ is on every sound, playing or paused. It stops it and closes the window for good, until you play it again. Nothing else pops up in its place.
+- Fixed: takes and tracks play again from the start after they finish.
+- Fixed: takes play in both ears with earphones. New takes are recorded as one channel, and older takes with the voice on one side play from a copy made for both ears. Your recordings themselves are never changed.
+
 ## 3.19.1 · 23 Oct 2026
 *Track player: MP3s can be picked in Files*
 <!-- area: fixes -->

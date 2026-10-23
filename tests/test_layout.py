@@ -77,7 +77,7 @@ def run(b, t):
             if not pg.evaluate("(()=>{const r=document.querySelector('.rechead');return !!r&&r.getBoundingClientRect().width>20&&r.scrollWidth<=r.clientWidth+1})()"): bad.append('recording label missing or cut off')
             check('song-recording')
             pg.evaluate("rec=null;const s=songById(U.songId);U.sheet='sgTakes';U.sd={k:s.id,o:s.order[1].o,fresh:'lt3'};render()"); pg.wait_for_timeout(500)
-            if not pg.evaluate(INSIDE, '.sheet') or pg.locator('.sheet .newtake').count() != 1: bad.append('takes sheet off screen')
+            if not pg.evaluate(INSIDE, '.sheet') or pg.locator('.sheet .tkr.open').count() != 1: bad.append('takes sheet off screen')
             check('song-takes')
             pg.evaluate("U.sheet=null;U.sd={};U.sSec=null;render()"); pg.wait_for_timeout(300)
             # Recall, with the hint level menu open

@@ -275,6 +275,13 @@ function sheetWrap(title, body, label, tools) {
     '</div></div>'
   );
 }
+// 3.20: the backup's expected size with and without recordings (base64 adds about a third to each)
+function exportSizes(P) {
+  const rec = Math.round(TAKES.reduce((a, t) => a + (+t.size || 0), 0) * 1.34),
+    base = P.noRec ? P.file.size : Math.max(0, P.file.size - rec),
+    tx = (b) => (b < 1048576 ? 'under 1 MB' : 'about ' + Math.round(b / 1048576) + ' MB');
+  return 'Without recordings: ' + tx(base) + '. With them: ' + tx(base + rec) + '.';
+}
 const confirmSheet = (title, text, btn, action, k, cancel) =>
   sheetWrap(
     title,
@@ -558,7 +565,9 @@ function renderSheet() {
         '</span></div></div>' +
         '<div class="grp" style="margin-top:10px"><button class="row" data-a="exportNoRec" role="switch" aria-checked="' +
         P.noRec +
-        '"><span class="lbl">Exclude recordings<small>A smaller file. Restoring it keeps the recordings already on the device.</small></span><span class="tgl" aria-checked="' +
+        '"><span class="lbl">Exclude recordings<small>' +
+        exportSizes(P) +
+        ' Restoring it keeps the recordings already on the device.</small></span><span class="tgl" aria-checked="' +
         P.noRec +
         '" aria-hidden="true"></span></button></div>' +
         '<p class="note" style="margin-top:10px">Choose <b>Save to Files</b>, then <b>iCloud Drive › Vocal Sessions › Backups</b>.' +
@@ -1154,6 +1163,7 @@ function render(keepScroll) {
   songsAfter();
   CLOCK.after(); // 3.18 Song Clock: the play-along view, the current line when paused, the wake lock
   TRACK.after(); // 3.19 the track player: its waveform, and letting go of a deleted song's track
+  TAKE.after(); // 3.20 the takes sheet: the expanded take's waveform and the field being typed in
   fwUpdate();
   DET.dockSwap(dk);
   DET.play();
@@ -1164,6 +1174,7 @@ function go(fn) {
   const was = U.view,
     z = ZOOM.before(); // 3.15: a card tapped (or Back) zooms between the screens
   fn();
+  if (typeof FW !== 'undefined') FW.shut = false; // 3.20: after ✕, other windows may show again on the next screen
   if (rec && U.view !== was) {
     stopRec();
     toast('Recording stopped and saved');
@@ -1176,7 +1187,7 @@ function go(fn) {
   if (!ZOOM.after(z)) DET.stepIn(DET.stepDir(was, U.view));
 }
 var toastT = null;
-function toast(t) {
+function toast(t, ms) {
   clearTimeout(toastT);
   const o = document.querySelector('.toast');
   if (o) o.remove();
@@ -1185,7 +1196,7 @@ function toast(t) {
   el.setAttribute('role', 'status');
   el.textContent = t;
   document.body.appendChild(el);
-  toastT = setTimeout(() => el.remove(), 1900);
+  toastT = setTimeout(() => el.remove(), ms || 1900);
 }
 
 /* ===== Sliding knobs ===== */

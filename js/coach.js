@@ -144,19 +144,18 @@ const COACH = (() => {
       // 3.17: after ✕, only a play you asked for brings the window back: COACH.play() (Play, a "Play with coach" row,
       // the window's button) clears dismissed itself, and so does playing the video where it's on screen (its slot,
       // or full screen from there). A play event while it waits in the holder (iOS can fire one when it's moved) never does
-      if (el.closest && el.closest('#app')) dismissed = false;
-      // one sound at a time: a take stops when the coach starts
-      if (typeof player !== 'undefined' && player) {
-        stopPlayback();
-        rerender();
-      }
-      if (typeof TRACK !== 'undefined') TRACK.pause(); // and the song's track (3.19)
+      // 3.20: through the one owner, so whatever else plays stops (a play from where it's on screen is explicit)
+      if (el.closest && el.closest('#app')) {
+        dismissed = false;
+        NOW.start('video', null, () => pause());
+      } else if (NOW.kind() !== 'video') NOW.start('video', null, () => pause());
       media();
       loop();
       changed();
     });
     el.addEventListener('pause', () => {
       keep(true);
+      if (!el.ended) fwPaused('video'); // paused on its own screen: leaving shows no window (3.20)
       changed();
     });
     el.addEventListener('ended', () => {
@@ -166,6 +165,7 @@ const COACH = (() => {
         return;
       }
       keep(true);
+      NOW.ended('video');
       changed();
     });
     el.addEventListener('timeupdate', () => {
@@ -293,8 +293,8 @@ const COACH = (() => {
   function play() {
     if (!has()) return;
     const v = video();
-    if (typeof player !== 'undefined' && player) stopPlayback();
     dismissed = false;
+    NOW.start('video', null, () => pause()); // one sound at a time (3.20)
     v.play().catch(() => {
       toast('Couldn’t play the coach video');
       changed();
@@ -1013,6 +1013,7 @@ const COACH = (() => {
       };
     },
     toggle: () => toggle(),
+    close: () => dismiss(),
     open() {
       if (where && isFlow(where.view) && X && X.cv) {
         const v = where.view,
@@ -1043,7 +1044,7 @@ const COACH = (() => {
           '">' +
           (i.on ? ICON.pause : ICON.play) +
           '</button></div>' +
-          '<button class="fwx" data-a="coachX" aria-label="Close the coach video">' +
+          '<button class="fwx" data-a="fwX" aria-label="Close the coach video">' +
           ICON.x +
           '</button><span class="fwvp" aria-hidden="true"><i></i></span>';
       }
@@ -1057,6 +1058,8 @@ const COACH = (() => {
   FW_KINDS.splice(1, 0, fwKind); // take → video → session
   function dismiss() {
     dismissed = true;
+    FW.dis.video = true;
+    NOW.ended('video');
     pause();
     keep(true);
     fwUpdate();

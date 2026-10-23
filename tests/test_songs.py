@@ -59,6 +59,7 @@ def run(b, t):
     ok(pg.evaluate("U.tab") == 'songs' and 'Versace on the Floor' in pg.inner_text('main'), 'Songs is a tab, and songs from song practice are in it')
     ok('No lyrics' in pg.inner_text('main'), 'a song without lyrics says so')
     pg.click('#barR [data-a=sgNew]'); pg.wait_for_timeout(400)
+    pg.click('.sheet [data-a=sgAddMode][data-v=manual]'); pg.wait_for_timeout(250)  # 3.20: Add media is the default
     pg.fill('#sgTitle', 'river song'); pg.fill('#sgArtist', 'example band')
     pg.click('[data-a=sgSplit]'); pg.wait_for_timeout(250)
     ok('Paste some lyrics first' in pg.inner_text('.sheet'), 'Next with no lyrics asks for them')
@@ -184,7 +185,7 @@ def run(b, t):
     for n in ['Kitchen radio', 'paper lanterns', 'Morning light']:
         pg.evaluate(ADD, [n, '', '[Verse]\nA line for ' + n + '\n\n[Chorus]\nSing it out for ' + n])
     pg.evaluate("U.tab='songs';U.view=null;render()"); pg.wait_for_timeout(250)
-    ok(pg.locator('.newtag').count() >= 3, 'songs never practised are marked New')
+    ok(pg.locator('#app .srow:has-text("Not practised yet")').count() >= 3, '3.20: songs never practised say Not practised yet')
     for i in range(4):
         pg.evaluate(f"togglePin(sortedSongs(D.songs.filter(s=>!s.pinned))[0].id)")
     pg.wait_for_timeout(300)

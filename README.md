@@ -2,9 +2,9 @@
 
 A mobile-first companion for structured vocal practice, styled like a native iOS app. It's a single HTML file with no install, no backend and no account. It's designed to live on your iPhone Home Screen.
 
-![Version 3.19.1](https://img.shields.io/badge/version-3.19.1-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
+![Version 3.20](https://img.shields.io/badge/version-3.20-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
 
-**Current version: 3.19.1 · 23 Oct 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
+**Current version: 3.20 · 23 Oct 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
 
 ---
 
@@ -36,8 +36,8 @@ And **Songs**, for learning a song: paste the lyrics, and they're split into lab
 - A weekly streak: weeks in a row where you hit 70 minutes. The current week never breaks it while it's still in progress.
 - This month's minutes against 280, and the suggested rotation exercise (the one that's gone longest since you last did it)
 - Start, resume or discard a session. A session you've left also shows in the **floating window** (below).
-- A Song practice card with its own weekly stats
-- **Pinned songs:** up to 3 songs you're working on, and **Show all songs**
+- A Song practice card with its own weekly stats. It opens the Songs tab, where every song's page is the place to practise it (song practice already going carries on from its song).
+- **Pinned songs:** up to 3 songs you're working on, each with a play button for its track, and **Show all songs**
 - **Settings** is the gear at the top right
 - Pull down to refresh. This also checks for a newer version of the app and loads it.
 
@@ -58,13 +58,15 @@ And **Songs**, for learning a song: paste the lyrics, and they're split into lab
 - Pull down to refresh
 
 **Songs**
-- **New song:** paste lyrics from anywhere. Labels like `[Chorus]`, `Verse 2:` or `PRECHORUS` start sections, and blank lines split them too. Website clutter (links, "You might also like", "Embed") is removed, a chorus that repeats itself is split in two, and exact repeats are linked. Check the labels, change any marked **Guessed**, and save. The original paste is kept untouched.
-- **The list:** up to 3 pinned songs at the top, then the rest sorted by Recently practised, Recently added or Title A–Z (tap the heading). Songs you haven't practised yet say **New**.
+- **New song (+):** one button, two ways in. **Add media** (the default) picks the song's audio from Files: once it's read, the form opens with the length taken from the file (linked to it) and the title empty (left blank, it uses the file's name, since metadata can't be trusted). Lyrics are optional; save and the song opens, ready to paste them later. **Manually** is the form below, as it always was. Nothing is stored until you save.
+- **Lyrics:** paste lyrics from anywhere. Labels like `[Chorus]`, `Verse 2:` or `PRECHORUS` start sections, and blank lines split them too. Website clutter (links, "You might also like", "Embed") is removed, a chorus that repeats itself is split in two, and exact repeats are linked. Check the labels, change any marked **Guessed**, and save. The original paste is kept untouched.
+- **The list:** up to 3 pinned songs at the top, then the rest sorted by Recently practised, Recently added or Title A–Z (tap the heading). Each row says when you last practised it and how many takes it has ("Practised today · 2 takes", or "Not practised yet"), never graded, and has a **play button** for the song's track (greyed, with "Upload a track to play", when there's no track on this device).
   - Swipe right to pin, left to delete. Press and hold (or right-click) for Pin, Rename and Delete. **Edit** selects several songs to pin or delete.
   - **Search** titles, artists and lyrics. It ignores case, punctuation and accents, finds words in any order, even across lines, and forgives a slipped letter in longer words. Lyric matches show the line with the words highlighted.
 - **A song:** one continuous page, one phrase per line, with a small label above each section, repeats numbered (Chorus 1, Chorus 2) and linked sections marked with a chain.
   - **Tap a section to focus it:** a soft patch appears behind it with **Record**, its takes and **Marks** (which opens Annotate there). The rest of the song dims and softly blurs with distance, while labels stay sharp. Tap it again, or away from the lyrics, to clear it. With Reduce Motion on, the rest only dims.
-  - **The header:** the artist and the song's length ("Artist · 3:58"; tap the length to change it on clock-style wheels), up to three pinned buttons (Timing and Key to start with), and **⋯** for **Song controls**: Timing, Check timing, Key, Marks while playing, Blur ahead, Snapping, Stay awake, Sync again, Lyrics and Track. Blue means on; **Edit** chooses what's pinned.
+  - **Takes** beside the title opens every take of the song (see Takes below).
+  - **The header:** the artist and the song's length ("Artist · 3:58"; tap the length to change it on clock-style wheels). With a track, the length follows it and shows a link icon: tapping it asks **Unlink from track?** first. A custom length shows a broken link ("Custom · track is 3:42"); tap it to relink. up to three pinned buttons (Timing and Key to start with), and **⋯** for **Song controls**: Timing, Check timing, Key, Marks while playing, Blur ahead, Snapping, Stay awake, Sync again, Lyrics and Track. Blue means on; **Edit** chooses what's pinned.
   - **Practise** shows every mark; **Perform** hides the technical ones and shows only the expressive cues. **Key** explains the marks.
   - **Recall** hides the lyrics a step at a time to learn them by heart: Full lyrics, Word shapes, First words, Cues only and Blank. Hidden letters become soft pills in place, so nothing moves, and marks stay visible. Tap a line to peek, or hold it to keep it showing. Tap a section's label to focus it. Work from the start, from the end, or start anywhere.
   - **Song Clock** (Timing):
@@ -75,15 +77,16 @@ And **Songs**, for learning a song: paste the lyrics, and they're split into lab
     - Changing a line of lyrics only clears that line's timing. **Snapping** is there for the Timeline, which comes later.
   - The pencil edits the title, artist and length in place, with **Edit lyrics**, **Marks** and **Done**. **Marks** opens **Annotate**: tap a word for Breath, Run, Higher, Lower, Sing as (a vowel) or a Note. A sing-as label sits above its word like a chord over lyrics, and the word makes room for it, so labels never overlap. Add a cue to a section, unlink a repeat to give it its own copy, or hold a section to move it. Undo steps back through changes.
   - **Lyrics** edits the words. Marked words are highlighted, marks follow their words, and a mark whose word changed is flagged to check. One whose word was removed waits at the top of its section to be moved or removed.
-  - **Record a section:** in Practise or Perform, focus a section, then **Record**. The screen stays on that section while it records, with a recording bar at the bottom (time, level meter, Stop). Stopping opens the takes for that section over the song: the new take, every starred one, and the latest and first. Each repeat keeps its own takes, even when linked.
+  - **Record a section:** in Practise or Perform, focus a section, then **Record**. The screen stays on that section while it records, with a recording bar at the bottom (time, level meter, Stop). Stopping opens the takes for that section over the song, with the new take ready to play. Each repeat keeps its own takes, even when linked. A take on any song page starts (or carries on) song practice for that song, timed from that first take.
+  - **Takes:** a switch between this section's takes and **All takes**, newest first. Tap a take to expand and play it: a waveform you drag to scrub, −5 s and +5 s, and its name (tap to rename; the original details stay underneath). **Comments** are stamped with the time: the moment you start typing, the playhead's time is locked (tap it for −1 s, +1 s or Use current time). While it plays, each comment pops up as the playhead passes it; dots under the waveform jump to them. Swipe a take right to star it, left to delete it, or hold it for both. Names and comments are in every backup.
   - **Song practice** at the bottom starts song practice with that song picked.
   - **Track** (beside it) adds the song's audio from Files, then opens the **track player**:
-    - **Zoom:** Phrase and Line are a strip moving under a fixed playhead, with a jog wheel on the right (drag slowly for precision, quickly to skim). Section and Song show the whole song in rows; tap a row to zoom into Line view there. Tap a level or pinch.
+    - **Zoom:** Phrase and Line are a strip moving under a fixed playhead, with a jog wheel on the right (drag slowly for precision, quickly to skim). Section and Song show the whole song in rows; tap to move the playhead there (the view stays). Change the zoom with the level pills, or pinch.
+    - **Markers:** **Marker** drops a purple marker at the playhead, playing or not. Markers show on the waveform at every level and as numbered chips in one sideways row: tap a chip to jump there (playing carries on). **End n here** gives the current chip an end, and a chip with an end has its own loop button. Dragging the orange handles while a chip's loop is on updates the chip. Hold a chip to rename it, move it to the playhead, set or remove its end, or delete it; **Clear all markers** is there and in the player's ⋯ menu. Markers are saved with the song.
     - **Loop:** **Set start** and **Set end** at the playhead, or drag the orange handles (they swap if you drag one past the other). Audio outside the loop is dimmed; double-tap outside it to clear it. The transport has back to the loop start, Play and Loop.
     - **Speed:** 0.5×, 0.75× or 1×, with the pitch kept. The zoom level and speed are remembered on this device; the loop is saved with the song.
     - On a Mac or with a keyboard: Space plays, ← and → move a second (Shift: five), I and O set the start and end.
     - MP3, M4A, WAV, AAC and AIFF from Files work; songs from Apple Music can't be added. The track stays on this device and isn't in backups (see [Data and privacy](#data-and-privacy)). Its settings button has **Replace track** and **Remove track**.
-- **New song from track** on the Songs list makes a song from an audio file, titled from its name, and opens the player. Paste the lyrics later.
 - Songs from song practice are here too, and **Add lyrics** gives them lyrics without losing their recordings.
 
 **Exercises**
@@ -96,14 +99,14 @@ And **Songs**, for learning a song: paste the lyrics, and they're split into lab
 
 
 **Settings** (the gear on Today)
-- **Export backup:** one file with everything (sessions, minutes, exercises, songs with their lyrics and marks, and recordings), checked before you save it. **Exclude recordings** makes a smaller file without them; restoring it keeps the device's recordings. Keep it in iCloud Drive › Vocal Sessions › Backups.
+- **Export backup:** one file with everything (sessions, minutes, exercises, songs with their lyrics and marks, and recordings), checked before you save it. **Exclude recordings** makes a smaller file without them (the sheet shows the size either way); restoring it keeps the device's recordings. Takes' names and comments are always included. Keep it in iCloud Drive › Vocal Sessions › Backups.
 - **Import backup:** checks the file and compares it with what's on this device, then replaces this device's data after you confirm.
 - **Check a backup:** tells you whether a file is complete and what's inside, without changing anything.
 - **Undo last restore:** for 30 days after a restore.
 - **Backup history**, **Where backups go** (a set-up guide) and **Save a read-me file**
 - When you last backed up, which turns red after two weeks
 - **Recall › Peek length:** how long a tapped line shows in Recall (1, 2, 3 or 5 seconds)
-- **Storage:** recordings, and **Storage protection**, which shows whether iOS has agreed not to clear the app's data when space runs low
+- **Storage:** recordings (how many takes and how much space), **Review old takes** (unstarred takes with no comments, oldest first, to clear by hand: nothing is ever removed for you), and **Storage protection**, which shows whether iOS has agreed not to clear the app's data when space runs low
 - Reset this month, and reset all data. Every reset asks first.
 - **Changelog:** every version on a timeline, with a growth chart of improvements by area. It's built from [CHANGELOG.md](CHANGELOG.md), and tapping the version number opens it too.
 - A link back to this GitHub repo, and the app version with its release date
@@ -119,7 +122,10 @@ And **Songs**, for learning a song: paste the lyrics, and they're split into lab
   - Tap it for a larger clock with Pause and a time for each step. Paused time isn't counted.
   - Song practice's clock starts when you record your first take; until then the timer says **Not started**.
   - Sessions over 90 minutes ask how long you actually practised.
-- **Floating window:** leave a session, or switch away while a take is playing, and a small window stays on every other screen.
+- **Floating window:** leave a session, or switch away while something plays, and a small window stays on every other screen.
+  - **One sound at a time:** a take, a recording, the coach video, a song's track and play-along all go through one place, so starting any of them stops whatever was playing. The lock screen's buttons follow whichever started last.
+  - Every sound's window has a **✕**, playing or paused. It stops the sound and closes the window, and nothing brings it back except playing it again: not switching tabs, a sheet, coming back to the app or a reload. Nothing else pops up in its place on that screen. When a sound finishes, its window goes.
+  - A sound's window shows while it plays, and when you paused it from the window (or the lock screen). Paused anywhere else, it doesn't follow you.
   - A session shows what's running (for example "Focused session · Rotation"), its live time and a pause button. Paused, it says Paused and the time stops.
   - A take shows "Playing · Chorus 2" (or the song's name for song practice), its time and progress, and a pause button. It goes when the take ends.
   - A song's track shows "Playing · song title", its time and progress, and a pause button. Pause it on the player itself and it doesn't follow you out.
@@ -131,7 +137,8 @@ And **Songs**, for learning a song: paste the lyrics, and they're split into lab
 - **How did it go?** After finishing, tap words that fit (or add your own) and an optional note. You can skip it.
 - **Recordings:**
   - Mono AAC at about 96 kbps (about 0.7 MB a minute), with the phone's voice processing off, up to 2 minutes per take
-  - Keeps the last 3 takes per song, from song practice or any section, plus any you star
+  - Every take is kept; nothing is removed automatically. **Settings › Storage › Review old takes** helps clear old ones by hand.
+  - New takes are mixed down to one channel before they're saved. Older takes with the voice on one side play from a copy made for both ears; the original is never changed.
   - Tap a take to add notes, such as "Flat on the high note"
   - Each take can be shared (Save to Files or iCloud Drive) or deleted
   - Leaving the app while recording stops the take and saves it
@@ -163,7 +170,7 @@ The layout follows the device, like a native Apple app:
 
 Opening the app shows a short launch screen with the app icon, in light or dark to match your phone. On a fresh open, the icon's sound-wave bars pulse one after another (the launch ripple), then the screen fades with a slight zoom and Today's blocks rise in from top to bottom. It plays again after an update loads or a backup is imported, but not when switching tabs or coming back to the app. With Reduce Motion on, the launch screen just fades. The launch images iOS shows before the app starts are in the `splash` folder.
 
-Cards that open a page zoom into it, like iPhone apps do: an exercise, a song, Show all sessions, Changelog, the weekly goal arc, and the Start session and Song practice buttons, which expand into the session. Back shrinks the page into the card it came from, with the list where you left it, and finishing a session shrinks it back into Start session. You can swipe back from anywhere on a page with a Back button, not just the edge: the page follows your finger and goes back past about a fifth of the screen or with a quick flick, otherwise it settles back. A row's own swipe (pin or delete), sliders and charts you slide across always come first. Tapping a day in the practice calendar grows its sessions out of the day, and a new song's paste sheet shrinks into its row before the song opens.
+Cards that open a page zoom into it, like iPhone apps do: an exercise, a song, Show all sessions, Changelog, the weekly goal arc, and the Start session button, which expands into the session (the Song practice card switches to the Songs tab). Back shrinks the page into the card it came from, with the list where you left it, and finishing a session shrinks it back into Start session. You can swipe back from anywhere on a page with a Back button, not just the edge: the page follows your finger and goes back past about a fifth of the screen or with a quick flick, otherwise it settles back. A row's own swipe (pin or delete), sliders and charts you slide across always come first. Tapping a day in the practice calendar grows its sessions out of the day, and a new song's paste sheet shrinks into its row before the song opens.
 
 Small movements show what changed: deleted rows shrink away and the gap closes, a pinned song travels into Pinned, the Progress bars ripple to new heights in the direction of time, the weekly goal arc fills after launch, and Recall hides lyrics word by word. Anything you drag or scrub follows your finger instantly, and nothing moves while you record or perform. With Reduce Motion on, changes fade instead of moving (zooms become a short fade, and a swipe back moves sideways only).
 

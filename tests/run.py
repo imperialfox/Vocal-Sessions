@@ -15,7 +15,7 @@ Exits with 1 if anything fails, so GitHub shows a red cross. Screenshots go to t
 import sys, os, time, json, importlib, traceback, subprocess, tempfile, concurrent.futures as cf
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-ORDER = ['release', 'content', 'flows', 'progress', 'edge', 'backup', 'songs', 'data', 'changelog', 'recording', 'sections', 'recall', 'fixes', 'lyrics', 'window', 'details', 'launch', 'zoom', 'coach', 'clock', 'track', 'layout', 'fuzz']
+ORDER = ['release', 'content', 'flows', 'progress', 'edge', 'backup', 'songs', 'data', 'changelog', 'recording', 'sections', 'recall', 'fixes', 'lyrics', 'window', 'details', 'launch', 'zoom', 'coach', 'clock', 'track', 'batch12', 'layout', 'fuzz']
 QUICK = [n for n in ORDER if n not in ('layout', 'fuzz')]
 HERE = os.path.abspath(__file__)
 
@@ -54,7 +54,7 @@ def jobs_for(names):
         else:
             out.append((n, n, {}))
     # the slowest first, so they don't hold up the end
-    slow = {'fuzz': 0, 'layout': 1, 'songs': 2, 'sections': 3, 'backup': 4, 'flows': 5, 'data': 6}
+    slow = {'fuzz': 0, 'layout': 1, 'batch12': 1, 'songs': 2, 'sections': 3, 'backup': 4, 'flows': 5, 'data': 6}
     return sorted(out, key=lambda j: slow.get(j[1], 9))
 
 

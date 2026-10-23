@@ -31,12 +31,14 @@ INV=r"""(()=>{const p=[];const L=document.getElementById('layer');
  if(X&&X.paused&&!X.pausedAt)p.push('paused without time');
  if(!rec&&(document.querySelector('.sgmodes.locked,.recbar')))p.push('song locked or recording bar shown without recording');
  if(!!document.querySelector('#dock .hcap')!==(recallOn()&&!U.sheet&&!rec))p.push('hint capsule shown when it shouldn\'t be, or missing in Recall');
- if(document.querySelector('.hx')&&!recallOn())p.push('hidden letters outside Recall');
+ if(document.querySelector('.hx:not(.zm .hx)')&&!recallOn())p.push('hidden letters outside Recall'); // a zoom's still copy of a Recall page doesn't count
  const fw=document.getElementById('fw'),ae=document.activeElement,typing=ae&&ae.matches&&ae.matches('input,textarea');
  if(FW.shown){if(U.sheet||L.firstElementChild)p.push('floating window over a sheet');if(rec)p.push('floating window while recording');
    if(FW.shown==='session'&&isFlow(U.view))p.push('session window on its own screen');
    const r=fw.getBoundingClientRect();if(!FW.drag&&!FW.stopSpring&&!fw.getAnimations().length&&(r.left<-1||r.right>innerWidth+1||r.top<-1||r.bottom>innerHeight+1))p.push('floating window off screen');}
- else if(X&&X.start&&!LAUNCH.busy()&&!isFlow(U.view)&&!U.sheet&&!U.clock&&!L.firstElementChild&&!rec&&!U.sFocus&&!typing)p.push('session running but no floating window');
+ else if(X&&X.start&&!LAUNCH.busy()&&!FW.shut&&!FW_KINDS.find(k=>k.id==='session').own()&&!U.sheet&&!U.clock&&!L.firstElementChild&&!rec&&!U.sFocus&&!typing)p.push('session running but no floating window');
+ if(FW.shown&&FW.shown!=='session'&&FW.dis[FW.shown])p.push('a closed sound’s window came back without a play');
+ if(FW.shown&&FW.shown!=='session'&&!document.querySelector('#fw [data-a=fwX]'))p.push('a sound’s window without its ✕');
  const cv=document.getElementById('cv'),cvs=document.querySelector('#app .cv-slot');
  if(document.querySelectorAll('video').length>1)p.push('more than one video element');
  if(cv&&cvs&&!cvs.contains(cv))p.push('coach video not in its slot');
@@ -53,8 +55,10 @@ INV=r"""(()=>{const p=[];const L=document.getElementById('layer');
  if(document.documentElement.classList.contains('ckplay')&&document.getElementById('ckpa').hidden)p.push('page scrolling locked without play-along');
  const tk=TRACK.state();
  if(FW.shown==='track'&&U.view==='trk'&&U.songId===tk.id)p.push('track window on its own screen');
- if(tk.playing&&!FW.shown&&!(U.view==='trk'&&U.songId===tk.id)&&!LAUNCH.busy()&&!U.sheet&&!U.clock&&!L.firstElementChild&&!rec&&!U.sFocus&&!typing)p.push('track playing with no way back to it');
+ if(tk.playing&&!FW.shown&&!FW.shut&&!(U.view==='trk'&&U.songId===tk.id)&&!LAUNCH.busy()&&!U.sheet&&!U.clock&&!L.firstElementChild&&!rec&&!U.sFocus&&!typing)p.push('track playing with no way back to it');
  if(tk.playing&&((COACH.el()&&!COACH.el().paused)||(typeof player!=='undefined'&&player&&!player.paused)||ck.run))p.push('two sounds at once');
+ if(COACH.el()&&!COACH.el().paused&&((typeof player!=='undefined'&&player&&!player.paused)||ck.run))p.push('two sounds at once (video)');
+ if(typeof player!=='undefined'&&player&&!player.paused&&ck.run)p.push('two sounds at once (take and play-along)');
  if(tk.loaded&&!songById(tk.id))p.push('a deleted song’s track still loaded');
  if(U.view==='trk'&&!U.sheet&&TRACK.has(U.songId)&&tk.loaded&&tk.id===U.songId&&!document.querySelector('#dock .trktr'))p.push('track player without its transport');
  try{JSON.parse(localStorage.getItem('vocalTracker'))}catch(e){p.push('saved data unreadable')}
@@ -65,13 +69,16 @@ VIS=r"""(()=>{const L=document.getElementById('layer');const root=L.querySelecto
    const cx=Math.min(innerWidth-1,Math.max(0,r.left+r.width/2)),cy=Math.min(innerHeight-1,Math.max(0,r.top+r.height/2));const t=document.elementFromPoint(cx,cy);return t&&(t===e||e.contains(t)||t.closest('[data-a]')===e);});
  return els.map((e,i)=>{e.setAttribute('data-fz',i);return {i,a:e.dataset.a||e.tagName.toLowerCase(),v:e.dataset.v||'',k:e.dataset.k||'',id:e.id||'',type:e.type||''};});})()"""
 # no microphone here: Record shows on a selected section, but recording itself is covered by test_recording and test_sections
-SKIP = {'importPick', 'checkPick', 'exportSave', 'saveReadme', 'rec', 'sgRec', 'coachAdd', 'coachFS', 'trkAdd', 'trkNew', 'trkReplace'}
+SKIP = {'importPick', 'checkPick', 'exportSave', 'saveReadme', 'rec', 'sgRec', 'coachAdd', 'coachFS', 'trkAdd', 'trkReplace', 'sgAddPick'}
 HEAVY = ('sgOpen','sgSec','sgTakes','playTake','star','sgMode','sgHint','sgHMenu','sgSetHint','sgRMenu','sgOrder','sgAnywhere','sgEdit','sgWord','sgMark','sgEditMode','sgNew','sgSplit','sgSave','sgSearch','sgListEdit','sgToggle','sgCue','sgUnlink','start','songStart','resume','cta','confirmF','tog','rlv','flv','wTog','saveHow','skipHow','editSess','saveEdit','exNote','takeNote','addWord','saveWord',
          'openNote','longOk','pauseToggle','fwOpen','fwToggle','clock','sheet','calDay','calSession','eflv','input','textarea',
          # 3.18 Song Clock
          'ckGrid','ckTile','ckPad','ckLine','ckPP','ckNudge','ckRedo','ckSyncPause','ckSyncUndo','ckFinish','ckSyncX','ckCheckDone','ckSyncAgain','ckLen','ckPickSet','ckPencil','ckHeadDone',
          # 3.19 the track player
-         'trkOpen','trkPP','trkLoop','trkSet','trkLevel','trkRow','trkToStart','trkSpeed','trkMenu','trkBack')
+         'trkOpen','trkPP','trkLoop','trkSet','trkLevel','trkRow','trkToStart','trkSpeed','trkMenu','trkBack',
+         # 3.20 songs, takes and markers
+         'sgRowPlay','fwX','tkOpenAll','tkTab','tkTap','tkPlay','tkSkip','tkStar','tkCollapse','tkRename','tkNameDone','tkPost','tkStamp','tkNudge','tkCJump','tkDel','tkReview',
+         'sgAddMode','sgAddLen','sgLenUnlinkYes','sgLenRelinkYes','ckRelink','trkMkAdd','trkChip','trkChipLoop','trkEndHere','trkMkMove','trkMkDel')
 
 def run(b, t):
     found = collections.OrderedDict()
@@ -95,6 +102,8 @@ def run(b, t):
         pg.evaluate("(()=>{const s=D.songs.find(x=>x.name==='River Song'),L=ckLines(s);ckStore(s,L,ckSpread(s,L,[0,10,20]),[true,true,true],L.map(()=>false),{est:true})})()")
         # a take from the river song's first chorus, so a section has takes and its sheet can open
         pg.evaluate("(()=>{const s=D.songs.find(x=>x.name==='River Song');return putTake({id:'tB',songId:s.id,o:s.order[1].o,created:Date.now()-2*864e5,len:14,size:5000,type:'audio/mp4',star:true,blob:new Blob([new Uint8Array(5000)],{type:'audio/mp4'})}).then(refreshTakes).then(rerender)})()")
+        # 3.20: a playable take on the river song with a name and a comment, so the takes sheet's player is in reach too
+        pg.evaluate("(()=>{const s=D.songs.find(x=>x.name==='River Song'),n=8000*3,b=new ArrayBuffer(44+n*2),v=new DataView(b),w=(o,t)=>[...t].forEach((c,i)=>v.setUint8(o+i,c.charCodeAt(0)));w(0,'RIFF');v.setUint32(4,36+n*2,true);w(8,'WAVE');w(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,8000,true);v.setUint32(28,16000,true);v.setUint16(32,2,true);v.setUint16(34,16,true);w(36,'data');v.setUint32(40,n*2,true);for(let i=0;i<n;i++)v.setInt16(44+i*2,Math.round(Math.sin(i/9)*3000),true);const bl=new Blob([b],{type:'audio/wav'});s.takeNotes={tC:{name:'Keeper',comments:[{t:1,text:'Breathe'}]}};save();return putTake({id:'tC',songId:s.id,o:s.order[0].o,created:Date.now()-3600e3,len:3,size:bl.size,type:'audio/wav',star:false,blob:bl}).then(refreshTakes).then(rerender)})()")
         # 3.16: the coach video added, so its player, doors and window are in the random taps too
         pg.set_input_files('#coachIn', fix('coach-chapters.webm'))
         pg.wait_for_function("COACH.has()&&!COACH.busy()", timeout=15000)
@@ -102,7 +111,7 @@ def run(b, t):
         # 3.19: a short track on the first song, so the player, its doors and its window are in the random taps too
         pg.evaluate("TRACK.expect('g_1')"); pg.set_input_files('#trackIn', TONES)
         pg.wait_for_function("TRACK.has('g_1')&&!TRACK.busy()", timeout=15000)
-        pg.evaluate("songById('g_1').loop={start:2,end:4,on:true};save();go(()=>{U.view=null;U.tab='today'})"); pg.wait_for_timeout(200)
+        pg.evaluate("(()=>{const s=songById('g_1');s.loop={start:2,end:4,on:true};s.markers=[{id:'m1',t:1},{id:'m2',t:2,end:4}];save();go(()=>{U.view=null;U.tab='today'})})()"); pg.wait_for_timeout(200)
         trace = collections.deque(maxlen=20); trace.append(f'seed {seed}, {w}x{h}')
         for step in range(STEPS):
             r = R.random()
@@ -133,7 +142,8 @@ def run(b, t):
                     else:
                         trace.append(f'tap {e["a"]} v={e["v"][:20]} k={e["k"][:14]}')
                         pg.click(sel, timeout=1500, no_wait_after=True)
-                    pg.wait_for_timeout(R.choice([30, 80, 250]))
+                    # the mode switch redraws 180 ms after the tap on purpose (the knob slides first), so check after that
+                    pg.wait_for_timeout(max(R.choice([30, 80, 250]), 260 if e['a'] == 'sgMode' else 0))
                 for x in errs: note(x, trace)
                 errs.clear()
                 for prob in pg.evaluate(INV):

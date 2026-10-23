@@ -1,13 +1,13 @@
-"""Recording takes with a fake microphone: saving, leaving mid-take, keeping the last 3, playback, and backing up audio."""
+"""Recording takes with a fake microphone: saving, leaving mid-take, keeping every take (3.20), playback, and backing up audio."""
 import json
-from harness import ready
+from harness import ready, SP
 
 LAUNCH_ARGS = ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream']
 
 def run(b, t):
     ok = t.ok
     pg = t.page(b, ctx_args={'permissions': ['microphone']})
-    pg.click('[data-a=songStart]'); pg.click('[data-a=song][data-k=g_1]')
+    pg.evaluate(SP); pg.click('[data-a=song][data-k=g_1]')
     pg.click('[data-a=rec]'); pg.wait_for_timeout(2500); pg.click('[data-a=rec]'); pg.wait_for_timeout(1200)
     ok(pg.evaluate("TAKES.length") == 1, 'recording and stopping saves a take')
     ok(pg.evaluate("X.takes.length") == 1, 'the take belongs to this song practice')
@@ -21,10 +21,10 @@ def run(b, t):
     ok(not pg.evaluate("!!rec"), 'leaving the screen stops the recording')
     pg.wait_for_timeout(500)
 
-    pg.click('[data-a=songStart]'); pg.wait_for_timeout(200)
+    pg.evaluate(SP); pg.wait_for_timeout(200)
     for _ in range(3):
         pg.click('[data-a=rec]'); pg.wait_for_timeout(1100); pg.click('[data-a=rec]'); pg.wait_for_timeout(900)
-    ok(pg.evaluate("TAKES.filter(t=>t.songId==='g_1'&&!t.star).length") == 3, 'only the last 3 unstarred takes per song are kept')
+    ok(pg.evaluate("TAKES.filter(t=>t.songId==='g_1'&&!t.star).length") == 6, '3.20: every take is kept (no keep-last-3 rule)')
     pg.click('[data-a=playTake] >> nth=0'); pg.wait_for_timeout(400); ok(pg.evaluate("!!playingId"), 'a take plays')
     pg.click('[data-a=playTake] >> nth=0'); pg.wait_for_timeout(200)
     pg.click('[data-a=cta]'); pg.wait_for_timeout(500); pg.click('[data-a=saveHow]'); pg.wait_for_timeout(500)

@@ -1,7 +1,7 @@
 """3.10.1 fixes: sheets keep their scroll to themselves, song practice is timed from its first take, the weekly goal
 opens Progress, and Recall's pills, hold to peek and Peek length setting."""
 import os, json
-from harness import with_song_practice, ready, OUT, fix, SEED, UA_IPHONE
+from harness import with_song_practice, ready, OUT, fix, SEED, UA_IPHONE, SP
 from test_recall import LYR, ADD
 
 LAUNCH_ARGS = ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream']
@@ -75,7 +75,7 @@ def sheets(b, t):
 def song_practice(b, t):
     ok = t.ok
     pg = t.page(b, ctx_args={'permissions': ['microphone']})
-    pg.click('[data-a=songStart]'); pg.wait_for_timeout(300)
+    pg.evaluate(SP); pg.wait_for_timeout(300)
     ok(pg.evaluate("U.view") == 'song' and pg.evaluate("X.start") is None, 'song practice opens with no start time')
     ok(pg.inner_text('#timer').strip() == 'Not started', 'the timer pill says Not started')
     ok(pg.locator('#timer[data-a]').count() == 0, 'the pill doesn’t open the clock')
@@ -92,7 +92,7 @@ def song_practice(b, t):
     ok('In progress' not in pg.inner_text('main') and pg.locator('[data-a=resume]').count() == 0, 'Today shows nothing in progress')
 
     # the clock starts with the first take
-    pg.click('[data-a=songStart]'); pg.wait_for_timeout(200)
+    pg.evaluate(SP); pg.wait_for_timeout(200)
     pg.click('[data-a=song][data-k=g_1]'); pg.wait_for_timeout(1200)
     opened = pg.evaluate("Date.now()")
     pg.click('[data-a=rec]'); pg.wait_for_function("!!rec", timeout=5000)
@@ -111,6 +111,8 @@ def song_practice(b, t):
     pg.click('#bar [data-a=exit]'); pg.wait_for_timeout(300)
     ok('In progress' in pg.inner_text('main'), 'once timed, Today shows song practice in progress')
     pg.click('[data-a=songStart]'); pg.wait_for_timeout(300)
+    ok(pg.evaluate("U.view") == 'lyr' and pg.evaluate("U.songId") == 'g_1', '3.20: the card carries on from the song’s page')
+    pg.evaluate(SP); pg.wait_for_timeout(300)
     pg.evaluate("X.start-=4*60e3;saveDraft()")  # four minutes since the first take
     pg.click('#dock .cta'); pg.wait_for_timeout(500); pg.click('[data-a=saveHow]'); pg.wait_for_timeout(500)
     ss = pg.evaluate("D.songSessions[D.songSessions.length-1]")
@@ -132,7 +134,7 @@ def song_practice(b, t):
                 {'kind': 'song', 'start': started, 'song': 'g_1', 'f': {}, 'xn': {}, 'rot': {}, 'rate': {}, 'takes': [], 'how': [], 'howNote': '', 'pausedTotal': 0})
     pg.reload(); ready(pg)
     ok('In progress' in pg.inner_text('main'), 'an older song practice draft still shows in progress')
-    pg.click('[data-a=songStart]'); pg.wait_for_timeout(300)
+    pg.evaluate(SP); pg.wait_for_timeout(300)
     ok(pg.evaluate("X.start") == started and pg.inner_text('#timer').strip().startswith('10:'), 'and resumes with its own start: ' + pg.inner_text('#timer'))
     pg.context.close()
 

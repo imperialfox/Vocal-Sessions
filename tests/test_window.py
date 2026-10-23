@@ -1,7 +1,7 @@
 """3.12 the floating window: a running session or a playing take stays in sight on every other screen. Its clock,
 pausing from it, going back to exactly where you were, a take winning over a session, dragging and throwing it to a
 corner (remembered after a reload), where it hides, and every size in light and dark."""
-from harness import with_song_practice
+from harness import with_song_practice, SP
 from test_layout import SIZES
 from test_sections import LYR, ADD
 
@@ -144,10 +144,10 @@ def takes(b, t):
     ok = t.ok
     pg = t.page(b, touch=True, ctx_args={'permissions': ['microphone']})
     # song practice: no window until its first take
-    pg.click('[data-a=songStart]'); pg.click('[data-a=song][data-k=g_1]'); pg.wait_for_timeout(200)
+    pg.evaluate(SP); pg.click('[data-a=song][data-k=g_1]'); pg.wait_for_timeout(200)
     pg.evaluate("go(()=>{U.view=null;U.tab='today'})"); pg.wait_for_timeout(200)
     ok(not pg.evaluate(SHOWN), 'untimed song practice has no window')
-    pg.click('[data-a=songStart]'); pg.click('[data-a=song][data-k=g_1]')
+    pg.evaluate(SP); pg.click('[data-a=song][data-k=g_1]')
     pg.click('[data-a=rec]'); pg.wait_for_timeout(300)
     ok(not pg.evaluate(SHOWN), 'no window while recording')
     pg.wait_for_timeout(3500); pg.click('[data-a=rec]'); pg.wait_for_function("TAKES.length===1", timeout=5000); pg.wait_for_timeout(300)
@@ -195,7 +195,7 @@ def takes(b, t):
     ok(not pg.evaluate(SHOWN), 'no window while a section is recording')
     pg.wait_for_timeout(3200)
     pg.click('[data-a=sgStop]'); pg.wait_for_function("U.sheet==='sgTakes'", timeout=5000); pg.wait_for_timeout(300)
-    pg.click('.sheet [data-a=playTake] >> nth=0'); pg.wait_for_function("!!player&&!player.paused", timeout=3000)
+    pg.click('.sheet #tkPP'); pg.wait_for_function("!!player&&!player.paused", timeout=3000)
     ok(not pg.evaluate(SHOWN), 'no window over the takes sheet')
     pg.evaluate("closeSheet()"); pg.wait_for_timeout(300)
     ok(pg.evaluate("!!player&&!player.paused"), 'closing the takes sheet lets the take carry on')
@@ -205,9 +205,10 @@ def takes(b, t):
     pg.click('#fw .fwopen'); pg.wait_for_timeout(400)
     ok(pg.evaluate("U.view") == 'lyr' and pg.evaluate("U.sheet") == 'sgTakes' and pg.evaluate("U.sd.o") == o1,
        'tapping it goes back to the song with that section’s takes')
-    pg.click('.sheet [data-a=playTake] >> nth=0'); pg.wait_for_timeout(200)
-    ok(not pg.evaluate("!!player"), 'stopping it there ends it')
+    pg.click('.sheet .tkr [data-a=tkPlay] >> nth=0'); pg.wait_for_timeout(200)
+    ok(pg.evaluate("!!player&&player.paused"), 'pausing it there pauses it')
     pg.evaluate("closeSheet()"); pg.wait_for_timeout(250)
+    ok(not pg.evaluate("!!player"), 'closing the sheet with it paused ends it')
     ok(not pg.evaluate(SHOWN), 'and the window goes')
     pg.context.close()
 

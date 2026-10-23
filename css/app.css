@@ -42,6 +42,9 @@
   --trk-loop: #ff9500;
   --trk-head: #c85400;
   --trk-dim: rgba(60, 60, 67, 0.26);
+  /* 3.20 markers on the track: purple, never the loop's orange */
+  --trk-mk: #8944e0;
+  --trk-mkfg: #ffffff;
   --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', system-ui, sans-serif;
   color-scheme: light;
 }
@@ -87,6 +90,8 @@
     --trk-loop: #ff9f0a;
     --trk-head: #ff6b1a;
     --trk-dim: rgba(235, 235, 245, 0.24);
+    --trk-mk: #b07bff;
+    --trk-mkfg: #1c0b33;
   }
 }
 
@@ -4542,8 +4547,9 @@ textarea.field.sglyr {
   height: 13px;
   stroke-width: 2.6;
 }
-.fw.paused .fwx {
-  display: grid;
+.fw.paused .fwx,
+.fw[data-kind='video'] .fwx {
+  display: grid; /* 3.20: ✕ is always there, playing or paused */
 }
 .fw .fwvp {
   position: absolute;
@@ -5499,4 +5505,692 @@ body.reg .trkstrip {
   font-size: 15px;
   font-weight: 500;
   white-space: nowrap;
+}
+
+/* ===== 3.20 songs, takes and markers ===== */
+/* the floating window's ✕, for every kind of sound (the bar kinds: beside play and pause) */
+.fw.hasx {
+  padding-right: 3px;
+}
+.fw.hasx .fwx {
+  position: relative;
+  display: grid;
+  flex-shrink: 0;
+  width: 34px;
+  height: 44px;
+  color: var(--fg2);
+}
+.fw.hasx .fwx::before {
+  display: none;
+}
+.fw.hasx .fwx svg.i {
+  width: 15px;
+  height: 15px;
+  stroke-width: 2.4;
+}
+.fw.hasx .fwp {
+  right: 92px;
+}
+/* a song row's play button: on the right, in line with the name; greyed (still tappable) with no track here */
+.sgplay {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  margin: -4px -6px -4px 6px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--fill);
+  color: var(--accent);
+  transition: transform 0.5s cubic-bezier(0.3, 1.7, 0.45, 1);
+}
+.sgplay svg.i {
+  width: 16px;
+  height: 16px;
+}
+.sgplay:not(.on) svg.i {
+  margin-left: 2px;
+}
+.sgplay.on {
+  background: var(--accent);
+  color: #fff;
+}
+.sgplay.off {
+  color: var(--fg3);
+  background: var(--fill);
+  opacity: 0.7;
+}
+.sgplay:active {
+  transform: scale(0.9);
+  transition-duration: 0.12s;
+}
+.row.sgtprow {
+  cursor: pointer;
+}
+/* the + sheet: Add media or Manually */
+.sgaddseg {
+  margin: 2px 0 14px;
+}
+.sgdrop {
+  width: 100%;
+  min-height: 150px;
+  border-radius: 20px;
+  border: 1.5px dashed var(--sep);
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 20px;
+  text-align: center;
+  color: var(--fg2);
+  font-size: 13px;
+}
+.sgdrop b {
+  color: var(--accent);
+  font-size: 17px;
+  font-weight: 600;
+}
+.sgdrop.busy b {
+  color: var(--fg);
+}
+.sgdrop svg.i {
+  width: 30px;
+  height: 30px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  margin-bottom: 4px;
+  color: var(--accent);
+}
+.sgadded {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--good);
+  overflow-wrap: anywhere;
+}
+.sgadded svg.i {
+  flex: none;
+  width: 18px;
+  height: 18px;
+}
+.sgswap {
+  display: block;
+  margin: 4px 0 2px 24px;
+  font-size: 15px;
+}
+.sglenrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+}
+.sglenv {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 12px;
+  background: var(--surface);
+  font-size: 17px;
+  font-variant-numeric: tabular-nums;
+}
+.sglenc,
+.cklenf {
+  font-size: 13px;
+  color: var(--fg2);
+}
+.sglenf {
+  margin-top: 4px;
+}
+/* the length's link to the track: linked (accent) or broken (secondary) */
+.lnk {
+  display: inline-grid;
+  place-items: center;
+  color: var(--fg2);
+}
+.lnk svg.i {
+  width: 16px;
+  height: 16px;
+}
+.lnk.on {
+  color: var(--accent);
+}
+button.lnk.off {
+  min-width: 32px;
+  min-height: 32px;
+  margin: -6px 0;
+}
+.cklen .lnk {
+  margin-left: 3px;
+  vertical-align: -2px;
+}
+.cklenf {
+  margin: -4px 0 8px;
+}
+/* the Takes button beside a song's title */
+.sgtrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sgtrow h1 {
+  flex: 1;
+  min-width: 0;
+}
+.sgtkb {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: var(--fill);
+  color: var(--accent);
+  font-size: 15px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: transform 0.5s cubic-bezier(0.3, 1.7, 0.45, 1);
+}
+.sgtkb svg.i {
+  width: 16px;
+  height: 16px;
+}
+.sgtkb:active {
+  transform: scale(0.93);
+  transition-duration: 0.12s;
+}
+.sgph .sgtkb {
+  margin-left: auto;
+}
+/* the takes sheet */
+.tkseg {
+  margin: 2px 0 12px;
+}
+.tkgrp {
+  overflow: visible;
+}
+.tkr {
+  position: relative;
+  overflow: hidden;
+  touch-action: pan-y;
+}
+.tkr + .tkr {
+  border-top: 0.5px solid var(--sep);
+}
+.tkacts {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  justify-content: space-between;
+}
+.tkacts button {
+  width: 84px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  visibility: hidden;
+}
+.tkacts svg.i {
+  width: 20px;
+  height: 20px;
+}
+.tkacts .tkas {
+  background: var(--star);
+}
+.tkacts .tkad {
+  background: var(--danger);
+  margin-left: auto;
+}
+/* only the side being swiped shows its colour */
+.tkr.sr .tkas,
+.tkr.sl .tkad {
+  visibility: visible;
+}
+.tkr.sr .tkacts {
+  background: var(--star); /* past the button, the colour fills the whole row on its own side */
+}
+.tkr.sl .tkacts {
+  background: var(--danger);
+}
+.tkfg {
+  position: relative;
+  background: var(--surface);
+  transition: transform 0.35s cubic-bezier(0.3, 1.2, 0.5, 1);
+}
+.tkhead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 58px;
+  padding: 8px 12px 8px 16px;
+  cursor: pointer;
+}
+.tktx {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.tktx b,
+.tkname b {
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tktx small,
+.tkname small {
+  font-size: 13px;
+  color: var(--fg2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tkic {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--fg2);
+  font-size: 13px;
+}
+.tkic svg.i {
+  width: 15px;
+  height: 15px;
+}
+.tkcmn {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.tkstar {
+  color: var(--star);
+  display: inline-grid;
+}
+.tkstar svg.i {
+  fill: currentColor;
+}
+.tkpp {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--fill);
+  color: var(--accent);
+}
+.tkpp svg.i {
+  width: 18px;
+  height: 18px;
+}
+.tkpp.on {
+  background: var(--accent);
+  color: #fff;
+}
+.tkopen {
+  padding: 10px 14px 14px 16px;
+}
+.tktop {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.tkname {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  min-height: 44px;
+  justify-content: center;
+}
+.tkrn {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+}
+.tkni {
+  flex: 1;
+  min-width: 0;
+  height: 38px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--fill);
+  font-size: 16px;
+  outline: none;
+}
+.tknx {
+  width: 32px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  color: var(--fg3);
+}
+.tknx svg.i {
+  width: 18px;
+  height: 18px;
+}
+.tknd {
+  font-weight: 600;
+  padding: 0 4px;
+  min-height: 38px;
+}
+.tkbtn {
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--fill);
+  color: var(--fg2);
+}
+.tkbtn svg.i {
+  width: 18px;
+  height: 18px;
+}
+.tkstb.on {
+  color: var(--star);
+}
+.tkstb.on svg.i {
+  fill: currentColor;
+}
+/* the comment pop-up strip, above the waveform */
+.tkpop {
+  min-height: 24px;
+  margin: 8px 0 2px;
+  font-size: 13px;
+  line-height: 24px;
+  color: var(--fg2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.tkpop.on {
+  opacity: 1;
+  color: var(--fg);
+}
+.tkwave {
+  position: relative;
+  height: 64px;
+  touch-action: none;
+  cursor: pointer;
+  outline: none;
+}
+.tkwave canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.tkdots {
+  position: relative;
+  height: 14px;
+}
+.tkdot {
+  position: absolute;
+  top: 1px;
+  width: 22px;
+  height: 22px;
+  margin-left: -11px;
+  margin-top: -4px;
+}
+.tkdot::before {
+  content: '';
+  position: absolute;
+  left: 7px;
+  top: 7px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--star);
+}
+.tktimes {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--fg2);
+  font-variant-numeric: tabular-nums;
+}
+.tktr {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 26px;
+  margin: 6px 0 10px;
+}
+.tkb {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  color: var(--fg);
+}
+.tkb svg.i {
+  width: 26px;
+  height: 26px;
+  stroke-width: 1.8;
+}
+.tkbig {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--fg);
+  color: var(--bg);
+  transition: transform 0.5s cubic-bezier(0.3, 1.7, 0.45, 1);
+}
+.tkbig svg.i {
+  width: 22px;
+  height: 22px;
+  stroke-width: 2.6;
+}
+.tkbig[data-on='false'] svg.i {
+  margin-left: 3px;
+}
+.tkbig:active,
+.tkb:active {
+  transform: scale(0.93);
+  transition-duration: 0.12s;
+}
+.tkcf {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 4px 0 10px;
+  border-radius: 14px;
+  background: var(--fill);
+}
+.tkstamp {
+  flex: none;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+.tkci {
+  flex: 1;
+  min-width: 0;
+  height: 40px;
+  border: 0;
+  background: none;
+  font-size: 16px;
+  outline: none;
+}
+.tkpost {
+  font-weight: 600;
+  padding: 0 8px;
+  min-height: 40px;
+}
+.tkpost:disabled {
+  color: var(--fg3);
+}
+.tkhint {
+  margin: 6px 4px 0;
+  font-size: 12px;
+  color: var(--fg2);
+}
+.tknudge[hidden] {
+  display: none;
+}
+.tknudge {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+.tkcl {
+  margin-top: 10px;
+  border-top: 0.5px solid var(--sep);
+}
+.tkcm {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 2px;
+  text-align: left;
+  border-bottom: 0.5px solid var(--sep);
+  font-size: 15px;
+  -webkit-touch-callout: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.tkct {
+  flex: none;
+  color: var(--accent);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.tkcx {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.tkrv .lbl {
+  min-width: 0;
+}
+/* the track player's markers: chips in one sideways row under the waveform */
+.trkmk {
+  display: flex;
+  gap: 8px;
+  margin: 12px -16px 0;
+  padding: 0 16px 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
+}
+body.reg .trkmk {
+  margin-left: 0;
+  margin-right: 0;
+  padding: 0 0 2px;
+}
+.trkmk::-webkit-scrollbar {
+  display: none;
+}
+.trkmk:empty {
+  display: none;
+}
+.trkchip {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  border-radius: 999px;
+  background: var(--fill);
+  box-shadow: inset 0 0 0 1.5px transparent;
+  transition: box-shadow 0.2s;
+  -webkit-touch-callout: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.trkchip.cur {
+  box-shadow: inset 0 0 0 1.5px var(--trk-mk);
+}
+.trkchb {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 12px 0 5px;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.trkchb b {
+  display: grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--trk-mk);
+  color: var(--trk-mkfg);
+  font-size: 12px;
+}
+.trkchn {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
+}
+.trkchl {
+  width: 34px;
+  height: 30px;
+  margin-right: 3px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  color: var(--fg2);
+}
+.trkchl svg.i {
+  width: 16px;
+  height: 16px;
+}
+.trkchl.on {
+  background: var(--trk-loop);
+  color: #fff;
+}
+.trkchips {
+  flex-wrap: wrap;
+}
+.trkaddmk svg.i {
+  width: 15px;
+  height: 15px;
+  margin-right: 3px;
+  vertical-align: -2px;
+}
+.trkendh {
+  color: var(--trk-mk);
+}
+.trkendh.wait {
+  opacity: 0.45;
 }

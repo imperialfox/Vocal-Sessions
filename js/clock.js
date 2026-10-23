@@ -97,6 +97,8 @@ function cleanTiming(t, sg) {
     est: t.est === true,
     slots: {},
   };
+  // 3.20: the length follows the song's track (set when a track is added; unlinked by hand)
+  if (t.lenLink === true && out.len != null) out.lenLink = true;
   const order = sg && Array.isArray(sg.order) ? sg.order : [];
   const src = t.slots && typeof t.slots === 'object' && !Array.isArray(t.slots) ? t.slots : {};
   order.forEach((x) => {
@@ -256,6 +258,7 @@ function ckStore(sg, L, T, anch, marks, flags) {
   });
   sg.timing = Object.assign(
     { len: old.len == null ? null : old.len, real: !!old.real, est: !!old.est },
+    old.lenLink && old.len != null ? { lenLink: true } : {},
     flags || {},
     { slots }
   );
@@ -428,8 +431,7 @@ function ckPlay(i) {
     const M = ckModel(sg);
     if (M.T[i]) ckSet(CK.pc, M.T[i][0]);
   }
-  if (typeof COACH !== 'undefined') COACH.pause(); // one sound at a time
-  if (typeof TRACK !== 'undefined') TRACK.pause();
+  NOW.start('clock', sg.id, () => ckPause()); // one sound at a time (3.20)
   CK.ever = true;
   ckGo(CK.pc);
   CK.lastA = -2;
@@ -445,6 +447,8 @@ function ckPause() {
     y = cur ? cur.getBoundingClientRect().top : null;
   ckHalt(CK.pc);
   ckWake();
+  NOW.ended('clock');
+  fwPaused('clock'); // 3.20: paused anywhere but the window (or lock screen): no window follows
   if (!ckHere()) return fwUpdate();
   rerender();
   const line = document.querySelector('.sgl.ckcur');
@@ -653,8 +657,7 @@ function ckStartSync(sg, keepRet) {
     CK.ever = false;
     ckHalt(CK.pc);
   }
-  if (typeof COACH !== 'undefined') COACH.pause();
-  if (typeof TRACK !== 'undefined') TRACK.pause();
+  NOW.stop(); // timing with music in another app: nothing here keeps playing
   const n = sg.order.length;
   CK.P = {
     id: sg.id,
@@ -963,9 +966,7 @@ function ckHeadHTML(sg) {
       '</button><span class="sp"></span><button class="sgpill blue" data-a="ckHeadDone">Done</button></div>'
     );
   const art = esc(sg.artist || ''),
-    lenB = len
-      ? '<button class="cklen" data-a="ckLen" aria-label="Song length ' + ckFmt(len) + '">' + ckFmt(len) + '</button>'
-      : '';
+    lenB = ckLenHTML(sg);
   const pins = p.pins
     .map((id) => {
       const t = ckTile(id, sg);
@@ -993,8 +994,35 @@ function ckHeadHTML(sg) {
     pins +
     '<button class="ckpi" data-a="ckGrid" aria-label="Song controls">' +
     SGI.more +
-    '</button></div>'
+    '</button></div>' +
+    ckLenFoot(sg)
   );
+}
+// 3.20 the length and its link to the song's track: 'on' follows the track, 'off' is a custom length beside one
+function ckLinkState(sg) {
+  const len = sg && sg.timing && sg.timing.len;
+  if (!sg || !sg.track || !len) return '';
+  return sg.timing.lenLink ? 'on' : 'off';
+}
+function ckLenHTML(sg) {
+  const len = sg.timing && sg.timing.len,
+    st = ckLinkState(sg);
+  if (!len) return '';
+  return (
+    '<button class="cklen" data-a="ckLen" aria-label="Song length ' +
+    ckFmt(len) +
+    (st === 'on' ? ', linked to the track' : '') +
+    '">' +
+    ckFmt(len) +
+    (st === 'on' ? '<span class="lnk on">' + SG_LNK + '</span>' : '') +
+    '</button>' +
+    (st === 'off' ? '<button class="lnk off" data-a="ckRelink" aria-label="Relink to the track">' + SG_UNLNK + '</button>' : '')
+  );
+}
+function ckLenFoot(sg) {
+  return ckLinkState(sg) === 'off'
+    ? '<p class="cklenf">Custom · track is ' + ckFmt(Math.round(sg.track.dur)) + '</p>'
+    : '';
 }
 function ckTitleInput(sg) {
   return (
@@ -1293,6 +1321,7 @@ function ckSetLen(sg, v) {
   ckSnap(sg);
   if (!sg.timing) sg.timing = { len: null, real: false, est: false, slots: {} };
   sg.timing.len = v > 0 ? Math.min(CK_MAXLEN, Math.round(v)) : null;
+  delete sg.timing.lenLink; // a length set by hand is the song's own (3.20)
   if (sg.timing.len == null && !Object.keys(sg.timing.slots || {}).length) delete sg.timing;
   save();
   rerender();
@@ -1330,6 +1359,10 @@ const CK_FW = {
     if (CK.pc.run) ckPause();
     else ckPlay();
     fwTick();
+  },
+  close() {
+    if (CK.pc.run) ckPause();
+    CK.ever = false;
   },
   open() {
     const sg = ckSong();
@@ -1486,6 +1519,8 @@ const CLOCK = {
   },
   page: () => (U.view === 'ckSync' ? ckSyncPage() : ckCheckPage()),
   headHTML: ckHeadHTML,
+  lenHTML: ckLenHTML,
+  lenFoot: ckLenFoot,
   titleInput: ckTitleInput,
   editingHead: () => CK.head,
   gridSheet: ckGridSheet,
@@ -1556,7 +1591,16 @@ Object.assign(SG_ACT, {
     const sg = songById(U.songId);
     if (!sg) return;
     ckCommitHead();
+    // 3.20: a length linked to the track asks before it's changed by hand
+    if (ckLinkState(sg) === 'on') {
+      U.sheet = 'sgLenUnlink';
+      U.sd = { k: sg.id };
+      return rerender();
+    }
     ckPick(el, (sg.timing && sg.timing.len) || 210, (v) => ckSetLen(sg, v));
+  },
+  ckRelink() {
+    sgRelink(songById(U.songId));
   },
   ckPencil() {
     const sg = songById(U.songId);

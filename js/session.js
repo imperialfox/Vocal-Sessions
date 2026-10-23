@@ -324,8 +324,7 @@ let recBusy = false;
 async function startRec(target) {
   const tg = target || { songId: X && X.song };
   if (rec || recBusy) return;
-  COACH.pause(); // the coach video stops before a recording starts
-  if (typeof TRACK !== 'undefined') TRACK.pause(); // and the song's track (3.19)
+  NOW.stop(); // one sound at a time (3.20): whatever plays stops before a recording starts
   if (!navigator.mediaDevices || !window.MediaRecorder) {
     toast('Recording isn’t supported in this browser');
     return;
@@ -342,18 +341,28 @@ async function startRec(target) {
     toast('Microphone access was blocked. Allow it in Settings, then try again.');
     return;
   }
+  const mono = await monoStream(stream); // 3.20: one channel, so takes play in both ears
   recBusy = false;
   const mime = pickMime();
   let mr;
   try {
     // AAC mono at about 96 kbps where the browser offers it
-    mr = new MediaRecorder(stream, Object.assign({ audioBitsPerSecond: 96000 }, mime ? { mimeType: mime } : {}));
+    mr = new MediaRecorder(mono.stream, Object.assign({ audioBitsPerSecond: 96000 }, mime ? { mimeType: mime } : {}));
   } catch (e) {
-    mr = new MediaRecorder(stream);
+    mr = new MediaRecorder(mono.stream);
   }
-  rec = { mr, stream, chunks: [], t: 0, songId: tg.songId, o: tg.o || null, started: Date.now() };
+  rec = { mr, stream, mono, chunks: [], t: 0, songId: tg.songId, o: tg.o || null, started: Date.now() };
+  NOW.start('rec', null, () => stopRec());
+  // 3.20: a take on any song page starts (or carries on) song practice for that song, timed from its first take
+  if (rec.o && songById(rec.songId)) {
+    if (!X) {
+      newSong();
+      X.song = rec.songId;
+    }
+    if (isSong() && X.song === rec.songId) rec.sp = true;
+  }
   // song practice's clock starts with its first take
-  if (!rec.o && unstarted()) {
+  if ((!rec.o || rec.sp) && unstarted()) {
     X.start = rec.started;
     X.paused = false;
     X.pausedTotal = 0;
@@ -415,6 +424,7 @@ function scrollToSec(o) {
 function stopRec() {
   if (!rec || rec.stopping) return;
   rec.stopping = true;
+  NOW.ended('rec');
   clearInterval(rec.timer);
   clearInterval(rec.mt);
   if (rec.ac) rec.ac.close().catch(() => {});
@@ -424,6 +434,34 @@ function stopRec() {
     saveRec();
   }
   rec.stream.getTracks().forEach((t) => t.stop());
+  if (rec.mono && rec.mono.close) rec.mono.close();
+}
+// 3.20: the microphone mixed down to one channel before it's encoded (a headset can give the voice on one side only).
+// Anything that doesn't work falls back to the microphone as it is, so a take is never lost to this
+async function monoStream(stream) {
+  const plain = { stream };
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return plain;
+    const tr = stream.getAudioTracks()[0],
+      st = tr && tr.getSettings ? tr.getSettings() : {};
+    if (st.channelCount === 1) return plain; // already one channel
+    const ac = new AC(),
+      src = ac.createMediaStreamSource(stream),
+      dst = ac.createMediaStreamDestination();
+    dst.channelCount = 1;
+    dst.channelCountMode = 'explicit';
+    dst.channelInterpretation = 'speakers';
+    src.connect(dst);
+    if (ac.state !== 'running') await Promise.race([ac.resume(), new Promise((r) => setTimeout(r, 400))]);
+    if (ac.state !== 'running') {
+      ac.close().catch(() => {});
+      return plain;
+    }
+    return { stream: dst.stream, close: () => ac.close().catch(() => {}) };
+  } catch (e) {
+    return plain;
+  }
 }
 async function saveRec() {
   const r = rec;
@@ -455,7 +493,7 @@ async function saveRec() {
   try {
     await putTake(t);
     saved = true;
-    if (X && !r.o) {
+    if (X && (!r.o || (r.sp && isSong() && X.song === r.songId))) {
       X.takes.push(t.id);
       saveDraft();
     }
@@ -463,8 +501,8 @@ async function saveRec() {
     unstartIfNoTakes(r);
     toast('Couldn’t save the take. Storage may be full.');
   }
-  await prune(r.songId);
-  await refreshTakes();
+  await refreshTakes(); // 3.20: every take is kept; nothing is removed automatically
+  if (saved && typeof TAKE !== 'undefined') TAKE.analyse(t.id); // its waveform and channels, once, on this device
   const song = saved && D.songs.find((s) => s.id === r.songId);
   if (song) {
     song.practised = t.created; // practised means a take was recorded
@@ -479,10 +517,6 @@ async function saveRec() {
   rerender();
   if (U.sd && U.sd.fresh === t.id) DET.takeIn();
 }
-async function prune(songId) {
-  const loose = (await allTakes()).filter((t) => t.songId === songId && !t.star).sort((a, b) => b.created - a.created);
-  for (const t of loose.slice(KEEP_TAKES)) await delTake(t.id);
-}
 function stopPlayback() {
   if (player) {
     const p = player;
@@ -490,16 +524,16 @@ function stopPlayback() {
     p.pause();
     URL.revokeObjectURL(p.src);
   }
+  if (playingId) NOW.ended('take', playingId);
   playingId = null;
   FW.take = null;
+  if (typeof TAKE !== 'undefined') TAKE.stopped();
 }
 // a take that's playing now (not paused from the floating window)
 const takePlaying = (id) => !!(id && playingId === id && player && !player.paused);
-function playTake(id) {
-  COACH.pause(); // one sound at a time
-  if (typeof TRACK !== 'undefined') TRACK.pause();
+function playTake(id, at) {
   if (playingId === id && player) {
-    // paused from the floating window: carry on from there; playing: stop, as before
+    // paused from the floating window: carry on from there (from 0:00 if it had finished); playing: stop, as before
     if (player.paused) FW_KINDS[0].toggle();
     else {
       stopPlayback();
@@ -510,31 +544,55 @@ function playTake(id) {
   stopPlayback();
   const t = TAKES.find((x) => x.id === id);
   if (!t) return;
-  player = new Audio(URL.createObjectURL(t.blob));
+  nowTake(id); // one sound at a time (3.20)
+  // 3.20: an older take with its voice on one side plays a copy made for both ears (the original is never changed)
+  const src = typeof TAKE !== 'undefined' ? TAKE.blobFor(t) : t.blob;
+  player = new Audio(URL.createObjectURL(src));
   playingId = id;
+  if (at > 0) {
+    const p0 = player;
+    p0.addEventListener('loadedmetadata', () => {
+      try {
+        if (player === p0) p0.currentTime = Math.min(at, Math.max(0, (isFinite(p0.duration) ? p0.duration : t.len) - 0.1));
+      } catch (e) {}
+    }, { once: true });
+  }
   FW.take = { id, place: fwHere() }; // where to come back to from the floating window
-  player.onplay = player.onpause = () => {
+  player.onplay = player.onpause = (e) => {
     if (player !== p) return;
+    if (e && e.type === 'pause' && !p.ended) fwPaused('take');
+    if (typeof TAKE !== 'undefined') TAKE.paint();
     // its own play button shows the change; elsewhere only the floating window does
-    if (document.querySelector('[data-a=playTake][data-k="' + id + '"]')) rerender();
+    if (document.querySelector('[data-a=playTake][data-k="' + id + '"]') && !(typeof TAKE !== 'undefined' && TAKE.inPlace()))
+      rerender();
     else fwUpdate();
   };
   player.onended = () => {
+    if (player !== p) return;
     stopPlayback();
     rerender();
   };
   player.play().catch(() => {
+    if (player !== p) return;
     stopPlayback();
     toast('Couldn’t play this take');
     rerender();
   });
-  rerender();
   const p = player;
+  if (typeof TAKE !== 'undefined' && TAKE.inPlace()) TAKE.paint();
+  else rerender();
   const tick = () => {
     if (player !== p) return;
     const el = $('pg-' + id),
       d = isFinite(p.duration) && p.duration > 0 ? p.duration : t.len || 1;
     if (el) el.style.width = Math.min(100, (p.currentTime / d) * 100) + '%';
+    // some recordings never say they've ended (iOS can report no length): past the take's length, it has
+    if (!p.paused && !isFinite(p.duration) && t.len && p.currentTime > t.len + 0.5) {
+      stopPlayback();
+      rerender();
+      return;
+    }
+    if (typeof TAKE !== 'undefined') TAKE.frame(p);
     if (FW.shown === 'take') fwTick();
     requestAnimationFrame(tick);
   };

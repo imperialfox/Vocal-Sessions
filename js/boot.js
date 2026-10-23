@@ -21,6 +21,7 @@ checkPersist(true).then(() => {
   if (U.tab === 'settings' && !U.view) rerender();
 });
 Promise.all([refreshTakes(), refreshUndo(), COACH.load(), TRACK.load()])
+  .then(() => TAKE.load()) // 3.20: takes' waveforms (and both-ears copies) on this device
   .then(rerender)
   .catch(() => {})
   .then(() => new Promise((r) => setTimeout(r, LAUNCH.minWait())))

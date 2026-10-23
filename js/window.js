@@ -19,6 +19,11 @@ const FW = {
   hideAnim: null,
   hideTimer: 0, // 3.17: the fallback that hides the window if its fade never finishes
   moved: 0,
+  // 3.20: ✕ (or another sound starting, or pausing a sound on its own screen) leaves a kind closed until its next
+  // explicit play (NOW.start). Nothing else clears it: not a tab switch, a redraw, a sheet, a reload or the app coming back
+  dis: {},
+  // 3.20: after ✕ nothing takes the closed window's place on this screen; cleared by the next change of screen (go())
+  shut: false,
 };
 try {
   const c = JSON.parse(localStorage.getItem(FW_KEY) || '{}').corner;
@@ -84,10 +89,16 @@ const FW_KINDS = [
       return U.view === p.view && U.tab === p.tab && U.songId === p.songId;
     },
     info: fwTakeInfo,
+    close() {
+      stopPlayback();
+      rerender();
+    },
     toggle() {
       if (!player) return;
       if (player.paused) {
         const p = player;
+        nowTake(playingId);
+        if (p.ended || (isFinite(p.duration) && p.currentTime >= p.duration - 0.05)) p.currentTime = 0; // 3.20: again from 0:00
         p.play().catch(() => {
           if (player !== p) return;
           stopPlayback();
@@ -115,7 +126,8 @@ const FW_KINDS = [
   {
     id: 'session',
     active: () => !!(X && X.start),
-    own: () => isFlow(U.view),
+    // 3.20: song practice's own screen includes the song's page, where its takes are recorded
+    own: () => isFlow(U.view) || !!(isSong() && songShown() && songShown().id === X.song),
     info() {
       const v = fwSessView();
       return {
@@ -153,8 +165,104 @@ function fwPick() {
   if (typeof LAUNCH !== 'undefined' && LAUNCH.busy()) return null; // appears after the launch ripple (3.13)
   const a = document.activeElement;
   if (a && a.matches && a.matches('input, textarea, [contenteditable="true"]')) return null; // keep the keyboard clear
-  for (const k of FW_KINDS) if (k.active() && !k.own()) return k;
+  if (FW.shut) return null; // ✕ always visibly closes something: nothing pops up in its place (3.20)
+  for (const k of FW_KINDS) if (!FW.dis[k.id] && k.active() && !k.own()) return k;
   return null;
+}
+// 3.20: the window shows a sound while it plays, and when it was paused from the window itself (or the lock screen).
+// Paused anywhere else (its own screen, a song row, the takes sheet), you've seen it stop, so no window follows
+function fwPaused(id) {
+  if (Date.now() - (FW.winAt || 0) > 800) FW.dis[id] = true;
+}
+// 3.20: ✕ on the window, for every kind of sound: stops it, and nothing brings the window back but an explicit play
+function fwClose() {
+  const k = fwKindNow();
+  if (!k || !k.close) return;
+  FW.dis[k.id] = true;
+  FW.shut = true;
+  NOW.ended(k.id);
+  k.close();
+  fwUpdate();
+}
+
+/* ===== One sound at a time (3.20) =====
+   Every sound starts through NOW: a take, a recording, the coach video, the song's track (its player or a song row's
+   play button) and Song Clock's play-along. Starting one stops whatever was playing, and the stopped one's window
+   stays closed until it's played again. The lock screen's play and pause follow whichever sound started last. */
+const NOW = (() => {
+  let cur = null; // {kind, id, stop}
+  let last = null; // the kind the lock screen controls
+  function start(kind, id, stop) {
+    if (cur && !(cur.kind === kind && cur.id === id)) {
+      const c = cur;
+      cur = null;
+      if (c.kind !== kind) FW.dis[c.kind] = true; // stopped by another sound: it doesn't wait in a window
+      try {
+        c.stop();
+      } catch (e) {}
+    }
+    cur = { kind, id: id == null ? null : id, stop: stop || (() => {}) };
+    FW.dis[kind] = false; // an explicit play brings its window back
+    FW.shut = false;
+    last = kind;
+    media();
+  }
+  // stop whatever plays (or only this kind)
+  function stop(kind) {
+    if (!cur || (kind && cur.kind !== kind)) return;
+    const c = cur;
+    cur = null;
+    try {
+      c.stop();
+    } catch (e) {}
+  }
+  // a sound finished or was stopped from its own controls
+  function ended(kind, id) {
+    if (cur && cur.kind === kind && (id == null || cur.id === id)) cur = null;
+  }
+  const kindOf = (id) => FW_KINDS.find((k) => k.id === id);
+  function media() {
+    if (!('mediaSession' in navigator) || last === 'rec') return;
+    const ms = navigator.mediaSession,
+      on = (a, f) => {
+        try {
+          ms.setActionHandler(a, f);
+        } catch (e) {}
+      };
+    const k = () => kindOf(last),
+      playing = () => {
+        try {
+          return !!(k() && k().active() && k().info().on);
+        } catch (e) {
+          return false;
+        }
+      };
+    on('play', () => {
+      FW.winAt = Date.now();
+      if (k() && !playing()) k().toggle();
+    });
+    on('pause', () => {
+      FW.winAt = Date.now();
+      if (k() && playing()) k().toggle();
+    });
+  }
+  return {
+    start,
+    stop,
+    ended,
+    kind: () => (cur ? cur.kind : null),
+    id: () => (cur ? cur.id : null),
+    last: () => last,
+  };
+})();
+// a take starting (or carrying on) through the owner
+function nowTake(id) {
+  NOW.start('take', id, () => {
+    if (playingId === id) {
+      stopPlayback();
+      rerender();
+    }
+  });
 }
 
 /* ===== Drawing it ===== */
@@ -172,7 +280,7 @@ function fwEl() {
 }
 function fwDraw(k, i) {
   const el = fwEl(),
-    b = k.id + '|' + i.on + '|' + (i.p != null);
+    b = k.id + '|' + i.on + '|' + (i.p != null) + '|' + !!k.close;
   el.setAttribute('aria-label', i.label);
   el.dataset.kind = k.id;
   if (k.draw) return k.draw(el, i); // a kind with its own look (3.16: the coach video holds the real video)
@@ -185,9 +293,11 @@ function fwDraw(k, i) {
       '">' +
       (i.on ? ICON.pause : ICON.play) +
       '</button>' +
+      (k.close ? '<button class="fwx" data-a="fwX" aria-label="Close">' + ICON.x + '</button>' : '') +
       (i.p != null ? '<span class="fwp" aria-hidden="true"><i></i></span>' : '');
   }
   el.classList.toggle('paused', !i.on);
+  el.classList.toggle('hasx', !!k.close);
   el.querySelector('.fwopen').setAttribute('aria-label', i.open + '. ' + i.k + ', ' + i.t);
   el.querySelector('.fwk').textContent = i.k;
   el.querySelector('.fwt').textContent = i.t;

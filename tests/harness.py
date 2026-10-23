@@ -75,6 +75,10 @@ ADD_TAKE = """async(id)=>{const b=new Blob([new Uint8Array(3000).map((_,i)=>i%25
   await putTake({id:id||'t1',songId:'g_1',created:Date.now()-864e5,len:12,size:b.size,type:'audio/mp4',blob:b,star:false,note:{w:['Breathy'],t:'Ran out of air'}});
   await refreshTakes();rerender();}"""
 
+# 3.20: Today's Song practice card switches to the Songs tab, so tests open the song practice screen directly
+# (as a song's own Song practice row does)
+SP = "(()=>{if(!X)newSong();go(()=>{U.tab='today';U.view='song'})})()"
+
 SEED = "o=>{localStorage.clear();if(o)localStorage.setItem('vocalTracker',JSON.stringify(o))}"
 
 

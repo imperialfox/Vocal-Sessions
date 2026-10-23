@@ -1,6 +1,6 @@
 """A full day of use on iPhone: suggestions, a session with notes, the clock, editing, song practice, Toggl text."""
 import json, datetime as dt
-from harness import now, OLD_DRAFT, ready
+from harness import now, OLD_DRAFT, ready, SP
 
 def run(b, t):
     pg = t.page(b)
@@ -92,7 +92,7 @@ def run(b, t):
 
     # song practice, with the long-session check and a take note
     w0 = pg.evaluate("weekInfo().mins"); m1 = pg.evaluate(f"D.months['{mk}']||0")
-    pg.click('[data-a=tab][data-v=today]'); pg.click('[data-a=songStart]'); pg.wait_for_timeout(200)
+    pg.click('[data-a=tab][data-v=today]'); pg.evaluate(SP); pg.wait_for_timeout(200)
     ok(pg.evaluate("X.kind") == 'song', 'song practice starts its own kind of session')
     pg.evaluate("X.start=Date.now()-125*60000;saveDraft()")
     pg.click('[data-a=song][data-k=g_1]')

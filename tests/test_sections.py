@@ -1,5 +1,5 @@
 """Recording a section of a song with a fake microphone: selecting a section, the screen locked while recording,
-takes saved to their place in the song, the review sheet, stars and the keep rule across sections, unlinking and
+takes saved to their place in the song, the takes sheet, stars and keeping every take (3.20), unlinking and
 reordering, leaving mid-take, and backups made with Exclude recordings."""
 import json
 from harness import with_song_practice
@@ -77,63 +77,65 @@ def run(b, t):
     ok(len(tk) == 1 and tk[0]['o'] == o4 and tk[0]['s'] == S['id'], 'stopping saves the take with its place in the song')
     ok(pg.evaluate("Date.now()-songById(U.songId).practised") < 10000, 'recording a take marks the song as practised')
     txt = pg.text_content('.sheet')
-    ok('Chorus 2' in txt and 'New take' in txt and 'Just now' in txt and 'Fresh ears help' in txt, 'the review sheet opens over the song with the new take')
+    ok('Chorus 2 · 1' in txt and 'All takes · 1' in txt and pg.locator('.sheet .tkr.open').count() == 1 and 'Fresh ears help' in txt,
+       '3.20: the takes sheet opens over the song on this section, with the new take expanded')
     ok(pg.evaluate("U.view") == 'lyr' and pg.locator('#app .sgsong').count() == 1, 'it’s layered on the same screen')
     ok(pg.locator('.sheet [data-a=sgRec]').inner_text().strip() == 'Record again', 'with Record again')
+    ok(pg.evaluate("isSong()&&X.song===U.songId&&X.start>0&&X.takes.length===1"), '3.20: a take on the song page starts song practice for that song, timed from it')
     t.shot(pg, 'review-sheet')
 
-    pg.click('.newtake [data-a=playTake]'); pg.wait_for_timeout(900)
+    pg.click('.sheet #tkPP'); pg.wait_for_timeout(900)
     ok(pg.evaluate("playingId") == tk[0]['id'], 'the new take plays')
-    ok(pg.evaluate(f"parseFloat(document.getElementById('pg-{tk[0]['id']}').style.width)||0") > 0, 'with its progress showing')
-    pg.click('.newtake [data-a=playTake]'); pg.wait_for_timeout(150)
-    pg.click('.newtake [data-a=star]'); pg.wait_for_timeout(300)
-    ok(pg.evaluate("TAKES[0].star") is True and pg.locator('.newtake .star.on').count() == 1, 'starring the new take')
-    pg.click('.newtake [data-a=takeNote]'); pg.wait_for_timeout(300)
-    ok(pg.evaluate("U.sheet") == 'takeNote', 'notes on a take use the take-note sheet')
-    pg.click('.sheet .chip >> nth=0'); pg.click('.sheet [data-a=close].cta'); pg.wait_for_timeout(300)
-    ok(pg.evaluate("U.sheet") == 'sgTakes' and pg.evaluate("TAKES[0].note.w.length") == 1, 'and come back to the takes')
+    ok(pg.evaluate(f"TAKE.now('{tk[0]['id']}')") > 0, 'with its progress showing')
+    pg.click('.sheet #tkPP'); pg.wait_for_timeout(150)
+    pg.click('.sheet .tkr.open .tkstb'); pg.wait_for_timeout(400)
+    ok(pg.evaluate("TAKES[0].star") is True and pg.locator('.sheet .tkr.open .tkstb.on').count() == 1, 'starring the new take')
 
     pg.click('.sheet [data-a=sgRec]'); pg.wait_for_function("!!rec", timeout=5000); pg.wait_for_timeout(1200)
     ok(pg.evaluate("U.sheet") is None, 'Record again closes the sheet and records')
     pg.click('[data-a=sgStop]'); pg.wait_for_function("U.sheet==='sgTakes'&&TAKES.length===2", timeout=5000); pg.wait_for_timeout(200)
-    txt = pg.text_content('.sheet')
-    ok('Starred' in txt and pg.locator('.sheet .sgtake').count() == 1, 'the starred take is listed under the new one')
+    ok(pg.locator('.sheet .tkr').count() == 2 and pg.locator('.sheet .tkr .tkstar').count() == 1, 'the starred take is listed under the new one')
     pg.click('.sheet .xbtn'); pg.wait_for_timeout(300)
     ok(pg.locator(sec(o4) + ' [data-a=sgTakes]').inner_text().strip() == '2 takes', 'the selected section shows "2 takes"')
     pg.click(sec(o4) + ' [data-a=sgTakes]'); pg.wait_for_timeout(300)
-    ok(pg.evaluate("U.sheet") == 'sgTakes' and 'New take' not in pg.text_content('.sheet') and 'Latest' in pg.text_content('.sheet'),
-       'the takes pill opens the same sheet, with the latest take')
+    ok(pg.evaluate("U.sheet") == 'sgTakes' and pg.locator('.sheet .tkr').count() == 2 and pg.locator('.sheet .tkr.open').count() == 0,
+       'the takes pill opens the same sheet on this section, nothing expanded')
     pg.click('.sheet .xbtn'); pg.wait_for_timeout(200)
     pg.click(sec(o4) + ' .sglab'); pg.wait_for_timeout(200)
     ok('2 takes' in pg.inner_text(sec(o4) + ' .sghead') and pg.locator(sec(o2) + ' .shared').count() == 0,
        'deselected, its header says "2 takes"; the linked Chorus 1 keeps its own (none)')
 
-    # the keep rule: the last 3 per song, from any section, plus starred
+    # 3.20: every take is kept, across sections
     for _ in range(3):
         select(o1)
         pg.click(sec(o1) + ' [data-a=sgRec]'); pg.wait_for_function("!!rec", timeout=5000); pg.wait_for_timeout(1100)
         pg.click('[data-a=sgStop]'); pg.wait_for_function("U.sheet==='sgTakes'", timeout=5000); pg.wait_for_timeout(150)
         pg.click('.sheet .xbtn'); pg.wait_for_timeout(200)
     loose = pg.evaluate(f"TAKES.filter(t=>t.songId==='{S['id']}'&&!t.star).map(t=>t.o)")
-    ok(len(loose) == 3 and loose.count(o1) == 3, 'only the last 3 unstarred takes of the song are kept, across sections')
+    ok(len(loose) == 4 and loose.count(o1) == 3, 'every take is kept: nothing is removed automatically')
     ok(pg.evaluate("TAKES.filter(t=>t.star).length") == 1 and pg.evaluate(f"TAKES.find(t=>t.star).o") == o4, 'the starred take is kept')
     select(o1); pg.click(sec(o1) + ' [data-a=sgTakes]'); pg.wait_for_timeout(300)
-    ok('First' in pg.text_content('.sheet') and 'Latest' in pg.text_content('.sheet') and '1 more take in Song practice' in pg.text_content('.sheet'),
-       'the sheet shows the latest and the first: ' + pg.text_content('.sheet').replace('\n', ' | ')[:160])
+    txt = pg.text_content('.sheet')
+    ok('Verse 1 · 3' in txt and 'All takes · 5' in txt and pg.locator('.sheet .tkr').count() == 3,
+       'the sheet switches between this section’s takes and all of them: ' + txt.replace('\n', ' | ')[:120])
+    pg.click('.sheet [data-a=tkTab][data-v=all]'); pg.wait_for_timeout(250)
+    ok(pg.locator('.sheet .tkr').count() == 5 and 'Chorus 2' in pg.text_content('.sheet .tkr:last-child small'),
+       'All takes lists every take, each saying its section')
     pg.click('.sheet .xbtn'); pg.wait_for_timeout(200)
 
     # older takes without a place belong to the whole song, and still show in song practice
     pg.evaluate(f"""(async()=>{{const b=new Blob([new Uint8Array(3000)],{{type:'audio/mp4'}});
       await putTake({{id:'old1',songId:'{S['id']}',created:Date.now()-5*864e5,len:9,size:3000,type:'audio/mp4',blob:b,star:true}});await refreshTakes();rerender();}})()""")
     pg.wait_for_timeout(300)
-    ok(pg.evaluate("TAKES.length") == 5 and pg.evaluate("[...document.querySelectorAll('.sgsec')].every(s=>!/[45] takes/.test(s.textContent))"),
+    ok(pg.evaluate("TAKES.length") == 6 and pg.evaluate(f"takesAt('{S['id']}','{o1}').length===3&&takesAt('{S['id']}','{o4}').length===2"),
        'a take without a place isn’t counted on any section')
     pg.click(f'[data-a=sgPractise]'); pg.wait_for_timeout(400)
     rows = pg.evaluate("[...document.querySelectorAll('.tk')].map(x=>x.textContent)")
-    ok(len(rows) == 5 and sum('Verse 1 · ' in r for r in rows) == 3 and sum('Chorus 2 · ' in r for r in rows) == 1,
+    ok(len(rows) == 6 and sum('Verse 1 · ' in r for r in rows) == 3 and sum('Chorus 2 · ' in r for r in rows) == 2,
        'song practice lists every take, saying which section each came from')
-    pg.click('#bar [data-a=exit]'); pg.wait_for_timeout(300)  # no take yet, so leaving drops it (3.10.1)
-    ok(pg.evaluate("X") is None, 'leaving song practice before a take keeps nothing')
+    ok(pg.evaluate("X.takes.length") == 5, 'the section takes belong to this song practice')
+    pg.click('#bar [data-a=exit]'); pg.wait_for_timeout(300)
+    pg.evaluate("X=null;saveDraft();rerender()")
     pg.evaluate(f"openSong('{S['id']}')"); pg.wait_for_timeout(300)
 
     # unlinking and reordering keep takes in place
@@ -143,10 +145,10 @@ def run(b, t):
     pg.evaluate("sgEndEdit(true);rerender()"); pg.wait_for_timeout(250)
     first = pg.evaluate("songById(U.songId).order[0]")
     ok(first['o'] == o4 and first['sid'] != S['sid'][1], 'the chorus was unlinked and moved to the top')
-    ok(pg.evaluate(f"TAKES.filter(t=>t.o==='{o4}').length") == 1 and '1 take' in pg.inner_text('.sgsec >> nth=0'),
+    ok(pg.evaluate(f"TAKES.filter(t=>t.o==='{o4}').length") == 2 and '2 takes' in pg.inner_text('.sgsec >> nth=0'),
        'its takes moved with it')
     select(o4); pg.click(sec(o4) + ' [data-a=sgTakes]'); pg.wait_for_timeout(300)
-    ok('Chorus' in pg.inner_text('.sheet h2') and pg.locator('.sheet .sgtake').count() == 1, 'and its sheet still lists it')
+    ok('Chorus' in pg.inner_text('.sheet h2') and pg.locator('.sheet .tkr').count() == 2, 'and its sheet still lists them')
     pg.click('.sheet .xbtn'); pg.wait_for_timeout(200)
 
     # leaving the app mid-take saves it, and the sheet is waiting on return

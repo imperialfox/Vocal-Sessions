@@ -119,10 +119,10 @@ function scrToday() {
     '</small></span>' +
     chev +
     '</button></div>' +
-    '<div class="hdr" data-rise>Just singing</div><div class="grp tiled" data-rise><button class="row" data-zk="songStart" data-a="songStart">' +
+    '<div class="hdr" data-rise>Just singing</div><div class="grp tiled" data-rise><button class="row" data-a="songStart">' +
     songTile +
     '<span class="lbl">Song practice<small>' +
-    (songLive ? 'In progress · tap to carry on' : 'Record a take and note how it went') +
+    (songLive ? 'In progress · tap to carry on' : 'Pick a song and record a take') +
     '</small>' +
     (sw2.n && !songLive
       ? '<small class="co">This week · ' + sw2.n + ' session' + (sw2.n > 1 ? 's' : '') + ' · ' + hm(sw2.m) + '</small>'
@@ -1014,13 +1014,8 @@ function scrSettings() {
     '</div></div></div>' +
     '<p class="foot">How long a hidden line shows when you tap it in Recall. Hold a line to keep it showing until you let go.</p>' +
     COACH.settings() +
-    '<div class="hdr">Storage</div><div class="grp"><button class="row" data-a="sheet" data-v="storage"><span class="lbl">Recordings</span><span class="mut">' +
-    TAKES.length +
-    ' · ' +
-    (size / 1048576).toFixed(1) +
-    ' MB</span>' +
-    chev +
-    '</button>' +
+    '<div class="hdr">Storage</div><div class="grp">' +
+    TAKE.storageRows() + // 3.20: Recordings · n takes · x MB, and Review old takes
     COACH.storageRow() +
     TRACK.storageRow() +
     '<button class="row" data-a="sheet" data-v="persist"><span class="lbl">Storage protection<small>' +
@@ -1223,9 +1218,7 @@ function takeRows(sid) {
         );
       })
       .join('') +
-    '</div><p class="foot">Tap a take to add notes. Keeps the last ' +
-    KEEP_TAKES +
-    ' takes per song, plus any you star. If you leave the app while recording, the take stops and is saved.</p>'
+    '</div><p class="foot">Tap a take to add notes. Every take is kept. If you leave the app while recording, the take stops and is saved.</p>'
   );
 }
 function scrApp() {
