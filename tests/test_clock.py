@@ -285,7 +285,6 @@ def run(b, t):
     # pause shows the song page with the current line highlighted, where the eye was
     pg.evaluate("document.querySelector('#ckpa .ckl[data-i=\"2\"]').click()"); pg.evaluate("CLOCK.advance(1)"); pg.wait_for_timeout(100)
     y0 = pg.evaluate("document.querySelector('#ckpa .ckl.now').getBoundingClientRect().top")
-    print('  info  playing at', y0, pg.evaluate("[scrollY,document.querySelector('#ckpa').getBoundingClientRect().top,document.querySelector('#ckpa .ckview').clientHeight]"))
     rel0 = pg.evaluate("window.__wl.rel")
     pg.click('.cktr [data-a=ckPP]'); pg.wait_for_timeout(300)
     ok(pg.locator('#ckpa:not([hidden])').count() == 0 and not pg.evaluate("CLOCK.state().run"), 'Pause shows the song page')

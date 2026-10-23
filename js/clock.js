@@ -1456,6 +1456,9 @@ const CLOCK = {
     }
     document.body.classList.toggle('ckplay', big);
     if (!big) document.documentElement.classList.remove('ckplay');
+    // 3.20: paused, the song page has room below its end, so the current line can stay where the eye was (a taller
+    // header or wider fonts could leave too little page to scroll)
+    document.body.classList.toggle('ckpaused', !!(CK.on && ckHere() && !CK.pc.run && !U.sEdit));
     document.body.classList.toggle('cksyncon', U.view === 'ckSync');
     // paused: the song page shows the current line
     document.querySelectorAll('.sgl.ckcur').forEach((l) => l.classList.remove('ckcur'));

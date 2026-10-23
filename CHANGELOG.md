@@ -9,6 +9,12 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.20.1 · 23 Oct 2026
+*Song Clock: pausing keeps your line in place*
+<!-- area: fixes -->
+
+- Fixed: pausing play-along near the end of a short song could move the line you were on down the screen. The song page now has room below the lyrics while paused, so the line stays where your eye was.
+
 ## 3.20 · 23 Oct 2026
 *Songs, takes and markers: one place for every take, and a ✕ that always closes*
 <!-- area: songs -->

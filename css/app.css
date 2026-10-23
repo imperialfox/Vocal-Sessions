@@ -6194,3 +6194,7 @@ body.reg .trkmk {
 .trkendh.wait {
   opacity: 0.45;
 }
+/* Song Clock paused on its song: room below the lyrics so the current line can stay where the eye was */
+body.ckpaused #app {
+  padding-bottom: 50vh;
+}
