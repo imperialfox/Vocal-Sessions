@@ -83,6 +83,9 @@ def importing(b, t):
     ok = t.ok
     pg = t.page(b, init=COUNT)
     pg.evaluate(SONG); pg.wait_for_timeout(250)
+    acc = pg.evaluate("document.getElementById('trackIn').accept")
+    ok('audio/*' not in acc and all(x in acc.split(',') for x in ('.mp3', '.m4a', '.wav', 'audio/mpeg', 'audio/mp4')),
+       f'3.19.1: the picker names MP3, M4A and WAV one by one (iOS greys out audio files for audio/*): {acc}')
     row = pg.locator('#app [data-a=trkAdd]')
     ok(row.count() == 1 and 'Add track' in row.inner_text(), 'the song page’s Practice group reads Add track before there’s a track')
     add_row(pg)

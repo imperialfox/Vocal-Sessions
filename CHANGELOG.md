@@ -9,6 +9,12 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.19.1 · 23 Oct 2026
+*Track player: MP3s can be picked in Files*
+<!-- area: fixes -->
+
+- Fixed: on iPhone, audio files were greyed out in Files when adding a track. The picker now names MP3, M4A, WAV, AAC and AIFF files one by one, so they can be chosen.
+
 ## 3.19 · 23 Oct 2026
 *Track player: loop a phrase of the real song, slowly*
 <!-- area: songs -->

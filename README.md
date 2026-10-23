@@ -2,9 +2,9 @@
 
 A mobile-first companion for structured vocal practice, styled like a native iOS app. It's a single HTML file with no install, no backend and no account. It's designed to live on your iPhone Home Screen.
 
-![Version 3.19](https://img.shields.io/badge/version-3.19-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
+![Version 3.19.1](https://img.shields.io/badge/version-3.19.1-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
 
-**Current version: 3.19 · 23 Oct 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
+**Current version: 3.19.1 · 23 Oct 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
 
 ---
 
@@ -82,7 +82,7 @@ And **Songs**, for learning a song: paste the lyrics, and they're split into lab
     - **Loop:** **Set start** and **Set end** at the playhead, or drag the orange handles (they swap if you drag one past the other). Audio outside the loop is dimmed; double-tap outside it to clear it. The transport has back to the loop start, Play and Loop.
     - **Speed:** 0.5×, 0.75× or 1×, with the pitch kept. The zoom level and speed are remembered on this device; the loop is saved with the song.
     - On a Mac or with a keyboard: Space plays, ← and → move a second (Shift: five), I and O set the start and end.
-    - MP3, M4A and WAV from Files work; songs from Apple Music can't be added. The track stays on this device and isn't in backups (see [Data and privacy](#data-and-privacy)). Its settings button has **Replace track** and **Remove track**.
+    - MP3, M4A, WAV, AAC and AIFF from Files work; songs from Apple Music can't be added. The track stays on this device and isn't in backups (see [Data and privacy](#data-and-privacy)). Its settings button has **Replace track** and **Remove track**.
 - **New song from track** on the Songs list makes a song from an audio file, titled from its name, and opens the player. Paste the lyrics later.
 - Songs from song practice are here too, and **Add lyrics** gives them lyrics without losing their recordings.
 
