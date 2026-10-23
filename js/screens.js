@@ -1022,6 +1022,7 @@ function scrSettings() {
     chev +
     '</button>' +
     COACH.storageRow() +
+    TRACK.storageRow() +
     '<button class="row" data-a="sheet" data-v="persist"><span class="lbl">Storage protection<small>' +
     (PERSIST === true
       ? 'iOS won’t clear the app’s data to free up space'

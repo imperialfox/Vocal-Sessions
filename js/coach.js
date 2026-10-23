@@ -150,6 +150,8 @@ const COACH = (() => {
         stopPlayback();
         rerender();
       }
+      if (typeof TRACK !== 'undefined') TRACK.pause(); // and the song's track (3.19)
+      media();
       loop();
       changed();
     });
@@ -180,20 +182,24 @@ const COACH = (() => {
       if (!U.view && U.tab === 'exercises') rerender();
       else paint();
     });
-    if ('mediaSession' in navigator) {
-      const ms = navigator.mediaSession,
-        on = (a, f) => {
-          try {
-            ms.setActionHandler(a, f);
-          } catch (e) {}
-        };
-      on('play', () => play());
-      on('pause', () => pause());
-      on('seekbackward', (d) => skip(-((d && d.seekOffset) || 10)));
-      on('seekforward', (d) => skip((d && d.seekOffset) || 10));
-      on('seekto', (d) => d && isFinite(d.seekTime) && seek(d.seekTime));
-    }
+    media();
     return el;
+  }
+  // the lock screen's buttons control the video (3.19: set again on each play, since the song's track takes them while
+  // it plays)
+  function media() {
+    if (!('mediaSession' in navigator)) return;
+    const ms = navigator.mediaSession,
+      on = (a, f) => {
+        try {
+          ms.setActionHandler(a, f);
+        } catch (e) {}
+      };
+    on('play', () => play());
+    on('pause', () => pause());
+    on('seekbackward', (d) => skip(-((d && d.seekOffset) || 10)));
+    on('seekforward', (d) => skip((d && d.seekOffset) || 10));
+    on('seekto', (d) => d && isFinite(d.seekTime) && seek(d.seekTime));
   }
   function pitch() {
     if (!el) return;

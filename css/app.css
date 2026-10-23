@@ -38,6 +38,10 @@
   --cR: #1a9bb5;
   --cA: #e8890c;
   --grid: rgba(60, 60, 67, 0.14);
+  /* 3.19 the track player: the loop's orange, the playhead's darker orange, and audio outside the loop */
+  --trk-loop: #ff9500;
+  --trk-head: #c85400;
+  --trk-dim: rgba(60, 60, 67, 0.26);
   --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', system-ui, sans-serif;
   color-scheme: light;
 }
@@ -80,6 +84,9 @@
     --cR: #2f9cc4;
     --cA: #cc800a;
     --grid: rgba(255, 255, 255, 0.12);
+    --trk-loop: #ff9f0a;
+    --trk-head: #ff6b1a;
+    --trk-dim: rgba(235, 235, 245, 0.24);
   }
 }
 
@@ -5261,4 +5268,235 @@ body.cksyncon main {
 }
 .ckpft .lnkbtn:last-child {
   font-weight: 600;
+}
+
+/* ===== 3.19 the track player (js/track.js) ===== */
+.trk {
+  padding-top: 6px;
+}
+.trk.trkload {
+  min-height: 300px;
+}
+/* zoom levels: the selected one outlined in orange */
+.trklv .knob {
+  box-shadow:
+    inset 0 0 0 1.5px var(--trk-loop),
+    0 3px 12px var(--glass-shadow);
+}
+.trklv button {
+  font-size: 14px;
+}
+.trkwave {
+  margin-top: 14px;
+}
+/* Phrase and Line: a strip with a fixed playhead, the waveform moving under it; the jog wheel half off the edge */
+.trkstrip {
+  position: relative;
+  height: 96px;
+  margin: 0 -16px;
+  border-top: 0.5px solid var(--sep);
+  border-bottom: 0.5px solid var(--sep);
+  overflow: hidden;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  outline: none;
+}
+body.reg .trkstrip {
+  margin: 0;
+}
+#trkC {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: calc(100% - 48px);
+  height: 100%;
+  transform-origin: 40% 50%;
+}
+.trkjog {
+  position: absolute;
+  top: 0;
+  right: -48px;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: var(--fill);
+  box-shadow:
+    inset 0 0 0 0.5px var(--sep),
+    inset 0 1px 0 var(--rim2);
+  touch-action: none;
+  cursor: ns-resize;
+}
+.trkjogr {
+  position: absolute;
+  inset: 6px;
+  border-radius: 50%;
+  background: repeating-conic-gradient(var(--fg3) 0 1.5deg, transparent 1.5deg 15deg);
+  -webkit-mask: radial-gradient(circle, transparent 36px, #000 37px);
+  mask: radial-gradient(circle, transparent 36px, #000 37px);
+  opacity: 0.6;
+}
+.trkjogi {
+  position: absolute;
+  left: 12px;
+  top: 38px;
+  width: 12px;
+  height: 20px;
+  fill: none;
+  stroke: var(--fg2);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.trkjog.drag {
+  background: var(--hx);
+}
+/* Section and Song: rows showing the whole song, each a time gutter and that stretch of waveform */
+.trkrows {
+  display: flex;
+  flex-direction: column;
+  touch-action: pan-y;
+}
+.trkrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 44px;
+  padding: 0;
+  text-align: left;
+  border-bottom: 0.5px solid var(--sep);
+}
+.trkrow:first-child {
+  border-top: 0.5px solid var(--sep);
+}
+.trkg {
+  flex: none;
+  width: 36px;
+  font-size: 12px;
+  color: var(--fg2);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.trkrow canvas {
+  flex: 1;
+  min-width: 0;
+  height: 36px;
+}
+.trkinfo {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin: 8px 2px 0;
+}
+.trkt {
+  flex: none;
+  font-size: 15px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.trkhint {
+  flex: 1;
+  min-width: 0;
+  text-align: right;
+  font-size: 12px;
+  color: var(--fg2);
+}
+.trkchips {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+.trkchips .sp {
+  flex: 1;
+}
+.trkfoot {
+  margin-top: 18px;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.trkempty > svg.i {
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+/* the transport, in the dock: back to the loop start, play, loop (orange when on) */
+.trktr {
+  position: relative;
+  width: 236px;
+  max-width: 100%;
+  height: 66px;
+  margin: 0 auto;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 9px;
+}
+.trkb {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--fill);
+  color: var(--fg);
+  transition:
+    transform 0.5s cubic-bezier(0.3, 1.7, 0.45, 1),
+    background 0.2s,
+    color 0.2s;
+}
+.trkb svg.i {
+  width: 20px;
+  height: 20px;
+}
+.trkb.on {
+  background: var(--trk-loop);
+  color: #fff;
+}
+.trkpp {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--fg);
+  color: var(--bg);
+  transition: transform 0.5s cubic-bezier(0.3, 1.7, 0.45, 1);
+}
+.trkpp svg.i {
+  width: 24px;
+  height: 24px;
+  stroke-width: 2.6;
+}
+.trkpp[data-on='false'] svg.i {
+  margin-left: 3px;
+}
+.trkb:active,
+.trkpp:active {
+  transform: scale(0.93);
+  transition-duration: 0.12s;
+}
+.trktile {
+  background: var(--trk-loop);
+}
+.trkadd {
+  flex: none;
+  font-size: 15px;
+  font-weight: 500;
+}
+/* while a track is read */
+.trkbusy {
+  position: fixed;
+  left: 50%;
+  top: calc(14px + env(safe-area-inset-top, 0px));
+  transform: translateX(-50%);
+  z-index: 59;
+  border-radius: 999px;
+  padding: 10px 18px;
+  font-size: 15px;
+  font-weight: 500;
+  white-space: nowrap;
 }

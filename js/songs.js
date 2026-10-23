@@ -34,6 +34,9 @@ const SGI = {
   grip: '<svg class="i" viewBox="0 0 24 24"><path d="M5 8h14M5 12h14M5 16h14"/></svg>',
   down: '<svg class="i" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>',
   wave: '<svg class="i" viewBox="0 0 24 24"><path d="M5 10v4M9 6v12M13 8v8M17 4v16M21 10v4"/></svg>',
+  // 3.19 New song from track: a short waveform with a plus
+  trackNew:
+    '<svg class="i" viewBox="0 0 24 24"><path d="M3 12h1M6.5 9v6M10 6v12M13.5 10v4"/><path d="M19 8v8M15 12h8"/></svg>',
   pen: '<svg class="i" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>',
   check: '<svg class="i" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
   trash:
@@ -214,6 +217,19 @@ function cleanSong(x) {
     const t = cleanTiming(s.timing, s);
     if (t) s.timing = t;
     else delete s.timing;
+  }
+  // 3.19 the track player: the track's name and length (the audio itself stays on the device, never in backups) and
+  // the song's last loop, kept even without the track so a restore loses nothing (cleanLoop in track.js)
+  if ('track' in s) {
+    const k = s.track;
+    if (k && typeof k === 'object' && !Array.isArray(k) && typeof k.dur === 'number' && isFinite(k.dur) && k.dur > 0)
+      s.track = { name: typeof k.name === 'string' ? k.name.slice(0, 200) : '', dur: Math.round(k.dur * 100) / 100 };
+    else delete s.track;
+  }
+  if ('loop' in s) {
+    const l = cleanLoop(s.loop, s.track && s.track.dur);
+    if (l) s.loop = l;
+    else delete s.loop;
   }
   return s;
 }
@@ -640,7 +656,8 @@ function sgp() {
   };
   // 3.18 Song Clock's settings live here too (checked in clock.js): Marks while playing, Blur ahead, Snapping,
   // Stay awake and the pinned icons
-  ['marksPlaying', 'blurAhead', 'snapping', 'stayAwake', 'pins'].forEach((k) => {
+  // (3.19: and the track player's zoom level and speed, checked in track.js)
+  ['marksPlaying', 'blurAhead', 'snapping', 'stayAwake', 'pins', 'trkLevel', 'trkSpeed'].forEach((k) => {
     if (k in o) SGP[k] = o[k];
   });
   return SGP;
@@ -741,6 +758,9 @@ function songListCol() {
         '</b><button class="txtbtn glass tinted" data-a="sgListDone">Done</button></div>'
       : '<div class="sgph"><h1>Songs</h1>' +
         (D.songs.length ? '<button class="txtbtn glass" data-a="sgListEdit">Edit</button>' : '') +
+        '<button class="circ glass" data-a="trkNew" aria-label="New song from track">' +
+        SGI.trackNew +
+        '</button>' +
         '<button class="circ glass" data-a="sgNew" aria-label="New song">' +
         ICON.plus +
         '</button></div>';
@@ -761,7 +781,7 @@ function songListCol() {
       h +
       '<div class="sgempty">' +
       SGI.wave +
-      '<b>Add your first song</b>Paste the lyrics and the sections are labelled for you.<div style="margin-top:18px"><button class="cta ink" data-a="sgNew" style="max-width:260px;margin:0 auto">New song</button></div></div>'
+      '<b>Add your first song</b>Paste the lyrics and the sections are labelled for you.<div style="margin-top:18px"><button class="cta ink" data-a="sgNew" style="max-width:260px;margin:0 auto">New song</button><button class="ghost" data-a="trkNew" style="max-width:260px;margin:4px auto 0">New song from track</button></div></div>'
     );
   return h + '<div id="slist">' + songListHTML() + '</div>';
 }
@@ -1216,6 +1236,9 @@ function songListBar() {
     t: 'Songs',
     r:
       (D.songs.length ? '<button class="txtbtn glass" data-a="sgListEdit">Edit</button>' : '') +
+      '<button class="circ glass" data-a="trkNew" aria-label="New song from track">' +
+      SGI.trackNew +
+      '</button>' +
       '<button class="circ glass" data-a="sgNew" aria-label="New song">' +
       ICON.plus +
       '</button>',
@@ -1342,7 +1365,9 @@ function practiceRow(sg) {
     (n ? n + ' saved take' + (n > 1 ? 's' : '') + ' · record another' : 'Record a take and note how it went') +
     '</small></span>' +
     chev +
-    '</button></div>'
+    '</button>' +
+    TRACK.row(sg) + // 3.19 the track player (track.js)
+    '</div>'
   );
 }
 
@@ -1825,6 +1850,7 @@ async function deleteSongs(ids) {
   D.songs = D.songs.filter((x) => !ids.includes(x.id));
   save();
   for (const t of TAKES.filter((t) => ids.includes(t.songId))) await delTake(t.id);
+  await TRACK.forget(ids); // 3.19: a deleted song's track goes from this device too
   if (X && ids.includes(X.song) && !rec) {
     X.song = null;
     saveDraft();

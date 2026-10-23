@@ -43,6 +43,13 @@ function renderBar() {
     } else $('barT').textContent = 'Coach video';
     $('barL').innerHTML = '<button class="circ glass" data-a="coachBack" aria-label="Back">' + ICON.back + '</button>';
     $('barR').innerHTML = '';
+  } else if (U.view === 'trk') {
+    // 3.19 the track player: Back, the song's title, and the track's settings
+    const b = TRACK.bar();
+    $('barL').innerHTML = b.l;
+    $('barT').innerHTML = b.t;
+    $('barR').innerHTML = b.r;
+    bar.classList.add('always');
   } else if (U.view === 'ex') {
     const e = exById(U.exId);
     $('barT').textContent = e ? e.name : '';
@@ -185,6 +192,12 @@ function renderDock() {
     $('dock').innerHTML = ck;
     return;
   }
+  // 3.19 the track player's transport
+  const tk = TRACK.dock();
+  if (tk) {
+    $('dock').innerHTML = tk;
+    return;
+  }
   // Recall: the hint capsule takes the place of the tab bar
   if (recallOn()) {
     $('dock').innerHTML = hintCapHTML();
@@ -308,6 +321,7 @@ function renderSheet() {
   let h = '';
   if (s && /^sg[A-Z]/.test(s)) h = songSheet(s);
   else if (s === 'ckGrid') h = CLOCK.gridSheet();
+  else if (s && /^trk/.test(s)) h = TRACK.sheet(s);
   else if (s === 'confirmF')
     h = sheetWrap(
       'Confirm foundation',
@@ -1106,6 +1120,8 @@ function render(keepScroll) {
             ? scrSongView()
             : v === 'ckSync' || v === 'ckCheck'
               ? CLOCK.page()
+            : v === 'trk'
+              ? TRACK.page()
             : v
               ? { found: scrFound, rot: scrRot, app: scrApp, song: scrSong }[v]()
               : {
@@ -1123,6 +1139,7 @@ function render(keepScroll) {
     v === 'coach' ||
     v === 'ckSync' ||
     v === 'ckCheck' ||
+    v === 'trk' ||
     (v === 'ex' && !split())
       ? ' narrow'
       : '');
@@ -1136,6 +1153,7 @@ function render(keepScroll) {
   logReveal();
   songsAfter();
   CLOCK.after(); // 3.18 Song Clock: the play-along view, the current line when paused, the wake lock
+  TRACK.after(); // 3.19 the track player: its waveform, and letting go of a deleted song's track
   fwUpdate();
   DET.dockSwap(dk);
   DET.play();

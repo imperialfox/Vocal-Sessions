@@ -4,6 +4,13 @@ import os, json, random, collections
 from harness import with_song_practice, OUT, ready, now, iso, url, APP_PATH, fix
 
 STEPS = int(os.environ.get('VS_FUZZ_STEPS', '200'))
+# 3.19: a short synthetic track (tones with gaps), written once
+TONES = os.path.join(OUT, 'fuzz-tones.wav')
+if not os.path.exists(TONES):
+    import wave, struct, math
+    with wave.open(TONES, 'wb') as _w:
+        _w.setnchannels(1); _w.setsampwidth(2); _w.setframerate(8000)
+        _w.writeframes(b''.join(struct.pack('<h', int(6000 * math.sin(i / 4)) if (i // 4000) % 2 == 0 else 0) for i in range(8000 * 12)))
 SEEDS = [int(s) for s in os.environ.get('VS_FUZZ_SEEDS', '11,12,13,14').split(',')]
 SIZES=[(390,844,True),(375,667,True),(852,393,True),(820,1180,True),(1180,820,True),(1440,900,False),(320,568,True)]
 TEXTS=['','x','  ','<b>bold</b> & "quotes" \'single\'','😀🎤 emoji','A'*300,'-5','0','999999','12.7','#tag','Line\nbreak']
@@ -44,6 +51,12 @@ INV=r"""(()=>{const p=[];const L=document.getElementById('layer');
  if(U.view!=='ckSync'&&(ck.syncing||ck.syncRun))p.push('Sync clock running after leaving Sync');
  if(!document.getElementById('ckpa').hidden&&!(ck.on&&songShown()&&!U.sEdit))p.push('play-along view shown without play-along');
  if(document.documentElement.classList.contains('ckplay')&&document.getElementById('ckpa').hidden)p.push('page scrolling locked without play-along');
+ const tk=TRACK.state();
+ if(FW.shown==='track'&&U.view==='trk'&&U.songId===tk.id)p.push('track window on its own screen');
+ if(tk.playing&&!FW.shown&&!(U.view==='trk'&&U.songId===tk.id)&&!LAUNCH.busy()&&!U.sheet&&!U.clock&&!L.firstElementChild&&!rec&&!U.sFocus&&!typing)p.push('track playing with no way back to it');
+ if(tk.playing&&((COACH.el()&&!COACH.el().paused)||(typeof player!=='undefined'&&player&&!player.paused)||ck.run))p.push('two sounds at once');
+ if(tk.loaded&&!songById(tk.id))p.push('a deleted song’s track still loaded');
+ if(U.view==='trk'&&!U.sheet&&TRACK.has(U.songId)&&tk.loaded&&tk.id===U.songId&&!document.querySelector('#dock .trktr'))p.push('track player without its transport');
  try{JSON.parse(localStorage.getItem('vocalTracker'))}catch(e){p.push('saved data unreadable')}
  const sumOk=Object.keys(D.months).length>=0;
  return p;})()"""
@@ -52,11 +65,13 @@ VIS=r"""(()=>{const L=document.getElementById('layer');const root=L.querySelecto
    const cx=Math.min(innerWidth-1,Math.max(0,r.left+r.width/2)),cy=Math.min(innerHeight-1,Math.max(0,r.top+r.height/2));const t=document.elementFromPoint(cx,cy);return t&&(t===e||e.contains(t)||t.closest('[data-a]')===e);});
  return els.map((e,i)=>{e.setAttribute('data-fz',i);return {i,a:e.dataset.a||e.tagName.toLowerCase(),v:e.dataset.v||'',k:e.dataset.k||'',id:e.id||'',type:e.type||''};});})()"""
 # no microphone here: Record shows on a selected section, but recording itself is covered by test_recording and test_sections
-SKIP = {'importPick', 'checkPick', 'exportSave', 'saveReadme', 'rec', 'sgRec', 'coachAdd', 'coachFS'}
+SKIP = {'importPick', 'checkPick', 'exportSave', 'saveReadme', 'rec', 'sgRec', 'coachAdd', 'coachFS', 'trkAdd', 'trkNew', 'trkReplace'}
 HEAVY = ('sgOpen','sgSec','sgTakes','playTake','star','sgMode','sgHint','sgHMenu','sgSetHint','sgRMenu','sgOrder','sgAnywhere','sgEdit','sgWord','sgMark','sgEditMode','sgNew','sgSplit','sgSave','sgSearch','sgListEdit','sgToggle','sgCue','sgUnlink','start','songStart','resume','cta','confirmF','tog','rlv','flv','wTog','saveHow','skipHow','editSess','saveEdit','exNote','takeNote','addWord','saveWord',
          'openNote','longOk','pauseToggle','fwOpen','fwToggle','clock','sheet','calDay','calSession','eflv','input','textarea',
          # 3.18 Song Clock
-         'ckGrid','ckTile','ckPad','ckLine','ckPP','ckNudge','ckRedo','ckSyncPause','ckSyncUndo','ckFinish','ckSyncX','ckCheckDone','ckSyncAgain','ckLen','ckPickSet','ckPencil','ckHeadDone')
+         'ckGrid','ckTile','ckPad','ckLine','ckPP','ckNudge','ckRedo','ckSyncPause','ckSyncUndo','ckFinish','ckSyncX','ckCheckDone','ckSyncAgain','ckLen','ckPickSet','ckPencil','ckHeadDone',
+         # 3.19 the track player
+         'trkOpen','trkPP','trkLoop','trkSet','trkLevel','trkRow','trkToStart','trkSpeed','trkMenu','trkBack')
 
 def run(b, t):
     found = collections.OrderedDict()
@@ -84,6 +99,10 @@ def run(b, t):
         pg.set_input_files('#coachIn', fix('coach-chapters.webm'))
         pg.wait_for_function("COACH.has()&&!COACH.busy()", timeout=15000)
         pg.wait_for_timeout(200)
+        # 3.19: a short track on the first song, so the player, its doors and its window are in the random taps too
+        pg.evaluate("TRACK.expect('g_1')"); pg.set_input_files('#trackIn', TONES)
+        pg.wait_for_function("TRACK.has('g_1')&&!TRACK.busy()", timeout=15000)
+        pg.evaluate("songById('g_1').loop={start:2,end:4,on:true};save();go(()=>{U.view=null;U.tab='today'})"); pg.wait_for_timeout(200)
         trace = collections.deque(maxlen=20); trace.append(f'seed {seed}, {w}x{h}')
         for step in range(STEPS):
             r = R.random()

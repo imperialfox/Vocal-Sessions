@@ -20,7 +20,7 @@ setTimeout(LAUNCH.finish, LAUNCH.capWait());
 checkPersist(true).then(() => {
   if (U.tab === 'settings' && !U.view) rerender();
 });
-Promise.all([refreshTakes(), refreshUndo(), COACH.load()])
+Promise.all([refreshTakes(), refreshUndo(), COACH.load(), TRACK.load()])
   .then(rerender)
   .catch(() => {})
   .then(() => new Promise((r) => setTimeout(r, LAUNCH.minWait())))

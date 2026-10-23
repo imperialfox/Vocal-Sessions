@@ -109,8 +109,8 @@ def run(b, t):
     # ---------- the ⋯ controls grid ----------
     pg.click('[data-a=ckGrid]'); pg.wait_for_timeout(300)
     labels = pg.evaluate("[...document.querySelectorAll('.sheet .cktile .cktl2')].map(e=>e.childNodes[0].textContent)")
-    ok(labels == ['Timing', 'Check timing', 'Key', 'Marks while playing', 'Blur ahead', 'Snapping', 'Stay awake', 'Sync again', 'Lyrics'],
-       'the grid has the nine tiles in order: ' + ', '.join(labels))
+    ok(labels == ['Timing', 'Check timing', 'Key', 'Marks while playing', 'Blur ahead', 'Snapping', 'Stay awake', 'Sync again', 'Lyrics', 'Add track'],
+       'the grid has the ten tiles in order (3.19: Track last): ' + ', '.join(labels))
     on = pg.evaluate("[...document.querySelectorAll('.sheet .cktile.on')].map(e=>e.dataset.v)")
     ok(on == ['marks', 'blur', 'snap', 'awake'], f'blue means on: Marks while playing, Blur ahead, Snapping and Stay awake start on ({on})')
     ok(pg.inner_text('.sheet [data-v=marks] small') == 'Breaths only', 'Marks while playing shows its value, Breaths only by default')
@@ -321,7 +321,7 @@ def run(b, t):
     ok(fk == 'Playing along' and __import__('re').match(r'^\d:\d\d · (Verse|Chorus) \d$', ft), f'it says Playing along, the time and the section ({fk} / {ft})')
     ok(not pg.evaluate("CLOCK.state().wake") and pg.evaluate("CLOCK.state().run"), 'the clock keeps going, but the screen may sleep away from the song')
     order = pg.evaluate("FW_KINDS.map(k=>k.id)")
-    ok(order == ['take', 'video', 'clock', 'session'], f'take → video → playing along → session ({order})')
+    ok(order == ['take', 'video', 'track', 'clock', 'session'], f'take → video → playing along → session ({order})')
     t.shot(pg, 'window')
     pg.click('#fw [data-a=fwToggle]'); pg.wait_for_timeout(200)
     ok(not pg.evaluate("CLOCK.state().run") and 'Paused' in pg.inner_text('#fw .fwt'), 'its button pauses')

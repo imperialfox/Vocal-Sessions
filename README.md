@@ -2,9 +2,9 @@
 
 A mobile-first companion for structured vocal practice, styled like a native iOS app. It's a single HTML file with no install, no backend and no account. It's designed to live on your iPhone Home Screen.
 
-![Version 3.18](https://img.shields.io/badge/version-3.18-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
+![Version 3.19](https://img.shields.io/badge/version-3.19-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
 
-**Current version: 3.18 · 22 Oct 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
+**Current version: 3.19 · 23 Oct 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
 
 ---
 
@@ -20,7 +20,7 @@ It guides you through a three-step practice session, keeps a history of every se
 
 There's also **Song practice**, for when you just want to sing a song and record it. Its clock starts with your first take, and it's kept separate from the focused stats above.
 
-And **Songs**, for learning a song: paste the lyrics, and they're split into labelled sections you can mark up with breaths, runs, pitch, vowels, notes and cues. **Song Clock** times the lyrics so you can sing along with them.
+And **Songs**, for learning a song: paste the lyrics, and they're split into labelled sections you can mark up with breaths, runs, pitch, vowels, notes and cues. **Song Clock** times the lyrics so you can sing along with them, and the **track player** loops a phrase of the song's real track, slowly, with the pitch kept.
 
 ---
 
@@ -64,7 +64,7 @@ And **Songs**, for learning a song: paste the lyrics, and they're split into lab
   - **Search** titles, artists and lyrics. It ignores case, punctuation and accents, finds words in any order, even across lines, and forgives a slipped letter in longer words. Lyric matches show the line with the words highlighted.
 - **A song:** one continuous page, one phrase per line, with a small label above each section, repeats numbered (Chorus 1, Chorus 2) and linked sections marked with a chain.
   - **Tap a section to focus it:** a soft patch appears behind it with **Record**, its takes and **Marks** (which opens Annotate there). The rest of the song dims and softly blurs with distance, while labels stay sharp. Tap it again, or away from the lyrics, to clear it. With Reduce Motion on, the rest only dims.
-  - **The header:** the artist and the song's length ("Artist · 3:58"; tap the length to change it on clock-style wheels), up to three pinned buttons (Timing and Key to start with), and **⋯** for **Song controls**: Timing, Check timing, Key, Marks while playing, Blur ahead, Snapping, Stay awake, Sync again and Lyrics. Blue means on; **Edit** chooses what's pinned.
+  - **The header:** the artist and the song's length ("Artist · 3:58"; tap the length to change it on clock-style wheels), up to three pinned buttons (Timing and Key to start with), and **⋯** for **Song controls**: Timing, Check timing, Key, Marks while playing, Blur ahead, Snapping, Stay awake, Sync again, Lyrics and Track. Blue means on; **Edit** chooses what's pinned.
   - **Practise** shows every mark; **Perform** hides the technical ones and shows only the expressive cues. **Key** explains the marks.
   - **Recall** hides the lyrics a step at a time to learn them by heart: Full lyrics, Word shapes, First words, Cues only and Blank. Hidden letters become soft pills in place, so nothing moves, and marks stay visible. Tap a line to peek, or hold it to keep it showing. Tap a section's label to focus it. Work from the start, from the end, or start anywhere.
   - **Song Clock** (Timing):
@@ -77,6 +77,13 @@ And **Songs**, for learning a song: paste the lyrics, and they're split into lab
   - **Lyrics** edits the words. Marked words are highlighted, marks follow their words, and a mark whose word changed is flagged to check. One whose word was removed waits at the top of its section to be moved or removed.
   - **Record a section:** in Practise or Perform, focus a section, then **Record**. The screen stays on that section while it records, with a recording bar at the bottom (time, level meter, Stop). Stopping opens the takes for that section over the song: the new take, every starred one, and the latest and first. Each repeat keeps its own takes, even when linked.
   - **Song practice** at the bottom starts song practice with that song picked.
+  - **Track** (beside it) adds the song's audio from Files, then opens the **track player**:
+    - **Zoom:** Phrase and Line are a strip moving under a fixed playhead, with a jog wheel on the right (drag slowly for precision, quickly to skim). Section and Song show the whole song in rows; tap a row to zoom into Line view there. Tap a level or pinch.
+    - **Loop:** **Set start** and **Set end** at the playhead, or drag the orange handles (they swap if you drag one past the other). Audio outside the loop is dimmed; double-tap outside it to clear it. The transport has back to the loop start, Play and Loop.
+    - **Speed:** 0.5×, 0.75× or 1×, with the pitch kept. The zoom level and speed are remembered on this device; the loop is saved with the song.
+    - On a Mac or with a keyboard: Space plays, ← and → move a second (Shift: five), I and O set the start and end.
+    - MP3, M4A and WAV from Files work; songs from Apple Music can't be added. The track stays on this device and isn't in backups (see [Data and privacy](#data-and-privacy)). Its settings button has **Replace track** and **Remove track**.
+- **New song from track** on the Songs list makes a song from an audio file, titled from its name, and opens the player. Paste the lyrics later.
 - Songs from song practice are here too, and **Add lyrics** gives them lyrics without losing their recordings.
 
 **Exercises**
@@ -115,7 +122,8 @@ And **Songs**, for learning a song: paste the lyrics, and they're split into lab
 - **Floating window:** leave a session, or switch away while a take is playing, and a small window stays on every other screen.
   - A session shows what's running (for example "Focused session · Rotation"), its live time and a pause button. Paused, it says Paused and the time stops.
   - A take shows "Playing · Chorus 2" (or the song's name for song practice), its time and progress, and a pause button. It goes when the take ends.
-  - If both are going, the playing take is shown.
+  - A song's track shows "Playing · song title", its time and progress, and a pause button. Pause it on the player itself and it doesn't follow you out.
+  - If more than one is going, a take wins, then the coach video, the track, play-along and a session, in that order.
   - Tap it to go back to exactly where you were: the same step at the same scroll, or the song with that section's takes open.
   - Drag it to any corner and it snaps there. It remembers the corner on this device.
   - It hides on its own screen, while a sheet is open and while you're recording.
@@ -214,7 +222,7 @@ A small service worker (`sw.js`) keeps a copy of the app on your device. When yo
 
 ## Data and privacy
 
-- Session data and songs are stored in `localStorage`, and recordings and the coach video in IndexedDB, all on your device only. The coach video is never in backups. Lyrics you paste stay on your device and in your backups; they're never part of the public app.
+- Session data and songs are stored in `localStorage`, and recordings, the coach video and song tracks in IndexedDB, all on your device only. The coach video and song tracks are never in backups: a restored song keeps its loop and timings, and says **Track not on this device** until you add the same file again. Lyrics you paste stay on your device and in your backups; they're never part of the public app.
 - There's no server, analytics or tracking.
 - Backups are plain JSON files that you keep. See [Backups](#backups).
 

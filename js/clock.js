@@ -11,7 +11,7 @@ const CK_MIN = 0.1; // a line lasts at least this long, and starts at least this
 const CK_DOT = 1.2; // a gap after a line longer than this gets an automatic breath dot
 const CK_GAP = 0.35; // the gap left between lines spread evenly
 const CK_MAXLEN = 20 * 60 + 59; // the song length picker goes to 20:59
-const CK_TILES = ['timing', 'check', 'key', 'marks', 'blur', 'snap', 'awake', 'sync', 'lyrics'];
+const CK_TILES = ['timing', 'check', 'key', 'marks', 'blur', 'snap', 'awake', 'sync', 'lyrics', 'track']; // 3.19: track
 const CK_MP = ['off', 'breaths', 'active']; // Marks while playing ('active' arrives with Marks 1)
 
 // what's on screen now; nothing here is saved
@@ -429,6 +429,7 @@ function ckPlay(i) {
     if (M.T[i]) ckSet(CK.pc, M.T[i][0]);
   }
   if (typeof COACH !== 'undefined') COACH.pause(); // one sound at a time
+  if (typeof TRACK !== 'undefined') TRACK.pause();
   CK.ever = true;
   ckGo(CK.pc);
   CK.lastA = -2;
@@ -653,6 +654,7 @@ function ckStartSync(sg, keepRet) {
     ckHalt(CK.pc);
   }
   if (typeof COACH !== 'undefined') COACH.pause();
+  if (typeof TRACK !== 'undefined') TRACK.pause();
   const n = sg.order.length;
   CK.P = {
     id: sg.id,
@@ -1043,6 +1045,7 @@ const CKI = {
     '<svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6L7 7M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4"/></svg>',
   sync: '<svg class="i" viewBox="0 0 24 24"><path d="M19.5 12a7.5 7.5 0 11-2.3-5.4"/><path d="M19.5 4v4.5H15"/></svg>',
   lyrics: '<svg class="i" viewBox="0 0 24 24"><path d="M4 6h16M4 11h16M4 16h9"/><path d="M16.5 16.5l3 3-3 .6.6-3z"/></svg>',
+  track: '<svg class="i" viewBox="0 0 24 24"><path d="M3.5 12h1M7 8.5v7M10.5 5v14M14 9v6M17.5 6.5v11M21 10.5v3"/></svg>',
 };
 const CK_MPNAME = { off: 'Off', breaths: 'Breaths only', active: 'Active layer' };
 // each tile: its label, icon, whether it's on (blue), and its value line where it has one
@@ -1066,6 +1069,8 @@ function ckTile(id, sg) {
       awake: { l: 'Stay awake', ic: CKI.awake, toggle: true, on: p.stayAwake },
       sync: { l: 'Sync again', ic: CKI.sync },
       lyrics: { l: 'Lyrics', ic: CKI.lyrics },
+      // 3.19 the track player: opens it, or adds the song's track
+      track: { l: sg && TRACK.has(sg.id) ? 'Track' : 'Add track', ic: CKI.track },
     }[id] || { l: id, ic: '' }
   );
 }
@@ -1170,6 +1175,12 @@ function ckTileAct(id, fromGrid) {
       if (!sg || !hasLyrics(sg)) return;
       close();
       return ckLyricsEdit();
+    case 'track':
+      if (!sg) return;
+      close();
+      if (TRACK.has(sg.id)) return TRACK.open(sg.id);
+      rerender();
+      return TRACK.pick(sg.id);
   }
 }
 

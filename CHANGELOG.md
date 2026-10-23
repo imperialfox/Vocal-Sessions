@@ -9,6 +9,24 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.19 · 23 Oct 2026
+*Track player: loop a phrase of the real song, slowly*
+<!-- area: songs -->
+
+**A song's track**
+- New: add a song's audio from Files, from the Track row in the song's Practice group, the Add track tile in Song controls, or New song from track on the Songs list (it makes the song, titled from the file name, and you can paste the lyrics later).
+- MP3, M4A and WAV all work. Songs from Apple Music can't be added, and a file that won't open says so.
+- The track stays on this phone and isn't included in backups, so they stay small. A restored song keeps its loop and timings and says "Track not on this device", with Add track to put the same file back.
+- The waveform is read once, when you add the track, so the player opens straight away after that.
+
+**The player**
+- Four zoom levels: Phrase and Line are a strip that moves under a fixed playhead; Section and Song show the whole song in rows. Tap a level or pinch, and tap a row to zoom into Line view there.
+- The jog wheel on the right: drag slowly for precision, quickly to skim.
+- Set start and Set end at the playhead, or drag the orange handles. Audio outside the loop is dimmed, and a double-tap outside it clears it.
+- Speed 0.5×, 0.75× or 1×, with the pitch kept, so it stays in key when slowed.
+- The loop is saved with the song. The zoom level and speed are remembered on this phone.
+- Leave while it plays and a small window says "Playing · song title". Only one thing plays at a time: the track, a take, the coach video or play-along.
+
 ## 3.18 · 22 Oct 2026
 *Song Clock: sync a song and sing along*
 <!-- area: songs -->
