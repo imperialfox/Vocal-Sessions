@@ -178,7 +178,7 @@ def run(b, t):
     pg = t.page(b, data=with_song_practice())
     pg.evaluate("""(async()=>{const b=new Blob([new Uint8Array(3000).map((_,i)=>i%251)],{type:'audio/mp4'});
       for(const [id,o] of [['k1','oA'],['k2',null]])await putTake(Object.assign({id,songId:'g_1',created:Date.now()-864e5,len:12,size:b.size,type:'audio/mp4',blob:b,star:false},o?{o}:{}));
-      await refreshTakes();U.tab='settings';render();})()"""); pg.wait_for_timeout(300)
+      await refreshTakes();U.tab='settings';U.view='set';U.setPg='backup';render();})()"""); pg.wait_for_timeout(300)
     pg.click('[data-a=exportPrep]'); pg.wait_for_function("U.sheet==='exportReady'", timeout=10000)
     ok(pg.locator('[data-a=exportNoRec][aria-checked=false]').count() == 1, 'backups include recordings unless you exclude them')
     with pg.expect_download(timeout=5000) as dl: pg.click('[data-a=exportSave]')
@@ -215,7 +215,7 @@ def run(b, t):
     ok(pg.evaluate("TAKES.length") == 2 and pg.evaluate("TAKES.every(t=>t.blob&&t.blob.size>0)") and pg.evaluate("D.sessions.length") == 3,
        'restoring it keeps this device’s recordings')
     ok('recordings were kept' in pg.inner_text('.toast'), 'and says so')
-    pg.evaluate("U.tab='settings';render()"); pg.click('[data-a=sheet][data-v=undoRestore]'); pg.wait_for_timeout(300)
+    pg.evaluate("U.tab='settings';U.view='set';U.setPg='backup';render()"); pg.click('[data-a=sheet][data-v=undoRestore]'); pg.wait_for_timeout(300)
     ok('didn’t include recordings' in pg.text_content('.sheet'), 'the undo sheet says the recordings were kept')
     pg.click('[data-a=undoYes]'); pg.wait_for_function("U.sheet===null", timeout=10000); pg.wait_for_timeout(300)
     ok(pg.evaluate("TAKES.length") == 2 and pg.evaluate("D.sessions.length") == 2, 'undoing it leaves the recordings alone')

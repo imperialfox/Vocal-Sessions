@@ -4,7 +4,8 @@
      Each is a damping ratio and a frequency in Hz, turned into a CSS linear() easing and a duration.
      CSS reads them as --ease-gentle / --dur-gentle and so on; JS uses MOTION.animate().
    - Stagger: words 30 ms apart, rows 45 ms, chart bars 30 ms.
-   - Reduce Motion (the iOS setting): no movement or blur, just short fades or nothing.
+   - Reduce Motion (the iOS setting, or forced on or off in Settings › Accessibility): no movement or blur, just short
+     fades or nothing. <html> gets .motion-reduced, which is what the stylesheet follows (3.21; it used a media query).
    - Speed: 1 normally, 4 for slow motion while tuning, 0 for motion off (the tests use 0).
      Set on this device with MOTION.setSpeed(n); kept in localStorage 'vocalMotion', never in backups.
    - Distance blur: the dim-and-blur used around a focused part of a song (and later Song Clock's Blur ahead). */
@@ -43,7 +44,18 @@ const MOTION = (() => {
     if (s !== null && !isNaN(+s)) speed = Math.max(0, Math.min(8, +s));
   } catch (e) {}
 
-  const reduced = () => !!(mq && mq.matches);
+  // Settings › Accessibility › Reduce motion (3.21): 'on' or 'off' in localStorage 'vocalReduce', otherwise the system's
+  const forced = () => {
+    try {
+      return localStorage.getItem('vocalReduce');
+    } catch (e) {
+      return null;
+    }
+  };
+  const reduced = () => {
+    const f = forced();
+    return f === 'on' ? true : f === 'off' ? false : !!(mq && mq.matches);
+  };
   const on = () => speed > 0 && !reduced();
   const dur = (name) => (C[name] ? C[name].ms : C.gentle.ms) * speed;
   const ease = (name) => (C[name] || C.gentle).ease;

@@ -9,6 +9,26 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.21 · 24 Oct 2026
+*Settings, like the iPhone's: a row for each, a page for each*
+<!-- area: look -->
+
+**The Settings list**
+- Settings is now a list of rows, each with its own icon, like the iPhone's Settings app: Backup, Storage, Recall, Coach video, Accessibility, Changelog and View on GitHub. Tap a row to open its page; it zooms open from the row, and Back (or a swipe from anywhere) shrinks it back.
+- Each row shows where things stand on the right: when you last backed up (red after two weeks, or if you never have), the space used, the peek length, whether the coach video is added, and the Reduce motion setting.
+- The two resets stay at the bottom of the list, in red, and still ask first.
+- At the very bottom: the app's icon, name, version and release date. Tap it for the Changelog.
+
+**Backup and Storage pages**
+- Both open with a card explaining what the page is for, with a big icon.
+- Backup has Export, Import, Check a backup and Undo last restore, when you last backed up, and Backup history, Where backups go and Save a read-me file. Undoing a restore brings you back here.
+- Storage shows one bar split by what's using the space (recordings, song tracks, the coach video, and sessions and songs), then the same rows as before: Recordings, Review old takes, Song tracks, Coach video and Storage protection.
+
+**Accessibility**
+- New page. **Reduce motion:** Match iPhone (the default), On or Off. On swaps zooms and slides for short fades even if your iPhone's Reduce Motion is off; Off keeps the motion even if it's on.
+- **Slow motion** plays every animation four times slower, to check how it feels.
+- Both are kept on this device only and are never in backups.
+
 ## 3.20.1 · 23 Oct 2026
 *Song Clock: pausing keeps your line in place*
 <!-- area: fixes -->

@@ -580,7 +580,7 @@ def keep_all(b, t):
     pg.evaluate("([sid,a,b])=>{const s=songById(sid);s.takeNotes={[a]:{name:'Named'},[b]:{comments:[{t:1,text:'A comment'}]}};save()}", [sid, ids[3], ids[1]])
     pg.evaluate("(async()=>{const t=TAKES[2];t.star=true;await putTake(t);await refreshTakes()})()"); pg.wait_for_timeout(200)
     # Settings › Storage
-    pg.evaluate("U.sheet=null;U.sd={};go(()=>{U.tab='settings';U.view=null})"); pg.wait_for_timeout(300)
+    pg.evaluate("U.sheet=null;U.sd={};go(()=>{U.tab='settings';U.view='set';U.setPg='storage'})"); pg.wait_for_timeout(300)
     row = pg.inner_text('#app [data-a=sheet][data-v=storage]')
     ok('Recordings' in row and '20 takes' in row and 'MB' in row, 'Settings › Storage: “Recordings · 20 takes · x MB”: ' + row.replace('\n', ' '))
     pg.click('#app [data-a=tkReview]'); pg.wait_for_timeout(300)
@@ -594,7 +594,7 @@ def keep_all(b, t):
     ok(pg.evaluate("U.sheet") == 'sgReview' and pg.locator('.sheet .tkrv').count() == 17 and pg.evaluate("TAKES.length") == 19, 'and the list is back, one shorter')
     pg.evaluate("closeSheet()"); pg.wait_for_timeout(200)
     # backups: size beside Exclude recordings; names and comments always in
-    pg.click('[data-a=exportPrep]'); pg.wait_for_function("U.sheet==='exportReady'", timeout=15000); pg.wait_for_timeout(200)
+    pg.evaluate("SET.open('backup')"); pg.wait_for_timeout(200); pg.click('[data-a=exportPrep]'); pg.wait_for_function("U.sheet==='exportReady'", timeout=15000); pg.wait_for_timeout(200)
     txt = pg.inner_text('.sheet [data-a=exportNoRec]')
     ok('Without recordings: under 1 MB' in txt and 'With them:' in txt, 'the export sheet shows the expected size beside Exclude recordings: ' + txt.replace('\n', ' '))
     with pg.expect_download(timeout=8000) as dl: pg.click('[data-a=exportSave]')

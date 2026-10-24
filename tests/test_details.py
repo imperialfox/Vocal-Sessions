@@ -232,7 +232,7 @@ def sheets(b, t):
     ok = t.ok
     pg = page(b, t)
     quiet(pg)
-    pg.evaluate("go(()=>{U.tab='settings'})"); quiet(pg)
+    pg.evaluate("go(()=>{U.tab='settings';U.view='set';U.setPg='backup'})"); quiet(pg)
     pg.evaluate("window.__sw=null;const f=DET.sheetSwap;DET.sheetSwap=h=>{window.__sw=h;return f(h)}")
     pg.click('[data-a=exportPrep]')
     pg.wait_for_function("U.sheet==='exportReady'", timeout=20000)

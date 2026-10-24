@@ -44,7 +44,7 @@ def run(b, t):
     t.shot(pg, 'every-change', full_page=True)
     pg.click('[data-a=logBack]'); pg.wait_for_timeout(300)
     ok(pg.evaluate("U.view") is None and pg.evaluate("U.tab") == 'settings', 'back returns to Settings')
-    pg.click('main button.foot[data-a=openLog]'); pg.wait_for_timeout(600); ok(pg.evaluate("U.view") == 'log', 'the version line opens it too')
+    pg.click('main button.setfoot[data-a=openLog]'); pg.wait_for_timeout(600); ok(pg.evaluate("U.view") == 'log', 'the app’s icon and version at the bottom open it too')
     pg.context.close()
 
     # a missing file shows a way to retry instead of breaking

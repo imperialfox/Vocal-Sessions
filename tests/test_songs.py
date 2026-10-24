@@ -261,7 +261,7 @@ def run(b, t):
        'the tab bar is Today, Progress, Songs, Exercises (3.17)')
 
     # backup round trip
-    pg.evaluate("U.tab='settings';render()")
+    pg.evaluate("U.tab='settings';U.view='set';U.setPg='backup';render()")
     with pg.expect_download() as dl:
         pg.click('[data-a=exportPrep]'); pg.wait_for_function("U.sheet==='exportReady'", timeout=8000); pg.click('[data-a=exportSave]')
     path = os.path.join(OUT, 'songs-backup.json'); dl.value.save_as(path)

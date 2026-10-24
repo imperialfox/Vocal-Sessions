@@ -44,7 +44,8 @@ def near(pg, sec, tol=2.0):
 
 
 def settings(pg):
-    pg.evaluate("go(()=>{U.tab='settings';U.view=null})"); pg.wait_for_timeout(200)
+    # Settings › Coach video, its own page since 3.21
+    pg.evaluate("go(()=>{U.tab='settings';U.view='set';U.setPg='coach'})"); pg.wait_for_timeout(200)
     return pg.inner_text('#app')
 
 
@@ -58,7 +59,7 @@ def storage(b, t):
     row = pg.locator('#app [data-a=coachSettings]')
     ok(row.count() == 1 and 'Add coach video' in row.inner_text(), 'with no video, the Exercises row reads Add coach video')
     row.click(); pg.wait_for_timeout(300)
-    ok(pg.evaluate("U.tab") == 'settings' and not pg.evaluate("U.view"), 'and opens Settings')
+    ok(pg.evaluate("U.tab+'/'+U.view+'/'+U.setPg") == 'settings/set/coach', 'and opens Settings › Coach video')
     pg.evaluate("go(()=>{U.tab='exercises';U.view='coach'})"); pg.wait_for_timeout(200)
     ok(pg.locator('#app .empty').count() == 1 and pg.locator('#app [data-a=coachSettings]').count() == 1,
        'the player page with no video shows a short empty state with Add coach video…')
@@ -68,7 +69,9 @@ def storage(b, t):
     ok('coach-chapters.webm' in txt and '12 exercises · 0.1 MB' in txt, 'once added, Settings shows its name, 12 exercises and its size')
     ok(pg.locator('#app [data-a=coachAdd] .lbl').inner_text().strip() == 'Replace video…' and pg.locator('#app [data-v=coachDel]').count() == 1,
        'with Replace video… and Remove video')
-    ok('Coach video' in pg.locator('#app .grp').filter(has_text='Recordings').inner_text(), 'the Storage group counts the video')
+    pg.evaluate("go(()=>{U.tab='settings';U.view='set';U.setPg='storage'})"); pg.wait_for_timeout(200)
+    ok('Coach video' in pg.locator('#app .grp:not(.setuse)').filter(has_text='Recordings').inner_text(), 'Settings › Storage counts the video')
+    settings(pg)
     ok(pg.evaluate("COACH.meta().chapters") and abs(pg.evaluate("COACH.meta().dur") - 4773) < 1, 'a 79:33 video gets the chapters')
     t.shot(pg, 'settings', full_page=True)
 
@@ -105,7 +108,7 @@ def backups(b, t):
     ok = t.ok
     pg = t.page(b)
     settings(pg); add(pg)
-    pg.click('[data-a=exportPrep]'); pg.wait_for_function("U.sheet==='exportReady'", timeout=15000)
+    pg.evaluate("SET.open('backup')"); pg.wait_for_timeout(200); pg.click('[data-a=exportPrep]'); pg.wait_for_function("U.sheet==='exportReady'", timeout=15000)
     txt = pg.evaluate("pendingExport.file.text()")
     ok('coach-chapters' not in txt and 'video/webm' not in txt and len(txt) < 60000, 'a backup doesn’t contain the coach video')
     pg.click('.xbtn'); pg.wait_for_timeout(300)
@@ -115,7 +118,7 @@ def backups(b, t):
     fc.value.set_files(p); pg.wait_for_function("U.sheet==='bkReport'", timeout=10000); pg.wait_for_timeout(200)
     pg.click('[data-a=importYes]'); pg.wait_for_function("U.sheet===null", timeout=10000); pg.wait_for_timeout(400)
     ok(pg.evaluate("COACH.has()&&COACH.chapters()"), 'restoring a backup leaves the stored video alone')
-    settings(pg)
+    pg.evaluate("go(()=>{U.tab='settings';U.view=null})"); pg.wait_for_timeout(200)  # the resets are on the main list
     pg.click('[data-a=sheet][data-v=resetAll]'); pg.wait_for_timeout(250)
     pg.click('.sheet [data-a=resetAll]'); pg.wait_for_function("!D.sessions.length", timeout=5000); pg.wait_for_timeout(300)
     ok(pg.evaluate("COACH.has()"), 'Reset all data leaves the coach video (only Remove removes it)')

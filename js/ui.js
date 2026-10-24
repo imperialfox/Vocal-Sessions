@@ -35,6 +35,15 @@ function renderBar() {
     } else $('barT').textContent = 'Changelog';
     $('barL').innerHTML = '<button class="circ glass" data-a="logBack" aria-label="Back">' + ICON.back + '</button>';
     $('barR').innerHTML = '';
+  } else if (U.view === 'set') {
+    // 3.21 a Settings page: Back to the main list
+    if (tabsMode) {
+      bar.classList.add('tabsmode');
+      $('barT').classList.add('tabs');
+      $('barT').innerHTML = topTabs();
+    } else $('barT').textContent = SET.title();
+    $('barL').innerHTML = '<button class="circ glass" data-a="setPgBack" aria-label="Back to Settings">' + ICON.back + '</button>';
+    $('barR').innerHTML = '';
   } else if (U.view === 'coach') {
     if (tabsMode) {
       bar.classList.add('tabsmode');
@@ -1119,6 +1128,8 @@ function render(keepScroll) {
   $('app').innerHTML =
     v === 'log'
       ? scrLog()
+      : v === 'set'
+        ? SET.page()
       : v === 'coach'
         ? COACH.page()
       : v === 'ex'
@@ -1144,6 +1155,7 @@ function render(keepScroll) {
     (isFlow(v) ? 'flow' : 'tabv') +
     (isFlow(v) ||
     (!v && U.tab === 'settings') ||
+    v === 'set' ||
     v === 'log' ||
     v === 'coach' ||
     v === 'ckSync' ||

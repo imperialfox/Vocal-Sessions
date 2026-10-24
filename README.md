@@ -2,9 +2,9 @@
 
 A mobile-first companion for structured vocal practice, styled like a native iOS app. It's a single HTML file with no install, no backend and no account. It's designed to live on your iPhone Home Screen.
 
-![Version 3.20.1](https://img.shields.io/badge/version-3.20.1-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
+![Version 3.21](https://img.shields.io/badge/version-3.21-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
 
-**Current version: 3.20.1 · 23 Oct 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
+**Current version: 3.21 · 24 Oct 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
 
 ---
 
@@ -98,18 +98,22 @@ And **Songs**, for learning a song: paste the lyrics, and they're split into lab
 - Add your own exercises (with an optional description). Swipe left to delete them.
 
 
-**Settings** (the gear on Today)
-- **Export backup:** one file with everything (sessions, minutes, exercises, songs with their lyrics and marks, and recordings), checked before you save it. **Exclude recordings** makes a smaller file without them (the sheet shows the size either way); restoring it keeps the device's recordings. Takes' names and comments are always included. Keep it in iCloud Drive › Vocal Sessions › Backups.
-- **Import backup:** checks the file and compares it with what's on this device, then replaces this device's data after you confirm.
-- **Check a backup:** tells you whether a file is complete and what's inside, without changing anything.
-- **Undo last restore:** for 30 days after a restore.
-- **Backup history**, **Where backups go** (a set-up guide) and **Save a read-me file**
-- When you last backed up, which turns red after two weeks
+**Settings** (the gear on Today) works like the iPhone's Settings app: a list of rows, each with its own icon, opening its own page. Each row shows where things stand on the right (when you last backed up, space used, and so on).
+- **Backup** (a page with a short explanation at the top):
+  - **Export backup:** one file with everything (sessions, minutes, exercises, songs with their lyrics and marks, and recordings), checked before you save it. **Exclude recordings** makes a smaller file without them (the sheet shows the size either way); restoring it keeps the device's recordings. Takes' names and comments are always included. Keep it in iCloud Drive › Vocal Sessions › Backups.
+  - **Import backup:** checks the file and compares it with what's on this device, then replaces this device's data after you confirm.
+  - **Check a backup:** tells you whether a file is complete and what's inside, without changing anything.
+  - **Undo last restore:** for 30 days after a restore.
+  - When you last backed up, which turns red after two weeks (on the Settings list too)
+  - **Backup history**, **Where backups go** (a set-up guide) and **Save a read-me file**
+- **Storage** (a page with a short explanation at the top): one bar showing what's using space (recordings, song tracks, the coach video, and sessions and songs), then recordings (how many takes and how much space), **Review old takes** (unstarred takes with no comments, oldest first, to clear by hand: nothing is ever removed for you), and **Storage protection**, which shows whether iOS has agreed not to clear the app's data when space runs low
 - **Recall › Peek length:** how long a tapped line shows in Recall (1, 2, 3 or 5 seconds)
-- **Storage:** recordings (how many takes and how much space), **Review old takes** (unstarred takes with no comments, oldest first, to clear by hand: nothing is ever removed for you), and **Storage protection**, which shows whether iOS has agreed not to clear the app's data when space runs low
+- **Coach video:** add, replace or remove it (see Coach video below)
+- **Accessibility:** **Reduce motion** (Match iPhone, On or Off) swaps zooms and slides for short fades; **Slow motion** plays every animation four times slower, for checking how it feels. Both are for this device only and aren't in backups.
+- **Changelog:** every version on a timeline, with a growth chart of improvements by area. It's built from [CHANGELOG.md](CHANGELOG.md).
+- **View on GitHub:** this repo
 - Reset this month, and reset all data. Every reset asks first.
-- **Changelog:** every version on a timeline, with a growth chart of improvements by area. It's built from [CHANGELOG.md](CHANGELOG.md), and tapping the version number opens it too.
-- A link back to this GitHub repo, and the app version with its release date
+- At the bottom, the app's icon, name, version and release date (tap it for the Changelog)
 
 ---
 
@@ -237,13 +241,13 @@ A small service worker (`sw.js`) keeps a copy of the app on your device. When yo
 
 **Names.** `Vocal Sessions backup · 2026-10 · iPhone.json`: one file per month for each device. Backing up again in the same month, Files asks whether to replace that month's file.
 
-**Where.** iCloud Drive › Vocal Sessions › Backups. Settings › Where backups go walks through making the folder the first time; Files remembers it after that.
+**Where.** iCloud Drive › Vocal Sessions › Backups. Settings › Backup › Where backups go walks through making the folder the first time; Files remembers it after that.
 
 **Check code.** Every backup ends with a SHA-256 fingerprint of its contents. Before offering to save, the app reads the finished file back and checks it. Check a backup and Import check it again, so a file that was cut short while copying, or edited, is spotted before anything is replaced. Backups from before 3.6 have no check code; they still import and are checked for readability.
 
 **Before you restore.** A backup from a newer version of the app says so and suggests updating first. Import shows the backup next to what's on this device: sessions, song practice, songs, recordings, practice time and the latest practice. If anything on the device isn't in the backup, it says how much would be removed and offers to back up first. A copy of the device's data, recordings included, is kept for 30 days so the restore can be undone.
 
-**Finding them later.** Each file opens with a short plain-English note: what it is, which device and app version made it, how many sessions and recordings it holds, and how to restore it. Settings › Save a read-me file saves `READ ME – Vocal Sessions backups.txt` for the folder too.
+**Finding them later.** Each file opens with a short plain-English note: what it is, which device and app version made it, how many sessions and recordings it holds, and how to restore it. Settings › Backup › Save a read-me file saves `READ ME – Vocal Sessions backups.txt` for the folder too.
 
 ---
 

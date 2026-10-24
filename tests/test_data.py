@@ -46,7 +46,7 @@ def run(b, t):
     src = json.load(open(fix('backup-3.6.json'), encoding='utf-8'))
     src['data']['schema'] = S + 1; src['appVersion'] = '9.9'; del src['checkCode']
     p = os.path.join(OUT, 'from-the-future.json'); json.dump(src, open(p, 'w', encoding='utf-8'))
-    pg.evaluate("U.tab='settings';render()")
+    pg.evaluate("U.tab='settings';U.view='set';U.setPg='backup';render()")
     with pg.expect_file_chooser() as fc: pg.click('[data-a=importPick]')
     fc.value.set_files(p); pg.wait_for_function("U.sheet==='bkReport'", timeout=8000)
     ok('Made by a newer version' in pg.inner_text('.sheet') and '9.9' in pg.inner_text('.sheet'), 'a backup from a newer version warns before restoring')
@@ -55,7 +55,7 @@ def run(b, t):
 
     # storage protection
     for case, init in PERSIST.items():
-        pg = t.page(b, init=init); pg.evaluate("U.tab='settings';render()"); pg.wait_for_timeout(300)
+        pg = t.page(b, init=init); pg.evaluate("U.tab='settings';U.view='set';U.setPg='storage';render()"); pg.wait_for_timeout(300)
         row = pg.locator('[data-v=persist]').inner_text()
         want = {'granted': 'On', 'refused': 'Off', 'missing': 'Not available'}[case]
         ok(want in [x.strip() for x in row.split('\n')], f'Storage protection shows "{want}" when the browser {case} it')

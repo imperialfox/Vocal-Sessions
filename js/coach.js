@@ -699,8 +699,8 @@ const COACH = (() => {
     return h;
   }
   // Settings › Coach video
-  function settings() {
-    let h = '<div class="hdr" id="cvset">Coach video</div><div class="grp">';
+  function settings(page) {
+    let h = page ? '<div class="grp setgap" id="cvset">' : '<div class="hdr" id="cvset">Coach video</div><div class="grp">';
     if (busy) h += '<div class="row"><span class="lbl mut">Adding the coach video…</span></div>';
     else if (!has())
       h += '<button class="row" data-a="coachAdd"><span class="lbl acc">Add coach video…</span>' + chev + '</button>';
@@ -767,7 +767,7 @@ const COACH = (() => {
     if (!file || busy) return;
     if (file.type && !/^video\//.test(file.type)) return toast('That isn’t a video file');
     busy = true;
-    if (U.tab === 'settings' && !U.view) rerender();
+    if (SET.shown()) rerender();
     const dur = await duration(file);
     if (!(dur > 0)) {
       busy = false;
@@ -861,14 +861,10 @@ const COACH = (() => {
       U.tab = b.tab || 'exercises';
     });
   }
+  // the player's empty state: Settings › Coach video (3.21: its own page)
   function toSettings() {
-    go(() => {
-      U.coachBack = null;
-      U.view = null;
-      U.tab = 'settings';
-    });
-    const h = $('cvset');
-    if (h) window.scrollTo(0, Math.max(0, h.getBoundingClientRect().top + window.scrollY - 110));
+    U.coachBack = null;
+    SET.open('coach');
   }
   // a session step: tap to show, then cue this step's exercise at its level and play
   function show() {

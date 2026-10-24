@@ -361,9 +361,9 @@ def data(b, t):
     pg.evaluate("id=>{songById(id).loop={start:4,end:7.5,on:true};save()}", sid)
     timing = pg.evaluate("id=>JSON.stringify(songById(id).timing)", sid)
     # backups: the track's name, length and the loop travel; the audio doesn't
-    pg.evaluate("go(()=>{U.tab='settings';U.view=null})"); pg.wait_for_timeout(200)
-    ok('Song tracks' in pg.inner_text('#app') and '1 ·' in pg.locator('#app .grp').filter(has_text='Song tracks').inner_text(), 'Settings › Storage counts the song tracks')
-    pg.click('[data-a=exportPrep]'); pg.wait_for_function("U.sheet==='exportReady'", timeout=15000)
+    pg.evaluate("go(()=>{U.tab='settings';U.view='set';U.setPg='storage'})"); pg.wait_for_timeout(200)
+    ok('Song tracks' in pg.inner_text('#app') and '1 ·' in pg.locator('#app .grp:not(.setuse)').filter(has_text='Song tracks').inner_text(), 'Settings › Storage counts the song tracks')
+    pg.evaluate("SET.open('backup')"); pg.wait_for_timeout(200); pg.click('[data-a=exportPrep]'); pg.wait_for_function("U.sheet==='exportReady'", timeout=15000)
     txt = pg.evaluate("pendingExport.file.text()")
     bk = json.loads(txt); s = [x for x in bk['data']['songs'] if x['id'] == sid][0]
     ok(s.get('track', {}).get('name') == 'Paper Boats.wav' and s.get('loop') == {'start': 4, 'end': 7.5, 'on': True}, 'a backup carries the song’s track name, length and loop')
@@ -385,7 +385,7 @@ def data(b, t):
     # another device: the song comes back without its track
     pg = t.page(b, init=COUNT)
     with pg.expect_file_chooser() as fc:
-        pg.evaluate("go(()=>{U.tab='settings';U.view=null})"); pg.wait_for_timeout(200); pg.click('[data-a=importPick]')
+        pg.evaluate("go(()=>{U.tab='settings';U.view='set';U.setPg='backup'})"); pg.wait_for_timeout(200); pg.click('[data-a=importPick]')
     fc.value.set_files(p); pg.wait_for_function("U.sheet==='bkReport'", timeout=10000); pg.wait_for_timeout(200)
     pg.click('[data-a=importYes]'); pg.wait_for_function("U.sheet===null", timeout=10000); pg.wait_for_timeout(400)
     ok(not pg.evaluate("id=>TRACK.has(id)", sid), 'on another device, the restored song has no track')

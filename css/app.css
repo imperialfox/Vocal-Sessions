@@ -45,6 +45,8 @@
   /* 3.20 markers on the track: purple, never the loop's orange */
   --trk-mk: #8944e0;
   --trk-mkfg: #ffffff;
+  /* 3.21 Settings: View on GitHub's near-black tile */
+  --tile-ink: #1c1c1e;
   --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', system-ui, sans-serif;
   color-scheme: light;
 }
@@ -92,6 +94,7 @@
     --trk-dim: rgba(235, 235, 245, 0.24);
     --trk-mk: #b07bff;
     --trk-mkfg: #1c0b33;
+    --tile-ink: #48484a;
   }
 }
 
@@ -690,14 +693,12 @@ h1 {
     opacity 0.5s ease,
     transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
-@media (prefers-reduced-motion: reduce) {
-  .tl-in {
-    opacity: 1;
-    transform: none;
-  }
-  .tl-item.now .tl-node::after {
-    animation: none;
-  }
+html.motion-reduced .tl-in {
+  opacity: 1;
+  transform: none;
+}
+html.motion-reduced .tl-item.now .tl-node::after {
+  animation: none;
 }
 
 .bkstat {
@@ -2544,60 +2545,17 @@ body.reg .pgrid > div > .hdr:first-child {
     opacity: 0;
   }
 }
-/* 3.14 Reduce Motion: nothing moves, but changes still fade in and out over about 0.2 s (it used to switch every
+/* 3.14 Reduce Motion (3.21: on <html class="motion-reduced">, set by MOTION from the system or Settings ›
+   Accessibility): nothing moves, but changes still fade in and out over about 0.2 s (it used to switch every
    animation and transition off, so things snapped). Only fades and colour changes are allowed to ease; anything that
    used to slide, scale or pop now fades in its place. Timers, the level meter and the recording dot stay live. */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    transition-property: opacity, color, background-color, border-color, box-shadow, fill, stroke !important;
-    transition-duration: 0.2s !important;
-    transition-delay: 0s !important;
-    transition-timing-function: ease-out !important;
-  }
-  @keyframes up {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-  @keyframes grow {
-    from {
-      opacity: 0;
-    }
-  }
-  @keyframes pop {
-    from {
-      opacity: 0;
-    }
-  }
-  @keyframes clockIn {
-    from {
-      opacity: 0;
-    }
-  }
-  @keyframes clockOut {
-    to {
-      opacity: 0;
-    }
-  }
-  @keyframes squish {
-    0%,
-    100% {
-      scale: 1 1;
-    }
-  }
-  @keyframes lgdraw {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
+html.motion-reduced *,
+html.motion-reduced *::before,
+html.motion-reduced *::after {
+  transition-property: opacity, color, background-color, border-color, box-shadow, fill, stroke !important;
+  transition-duration: 0.2s !important;
+  transition-delay: 0s !important;
+  transition-timing-function: ease-out !important;
 }
 /* 3.8 Songs */
 :root {
@@ -6197,4 +6155,141 @@ body.reg .trkmk {
 /* Song Clock paused on its song: room below the lyrics so the current line can stay where the eye was */
 body.ckpaused #app {
   padding-bottom: 50vh;
+}
+
+/* 3.21 Reduce Motion, continued: what used to slide, scale or pop fades in its place (these used to redefine the
+   keyframes inside a media query; a class can't do that, so the animations swap to plain fades instead) */
+@keyframes rmIn {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes rmOut {
+  to {
+    opacity: 0;
+  }
+}
+html.motion-reduced .lgdraw,
+html.motion-reduced .sheet,
+html.motion-reduced .notebox,
+html.motion-reduced .clock,
+html.motion-reduced .ctxmenu {
+  animation-name: rmIn;
+}
+html.motion-reduced .clock.out {
+  animation-name: rmOut;
+}
+html.motion-reduced .knob.squish {
+  animation: none;
+}
+
+/* 3.21 Settings: a main list of icon rows, each opening its own page */
+.setgap {
+  margin-top: 22px;
+}
+#app .setwarn {
+  color: var(--danger);
+}
+.row .mut svg.i {
+  width: 18px;
+  height: 18px;
+  vertical-align: -3px;
+}
+.setchk {
+  width: 22px;
+  display: grid;
+  place-items: center;
+}
+/* Backup and Storage open with a hero card: the big icon, the title and what the page is for */
+.sethero {
+  background: var(--surface);
+  border-radius: 20px;
+  padding: 18px 18px 18px;
+  margin-top: 6px;
+}
+.sethero .tile.big {
+  margin: 0 0 14px;
+}
+.sethero h1 {
+  font-size: 28px;
+  margin: 0 0 6px;
+  letter-spacing: 0;
+}
+.sethero p {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.42;
+  color: var(--fg2);
+}
+/* Storage: one bar split by what's using the space, with a key */
+.setuse {
+  padding: 14px 16px 14px;
+}
+.setuse-t {
+  font-size: 17px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.setbar {
+  display: flex;
+  gap: 2px;
+  height: 12px;
+  margin: 10px 0 10px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--fill);
+}
+.setbar i {
+  display: block;
+  min-width: 3px;
+}
+.setkey {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font-size: 13px;
+  color: var(--fg2);
+}
+.setkey span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.setkey i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+/* the bottom of the main list: the app's icon, name and version (tap for the changelog) */
+.setfoot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 100%;
+  margin: 34px 0 8px;
+  padding: 8px 0;
+  color: var(--fg2);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  transition: transform 0.5s cubic-bezier(0.3, 1.7, 0.45, 1);
+}
+.setfoot:active {
+  transform: scale(0.96);
+  transition-duration: 0.12s;
+}
+.setfoot img {
+  width: 60px;
+  height: 60px;
+  border-radius: 13.5px;
+  margin-bottom: 8px;
+  box-shadow: 0 0 0 0.5px var(--sep);
+}
+.setfoot b {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--fg);
+}
+.setuse > *::before {
+  display: none;
 }

@@ -1921,6 +1921,11 @@ const TRACK = (() => {
     sheet,
     after,
     storageRow,
+    bytes: () => {
+      let s = 0;
+      have.forEach((m) => (s += +m.size || 0));
+      return s;
+    },
     open,
     back,
     pick,

@@ -148,4 +148,4 @@ def run(b, t):
 
     pg.evaluate("U.view=null;U.tab='settings';render()"); pg.evaluate("scrollTo(0,document.body.scrollHeight)"); pg.wait_for_timeout(300)
     v = pg.evaluate("APP_VERSION")
-    ok(pg.locator(f'text=Vocal Sessions {v}').count() == 1, f'Settings shows version {v}')
+    ft = pg.locator('main .setfoot'); ok(ft.count() == 1 and 'Vocal Sessions' in ft.inner_text() and v in ft.inner_text() and ft.locator('img').count() == 1, f'Settings ends with the app’s icon, name and version {v}')

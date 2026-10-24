@@ -42,7 +42,7 @@ Notes for whoever works on the app next, whether that's Ivan, a new Claude sessi
 | `js/motion.js` | **The shared springs** (`MOTION`): gentle, nav and ripple springs as CSS `linear()` easings and `--ease-*`/`--dur-*` variables, stagger helpers, Reduce Motion, the speed setting and the distance blur. See Motion below |
 | `js/storage.js` | Loading, checking (`cleanData`) and saving data, data-version upgrades, recordings in IndexedDB |
 | `js/helpers.js` | Small helpers (dates, text, icons, layout) and the on-screen state `U` |
-| `js/screens.js` | Today, Progress, Exercises, Settings and the session steps |
+| `js/screens.js` | Today, Progress, Exercises and the session steps |
 | `js/songs.js` | Songs: the list, pasting and labelling lyrics, the lyrics screen, marks and cues, editing, search, pins, and checking saved songs (`cleanSong`) |
 | `js/changelog.js` | Settings › Changelog, built from CHANGELOG.md |
 | `js/ui.js` | Top bar, tab bar, sidebar, sheets, `render()` and the sliding picker knobs |
@@ -53,6 +53,7 @@ Notes for whoever works on the app next, whether that's Ivan, a new Claude sessi
 | `js/track.js` | **The track player** (`TRACK`, 3.19): a song's track stored on the device, its waveform peaks, the player page (zoom levels, loop, jog wheel, speed, 3.20 markers and chips), song rows' play buttons, its doors and its floating window kind. See The track player below |
 | `js/takes.js` | **Takes** (`TAKE`, 3.20): the takes sheet (section / All takes, the scrubber, ±5 s, swipes and hold), renaming, timestamped comments, Review old takes, and each take's waveform and both-ears copy on the device (`vocalTakeExtras`). See Recordings below |
 | `js/backup.js` | Export, Check a backup, restore, undo, and Copy for Toggl |
+| `js/settings.js` | **Settings** (`SET`, 3.21): the main list of icon rows, the pages they open (Backup, Storage, Recall, Coach video, Accessibility), the icon tiles, the footer, and this device's Reduce motion choice. See Settings below |
 | `js/events.js` | Every button action, swipe to delete, and blocking zoom |
 | `js/gestures.js` | Pull to refresh and the update check, rotating, keyboard shortcuts, dragging sheets, scrolling |
 | `js/details.js` | **Motion details** (`DET`): rows leaving, arriving and moving, Progress bar ripples, Today's arch fill and week wave, calendar days, session step slides, the Recall wave, sheets that change in place. See Motion below |
@@ -132,7 +133,7 @@ Everything that moves uses `MOTION` (`js/motion.js`), so the app feels the same 
 
 - **Springs:** `gentle` (ζ 0.82, 1.9 Hz: rows, capsules, sheets, fades), `nav` (ζ 0.86, 2.2 Hz: moving between pages, a little quicker) and `ripple` (ζ 0.6, 2.4 Hz: peeks and small pops). CSS uses `var(--dur-gentle)` and `var(--ease-gentle)` (and so on); JS uses `MOTION.animate(el, frames, {spring, delay, ms, fade})`, which does nothing (or a short fade with `fade: true`) when motion is off.
 - **Stagger:** `MOTION.stagger(i, 'word' | 'row' | 'bar')` gives 30, 45 or 30 ms per item, for `MOTION.animate`'s `delay` (which applies the speed, so the stagger itself doesn't, since 3.13).
-- **Reduce Motion** (the iOS setting) and **speed:** `MOTION.on()` is false with Reduce Motion or speed 0. `MOTION.setSpeed(4)` is slow motion for tuning on a device, `setSpeed(1)` puts it back; it's kept in localStorage `vocalMotion`, never in backups. With motion off, every `--dur-*` is `0ms` and `<html>` has `motion-off`.
+- **Reduce Motion** (the iOS setting, or forced On or Off in Settings › Accessibility since 3.21: localStorage `vocalReduce`, `'on'`/`'off'`, absent = Match iPhone) and **speed:** `MOTION.reduced()` reads both; `MOTION.on()` is false with Reduce Motion or speed 0. `MOTION.setSpeed(4)` is slow motion for tuning on a device, `setSpeed(1)` puts it back; it's kept in localStorage `vocalMotion`, never in backups. With motion off, every `--dur-*` is `0ms` and `<html>` has `motion-off`.
 - **Distance blur:** `MOTION.blur(d)` (up to `BLUR_MAX`, 1.5 px, and 0 with Reduce Motion), `MOTION.dim(d)` (down to 0.3) and `MOTION.dimLabel(d)` (labels only dim, down to 0.45), where `d` is how many lines away from the focus. Song Clock's Blur ahead should reuse these.
 - **Tests run with motion off:** the harness sets `vocalMotion` to `0` before each page loads. A test that needs real motion passes its own `init` setting it to `1` (see `test_lyrics.py`).
 - **The launch ripple (3.13, `js/launch.js`, `LAUNCH`):** the app's signature moment. On a cold launch the icon's six sound-wave bars pulse in turn (`BAR`: 520 ms each, 70 ms apart, from 120 ms), the launch screen fades with a slight zoom (`FADE`: 300 ms, at 860 ms), then Today's blocks rise in, top to bottom, on `gentle` 45 ms apart (`RISE`). `boot.js` calls `LAUNCH.start()` before the first draw and `LAUNCH.finish()` once recordings have loaded and `LAUNCH.minWait()` has passed (at most `LAUNCH.capWait()`). `restoreImport()` calls `LAUNCH.replay(then)` to replay it on Today, with the toast in `then`. Tab switches and coming back to the app never replay it; an update reload is a cold launch, so it plays.
@@ -148,7 +149,7 @@ Everything that moves uses `MOTION` (`js/motion.js`), so the app feels the same 
   - **Elsewhere:** `DET.calendarIn()` after opening or changing month; `go()` calls `DET.stepIn(DET.stepDir(from, to))` between Foundation, Rotation and Application; `DET.listIn()` after the All sessions switch; `DET.exLine()` after switching an exercise to History; `DET.takeIn()` / `DET.starPop()` for takes; `DET.dockSwap()` brings the song's bottom capsules in on a mode change only (never on a hint step or redraw).
   - **Recall wave:** `DET.hxSnap()` before a hint change, `DET.hxWave(was)` after: newly hidden words get `--hxd` delays (30 ms a word, in reading order, used by `.hxin .hx` / `::after` in app.css), newly shown words fade from the end backwards. `peekLine()` and the hold call `DET.peek(line)` for a small `ripple` spring.
   - **Sheets changing in place:** `renderSheet()` treats `exporting` → `exportReady` as the same sheet (`DET.inPlace`), so it doesn't rise again; `DET.sheetSwap(oldH)` eases its height and fades the content.
-  - **Reduce Motion in CSS (3.14):** the old blanket `* { animation: none; transition: none }` is gone. Under `prefers-reduced-motion` every transition is limited to opacity and colours over 0.2 s, and the keyframes that moved things (`up`, `pop`, `grow`, `clockIn`, `clockOut`, `squish`, `lgdraw`) are redefined as plain fades. New CSS motion gets this for free; don't add `!important` rules that switch fades off.
+  - **Reduce Motion in CSS (3.14; class-based since 3.21):** the old blanket `* { animation: none; transition: none }` is gone. Under `html.motion-reduced` (set by `MOTION.publish()` from `MOTION.reduced()`, so the in-app choice works too) every transition is limited to opacity and colours over 0.2 s, and the elements whose keyframes moved things (`.sheet`, `.notebox`, `.clock`, `.ctxmenu`, `.lgdraw`) swap to the plain fade `rmIn` (`.clock.out` to `rmOut`; `.knob.squish` to none), at the end of app.css. **Don't use `@media (prefers-reduced-motion)` in new CSS:** use `html.motion-reduced`, and add any new moving keyframe's element to that list.
   - **Not built yet (left for later):** Annotate's marks menu blooming from the word and the section lift while reordering, Perform's larger text scaling (FLIP), the recording bar rising, the progress dashes filling and the step pill moving onto the shared springs.
   - Tests: `tests/test_details.py` (motion on in slow motion, Reduce Motion, motion off). `daily()` seeds a session on each of the last 15 days so the checks don't depend on the day of the week.
 - **Card zoom (3.15, `js/zoom.js`, `ZOOM`):** a card that opens a page zooms into it; Back shrinks the page into the card, with the list scrolled back to where it was.
@@ -285,6 +286,21 @@ A backup is a JSON file with: a plain-English `README` array, `app`, `format` (2
 The fixtures in `tests/fixtures/` are real backups made by 3.5 and 3.6, plus a copy of the 3.6 app. **Don't regenerate them.** They prove that old backups keep working, and that new backups still open in 3.6.
 
 ---
+
+### Settings
+
+Settings (3.21, `js/settings.js`, `SET`) works like the iPhone's Settings app: a main list of icon rows, each opening its own page.
+
+- **The main list** (`SET.main()`, drawn for `U.tab = 'settings'` with no view): Backup and Storage; Recall, Coach video and Accessibility; Changelog and View on GitHub; the two resets (red, no icons); then the app's icon (`icon.png`), name, version and date (`.setfoot`, which opens the Changelog). Each row shows its state on the right: when you last backed up (red after 14 days or if never), the space used, the peek length, whether the coach video is added, and the Reduce motion choice.
+- **Pages** are `U.view = 'set'` with `U.setPg` = `backup`, `storage`, `recall`, `coach` or `access` (`SET.page()`). `SET.open(k)` and `SET.back()` move between them through `go()`, so a row zooms into its page (`data-zk="set:<k>"`) and Back (`setPgBack`, aria-label "Back to Settings") shrinks it into the row; swipe back works too. `ZOOM`'s `pid()` includes `U.setPg`, so each page is its own place.
+- **Backup** and **Storage** open with a hero card (`.sethero`: the big icon tile, an `h1` title the zoom anchors on, and what the page is for). Recall, Coach video and Accessibility are plain pages with a large title.
+- **Icon tiles** use the exercises' `.tile` (34 px, 64 px big) with iOS-style colours and a custom glyph each (`G` and `COL` in settings.js). View on GitHub's near-black tile is `--tile-ink` (lighter in dark mode so it shows on the dark list).
+- **Storage** (`SET.sizes()`): recordings (`TAKES`), song tracks (`TRACK.bytes()`), the coach video (`COACH.meta().size`) and the saved data (the `vocalTracker` and `vocalDraft` strings), as one bar in the Progress colours (`--cF`, `--cR`, `--cA`, `--done`) with a key, then the rows from `TAKE.storageRows()`, `TRACK.storageRow()` and `COACH.storageRow()`.
+- **Coach video:** `COACH.settings(true)` draws its rows without their own header. The player's empty state (`coachSettings`) opens this page (`COACH.toSettings()` → `SET.open('coach')`).
+- **Accessibility:** Reduce motion (Match iPhone, On, Off: `SET.setReduce()`, localStorage `vocalReduce`, then `MOTION.publish()`) and Slow motion (`MOTION.setSpeed(4)` / `1`). Both are this device only and never in backups.
+- **Redrawing:** anything that changes what Settings shows calls `rerender()` when `SET.shown()` (the main list or one of its pages is on screen).
+- **Undo last restore** returns to Settings › Backup.
+- Tests: `tests/test_settings.py` (the main list, every page in light and dark, what's on each page, Reduce motion and Slow motion, the coach video door, wide layouts); test_zoom zooms into Backup and Accessibility; test_layout checks every page at every size.
 
 ## Tests
 

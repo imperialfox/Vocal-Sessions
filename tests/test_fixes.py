@@ -50,7 +50,7 @@ def sheets(b, t):
     ok(pg.evaluate("U.sheet") is None, 'dragging a sheet down by its header still closes it')
 
     # a tall sheet still scrolls inside itself, and stops at its ends without moving the page
-    pg.evaluate("U.tab='settings';U.view=null;render();scrollTo(0,0)"); pg.wait_for_timeout(200)
+    pg.evaluate("U.tab='settings';U.view='set';U.setPg='backup';render();scrollTo(0,0)"); pg.wait_for_timeout(200)
     pg.evaluate("document.querySelector('main').style.paddingBottom='1200px';scrollTo(0,80)")
     y = pg.evaluate("scrollY")
     pg.click('[data-a=exportPrep]'); pg.wait_for_function("U.sheet==='exportReady'", timeout=10000); pg.wait_for_timeout(700)
@@ -216,7 +216,7 @@ def recall(b, t):
     ok(pg.evaluate("U.sSec") is None, 'holding doesn’t select the section')
 
     # Settings › Recall › Peek length
-    pg.evaluate("U.sMode='practise';U.view=null;U.tab='settings';render();scrollTo(0,0)"); pg.wait_for_timeout(300)
+    pg.evaluate("U.sMode='practise';U.tab='settings';U.view='set';U.setPg='recall';render();scrollTo(0,0)"); pg.wait_for_timeout(300)
     seg = pg.locator('[aria-label="Peek length"]')
     ok(seg.count() == 1 and [x.strip() for x in seg.locator('button').all_inner_texts()] == ['1 s', '2 s', '3 s', '5 s']
        and seg.locator('button.on').inner_text().strip() == '2 s', 'Settings › Recall › Peek length offers 1, 2, 3 and 5 s, set to 2 s')
@@ -224,7 +224,7 @@ def recall(b, t):
     seg.locator('[data-v="1"]').click(); pg.wait_for_timeout(300)
     ok(pg.evaluate("D.prefs.peek") == 1, 'choosing 1 s saves it')
     pg.reload(); ready(pg)
-    pg.evaluate("U.tab='settings';render()"); pg.wait_for_timeout(200)
+    pg.evaluate("U.tab='settings';U.view='set';U.setPg='recall';render()"); pg.wait_for_timeout(200)
     ok(pg.evaluate("peekSecs()") == 1 and pg.locator('[aria-label="Peek length"] button.on').inner_text().strip() == '1 s', 'it’s kept after a reload')
     pg.evaluate("U.tab='songs';render()"); pg.wait_for_timeout(200)
     pg.evaluate("id=>openSong(id)", sid); pg.wait_for_timeout(300)
@@ -235,19 +235,19 @@ def recall(b, t):
     ok(pg.locator('.sgl.peeking').count() == 0, 'and hides after 1 s')
 
     # backups carry it; older backups get the default
-    pg.evaluate("U.sMode='practise';U.view=null;U.tab='settings';render();scrollTo(0,0)"); pg.wait_for_timeout(200)
+    pg.evaluate("U.sMode='practise';U.tab='settings';U.view='set';U.setPg='recall';render();scrollTo(0,0)"); pg.wait_for_timeout(200)
     pg.locator('[aria-label="Peek length"] [data-v="5"]').click(); pg.wait_for_timeout(200)
-    pg.click('[data-a=exportPrep]'); pg.wait_for_function("U.sheet==='exportReady'", timeout=10000)
+    pg.evaluate("SET.open('backup')"); pg.wait_for_timeout(200); pg.click('[data-a=exportPrep]'); pg.wait_for_function("U.sheet==='exportReady'", timeout=10000)
     with pg.expect_download(timeout=5000) as dl: pg.click('[data-a=exportSave]')
     path = os.path.join(OUT, 'fixes-backup.json'); dl.value.save_as(path)
     ok(json.load(open(path, encoding='utf-8'))['data'].get('prefs', {}).get('peek') == 5, 'the backup includes Peek length')
     pg.evaluate("D.prefs={peek:3};save()"); pg.reload(); ready(pg)
-    pg.evaluate("U.tab='settings';render()"); pg.wait_for_timeout(300)
+    pg.evaluate("U.tab='settings';U.view='set';U.setPg='backup';render()"); pg.wait_for_timeout(300)
     with pg.expect_file_chooser() as fc: pg.click('[data-a=importPick]')
     fc.value.set_files(path); pg.wait_for_function("U.sheet==='bkReport'", timeout=10000); pg.wait_for_timeout(200)
     pg.click('[data-a=importYes]'); pg.wait_for_function("U.sheet===null", timeout=10000); pg.wait_for_timeout(300)
     ok(pg.evaluate("peekSecs()") == 5, 'restoring it brings Peek length back')
-    pg.evaluate("U.tab='settings';U.view=null;render()"); pg.wait_for_timeout(300)  # restoring returns to Today
+    pg.evaluate("U.tab='settings';U.view='set';U.setPg='backup';render()"); pg.wait_for_timeout(300)  # restoring returns to Today
     with pg.expect_file_chooser() as fc: pg.click('[data-a=importPick]')
     fc.value.set_files(fix('backup-3.6.json')); pg.wait_for_function("U.sheet==='bkReport'", timeout=10000); pg.wait_for_timeout(200)
     pg.click('[data-a=importYes]'); pg.wait_for_function("U.sheet===null", timeout=10000); pg.wait_for_timeout(300)

@@ -79,7 +79,7 @@ def ripple(b, t):
     ok(pg.evaluate(GONE) and not pg.evaluate("LAUNCH.busy()"), 'nor does coming back to the app')
 
     # importing a backup replays it on Today
-    pg.evaluate("U.tab='settings';render()")
+    pg.evaluate("U.tab='settings';U.view='set';U.setPg='backup';render()")
     with pg.expect_file_chooser() as fc: pg.click('[data-a=importPick]')
     fc.value.set_files(fix('backup-3.6.json')); pg.wait_for_function("U.sheet==='bkReport'", timeout=10000); pg.wait_for_timeout(200)
     pg.click('[data-a=importYes]')

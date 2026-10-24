@@ -41,7 +41,7 @@ const ZOOM = (() => {
   const T2 = (x, y) => 'translate(' + x + 'px,' + y + 'px)';
 
   // where you are: the place a Back returns to (session steps count as one place for the stack)
-  const pid = () => (U.view === 'ex' ? U.exId : U.view === 'lyr' ? U.songId : '') || '';
+  const pid = () => (U.view === 'ex' ? U.exId : U.view === 'lyr' ? U.songId : U.view === 'set' ? U.setPg : '') || '';
   const here = () => U.tab + '|' + (U.view || '') + '|' + pid();
   const STEPS = { found: 1, rot: 1, app: 1 };
   const stackHere = () => U.tab + '|' + (STEPS[U.view] ? 'steps' : U.view || '') + '|' + pid();

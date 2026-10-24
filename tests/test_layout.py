@@ -68,6 +68,8 @@ def run(b, t):
             if sc == 'light': titles(t, pg, name)
             for tab in ['history', 'exercises', 'settings', 'songs']:
                 pg.evaluate(f"U.tab='{tab}';U.view=null;render()"); pg.wait_for_timeout(250); check(tab)
+            for k in ['backup', 'storage', 'recall', 'coach', 'access']:  # 3.21 the Settings pages
+                pg.evaluate(f"U.tab='settings';U.view='set';U.setPg='{k}';render()"); pg.wait_for_timeout(200); check('settings-' + k)
             pg.evaluate(SONG); pg.wait_for_timeout(300); check('song')
             # a selected section, recording it (without a microphone: the screen as it looks), and its takes
             pg.evaluate(TAKES); pg.wait_for_timeout(300); check('song-selected')

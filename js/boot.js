@@ -18,7 +18,7 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
    With motion on, the launch ripple plays meanwhile and the screen goes once it has (js/launch.js). */
 setTimeout(LAUNCH.finish, LAUNCH.capWait());
 checkPersist(true).then(() => {
-  if (U.tab === 'settings' && !U.view) rerender();
+  if (SET.shown()) rerender();
 });
 Promise.all([refreshTakes(), refreshUndo(), COACH.load(), TRACK.load()])
   .then(() => TAKE.load()) // 3.20: takes' waveforms (and both-ears copies) on this device

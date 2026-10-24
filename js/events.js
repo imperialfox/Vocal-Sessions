@@ -281,7 +281,7 @@ document.addEventListener('click', (e) => {
         const y = t.getBoundingClientRect().top + window.scrollY - 110;
         window.scrollTo({
           top: y,
-          behavior: matchMedia('(prefers-reduced-motion:reduce)').matches ? 'auto' : 'smooth',
+          behavior: MOTION.reduced() ? 'auto' : 'smooth',
         });
         const c = t.querySelector('.tl-card');
         setTimeout(() => {

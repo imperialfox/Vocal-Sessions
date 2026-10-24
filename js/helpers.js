@@ -334,6 +334,7 @@ const freshU = () => ({
   exId: null,
   exTab: 'summary',
   coachBack: null, // where the coach video player's Back goes (3.16)
+  setPg: null, // the Settings page open when view is 'set' (3.21)
   sheet: null,
   sd: {},
   histTab: 'sessions',

@@ -427,6 +427,8 @@ async function undoRestore() {
     await refreshTakes();
     U = freshU();
     U.tab = 'settings';
+    U.view = 'set';
+    U.setPg = 'backup';
     window.scrollTo(0, 0);
     render();
     toast('Restore undone');

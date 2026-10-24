@@ -61,6 +61,8 @@ def cards(b, t):
         ('a song in Songs', "go(()=>{U.tab='songs';U.view=null})", '[data-zk="sg:g_x3"]', 'songs|lyr'),
         ('Show all sessions on Progress', "go(()=>{U.tab='history';U.view=null})", '[data-zk="all:sessions"]', 'history|all'),
         ('Changelog in Settings', "go(()=>{U.tab='settings';U.view=null})", '[data-zk="log"]', 'settings|log'),
+        ('Backup in Settings (3.21)', "go(()=>{U.tab='settings';U.view=null})", '[data-zk="set:backup"]', 'settings|set'),
+        ('Accessibility in Settings (3.21)', "go(()=>{U.tab='settings';U.view=null})", '[data-zk="set:access"]', 'settings|set'),
         ('the Start session capsule', "go(()=>{U.tab='today';U.view=null})", '[data-zk="start"]', 'today|found'),
     ]
     for name, to, card, dest in CASES:
