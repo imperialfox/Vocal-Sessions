@@ -798,6 +798,16 @@ html.motion-reduced .tl-item.now .tl-node::after {
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
+/* Exercise pages: Apple Health-style bold sentence-case titles */
+.hdr.exh {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--fg);
+  text-transform: none;
+  letter-spacing: 0;
+  margin: 28px 4px 10px;
+}
 .grp {
   background: var(--surface);
   border-radius: 20px;

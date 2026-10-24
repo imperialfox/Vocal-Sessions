@@ -126,8 +126,8 @@ const TOGGL = {
 const DESC = {
   slides: {
     n: 1,
-    what: 'Light, quiet glides from low to high and back on <i>hee, hoo, hoe, hah, hay</i>, keeping the buzz on the roof of your mouth. Short slides first, then medium, then your full range, bending forward on the top notes. Levels 2–3 add a bounce on the high notes.',
-    why: 'It’s the vocal equivalent of stretching before a workout. Sliding through every pitch with no gaps starts blending chest and head voice, and keeping it light teaches the voice to thin out as it rises instead of pushing.',
+    what: 'A vocal slide is a smooth glide from a low note to a high note and back down, with no gaps between pitches. It starts on a lip trill or a buzzy <i>ng</i>, then moves onto the vowels <i>hee, hoo, hoe, hah</i> and <i>hay</i>, keeping the buzz on the roof of the mouth. Short slides come first, then medium ones, then your full range, bending forward on the top notes. Levels 2 and 3 add a small bounce on the high notes.',
+    why: 'Slides warm up the muscles that change pitch, much like stretching before a workout. Moving through every note joins chest voice and head voice, so there’s less of a break as you go higher. Keeping the sound light teaches the voice to thin out as it rises. If the top notes feel strained, sing quieter rather than pushing.',
     song: [
       [
         'Scoops and glides into notes',
@@ -141,8 +141,8 @@ const DESC = {
   },
   humming: {
     n: 2,
-    what: 'Humming short melodic patterns with lips only lightly touching, quiet and relaxed, feeling a buzz around your nose and cheekbones (the “mask”).',
-    why: 'It’s the easiest way to find forward placement: the sound sits up front rather than falling into the back of the throat. That forward buzz keeps notes clear, in tune and easier to reach higher.',
+    what: 'Humming is singing short melodic patterns with your lips closed. Keep the lips only lightly touching and the sound quiet and relaxed. You should feel a buzz around your nose and cheekbones, an area singers call the “mask”.',
+    why: 'Humming is the simplest way to find forward placement, where the sound sits at the front of the face rather than falling into the back of the throat. That forward buzz helps notes stay clear and in tune, and makes higher notes easier to reach. If you feel the buzz in your throat instead, hum more quietly.',
     song: [
       [
         'The first note',
@@ -156,8 +156,8 @@ const DESC = {
   },
   lip: {
     n: 3,
-    what: 'Blowing through loose lips to make a motorboat <i>brrr</i> while singing patterns through your whole range. If your lips won’t flutter, press your cheeks in and forward with your fingertips.',
-    why: 'It keeps lips, face and jaw relaxed from bottom to top, and it balances breath: too much air and the neck tenses, too little and the trill stops. The aim is to pass through chest, mix and head voice with no change in effort.',
+    what: 'Lip bubbling, also called a lip trill, is a motorboat <i>brrr</i> made by blowing air through loose lips. You sing patterns through your whole range while the lips keep fluttering. If your lips won’t flutter, press your cheeks in and forward with your fingertips.',
+    why: 'The trill keeps your lips, face and jaw relaxed from the bottom of your range to the top. It also balances your breath: with too much air the neck tenses, and with too little the trill stops. The aim is to move through chest, mixed and head voice with the same effort throughout. If the trill cuts out on high notes, keep the air flowing steadily rather than pushing harder.',
     song: [
       [
         'Running a whole song on a trill',
@@ -171,8 +171,8 @@ const DESC = {
   },
   falsetto: {
     n: 4,
-    what: 'Flowing, wave-like patterns in falsetto on <i>hoo</i>, <i>hee</i>, then <i>woh/wah</i>, at whatever volume feels comfortable. Teeth at least half an inch apart so the jaw doesn’t clamp.',
-    why: 'Falsetto is the light, breathy voice that’s disconnected from chest voice. This makes it comfortable and controllable, so it becomes a colour you choose rather than something you fall into.',
+    what: 'Falsetto is the light, breathy voice that sits apart from your chest voice. In this exercise you sing flowing, wave-like patterns in falsetto on <i>hoo</i> and <i>hee</i>, then <i>woh</i> or <i>wah</i>, at whatever volume feels comfortable. Keep your teeth at least half an inch (about 1 cm) apart so your jaw doesn’t clamp.',
+    why: 'Regular practice makes falsetto comfortable and controllable, so it becomes a sound you choose rather than one you slip into. If it feels tight, check your jaw is still loose before changing anything else.',
     song: [
       [
         'Whole songs in falsetto',
@@ -190,8 +190,8 @@ const DESC = {
   },
   upperlower: {
     n: 5,
-    what: 'Patterns that start high and descend on <i>woh</i> / <i>woo</i>, <i>we</i>, then <i>wah/way</i>, sung slowly and quietly, in “slow motion”, so you pass from head voice down into chest with no bump. Can also be done on lip trills or through a straw.',
-    why: 'Most people practise going up; this trains the way down. The goal is no audible change in tone as you cross between registers in either direction.',
+    what: 'This exercise trains your voice from high to low. Patterns start high and come down on <i>woh</i> or <i>woo</i>, then <i>we</i>, then <i>wah</i> or <i>way</i>. Sing them slowly and quietly, in slow motion, so you pass from head voice down into chest voice without a bump. You can also do them on a lip trill or through a straw.',
+    why: 'Most practice works the voice upwards, and this trains the way down. The goal is no audible change in tone as you cross between registers in either direction. If you hear a bump on the way down, slow the pattern further rather than forcing through it.',
     song: [
       [
         'Coming down from a peak',
@@ -205,8 +205,8 @@ const DESC = {
   },
   straw: {
     n: 6,
-    what: 'Humming and singing patterns through a straw into water, which adds slight resistance. Start with a wide straw and little water; it should feel soothing, never like work.',
-    why: 'It’s a semi-occluded (SOVT) exercise: the partial blockage creates back-pressure that lets your vocal folds vibrate with less effort. The bubbles show you instantly if your air stops flowing, which builds steady breath support.',
+    what: 'Straw singing is humming and singing patterns through a straw into a cup of water, which adds a little resistance. Start with a wide straw and only a little water.',
+    why: 'It’s a semi-occluded vocal tract (SOVT) exercise. The partly blocked airway creates back-pressure that lets your vocal folds vibrate with less effort. The bubbles show you straight away if your air stops flowing, which builds steady breath support. It should feel soothing, never like work; if it doesn’t, use a wider straw or less water.',
     song: [
       [
         'Mapping a hard song safely',
@@ -220,8 +220,8 @@ const DESC = {
   },
   rung: {
     n: 7,
-    what: 'Singing patterns on the word <i>rung</i>, jaw dropped open vertically as far as is comfortable, tongue tip resting behind the lower front teeth. Light and moderately quiet, never heavy.',
-    why: 'The <i>ng</i> keeps the sound forward while the open jaw breaks the habit of a clamped or spread mouth. Kept light, it’s one of the best blenders for the tricky middle (mixed) voice.',
+    what: 'This exercise uses the word <i>rung</i> to shape your sound. Sing patterns on <i>rung</i> with your jaw dropped open vertically, as far as is comfortable, and the tip of your tongue resting behind your lower front teeth. Keep it light and moderately quiet.',
+    why: 'The <i>ng</i> keeps the sound forward, while the open jaw breaks the habit of a clamped or spread mouth. Kept light, it’s one of the most reliable ways to blend the tricky middle, or mixed, voice. If it starts to feel heavy, sing quieter.',
     song: [
       [
         'Tenor choruses in the passaggio',
@@ -235,8 +235,8 @@ const DESC = {
   },
   hinge: {
     n: 8,
-    what: 'Gliding on a creaky, squeaky-hinge sound (often on <i>hmmm</i>), imagining the sound in the centre of your head. Aim high even on the low note, and let the sound get thinner and narrower as you go up.',
-    why: 'One of the best exercises for finding the mixed voice. With good placement and support it feels effortless right up to your top notes, and it can even soothe a hoarse voice.',
+    what: 'The squeaky hinge is a glide on a creaky sound, like an old door hinge, usually on <i>hmmm</i>. Imagine the sound in the centre of your head, and aim high even on the low note. As you go up, let the sound get thinner and narrower.',
+    why: 'It’s one of the most direct ways to find your mixed voice. With good placement and support, it can feel easy right up to your top notes, and it can also soothe a hoarse voice. If your throat tightens as you rise, let the sound get smaller rather than louder.',
     song: [
       ['Songs with a big range', 'When a song spans low verses to a high chorus, the squeaky door bridges that gap.'],
       [
@@ -247,8 +247,8 @@ const DESC = {
   },
   half: {
     n: 9,
-    what: 'Part two of the squeaky door. You keep some of the squeak while blending in your normal singing tone, on <i>wah</i>, then <i>bow</i>, then <i>way/wah</i>, with the jaw dropped open.',
-    why: 'It’s the bridge from an odd exercise sound to your real singing voice. You keep the easy, forward placement of the squeak but with a tone you’d actually use on stage.',
+    what: 'This is the second part of the squeaky hinge. You keep some of the squeak while blending in your normal singing tone, first on <i>wah</i>, then <i>bow</i>, then <i>way</i> or <i>wah</i>, with your jaw dropped open.',
+    why: 'It bridges the gap between an unusual exercise sound and your real singing voice. You keep the easy, forward placement of the squeak, with a tone you’d actually use on stage. If the squeak disappears completely, go back to more squeak and blend in your normal tone again gradually.',
     song: [
       [
         'Practising the hard line',
@@ -262,8 +262,8 @@ const DESC = {
   },
   vertical: {
     n: 10,
-    what: 'Patterns on <i>mum</i>, then <i>lum</i>, then <i>yum</i>, keeping the mouth in a relaxed vertical oval rather than a wide smile.',
-    why: 'A spread, smiley mouth tightens the neck and makes high notes harder over time. The vertical shape gives a warmer tone and a freer throat; many singers find it brings a new sense of freedom.',
+    what: 'Vertical mouth exercises keep your mouth in a relaxed, tall oval rather than a wide smile. Sing patterns on <i>mum</i>, then <i>lum</i>, then <i>yum</i>, holding that shape throughout.',
+    why: 'A spread, smiling mouth tightens the neck and makes high notes harder over time. The vertical shape gives a warmer tone and a freer throat, and many singers find it brings a new sense of freedom. Keep the oval relaxed; if your jaw starts to ache, it’s open too far.',
     song: [
       [
         'Emotional high notes',
@@ -277,8 +277,8 @@ const DESC = {
   },
   nasal: {
     n: 11,
-    what: 'Deliberately nasal patterns on <i>may</i>, <i>me</i>, then <i>nay-yay</i>. The goal isn’t a nasal tone; it’s to lock in a forward placement.',
-    why: 'It strengthens low notes, which go muffled and muddy when the sound drops into the back of the throat. It also gives you another smooth route into the mixed middle range.',
+    what: 'This exercise uses a deliberately nasal sound to set your placement. Sing patterns on <i>may</i> and <i>me</i>, then <i>nay-yay</i>. The goal isn’t a nasal tone; it’s to lock in a forward placement.',
+    why: 'It strengthens low notes, which become muffled and muddy when the sound drops into the back of the throat. It also gives you another smooth route into the mixed middle range. When you move on to a song, keep the forward feeling but let the nasal quality go.',
     song: [
       [
         'Low verses that need to carry',
@@ -292,8 +292,8 @@ const DESC = {
   },
   flex: {
     n: 12,
-    what: 'Scale patterns built on the pentatonic scale, on <i>woo</i>, <i>woh/wah</i>, then <i>he</i>. Learn them slowly and cleanly, then sing them a cappella, then speed them up.',
-    why: 'The pentatonic scale is the template most R&amp;B and gospel runs are built on. Drilling it builds agility and pitch accuracy at speed, but only if each tempo is clean before you go faster.',
+    what: 'Vocal flexibility exercises are scale patterns built on the pentatonic scale, sung on <i>woo</i>, then <i>woh</i> or <i>wah</i>, then <i>he</i>. Learn each pattern slowly and cleanly, then sing it a cappella, then speed it up.',
+    why: 'The pentatonic scale is the template most R&amp;B and gospel runs are built on. Practising it builds agility and pitch accuracy at speed. Stay at each tempo until the notes come out clearly before going faster.',
     song: [
       [
         'Runs and riffs',

@@ -820,26 +820,30 @@ function scrEx() {
     '">History</button></div>';
   if (U.exTab === 'summary') {
     h +=
-      '<div class="hdr">Last done</div><div class="grp"><div class="row"><span class="lbl">' +
+      '<div class="hdr exh">Last done</div><div class="grp"><div class="row"><span class="lbl">' +
       lastDone(e.id)
         .replace(/^last done /, '')
         .replace(/^Not done yet$/, 'Not done yet') +
       '</span></div></div>';
     if (d) {
       h +=
-        '<div class="hdr">What it is</div><div class="grp"><div class="prose">' +
+        '<div class="hdr exh">About ' +
+        esc(e.name.charAt(0).toLowerCase() + e.name.slice(1)) +
+        '</div><div class="grp"><div class="prose">' +
         d.what +
         '</div></div>' +
-        '<div class="hdr">Why it helps</div><div class="grp"><div class="prose">' +
+        '<div class="hdr exh">Why it helps</div><div class="grp"><div class="prose">' +
         d.why +
         '</div></div>' +
         COACH.exerciseRow(e.id) +
-        '<div class="hdr">In a song</div><div class="grp"><div class="prose"><ul>' +
+        '<div class="hdr exh">In a song</div><div class="grp"><div class="prose"><ul>' +
         d.song.map((x) => '<li><b>' + x[0] + '.</b> ' + x[1] + '</li>').join('') +
         '</ul></div></div>';
     } else {
       h +=
-        '<div class="hdr">What it is</div><div class="grp"><div class="prose' +
+        '<div class="hdr exh">About ' +
+        esc(e.name) +
+        '</div><div class="grp"><div class="prose' +
         (e.what ? '' : ' mut') +
         '">' +
         (e.what ? esc(e.what) : 'No description yet.') +

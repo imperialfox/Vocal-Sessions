@@ -9,6 +9,16 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.21.1 · 24 Oct 2026
+*Exercise pages that read like Apple Health*
+<!-- area: look -->
+
+- Exercise pages now have bold, sentence-case titles in place of the small grey labels: "About vocal slides", "Why it helps", "In a song" and "Last done". Other pages keep their labels.
+- The About and Why it helps text for all 12 exercises is rewritten in a calm, factual tone: what the exercise is first, then how it's done, then what it does for your voice, ending with one practical tip on what to adjust. Every detail from before is kept.
+- Half squeaky now says "squeaky hinge", matching the exercise's name.
+
+---
+
 ## 3.21 · 24 Oct 2026
 *Settings, like the iPhone's: a row for each, a page for each*
 <!-- area: look -->
