@@ -12,13 +12,14 @@ Notes for whoever works on the app next, whether that's Ivan, a new Claude sessi
 4. Run `python tests/run.py release` to check the version agrees everywhere.
 5. Push to `main`. GitHub Pages publishes it within a minute or two, and the **Tests** check runs on GitHub.
 
-**Working with Claude:** Ivan reviews prototypes first. Nothing is built into the app or pushed until he says **"render"**.
-- Research and prototyping happen in one chat; each build happens in a **fresh chat**, started from a short [handoff note](HANDOFF.md) (the agreed scope, decisions and what's queued), so the build begins with a clear memory.
+**Working with Claude:** The call signs have separate meanings. **Render** approves the exact named scope; it does not start implementation or authorize a push. **Build** starts implementation only after that scope has Render approval. Build follows the checks and release steps below when applicable.
+- Research, planning and prototyping may happen before approval, but do not edit the app in the repo until Ivan separately says **Build** for a Render-approved item.
+- Each build happens in a **fresh chat**, started from a short [handoff note](HANDOFF.md). Implement only that approved scope; don't bundle other queue items.
 - Tests are tiered: `quick` or single files while building, the full suite once before pushing. The full suite runs files side by side.
 
-**Handoffs between chats and models:** [HANDOFF.md](HANDOFF.md) has the workflow and a template to copy. Queued app work, with each item's approval status, is in [RENDER_QUEUE.md](RENDER_QUEUE.md); a build takes its item from there.
-- Prepare one when a stage ends (an idea agreed, a prototype approved, a build pushed), when switching between Gemini, ChatGPT and Claude, and before every fresh build chat.
-- Start the next chat with it. The receiving model checks it against the repo (the code wins on what's built), then does only the next action it names. One model builds each change; the others explore or review.
+**Handoffs between chats and models:** [HANDOFF.md](HANDOFF.md) defines Recon, Blueprint, Render, Build and Debrief, with a template to copy. Queued app work and each item's gate status are in [RENDER_QUEUE.md](RENDER_QUEUE.md).
+- Prepare a handoff when a stage ends (an idea agreed, a prototype approved, a build pushed), when switching between Gemini, ChatGPT and Claude, and before every fresh build chat.
+- Start the next chat with it. The receiving model checks it against the repo (the code wins on what's built), confirms the required gates, then does only the next action it names. One model builds each change; the others explore or review.
 
 ---
 
