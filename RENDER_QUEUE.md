@@ -2,7 +2,7 @@
 
 App work Ivan has queued, in the order he wants it built. Each item is one build, in a fresh chat, started from a handoff (see [HANDOFF.md](HANDOFF.md)). Last checked against `main` at **3.21.1** (25 Oct 2026).
 
-- **Nothing here is approved to build yet.** Every item is awaiting Ivan's **"render"**. Earlier approvals (a wireframe, a prototype, a plan) are recorded per item, but only "render" starts a build or a push. When he says it, record when and for what in the handoff.
+- **Every item has two separate gates.** `Awaiting Render` means it is not approved. Ivan's **Render** approves only the named item's exact scope and moves it to `Approved — awaiting Build`; it does not start work or authorize a push. A separate **Build** instruction starts implementation for that approved item. Do not treat approval of one item as approval of the whole queue.
 - **The code wins on what's built.** This is a summary, not a spec. Check each note against the code before relying on it.
 - **Detailed design notes live in Ivan's private project notes, not in this repo.** Where an item names one, ask Ivan to paste or attach it. Anything not settled here is marked *Unresolved*.
 - **Ivan can reorder the queue.** Versions follow build order: each build takes the next minor version when it's built.
@@ -21,7 +21,7 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 
 ## 1 · Search (Render 10)
 
-**Approval:** Awaiting Ivan's "render". Wireframe approved 22 Oct 2026.
+**Status:** Awaiting Render. **Approval:** Not yet given. Wireframe approved 22 Oct 2026.
 **Needs:** 3.21 live (it is).
 
 - **Goal:** find anything in the app from one place.
@@ -44,7 +44,7 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
   - The circle isn't a `TABS()` entry.
   - It must clear the song rows' play buttons, and `fwBounds()` must keep the floating window clear of it.
   - Take names and comments are plain strings in `sg.takeNotes`; default names come from `TAKE.nameOf(id)`.
-- **Next action:** once Ivan says "render", build in a fresh chat. Ask Ivan for the search design notes (UI refresh handoff item 4, and item 12 of the songs, takes and markers handoff).
+- **Next action:** after Ivan gives Render approval for this item and separately says Build, implement it in a fresh chat. Ask Ivan for the search design notes (UI refresh handoff item 4, and item 12 of the songs, takes and markers handoff).
 - **Done when:**
   - Every group finds its matches.
   - Take and comment hits open as described above.
@@ -55,7 +55,7 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 
 ## 2 · Sections on the waveform (Track 2)
 
-**Approval:** Awaiting Ivan's "render". Queued 23 Oct 2026. **Not scheduled until Ivan has used Track 1** (the track player, 3.19).
+**Status:** Awaiting Render. **Approval:** Not yet given. Queued 23 Oct 2026. **Not scheduled until Ivan has used Track 1** (the track player, 3.19).
 **Needs:** Track 1 live (it is).
 
 - **Goal:** set a song's timing by scrubbing its track instead of tapping along live.
@@ -87,7 +87,7 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 
 ## 3 · Layered marks (Marks 1)
 
-**Approval:** Awaiting Ivan's "render". Wireframes, prototype and plan approved 22 Oct 2026; a build handoff exists in Ivan's project notes.
+**Status:** Awaiting Render. **Approval:** Not yet given. Wireframes, prototype and plan approved 22 Oct 2026; a build handoff exists in Ivan's project notes.
 **Needs:** Song Clock A1 live (it is). Planned after Search, or before it if Ivan asks (nothing depends on Search).
 
 - **Goal:** marks that match how a song is learned, one layer at a time.
@@ -110,7 +110,7 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 - **Notes from earlier builds:**
   - Add `'active'` to the Marks while playing cycle (`ckTileAct('marks')`, `CK_MPNAME`) and draw the active layer in `ckBuild()`.
   - Replace the pencil row's Edit lyrics / Marks pills with the Marks · Lyrics switch.
-- **Next action:** once Ivan says "render", build in a fresh chat from the Marks 1 build handoff, which Ivan pastes in.
+- **Next action:** after Ivan gives Render approval for this item and separately says Build, implement it in a fresh chat from the Marks 1 build handoff, which Ivan pastes in.
 - **Done when:**
   - Everything decided above works.
   - Existing marks carry across without loss.
@@ -120,7 +120,7 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 
 ## 4 · Marks help (Marks 2)
 
-**Approval:** Awaiting Ivan's "render". Guide text and prototype approved 22 Oct 2026; a build handoff exists in Ivan's project notes.
+**Status:** Awaiting Render. **Approval:** Not yet given. Guide text and prototype approved 22 Oct 2026; a build handoff exists in Ivan's project notes.
 **Needs:** Marks 1 live.
 
 - **Goal:** explain each mark where it's used.
@@ -131,7 +131,7 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
   - A How to mark a song walkthrough.
   - All of these are reachable from several places in the app.
 - **Assumptions:** the guide's wording is original writing and safe to commit.
-- **Next action:** once Ivan says "render", build in a fresh chat from the Marks 2 build handoff and the guide wording, which Ivan pastes in.
+- **Next action:** after Ivan gives Render approval for this item and separately says Build, implement it in a fresh chat from the Marks 2 build handoff and guide wording, which Ivan pastes in.
 - **Done when:**
   - Every door opens the right help.
   - Every mark has its page.
@@ -140,7 +140,7 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 
 ## 5 · Song Clock A2 (Render 6)
 
-**Approval:** Awaiting Ivan's "render". Planned, not scheduled.
+**Status:** Awaiting Render. **Approval:** Not yet given. Planned, not scheduled.
 **Needs:** Marks 1 live.
 
 - **Goal:** time songs line by line, and fix lines in place.
@@ -162,7 +162,7 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 
 ## 6 · Song Clock B (Render 7)
 
-**Approval:** Awaiting Ivan's "render". Dates to confirm with Ivan.
+**Status:** Awaiting Render. **Approval:** Not yet given. Dates to confirm with Ivan.
 
 - **Scope:**
   - What's left of B: section starts, wheel pickers and Retime routes.
@@ -177,7 +177,7 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 
 ## 7 · Song Clock C (Render 8)
 
-**Approval:** Awaiting Ivan's "render". Dates to confirm with Ivan.
+**Status:** Awaiting Render. **Approval:** Not yet given. Dates to confirm with Ivan.
 
 - **Scope:** paced Recall, and recording against the clock.
 - **Decided:** marks over Recall's pills stay still while words reveal (a test, not new behaviour).
