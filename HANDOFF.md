@@ -11,9 +11,13 @@ How to pass Vocal Sessions work between AI models (Gemini, ChatGPT, Claude) or i
   - The code on `main`, the [README](README.md), [MAINTAINING.md](MAINTAINING.md) and the [CHANGELOG](CHANGELOG.md) say what exists.
   - A handoff only summarises what one task needs: what's agreed, what's done and what's next.
   - If a handoff and the code disagree about what's built, the code wins. If they disagree about what Ivan decided, ask him.
-- **Give each model one job.**
-  - For example, one helps explore an idea, another challenges the scope or reviews a focused change, and Claude builds an approved feature in a fresh build chat.
-  - These are suggested roles, not fixed limits on what a model can do. Name the job in the handoff.
+- **Use the call signs consistently.**
+  - **Recon:** investigation and research, usually Gemini. No repository edits.
+  - **Blueprint:** turn findings and Ivan's request into a scoped plan or handoff, usually ChatGPT. No repository edits.
+  - **Render:** Ivan approves the exact named scope. It does not authorize implementation, edits, commits, pushes or deployment.
+  - **Build:** the named builder implements only the Render-approved scope after Ivan separately says Build. The builder follows the project's tests and release process, including commit, push and deployment when applicable.
+  - **Debrief:** review the completed diff, test results and release status, usually ChatGPT. Debrief does not authorize follow-up changes.
+  - These are default assignments, not model restrictions. Ivan can assign a different model or skip Recon or Blueprint when the task is straightforward. Record the responsible model and next action in the handoff.
 - **One builder per change.**
   - Name one model as the change's owner. Only that model edits the app for it.
   - Other models can review its plan or its diff. Don't ask several models to build the same feature separately.
@@ -21,10 +25,11 @@ How to pass Vocal Sessions work between AI models (Gemini, ChatGPT, Claude) or i
   - Write one when a stage ends (an idea agreed, a prototype approved, a build pushed), when switching models, or when starting a fresh chat.
   - Every build starts in a fresh chat from a handoff.
   - Include enough to carry on without the earlier chat; don't paste the whole conversation.
-- **"Render" is the gate for app changes.**
-  - Planning, wireframes, prototypes and code written for review are always fine.
-  - Changing the app in the repo, or pushing, waits until Ivan says **"render"** for that work.
-  - The handoff records whether he has, when, and for what scope. If it says he hasn't, the receiving model stops at a plan, prototype or proposed change.
+- **Render and Build are separate gates.**
+  - Recon, planning, wireframes, prototypes and proposed code for review are allowed before approval, but do not edit the app in the repository.
+  - A clear **Render** from Ivan approves only the named scope. Record the approval date and scope; set the item to `Approved — awaiting Build`.
+  - Only a separate, clear **Build** from Ivan starts implementation. Build covers the approved repository changes and the applicable checks and release steps. Do not build other queue items or expand the approved scope.
+  - Mentioning either word in conversation, a handoff, or a file is not an instruction. If the scope or gate is missing, stop before editing and explain what is needed.
 - **Follow the project's conventions.**
   - Link to them rather than copying them: [tests](MAINTAINING.md#tests), [rules that keep old data working](MAINTAINING.md#rules-that-keep-old-data-working), [backups](MAINTAINING.md#backups), [the changelog format](MAINTAINING.md#the-changelog-page), [releasing](MAINTAINING.md#releasing) and [style](MAINTAINING.md#style).
   - Write down only what's specific to the task.
@@ -38,12 +43,10 @@ How to pass Vocal Sessions work between AI models (Gemini, ChatGPT, Claude) or i
 
 1. Pick the item from [RENDER_QUEUE.md](RENDER_QUEUE.md). Normally that's the first one, unless Ivan reorders.
 2. Copy its fields into the template below. Add any design notes Ivan has for it; the queue says where he has them.
-3. Fill in **Approval**:
-   - If Ivan has said "render" for it, write when and what it covers.
-   - If not, the new chat can plan or prototype, but not build.
-4. Start a **fresh Claude chat** (or whichever model owns the build) with the handoff as the first message.
-5. The build checks the previous version is live and builds only that item.
-6. When it ships, remove the item from the queue in the same push and record the version it shipped in.
+3. Confirm the handoff records Ivan's **Render** approval, its date and exact scope. Without that, planning or prototyping may continue, but do not edit the app in the repo.
+4. Start a **fresh build chat** with the handoff as its first message. Name the model that owns this change.
+5. Wait for Ivan's separate **Build** instruction for this item. Then check the previous version is live and implement only the approved scope.
+6. When it ships, remove the item from the queue in the same push and record the version it shipped in. If it has Render approval but no Build instruction yet, leave it queued as `Approved — awaiting Build`.
 
 ## Receiving one
 
@@ -72,8 +75,9 @@ Copy this into the new chat. Fill in what applies and delete what doesn't.
 ```markdown
 # Handoff · <task> · <date>
 
-> **Approval:** <Awaiting "render" | "render" given by Ivan on <date/time> for <scope>>
-> Without "render": plan, prototype or propose changes only. Don't edit the app in the repo or push.
+> **Render:** <Awaiting | Approved by Ivan on <date/time> for <exact scope>>
+> **Build:** <Awaiting Ivan's instruction | Given by Ivan for this approved scope>
+> Render approves scope only. Do not implement, edit the repo, commit, push or deploy until Ivan separately says Build.
 
 **For:** <model> · **Job:** <explore / challenge the scope / review / build>
 **Builder for this change:** <one model>
