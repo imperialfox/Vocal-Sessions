@@ -16,7 +16,7 @@ Notes for whoever works on the app next, whether that's Ivan, a new Claude sessi
 - Research and prototyping happen in one chat; each build happens in a **fresh chat**, started from a short [handoff note](HANDOFF.md) (the agreed scope, decisions and what's queued), so the build begins with a clear memory.
 - Tests are tiered: `quick` or single files while building, the full suite once before pushing. The full suite runs files side by side.
 
-**Handoffs between chats and models:** [HANDOFF.md](HANDOFF.md) has the workflow and a template to copy.
+**Handoffs between chats and models:** [HANDOFF.md](HANDOFF.md) has the workflow and a template to copy. Queued app work, with each item's approval status, is in [RENDER_QUEUE.md](RENDER_QUEUE.md); a build takes its item from there.
 - Prepare one when a stage ends (an idea agreed, a prototype approved, a build pushed), when switching between Gemini, ChatGPT and Claude, and before every fresh build chat.
 - Start the next chat with it. The receiving model checks it against the repo (the code wins on what's built), then does only the next action it names. One model builds each change; the others explore or review.
 
