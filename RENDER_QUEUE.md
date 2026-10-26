@@ -67,7 +67,7 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
   - Play along from the in-app track when its local audio is available, with backing audio on by default and a mute control. Without local audio, retain the existing lyric-only Song Clock playback; hide or disable the audio mute control.
   - Add the Marker grid's large rehearsal tiles, per-marker loop toggles, Replay / Play-Pause / Next transport, active state and quick-add tile.
   - Support Left, Right and Bottom jog positions, with touch expansion for the edge wheels and a full-width Bottom roller.
-  - Use red playhead styling and resync looping and the playhead after device sleep.
+  - Use red playhead styling and best-effort loop/playhead resync after device sleep.
 - **Decided:**
   - Scrubbing the waveform replaces Song Clock B's Timeline.
   - `sg.timing` remains the only timing model; take undo snapshots before edits.
