@@ -9,6 +9,26 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.25 · 26 Oct 2026
+*Bigger rehearsal controls on the track player (Q09)*
+
+<!-- area: songs -->
+**Markers**
+- Three big pads replace the round buttons: **Replay**, **Play/Pause** (the widest) and **Next**, with two pills above them: **Backing Sound** and **Loop**.
+- **Backing Sound** off keeps the track playing silently: the playhead, the loop and Next carry on, so you can sing the marker on your own. It's on whenever you open the player, and only Markers is silenced.
+- **Loop** turns the loop on or off. With no loop yet, it loops the marker you're in.
+- **Replay** starts the marker you're in again. **Next** goes to the next marker in time order and scrolls its tile into view.
+- Tiles are taller (108 pt), and each tile's loop button is bigger and sits at the bottom right, where your thumb lands.
+
+**Looping**
+- The jump back at the end of a loop happens right at the end, so the pause there is shorter, at every speed. The pitch stays the same at 0.75× and 0.5×.
+
+<!-- area: look -->
+**The player**
+- The left and right jog wheels grow while you hold them, staying where they are on the edge (they no longer slide in).
+- In Song, the rows sit in a card, with the **Lyrics** pill at its top right.
+- The lyric card above the waveform moves the new line into place with a soft pulse when it changes (a fade with Reduce Motion).
+
 ## 3.24 · 26 Oct 2026
 *Waveform sections on the track player (Q02)*
 

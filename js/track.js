@@ -97,6 +97,9 @@ const TRACK = (() => {
   let alongEnd = false; // a play-along reached the track's end (its pause came before the ended event)
   let mdl = null; // Q02: the song's timing (ckModel), kept until the next redraw or change
   let ctxAt = null; // the line the lyric card last showed
+  let mute = false; // Q09 Backing Sound off: the track plays silently in Markers (on again whenever you leave the player)
+  let wrapT = 0; // Q09 the timer that wraps the loop right at its end (a frame can be up to 16 ms late; a locked screen more)
+  const wraps = []; // Q09 the last few wraps, for the tests: {t, start, end, rate, by}
 
   /* ----- this device's settings: zoom level, speed, jog wheel and Song lyrics (vocalSongPrefs, never backed up) ----- */
   function prefs() {
@@ -268,10 +271,13 @@ const TRACK = (() => {
         media();
       }
       frames();
+      armWrap();
       paintRows();
       changed();
     });
     el.addEventListener('pause', () => {
+      clearTimeout(wrapT);
+      wrapT = 0;
       if (cur) pos[cur.id] = el.currentTime;
       // Q02: stopped from outside play-along (the lock screen, another sound): play-along pauses with it. (A pause
       // event that arrives after play-along has started the audio again is an older one, from what played before.)
@@ -289,7 +295,8 @@ const TRACK = (() => {
     });
     // Q02 sleep: with the screen locked there are no animation frames, so the loop is also kept on timeupdate
     el.addEventListener('timeupdate', () => {
-      if (!raf || document.hidden) keepLoop(false);
+      if (!raf || document.hidden) keepLoop(false, 'tick');
+      armWrap();
     });
     el.addEventListener('ended', () => {
       // the end of a play-along (its pause came first): the player's own loop doesn't take over
@@ -316,6 +323,7 @@ const TRACK = (() => {
     el.addEventListener('seeked', () => {
       paint();
       if (!playing()) draw();
+      else armWrap();
     });
     return el;
   }
@@ -493,6 +501,7 @@ const TRACK = (() => {
     else if (v.ended || (len() > 0 && t >= len() - 0.05)) seek(0);
     v.playbackRate = speed();
     pitch();
+    syncMute();
     v.play().catch(() => {
       toast('Couldn’t play the track');
       changed();
@@ -507,6 +516,8 @@ const TRACK = (() => {
     t = Math.max(0, Math.min(Math.max(0, len() - 0.02), +t || 0));
     pos[cur.id] = t;
     prevT = t;
+    clearTimeout(wrapT);
+    wrapT = 0;
     if (el && el.readyState >= 1 && pend == null) {
       try {
         el.currentTime = t;
@@ -518,7 +529,8 @@ const TRACK = (() => {
   // every frame while playing: the loop, the waveform and the time
   function frame() {
     if (!cur || !el) return;
-    keepLoop(false);
+    keepLoop(false, 'frame');
+    armWrap();
     draw();
     paint();
     if (FW.shown === 'track') fwTick();
@@ -526,13 +538,13 @@ const TRACK = (() => {
   // the loop's boundary: wrap when playback crosses its end. Q02: also on timeupdate (no frames while the screen is
   // locked) and, waking, a playhead found outside the loop goes back to its start (best effort: iOS decides how
   // often a locked page hears anything)
-  function keepLoop(wake) {
+  function keepLoop(wake, by) {
     if (!cur || !el) return;
     const L = loopNow();
     let t = el.currentTime;
     if (L && L.on && !along && !(drag && drag.kind !== 'handle')) {
       if (prevT < L.end && t >= L.end - 0.005) {
-        el.currentTime = L.start;
+        wrapTo(L, t, by || 'frame');
         t = L.start;
       } else if (wake && !el.paused && (t < L.start - 0.05 || t > L.end + 0.05)) {
         el.currentTime = L.start;
@@ -542,9 +554,48 @@ const TRACK = (() => {
     prevT = t;
     pos[cur.id] = t;
   }
+  // Q09 the loop's boundary, as close to its end as a timer allows: when the end is under 0.3 s away (in real time, at
+  // this speed) a timer is set for that moment, so the jump back isn't held up waiting for the next frame (or, locked, for
+  // the next timeupdate). The frame and timeupdate checks above stay as the safety net, so no boundary is missed. Still
+  // one <audio> with its pitch kept (the gapless Web Audio loop would change the pitch when slowed, and a second element
+  // would fight the lock screen and one sound at a time)
+  function wrapTo(L, t, by) {
+    wraps.push({ t: r3(t), start: L.start, end: L.end, rate: el.playbackRate, by });
+    if (wraps.length > 30) wraps.shift();
+    el.currentTime = L.start;
+    prevT = L.start;
+    if (cur) pos[cur.id] = L.start;
+  }
+  const r3 = (x) => Math.round(x * 1000) / 1000;
+  const WRAP_SOON = 0.3; // seconds of real time before the end that the timer is set
+  const WRAP_NEAR = 0.012; // seconds of real time: close enough to the end to jump now
+  function armWrap() {
+    clearTimeout(wrapT);
+    wrapT = 0;
+    if (!cur || !el || el.paused || along || (drag && drag.kind !== 'handle') || el.readyState < 1 || pend != null)
+      return;
+    const L = loopNow();
+    if (!L || !L.on) return;
+    const t = el.currentTime,
+      rate = el.playbackRate || 1,
+      left = (L.end - t) / rate;
+    if (t < L.start - 0.05 || left <= 0 || left > WRAP_SOON) return;
+    wrapT = setTimeout(
+      () => {
+        wrapT = 0;
+        const L2 = loopNow();
+        if (!cur || !el || el.paused || along || !L2 || !L2.on || (drag && drag.kind !== 'handle')) return;
+        const t2 = el.currentTime;
+        if (t2 < L2.start - 0.05 || t2 > L2.end + 0.25) return; // moved away meanwhile: the frame check decides
+        if ((L2.end - t2) / (el.playbackRate || 1) > WRAP_NEAR) return armWrap(); // the timer came early: once more
+        wrapTo(L2, t2, 'timer');
+      },
+      Math.max(0, left * 1000 - 4)
+    );
+  }
   document.addEventListener('visibilitychange', () => {
     if (document.hidden || !cur || !el) return;
-    keepLoop(true);
+    keepLoop(true, 'wake');
     draw();
     paint();
     if (playing()) frames();
@@ -680,8 +731,9 @@ const TRACK = (() => {
     const b = document.querySelector('#app .trklv button[data-v="' + i + '"]');
     if (b) segPick(b);
     body();
-    // Q02: Markers has its own transport (replay, play, next)
+    // Q02: Markers has its own transport (Q09: Replay, Play/Pause and Next pads, under Backing Sound and Loop)
     if (!!TRK_LEVELS[was].grid !== grid()) renderDock();
+    syncMute(); // Q09: Backing Sound off only silences Markers
     const box = $('trkWave');
     showHead();
     // eases on gentle (Reduce Motion: a short fade; motion off: a jump). Never while playing: stillness while singing
@@ -977,8 +1029,46 @@ const TRACK = (() => {
     const x = ctxLines(),
       key = x ? x.a : 'none';
     if (key === ctxAt) return;
+    const was = ctxAt;
     ctxAt = key;
     box.innerHTML = ctxInner();
+    // Q09 the teleprompter: the new line rises (or, going back, drops) into place on the gentle spring, its neighbours
+    // follow, and the line itself gives one soft pulse. Not on the first paint after a redraw (nothing changed then).
+    // Reduce Motion: a short fade, no pulse. Motion off: nothing
+    if (was === null || !x || typeof key !== 'number') return;
+    const dir = typeof was === 'number' && key < was ? -1 : 1,
+      c = box.querySelector('.trkcc'),
+      t = box.querySelector('.trkct');
+    MOTION.animate(
+      c,
+      [
+        { transform: 'translateY(' + 12 * dir + 'px)', opacity: 0.35 },
+        { transform: 'none', opacity: 1 },
+      ],
+      {
+        spring: 'gentle',
+        fade: true,
+      }
+    );
+    box.querySelectorAll('.trkcp, .trkcn').forEach((p) =>
+      MOTION.animate(
+        p,
+        [
+          { transform: 'translateY(' + 6 * dir + 'px)', opacity: 0 },
+          { transform: 'none', opacity: 1 },
+        ],
+        {
+          spring: 'gentle',
+          fade: true,
+        }
+      )
+    );
+    if (t && !MOTION.reduced())
+      MOTION.animate(
+        t,
+        [{ transform: 'scale(1)' }, { transform: 'scale(1.035)', offset: 0.35 }, { transform: 'scale(1)' }],
+        { ms: 460, easing: 'ease-out' }
+      );
   }
 
   /* ----- Q02 the Markers grid: where each marker's rehearsal loop runs, and which one the playhead is in ----- */
@@ -1330,26 +1420,71 @@ const TRACK = (() => {
     paint();
     draw();
   }
-  // Replay: back to the start of the marker the playhead is in (or the selected one), playing
+  // the active marker: the one the playhead is in, else the one last tapped
+  const activeMk = () => playingMk() || curMk();
+  // Replay: back to the start of the active marker, playing
   function replay() {
-    const m = playingMk() || curMk();
+    const m = activeMk();
     if (!m) return toStart();
     seek(m.t);
     prevT = m.t;
     if (!playing()) play();
+    showTile(m.id);
   }
-  // Next: the next marker after the playhead; a marker loop moves on to it, otherwise it just goes there
+  // Next (Q09): the marker after the active one, in time order (with none active, the first after the playhead); a
+  // marker loop moves on to it, otherwise it just goes there. Its tile scrolls into view
   function nextMk() {
-    const t = now(),
-      n = mks().find((m) => m.t > t + 0.05);
-    if (!n) return toast('That’s the last marker');
+    const M = mks(),
+      a = activeMk(),
+      n = a ? M[M.indexOf(a) + 1] : M.find((m) => m.t > now() + 0.05);
+    if (!n) return toast(M.length ? 'That’s the last marker' : 'Add a marker first');
     const L = loopNow();
-    if (L && L.on && L.mk) return tileTap(n.id);
-    mkCur = { id: cur.id, mk: n.id };
-    seek(n.t);
-    prevT = n.t;
-    if (!playing()) play();
-    paint();
+    if (L && L.on && L.mk) tileTap(n.id);
+    else {
+      mkCur = { id: cur.id, mk: n.id };
+      seek(n.t);
+      prevT = n.t;
+      if (!playing()) play();
+      paint();
+    }
+    showTile(n.id);
+  }
+  // a tile into view between the top bar and the dock, smoothly (Reduce Motion or motion off: straight there)
+  function showTile(id) {
+    const tl = document.querySelector('#trkGrid .trktl[data-mk="' + id + '"]');
+    if (!tl) return;
+    const r = tl.getBoundingClientRect(),
+      top = Math.max(0, $('bar').getBoundingClientRect().bottom) + 8,
+      dk = $('dock').firstElementChild,
+      bot = (dk ? dk.getBoundingClientRect().top : window.innerHeight) - 8;
+    const dy = r.top < top ? r.top - top : r.bottom > bot ? Math.min(r.bottom - bot, r.top - top) : 0;
+    if (Math.abs(dy) < 1) return;
+    window.scrollTo({ top: Math.max(0, window.scrollY + dy), behavior: MOTION.on() ? 'smooth' : 'auto' });
+  }
+  // Q09 Backing Sound: in Markers the track can play silently while the playhead, the loop and Next carry on, so you
+  // sing the marker on your own. Only on the player, in Markers: any other view, the floating window or a song row is
+  // heard, and leaving the player turns it back on (so it's on by default)
+  function syncMute() {
+    if (!el || along) return;
+    const m = mute && here() && grid();
+    if (el.muted !== m) el.muted = m;
+  }
+  function setBacking(on) {
+    mute = !on;
+    syncMute();
+    const b = $('trkSnd');
+    if (b) {
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', on);
+      b.innerHTML = (on ? CKI.sound : CKI.muted) + '<span>Backing Sound</span>';
+    }
+  }
+  // Q09 the Loop pill in Markers: the loop on or off; with no loop yet, the active marker's
+  function mdLoop() {
+    if (loopNow()) return toggleLoop();
+    const m = activeMk();
+    if (m) return tileLoop(m.id);
+    toast('Tap a marker to loop it');
   }
 
   /* ----- Q02 a marker becomes a section start (one timing model: written through ckStore) ----- */
@@ -1459,8 +1594,25 @@ const TRACK = (() => {
     const rs = TRK_LEVELS[lv()].row,
       d = len(),
       n = Math.max(1, Math.ceil(d / rs - 1e-6)),
-      M = prefs().trkSongLyrics && timed() ? model() : null;
-    let h = '<div class="trkrows' + (M ? ' ly' : '') + '" id="trkRows" data-own-gesture>';
+      sg = song(),
+      lyT = !!(sg && hasLyrics(sg) && timed()),
+      lyOn = prefs().trkSongLyrics,
+      M = lyOn && timed() ? model() : null;
+    // Q09 the Song overview card: its heading, and the Lyrics pill at the top right
+    let h =
+      '<div class="trksong" id="trkSong"><div class="trksh"><span class="trksht">Whole song<small>' +
+      fmt(d) +
+      '</small></span>' +
+      (lyT
+        ? '<button class="cvpill trklyt' +
+          (lyOn ? ' on' : '') +
+          '" data-a="trkSongLyrics" aria-pressed="' +
+          lyOn +
+          '">Lyrics</button>'
+        : '') +
+      '</div><div class="trkrows' +
+      (M ? ' ly' : '') +
+      '" id="trkRows" data-own-gesture>';
     for (let r = 0; r < n; r++) {
       const a = r * rs,
         b = Math.min(d, (r + 1) * rs);
@@ -1476,7 +1628,7 @@ const TRACK = (() => {
         '</span><canvas aria-hidden="true"></canvas></button>';
       if (M) h += rowLyrics(M, a, r === n - 1 ? Infinity : (r + 1) * rs);
     }
-    return h + '</div>';
+    return h + '</div></div>';
   }
   // Q02 Song: the lines that start in a row, under it; a section's name where it starts. Tap a line to go to it
   function rowLyrics(M, a, b) {
@@ -1602,10 +1754,7 @@ const TRACK = (() => {
   }
   // everything that changes with the level: the lyric card, the waveform (or the grid), chips and buttons
   function bodyHTML() {
-    const g = grid(),
-      sg = song(),
-      lyT = TRK_LEVELS[lv()].row && sg && hasLyrics(sg) && timed(),
-      lyOn = prefs().trkSongLyrics;
+    const g = grid();
     ctxAt = null;
     return (
       (strip() ? ctxHTML() : '') +
@@ -1618,13 +1767,6 @@ const TRACK = (() => {
       '</span>' +
       // Markers: the speed sits here, since the grid has its own add tile and no Set start / Set end
       (g ? spdHTML() : '') +
-      (lyT
-        ? '<button class="cvpill trklyt' +
-          (lyOn ? ' on' : '') +
-          '" data-a="trkSongLyrics" aria-pressed="' +
-          lyOn +
-          '">Lyrics</button>'
-        : '') +
       '</div>' +
       (g ? '' : '<div class="trkmk" id="trkMk" data-own-gesture>' + chipsHTML() + '</div>') +
       (g
@@ -1668,21 +1810,36 @@ const TRACK = (() => {
     if (U.view !== 'trk' || !cur || U.songId !== cur.id || U.sheet) return '';
     const on = playing(),
       L = loopNow();
-    // Q02 Markers: replay the marker, play or pause, go to the next marker
-    if (grid())
+    // Q09 Markers: three wide pads (Replay the marker, Play/Pause, Next marker) under a floating row of pills
+    // (Backing Sound and Loop). Phrase, Line and Song keep the round transport below
+    if (grid()) {
+      const lo = !!(L && L.on);
       return (
-        '<div class="trktr glass" role="group" aria-label="Markers"><button class="trkb" data-a="trkReplay" aria-label="Replay this marker">' +
+        '<div class="trkmd" role="group" aria-label="Markers"><div class="trkmp"><button class="trkpill glass' +
+        (mute ? '' : ' on') +
+        '" id="trkSnd" data-a="trkSnd" aria-pressed="' +
+        !mute +
+        '">' +
+        (mute ? CKI.muted : CKI.sound) +
+        '<span>Backing Sound</span></button><button class="trkpill trkpl glass' +
+        (lo ? ' on' : '') +
+        '" id="trkLoopB" data-a="trkMdLoop" aria-pressed="' +
+        lo +
+        '" aria-label="Loop">' +
+        LOOP +
+        '<span>Loop</span></button></div><div class="trkpads"><button class="trkpad glass" data-a="trkReplay" aria-label="Replay this marker">' +
         REPLAY +
-        '</button><button class="trkpp" id="trkPP" data-a="trkPP" data-on="' +
+        '</button><button class="trkpad trkpadpp" id="trkPP" data-a="trkPP" data-on="' +
         on +
         '" aria-label="' +
         (on ? 'Pause' : 'Play') +
         '">' +
         (on ? ICON.pause : ICON.play) +
-        '</button><button class="trkb" data-a="trkNext" aria-label="Next marker">' +
+        '</button><button class="trkpad glass" data-a="trkNext" aria-label="Next marker">' +
         NEXT +
-        '</button></div>'
+        '</button></div></div>'
       );
+    }
     return (
       '<div class="trktr glass" role="group" aria-label="Track player"><button class="trkb" data-a="trkToStart" aria-label="Back to the loop start">' +
       TOSTART +
@@ -2097,6 +2254,8 @@ const TRACK = (() => {
     if (cur && !songById(cur.id)) unload();
     mdl = null; // Q02: the song's timing is read again after any change
     ctxAt = null;
+    if (!here()) mute = false; // Q09: Backing Sound is on again whenever you come back
+    syncMute();
     if (U.view === 'trk') {
       const sg = songById(U.songId);
       if (sg && have.has(sg.id) && (!cur || cur.id !== sg.id)) open1(sg.id);
@@ -2537,6 +2696,14 @@ const TRACK = (() => {
     trkNext() {
       nextMk();
     },
+    // Q09 the Markers dock's pills
+    trkSnd() {
+      setBacking(mute);
+      toast(mute ? 'Backing sound off' : 'Backing sound on');
+    },
+    trkMdLoop() {
+      mdLoop();
+    },
     // Q02 a marker into a section start
     trkMkSec(el, v, k) {
       U.sheet = 'trkMkSec';
@@ -2635,6 +2802,11 @@ const TRACK = (() => {
     tileLoop,
     replay,
     nextMk,
+    // Q09
+    backing: () => !mute,
+    setBacking,
+    mdLoop,
+    wraps: () => wraps.map((w) => Object.assign({}, w)),
     jogPos,
     ctx: () => ctxLines(),
     state: () => ({

@@ -5549,26 +5549,25 @@ body.reg .trkstrip {
 .trkjog.drag {
   background: var(--hx);
 }
-/* Q02: the wheel slides further in under the finger, for a bigger grip */
+/* Q09: the wheel grows about 38% under the finger, in place: its centre stays on the edge, so it never slides in */
 .trkjog.drag {
-  transform: translateX(-22px) scale(1.12);
+  transform: scale(1.38);
 }
 .jog-left .trkjog {
   right: auto;
   left: -48px;
 }
 .jog-left .trkjog.drag {
-  transform: translateX(22px) scale(1.12);
+  transform: scale(1.38);
 }
 .jog-left .trkjogi {
   left: auto;
   right: 12px;
 }
-html.motion-reduced .trkjog {
+/* Reduce Motion (and motion off): it still grows, at once, with no transition */
+html.motion-reduced .trkjog,
+html.motion-off .trkjog {
   transition: background 0.2s;
-}
-html.motion-reduced .trkjog.drag {
-  transform: none;
 }
 /* Q02 Bottom: a full-width roller under the strip; drag right for later */
 .trkroll {
@@ -5683,9 +5682,38 @@ body.reg .trkroll {
 .trkrows.ly .trkrow {
   border-bottom: 0;
 }
+/* Q09 the Song overview card: the whole song's rows, with its heading and the Lyrics pill at the top right */
+.trksong {
+  padding: 4px 12px 10px;
+  border-radius: 18px;
+  background: var(--surface);
+}
+.trksh {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 48px;
+}
+.trksht {
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+.trksht small {
+  margin-left: 8px;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--fg2);
+  font-variant-numeric: tabular-nums;
+}
+.trksong .trkrows > :last-child {
+  border-bottom: 0;
+}
 .trklyt {
   flex: none;
-  align-self: center;
+  height: 34px;
+  margin-left: auto;
 }
 .trklyt.on {
   background: var(--accent);
@@ -5699,7 +5727,7 @@ body.reg .trkroll {
 }
 .trktl {
   position: relative;
-  min-height: 96px;
+  min-height: 108px;
   border-radius: 18px;
   background: var(--surface);
   box-shadow: inset 0 0 0 2px transparent;
@@ -5722,9 +5750,9 @@ body.reg .trkroll {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 4px;
+  gap: 5px;
   width: 100%;
-  min-height: 96px;
+  min-height: 108px;
   padding: 12px;
   text-align: left;
 }
@@ -5749,17 +5777,19 @@ body.reg .trkroll {
   font-weight: 600;
 }
 .trktm {
+  max-width: calc(100% - 48px); /* clear of the loop button */
   white-space: nowrap;
   font-size: 13px;
   color: var(--fg2);
   font-variant-numeric: tabular-nums;
 }
+/* Q09: the loop button at the tile's bottom right, where a thumb lands, and a full 44 pt target */
 .trktlo {
   position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 38px;
-  height: 38px;
+  bottom: 6px;
+  right: 6px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   display: grid;
   place-items: center;
@@ -5767,8 +5797,8 @@ body.reg .trkroll {
   color: var(--fg2);
 }
 .trktlo svg.i {
-  width: 17px;
-  height: 17px;
+  width: 19px;
+  height: 19px;
 }
 .trktlo.on {
   background: var(--trk-loop);
@@ -5964,6 +5994,94 @@ body.reg .trkroll {
   flex: none;
   font-size: 15px;
   font-weight: 500;
+}
+/* Q09 Markers: a floating row of pills (Backing Sound, Loop) over three wide pads (Replay, Play/Pause, Next) */
+.trkmd {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 360px;
+  margin: 0 auto;
+}
+.trkmp {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+.trkpill {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 999px;
+  color: var(--fg2);
+  font-size: 15px;
+  font-weight: 500;
+  transition:
+    transform 0.5s cubic-bezier(0.3, 1.7, 0.45, 1),
+    background 0.2s,
+    color 0.2s;
+}
+.trkpill svg.i {
+  width: 19px;
+  height: 19px;
+}
+.trkpill.on {
+  color: var(--fg);
+}
+.trkpl.on {
+  background: var(--trk-loop);
+  color: #fff;
+}
+.trkpads {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+.trkpad {
+  position: relative;
+  flex: 95 1 0;
+  max-width: 95px;
+  height: 72px;
+  border-radius: 24px;
+  display: grid;
+  place-items: center;
+  color: var(--fg);
+  transition: transform 0.5s cubic-bezier(0.3, 1.7, 0.45, 1);
+}
+.trkpad svg.i {
+  width: 26px;
+  height: 26px;
+}
+.trkpadpp {
+  flex: 140 1 0;
+  max-width: 140px;
+  background: var(--fg);
+  color: var(--bg);
+  box-shadow: 0 12px 32px var(--glass-shadow);
+}
+.trkpadpp svg.i {
+  width: 30px;
+  height: 30px;
+  stroke-width: 2.6;
+}
+.trkpadpp[data-on='false'] svg.i {
+  margin-left: 4px;
+}
+.trkpad:active,
+.trkpill:active {
+  transform: scale(0.94);
+  transition-duration: 0.12s;
+}
+/* the page clears the taller dock */
+body:has(#dock .trkmd) main {
+  padding-bottom: calc(150px + var(--dockb));
+}
+/* Q09 the teleprompter's line pulses from its start */
+.trkct {
+  transform-origin: 0 50%;
 }
 /* while a track is read */
 .trkbusy {
@@ -6902,6 +7020,7 @@ html.motion-off .tgrad i {
 /* in a zoom's or a push's still copy the wash sits behind the copied page, not behind the whole layer */
 .zm main {
   isolation: isolate;
+}
 .trkinfo .trkspd {
   flex: none;
   align-self: center;

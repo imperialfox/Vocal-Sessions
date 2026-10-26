@@ -4,6 +4,9 @@ rehearsal tiles), a marker made into a section start through the section picker 
 timing and the marker), the Markers grid's tiles, loops, transport and quick add, the jog wheel on the left, the
 right or as a bottom roller, the red playhead, play-along running off the song's track (with a mute button, and
 lyric-only without the track), the loop kept after the phone sleeps, the level reset, and old data.
+Q09 (the follow-up): the Markers dock's three pads under Backing Sound and Loop, Replay and Next (scrolling the tile
+into view), 108 px tiles with a thumb-reach loop button, the edge jog wheels growing in place, the Lyrics pill on the
+Song card, the teleprompter's line change, and the loop wrapping close to its end at 0.5×, 0.75× and 1×.
 The audio is synthetic: tones with gaps, written by the test as WAV files. Nothing copyrighted is ever used."""
 import json
 from harness import ready
@@ -338,7 +341,7 @@ def jog(b, t):
     for i in range(1, 7): cdp.send('Input.dispatchTouchEvent', {'type': 'touchMove', 'touchPoints': [{'x': c[0], 'y': c[1] + i * 15}]})
     tf = pg.evaluate("getComputedStyle(document.getElementById('trkJog')).transform")
     cdp.send('Input.dispatchTouchEvent', {'type': 'touchEnd', 'touchPoints': []}); pg.wait_for_timeout(150)
-    ok(tf not in ('none', '') , f'the edge wheel slides further in while it’s held ({tf})')
+    ok(tf not in ('none', '') , f'the edge wheel grows while it’s held ({tf})')
     ok(pg.evaluate("TRACK.now()") - t0 > 2, f'dragging it down moves later ({pg.evaluate("TRACK.now()") - t0:.2f} s)')
     ok('jogPos' not in pg.evaluate("localStorage.getItem('vocalTracker')") and
        '"trkJogPos":"left"' in pg.evaluate("localStorage.getItem('vocalSongPrefs')"), 'the side is kept on this device only')
@@ -456,7 +459,7 @@ def sizes(b, t):
                 for jp in (('right', 'left', 'bottom') if i < 2 else ('right',)):
                     pg.evaluate("v=>{sgp().trkJogPos=v;saveSGP()}", jp); pg.evaluate("i=>TRACK.setLevel(i,false)", i)
                     pg.evaluate("TRACK.setLevel((TRACK.level()+1)%4,false)"); pg.evaluate("i=>TRACK.setLevel(i,false)", i); pg.wait_for_timeout(120)
-                    r = pg.evaluate("""(()=>{const d=document.querySelector('#dock .trktr');return [document.documentElement.scrollWidth<=innerWidth+1,
+                    r = pg.evaluate("""(()=>{const d=document.querySelector('#dock .trktr, #dock .trkmd');return [document.documentElement.scrollWidth<=innerWidth+1,
                         !!d&&d.getBoundingClientRect().bottom<=innerHeight+1]})()""")
                     if not all(r): bad.append((i, jp, r))
                     if i < 2 and pg.evaluate(INK) < 500: bad.append((i, jp, 'no ink'))
@@ -466,7 +469,234 @@ def sizes(b, t):
             pg.context.close()
 
 
+MOTION_ON = "try{localStorage.setItem('vocalMotion','1')}catch(e){}"
+REDUCE_ON = "try{localStorage.setItem('vocalMotion','1');localStorage.setItem('vocalReduce','on')}catch(e){}"
+RECT = "s=>{const r=document.querySelector(s).getBoundingClientRect();return [r.left,r.top,r.width,r.height,r.right,r.bottom]}"
+IN_VIEW = """id=>{const r=document.querySelector('#trkGrid .trktl[data-mk="'+id+'"]').getBoundingClientRect(),
+  top=document.getElementById('bar').getBoundingClientRect().bottom,bot=document.getElementById('dock').firstElementChild.getBoundingClientRect().top;
+  return r.top>=top-1&&r.bottom<=bot+1}"""
+
+
+def q09_dock(b, t):
+    ok = t.ok
+    for w, h in ((390, 844), (375, 667)):
+        pg = t.page(b, w=w, h=h)
+        sid = lyric_song(pg)
+        with_track(pg, sid, 60)
+        pg.evaluate(SETMK, [sid, [2, {'t': 9, 'end': 12, 'name': 'Run into the chorus'}, 25, 40]])
+        level(pg, 3)
+        pads = pg.evaluate("[...document.querySelectorAll('#dock .trkpads > button')].map(b=>[b.dataset.a,Math.round(b.getBoundingClientRect().width),Math.round(b.getBoundingClientRect().height)])")
+        ok([p[0] for p in pads] == ['trkReplay', 'trkPP', 'trkNext'], f'{w}: Markers has three pads, Replay, Play/Pause, Next ({pads})')
+        if w == 390:
+            ok(abs(pads[0][1] - 95) <= 2 and abs(pads[1][1] - 140) <= 2 and abs(pads[2][1] - 95) <= 2,
+               f'390: the pads are about 95, 140 and 95 px wide ({pads})')
+        else:
+            ok(pads[0][1] >= 86 and pads[1][1] >= 128 and pads[0][1] == pads[2][1] and abs(pads[1][1] / pads[0][1] - 140 / 95) < 0.05,
+               f'375: the pads keep their 95:140:95 proportions in the room there is ({pads})')
+        ok(all(p[2] >= 64 for p in pads), f'{w}: tall enough to hit without looking ({[p[2] for p in pads]})')
+        pills = pg.evaluate("[...document.querySelectorAll('#dock .trkmp > button')].map(b=>[b.id,b.textContent.trim()])")
+        ok(pills == [['trkSnd', 'Backing Sound'], ['trkLoopB', 'Loop']], f'{w}: a row of pills above them: Backing Sound and Loop ({pills})')
+        mp, pd = pg.evaluate(RECT, '#dock .trkmp'), pg.evaluate(RECT, '#dock .trkpads')
+        ok(mp[5] <= pd[1] and pd[5] <= h + 1 and no_side(pg), f'{w}: pills over the pads, all in view, no sideways scroll ({mp[5]:.0f} ≤ {pd[1]:.0f}, {pd[5]:.0f})')
+        # the floating window keeps clear of the taller dock
+        fb = pg.evaluate("fwBounds().b")
+        ok(fb <= mp[1], f'{w}: the floating window’s room ends above the pill row ({fb:.0f} ≤ {mp[1]:.0f})')
+        # the page clears it: the last tile can scroll above the dock
+        pg.evaluate("window.scrollTo(0,1e5)"); pg.wait_for_timeout(100)
+        last = pg.evaluate(RECT, '#trkGrid .trkqa')
+        ok(last[5] <= mp[1] + 1, f'{w}: the last tile scrolls clear of the dock ({last[5]:.0f} ≤ {mp[1]:.0f})')
+        t.shot(pg, f'q09-markers-{w}')
+        # 108 px tiles, a 44 px loop button at the bottom right, clear of the time
+        hs = pg.evaluate("[...document.querySelectorAll('#trkGrid .trktl')].map(e=>e.getBoundingClientRect().height)")
+        ok(all(abs(x - 108) < 0.6 for x in hs), f'{w}: tiles are 108 px tall ({set(round(x, 1) for x in hs)})')
+        tl, lo, tm = (pg.evaluate(RECT, f'#trkGrid .trktl[data-mk=m1] {s}') for s in ('', '.trktlo', '.trktm'))
+        tl = pg.evaluate(RECT, '#trkGrid .trktl[data-mk=m1]')
+        ok(abs(lo[2] - 44) < 0.6 and abs(lo[3] - 44) < 0.6 and tl[4] - lo[4] <= 8 and tl[5] - lo[5] <= 8,
+           f'{w}: the loop button is 44 px, at the tile’s bottom right ({lo[:4]})')
+        ok(tm[4] <= lo[0] and pg.evaluate("(()=>{const e=document.querySelector('#trkGrid .trktl[data-mk=m1] .trktm');return e.scrollWidth<=e.clientWidth})()"),
+           f'{w}: the time is whole and clear of it')
+        cols = pg.evaluate("getComputedStyle(document.getElementById('trkGrid')).gridTemplateColumns.split(' ').length")
+        ok(cols == 2, f'{w}: still two columns')
+        # the other views keep 3.24's transport
+        level(pg, 1)
+        ok(pg.locator('#dock .trktr').count() == 1 and pg.locator('#dock .trkmd').count() == 0, f'{w}: Line keeps the round transport')
+        pg.context.close()
+
+
+def q09_controls(b, t):
+    ok = t.ok
+    pg = t.page(b, w=375, h=667)
+    sid = lyric_song(pg)
+    with_track(pg, sid, 60)
+    ts = [2, 6, 10, 14, 18, 22, 26, 30, 34, 38, 42, 46]
+    pg.evaluate(SETMK, [sid, ts])
+    level(pg, 3)
+    # Backing Sound: on by default; off silences the track while it carries on playing and looping
+    ok(pg.get_attribute('#trkSnd', 'aria-pressed') == 'true' and pg.evaluate("TRACK.backing()"), 'Backing Sound is on to start with')
+    pg.click('#trkGrid .trktl[data-mk=m0] .trktlb'); pg.wait_for_function("TRACK.state().playing", timeout=5000)
+    pg.click('#trkSnd'); pg.wait_for_timeout(150)
+    st = pg.evaluate("[TRACK.state().muted,TRACK.state().playing,document.getElementById('trkSnd').getAttribute('aria-pressed')]")
+    ok(st == [True, True, 'false'], f'off: the track is silent and still playing ({st})')
+    pg.evaluate("TRACK.seek(5.8)"); pg.wait_for_timeout(500)
+    ok(2 <= pg.evaluate("TRACK.now()") < 3, 'the marker’s loop carries on without the sound')
+    pg.click('#dock [data-a=trkNext]'); pg.wait_for_timeout(200)
+    ok(abs(pg.evaluate("TRACK.now()") - 6) < 0.4 and pg.evaluate("TRACK.state().muted"), 'Next carries on without it too')
+    level(pg, 1)
+    ok(pg.evaluate("TRACK.state().muted") is False, 'Line is heard (Backing Sound is a Markers control)')
+    level(pg, 3)
+    ok(pg.evaluate("TRACK.state().muted") is True and pg.get_attribute('#trkSnd', 'aria-pressed') == 'false', 'back in Markers it’s off again')
+    pg.click('#barL [data-a=trkBack]'); pg.wait_for_timeout(300)
+    ok(pg.evaluate("TRACK.state().muted") is False and pg.evaluate("TRACK.backing()"), 'leaving the player turns it back on')
+    pg.evaluate(PLAYER, sid); loaded(pg, sid)
+    ok(pg.get_attribute('#trkSnd', 'aria-pressed') == 'true', 'and it’s on when you come back')
+    pg.evaluate("TRACK.pause()"); pg.wait_for_timeout(100)
+    # the Loop pill
+    ok(pg.get_attribute('#trkLoopB', 'aria-pressed') == 'true', 'the Loop pill shows the marker’s loop on')
+    pg.click('#trkLoopB'); pg.wait_for_timeout(120)
+    ok(loop(pg, sid)['on'] is False and pg.get_attribute('#trkLoopB', 'aria-pressed') == 'false', 'the Loop pill turns it off')
+    pg.click('#trkLoopB'); pg.wait_for_timeout(120)
+    ok(loop(pg, sid)['on'] is True, 'and on again')
+    pg.evaluate("id=>{delete songById(id).loop;save()}", sid); pg.evaluate("TRACK.seek(15)"); pg.wait_for_timeout(100)
+    pg.click('#trkLoopB'); pg.wait_for_timeout(120)
+    L = loop(pg, sid)
+    ok(L and L['start'] == 14 and L['end'] == 18 and L['mk'] == 'm3', f'with no loop yet, it loops the marker the playhead is in ({L})')
+    # Replay restarts the active marker, playing
+    pg.evaluate("TRACK.seek(16.5)"); pg.click('#dock [data-a=trkReplay]'); pg.wait_for_timeout(200)
+    ok(abs(pg.evaluate("TRACK.now()") - 14) < 0.4 and pg.evaluate("TRACK.state().playing"), 'Replay restarts the active marker')
+    # Next in time order, scrolling the tile into view
+    pg.evaluate("TRACK.pause()"); pg.evaluate("window.scrollTo(0,0)"); pg.wait_for_timeout(100)
+    ok(not pg.evaluate(IN_VIEW, 'm10'), 'the later tiles start out of view (behind the dock)')
+    pg.click('#trkGrid .trktl[data-mk=m8] .trktlb'); pg.wait_for_timeout(150)
+    order = []
+    for _ in range(3):
+        pg.click('#dock [data-a=trkNext]'); pg.wait_for_timeout(200)
+        order.append(loop(pg, sid)['mk'])
+    ok(order == ['m9', 'm10', 'm11'], f'Next moves through the markers in time order ({order})')
+    ok(pg.evaluate(IN_VIEW, 'm11'), 'and scrolls the active tile into view between the top bar and the dock')
+    pg.click('#dock [data-a=trkNext]'); pg.wait_for_timeout(200)
+    ok('last marker' in pg.inner_text('.toast'), 'after the last it says so')
+    pg.evaluate("TRACK.pause()")
+    pg.context.close()
+    # smooth scrolling with motion on
+    pg = t.page(b, w=375, h=667, init=MOTION_ON)
+    sid = lyric_song(pg)
+    with_track(pg, sid, 60)
+    pg.evaluate(SETMK, [sid, ts]); level(pg, 3)
+    pg.evaluate("window.scrollTo(0,0)"); pg.click('#trkGrid .trktl[data-mk=m9] .trktlb'); pg.wait_for_timeout(100)
+    pg.evaluate("window.scrollTo(0,0)"); pg.wait_for_timeout(100)
+    pg.evaluate("window.__sc=[];const f=window.scrollTo.bind(window);window.scrollTo=function(a){window.__sc.push(a&&a.behavior||'');return f(...arguments)};0")
+    pg.click('#dock [data-a=trkNext]'); pg.wait_for_timeout(900)
+    sc = pg.evaluate("window.__sc")
+    ok(sc == ['smooth'] and pg.evaluate(IN_VIEW, 'm10'), f'with motion on it scrolls there smoothly ({sc})')
+    pg.evaluate("TRACK.pause()")
+    pg.context.close()
+
+
+def q09_jog(b, t):
+    ok = t.ok
+    for init, name in ((None, 'motion off'), (MOTION_ON, 'motion on'), (REDUCE_ON, 'reduce motion')):
+        pg = t.page(b, touch=True, init=init)
+        sid = lyric_song(pg)
+        with_track(pg, sid, 60)
+        for side in ('right', 'left'):
+            pg.evaluate("v=>{sgp().trkJogPos=v;saveSGP();rerender()}", side); pg.wait_for_timeout(200)
+            r0 = pg.evaluate(RECT, '#trkJog')
+            c = [r0[0] + r0[2] / 2 + (-30 if side == 'right' else 30), r0[1] + r0[3] / 2]
+            cdp = pg.context.new_cdp_session(pg)
+            cdp.send('Input.dispatchTouchEvent', {'type': 'touchStart', 'touchPoints': [{'x': c[0], 'y': c[1]}]})
+            pg.wait_for_timeout(700 if init == MOTION_ON else 30)
+            r1 = pg.evaluate(RECT, '#trkJog')
+            tr = pg.evaluate("(()=>{const s=getComputedStyle(document.getElementById('trkJog'));return [s.transform,s.transitionProperty]})()")
+            cdp.send('Input.dispatchTouchEvent', {'type': 'touchEnd', 'touchPoints': []}); pg.wait_for_timeout(100)
+            k = r1[2] / r0[2]
+            ok(1.35 <= k <= 1.40, f'{name}, {side}: the wheel grows {k:.2f}× while held ({tr[0]})')
+            ok(abs((r1[0] + r1[2] / 2) - (r0[0] + r0[2] / 2)) < 0.6 and abs((r1[1] + r1[3] / 2) - (r0[1] + r0[3] / 2)) < 0.6,
+               f'{name}, {side}: its centre stays on the edge (no slide in)')
+            if init == REDUCE_ON:
+                ok('transform' not in tr[1] and 'all' not in tr[1], f'reduce motion, {side}: it grows at once, no transition ({tr[1]})')
+        pg.context.close()
+
+
+def q09_song_card(b, t):
+    ok = t.ok
+    for w, h in ((375, 667), (820, 1180)):
+        pg = t.page(b, w=w, h=h)
+        sid = lyric_song(pg)
+        with_track(pg, sid, 60)
+        pg.evaluate(SPREAD, sid)
+        level(pg, 2)
+        ok(pg.locator('#trkSong #trkRows').count() == 1 and pg.locator('.trkinfo [data-a=trkSongLyrics]').count() == 0,
+           f'{w}: Song’s rows sit in the Song card, and the Lyrics pill has left the line under it')
+        cd, pl = pg.evaluate(RECT, '#trkSong'), pg.evaluate(RECT, '#trkSong [data-a=trkSongLyrics]')
+        rows = pg.evaluate(RECT, '#trkRows')
+        ok(pl[1] - cd[1] <= 16 and cd[4] - pl[4] <= 16 and pl[5] <= rows[1] + 1,
+           f'{w}: the Lyrics pill is at the card’s top right, above the rows ({pl[:4]} in {cd[:4]})')
+        pg.click('#trkSong [data-a=trkSongLyrics]'); pg.wait_for_timeout(150)
+        ok(pg.locator('#app .trkly').count() == 0 and pg.locator('#trkSong [data-a=trkSongLyrics]').count() == 1, f'{w}: it still hides the lyrics, and stays put')
+        ok(no_side(pg), f'{w}: no sideways scroll')
+        t.shot(pg, f'q09-song-{w}')
+        pg.context.close()
+
+
+def q09_prompter(b, t):
+    ok = t.ok
+    ANIMS = "s=>{const e=document.querySelector(s);return e?e.getAnimations().map(a=>Object.keys(a.effect.getKeyframes()[0]).filter(k=>['opacity','transform'].includes(k)).sort().join('+')):[]}"
+    for init, name in ((MOTION_ON, 'motion on'), (REDUCE_ON, 'reduce motion'), (None, 'motion off')):
+        pg = t.page(b, init=init)
+        sid = lyric_song(pg)
+        with_track(pg, sid, 60)
+        pg.evaluate(SPREAD, sid)
+        pg.evaluate(PLAYER, sid); loaded(pg, sid)
+        pg.evaluate("TRACK.seek(5)"); pg.wait_for_timeout(1500)
+        first = pg.inner_text('#trkCtx .trkct')
+        ok(pg.evaluate(ANIMS, '#trkCtx .trkcc') == [], f'{name}: nothing moves while the line stays the same')
+        pg.evaluate("TRACK.seek(12)")
+        a, p = pg.evaluate(ANIMS, '#trkCtx .trkcc'), pg.evaluate(ANIMS, '#trkCtx .trkct')
+        ok(pg.inner_text('#trkCtx .trkct') != first, f'{name}: the active line changed')
+        if init == MOTION_ON:
+            ok(a == ['opacity+transform'] and p == ['transform'], f'motion on: the new line moves into place with a pulse ({a}, {p})')
+            sc = pg.evaluate(r"(()=>{const k=document.querySelector('#trkCtx .trkct').getAnimations()[0].effect.getKeyframes();return Math.max(...k.map(f=>+(/scale\(([\d.]+)/.exec(f.transform)||[0,1])[1]))})()")
+            ok(1.0 < sc <= 1.05, f'a subtle pulse ({sc})')
+        elif init == REDUCE_ON:
+            ok(a == ['opacity'] and p == [], f'reduce motion: a fade only, no pulse ({a}, {p})')
+        else:
+            ok(a == [] and p == [], 'motion off: it just changes')
+        pg.evaluate("TRACK.pause()")
+        pg.context.close()
+
+
+def q09_loop(b, t):
+    """The loop's boundary at 1×, 0.75× and 0.5×: never missed, jumping back within a few ms of the end, pitch kept."""
+    ok = t.ok
+    pg = t.page(b)
+    sid = lyric_song(pg)
+    with_track(pg, sid, 60)
+    pg.evaluate(PLAYER, sid); loaded(pg, sid)
+    pg.evaluate("id=>{songById(id).loop={start:4,end:5,on:true};save()}", sid)
+    for sp in (1, 0.75, 0.5):
+        pg.evaluate("v=>{sgp().trkSpeed=v;saveSGP()}", sp)
+        pg.evaluate("TRACK.seek(4)"); n0 = len(pg.evaluate("TRACK.wraps()"))
+        pg.evaluate("TRACK.play()"); pg.wait_for_function("TRACK.state().playing", timeout=5000)
+        # watch the playhead every frame: it never runs past the end
+        pg.evaluate("window.__mx=0;(function f(){const v=TRACK.el();if(v&&!v.paused){window.__mx=Math.max(window.__mx,v.currentTime);requestAnimationFrame(f)}})()")
+        pg.wait_for_function("n=>TRACK.wraps().length>=n", arg=n0 + 3, timeout=int(9000 / sp))
+        W = pg.evaluate("TRACK.wraps()")[n0:]
+        st = pg.evaluate("[TRACK.el().playbackRate,TRACK.el().preservesPitch!==false,window.__mx]")
+        pg.evaluate("TRACK.pause()"); pg.wait_for_timeout(100)
+        over = [round(w['t'] - w['end'], 3) for w in W]
+        ok(len(W) >= 3 and all(w['start'] == 4 for w in W), f'{sp}×: it wrapped every time round ({len(W)} wraps)')
+        ok(all(-0.03 <= o <= 0.03 * max(1, sp) for o in over), f'{sp}×: each jump back was within a few ms of the end ({over}, {[w["by"] for w in W]})')
+        ok(st[0] == sp and st[1] and st[2] < 5.06, f'{sp}×: pitch kept at this speed, and the playhead never ran past the end ({st})')
+    pg.context.close()
+
+
 def run(b, t):
+    q09_dock(b, t)
+    q09_controls(b, t)
+    q09_jog(b, t)
+    q09_song_card(b, t)
+    q09_prompter(b, t)
+    q09_loop(b, t)
     views(b, t)
     lyrics_card(b, t)
     promotion(b, t)

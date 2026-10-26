@@ -1,6 +1,6 @@
 # Render queue
 
-App work Ivan has queued, in the order he wants it built. Each item is one build, in a fresh chat, started from a handoff (see [HANDOFF.md](HANDOFF.md)). Last checked against `main` at **3.24** (26 Oct 2026). **Shipped:** Q01 · Search: Global Find in 3.22; Q08 · Interface: Native iOS Polish in 3.23; Q02 · Track: Waveform Sections in 3.24.
+App work Ivan has queued, in the order he wants it built. Each item is one build, in a fresh chat, started from a handoff (see [HANDOFF.md](HANDOFF.md)). Last checked against `main` at **3.25** (26 Oct 2026). **Shipped:** Q01 · Search: Global Find in 3.22; Q08 · Interface: Native iOS Polish in 3.23; Q02 · Track: Waveform Sections in 3.24; Q09 · Track: Waveform Sections Follow-up in 3.25.
 
 - **Every item has two separate gates.** `Awaiting Render` means it is not approved. Ivan's **Render** approves only the named item's exact scope and moves it to `Approved — awaiting Build`; it does not start work or authorize a push. A separate **Build** instruction starts implementation for that approved item. Do not treat approval of one item as approval of the whole queue.
 - **The code wins on what's built.** This is a summary, not a spec. Check each note against the code before relying on it.
@@ -29,6 +29,7 @@ Older chats, notes and prototypes use working names. They map like this:
 | Q06 | Song Clock: Timeline View | Song Clock B, Render 7, Section starts and wheels |
 | Q07 | Song Clock: Dynamic Sync | Song Clock C, Render 8, Paced Recall |
 | Q08 | Interface: Native iOS Polish | Native bars, iOS 27 polish (shipped in 3.23) |
+| Q09 | Track: Waveform Sections Follow-up | Giant 3-Pad dock, Q02 follow-up (shipped in 3.25) |
 
 Work shipped before this standard (for example Track 1 and Song Clock A1) keeps its version numbers and has no queue ID.
 
@@ -42,29 +43,6 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
   - Never commit with Ivan's personal email. Claude commits as `Claude <noreply@anthropic.com>`.
 
 ---
-
-## Q09 · Track: Waveform Sections Follow-up
-
-**Status:** Approved — awaiting Build. **Render:** Approved by Ivan on 26 Oct 2026 for the corrective scope below. **Build:** Awaiting Ivan's separate instruction.
-**Needs:** Q02 · Track: Waveform Sections is live in 3.24 (verified on main).
-
-- **Goal:** Bring the shipped Q02 track player into alignment with the approved rehearsal controls and interaction details.
-- **Agreed:**
-  - The Giant 3-Pad dock is **Markers-only**.
-  - Preserve pitch when playback speed changes; reduce the audible loop-boundary pause as much as possible. A zero-gap engine is not required.
-- **Scope:**
-  - In Markers, replace the compact round dock controls with three wide touch pads: Replay (~95px), Play/Pause (~140px), Next (~95px). Put Backing Sound and Loop pill controls in a floating row above.
-  - Replay restarts the active marker. Next advances to the next chronological marker and smoothly scrolls the active tile into view.
-  - Improve loop-boundary playback to reduce the audible pause while preserving pitch at slower playback speeds. No missed loop boundaries, clicks or cutoffs.
-  - Increase marker tile height from 76px to 108px; retain the two-column grid, readable marker names and times, active-playback indicator and thumb-friendly per-marker loop control.
-  - Make left/right jog dials expand by 35–40% while touched or held, without shifting their edge position.
-  - Move the Lyrics pill to the top-right of the Song overview card.
-  - Add a smooth lyric-line transition and subtle pulse when the active teleprompter line changes.
-- **Notes against 3.24** (checked 26 Oct): tiles are 96 px in 3.24 (`.trktl`), not 76 px; the target is still 108 px. The jog's drag style is `translateX(-22px) scale(1.12)`; Q09 drops the slide and grows about 1.35–1.4× in place. The handoff (`q09_track_waveform_sections_followup_handoff.md`, in Ivan's project notes) has code pointers.
-- *Unresolved (default recorded):* **Backing Sound pill.** The 3.24 track player has no sound toggle (mute exists only for Song Clock play-along). Default: mutes the track while the playhead, loop and Next keep running; on by default. Confirm with Ivan at the start of the build.
-- **Out of scope:** Rebuilding Q02 areas already present in 3.24, including unified timing and section promotion/undo, 24-second Song rows, red playhead styling and play-along synchronization.
-- **Next action:** Start a fresh Claude build chat from the Q09 handoff and approved Q02 wireframe/spec. Do not edit the app until Ivan separately says **Build**.
-- **Done when:** The Markers dock, Replay/Next behavior, tile dimensions, jog expansion, Lyrics placement and lyric transitions meet this scope; loop playback has a reduced boundary pause without losing pitch at slower speeds. Follow the checks and release process in [MAINTAINING.md](MAINTAINING.md).
 
 ## Q03 · Marks: Layered Annotations
 
