@@ -259,26 +259,85 @@ setInterval(() => {
   const cs = $('curSplit');
   if (cs) cs.textContent = clk(elapsedSec() - (+cs.dataset.base || 0));
 }, 1000);
+/* 3.23 (Q08) the tab bar's collapse, as in Music. Scrolling down shrinks it to a pill at the left edge, scrolling up
+   (or tapping the pill) brings it back. Only scrolling you do counts:
+   - about 30 pt of steady scrolling down collapses it, about 20 pt up expands it (TAB_DOWN, TAB_UP);
+   - never in the first 120 pt, and always expanded within 60 pt of the top;
+   - the page needs real room to scroll (tabRoom(), a third of the screen); rechecked whenever the page's height changes;
+   - rubber-banding past either end is ignored, and so are scrolls the app makes itself (scroll restore after Back,
+     scrolling to a section): window.scrollTo and scrollBy move lastY with them, and a smooth one is ignored until done;
+   - never on Search, with a sheet open or while typing (the keyboard is up), and only on iPhone upright. */
 let lastY = 0,
-  tabMin = false;
+  tabMin = false,
+  tabRun = 0, // how far this run of scrolling has gone, signed (down is positive)
+  tabInput = 0, // when a finger, the wheel or a key last moved the page
+  tabTouch = false,
+  tabQuiet = 0; // until when an app-made smooth scroll is going on
+const TAB_DOWN = 30,
+  TAB_UP = 20;
+const tabTyping = () => {
+  const a = document.activeElement;
+  return !!(a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.isContentEditable));
+};
+const tabMayMin = () =>
+  document.body.classList.contains('phone') && !U.sheet && U.tab !== 'find' && !tabTyping() && !!$('dock').querySelector('.dockrow .tabpill') && tabRoom();
+['scrollTo', 'scrollBy'].forEach((m) => {
+  const f = window[m].bind(window);
+  window[m] = function () {
+    const o = arguments[0];
+    if (o && typeof o === 'object' && o.behavior === 'smooth') tabQuiet = Date.now() + 900;
+    f.apply(window, arguments);
+    lastY = window.scrollY; // not a scroll you made
+    tabRun = 0;
+  };
+});
+['touchstart', 'touchmove', 'touchend', 'wheel', 'keydown'].forEach((t) =>
+  document.addEventListener(
+    t,
+    (e) => {
+      tabInput = Date.now();
+      if (t === 'touchstart') tabTouch = true;
+      if (t === 'touchend') tabTouch = e.touches && e.touches.length > 0;
+    },
+    { passive: true, capture: true }
+  )
+);
+// momentum after a flick carries on for a moment after the finger lifts
+const tabByYou = () => tabTouch || Date.now() - tabInput < 1500;
 window.addEventListener(
   'scroll',
   () => {
     closeSwipes();
-    const y = window.scrollY;
+    const y = window.scrollY,
+      max = document.documentElement.scrollHeight - window.innerHeight;
     const sc = y > 36;
     $('bar').classList.toggle('scrolled', sc);
     document.body.classList.toggle('scrolled', sc);
-    const tb = $('dock').querySelector('.tabbar');
-    if (tb && !U.sheet && !document.body.classList.contains('land') && U.tab !== 'find') {
-      if (y > lastY + 6 && y > 120) tabMin = true;
-      else if (y < lastY - 6 || y < 60) tabMin = false;
-      tb.classList.toggle('min', tabMin);
-    }
+    if (y < 0 || y > max + 1) return; // rubber-banding past an end
+    const dy = y - lastY;
     lastY = y;
+    if (y < 60) {
+      tabRun = 0;
+      if (tabMin) setTabMin(false);
+      return;
+    }
+    if (!dy || Date.now() < tabQuiet || !tabByYou()) {
+      tabRun = 0;
+      return;
+    }
+    tabRun = Math.sign(dy) === Math.sign(tabRun) ? tabRun + dy : dy;
+    if (!tabMin && tabRun >= TAB_DOWN && y > 120 && tabMayMin()) setTabMin(true);
+    else if (tabMin && tabRun <= -TAB_UP) setTabMin(false);
   },
   { passive: true }
 );
+// the page's height changes (a filter, a section folding, rows deleted, rotating): too short now, and it comes back
+if (window.ResizeObserver)
+  new ResizeObserver(() => {
+    if (tabMin && !tabRoom()) setTabMin(false);
+  }).observe(document.body);
+// the keyboard coming up brings the bar back
+document.addEventListener('focusin', () => tabMin && tabTyping() && setTabMin(false));
 // iOS pauses the mic when you leave the app, so stop and save the take, then say so on return
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) {

@@ -673,6 +673,7 @@ function ckStartSync(sg, keepRet) {
   if (!keepRet || !CK.ret) CK.ret = ckReturnPlace();
   CK.head = false;
   U.clock = false;
+  ckPushFrom('ck:sync');
   go(() => {
     U.songId = sg.id;
     U.view = 'ckSync';
@@ -795,9 +796,16 @@ function ckBack() {
     U.sd = {};
   });
 }
+// 3.23 (Q08): from a song page, Sync by sections and Check timing push in from the right; between the two they
+// replace each other, so Back (or ✕, or Done) still slides away to the song page
+function ckPushFrom(key) {
+  if (U.view === 'lyr') ZOOM.armPush(key);
+  else if (U.view === 'ckSync' || U.view === 'ckCheck') ZOOM.retarget();
+}
 function ckOpenCheck(sg, keepRet) {
   if (!keepRet || !CK.ret) CK.ret = ckReturnPlace();
   CK.head = false;
+  ckPushFrom('ck:check');
   go(() => {
     U.songId = sg.id;
     U.view = 'ckCheck';
@@ -944,7 +952,7 @@ function ckCheckPage() {
   });
   if (lastK >= 0) h += '</div>';
   h +=
-    '<button class="cta ink ckcta" data-a="ckCheckDone">Done</button><div class="ckcen"><button class="lnkbtn" data-a="ckSyncAgain">Sync again from the start</button></div>';
+    '<button class="cta ink ckcta" data-a="ckCheckDone" data-pop>Done</button><div class="ckcen"><button class="lnkbtn" data-a="ckSyncAgain">Sync again from the start</button></div>';
   return h;
 }
 
@@ -1499,7 +1507,7 @@ const CLOCK = {
       const P = CK.P,
         live = P && (P.started || P.note);
       return {
-        l: '<button class="circ glass" data-a="ckSyncX" aria-label="Close">' + ICON.x + '</button>',
+        l: '<button class="circ glass" data-a="ckSyncX" data-pop aria-label="Close">' + ICON.x + '</button>',
         t: live
           ? '<span class="pill glass ckpill"><span class="recdot" aria-hidden="true"></span><span id="ckST">' +
             ckFmt(ckNow(CK.sc)) +

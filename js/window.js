@@ -409,8 +409,7 @@ function fwBounds() {
   const t = Math.max(0, $('bar').getBoundingClientRect().bottom) + 10;
   let b = dr.bottom - parseFloat(cs.paddingBottom);
   if (inn.firstElementChild) {
-    b = Math.min(b, inn.getBoundingClientRect().top) - 12;
-    if (inn.querySelector('.tabbar.min')) b -= 8; // the tab bar grows a little when it opens again
+    b = Math.min(b, inn.getBoundingClientRect().top) - 12; // 3.23: the collapsed bar keeps the row's height
   }
   return { l, r, t, b };
 }

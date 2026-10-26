@@ -183,7 +183,7 @@ const FIND = (() => {
   function songRow(s, toks, pm) {
     const lp = lastPractised(s, pm);
     return row(
-      'data-zk="sg:' + s.id + '" data-a="sgOpen" data-v="find" data-k="' + s.id + '"',
+      'data-zk="sg:' + s.id + '" data-push data-a="sgOpen" data-v="find" data-k="' + s.id + '"',
       TILE.song,
       hlWords(songTitle(s), toks),
       (s.artist ? hlWords(s.artist, toks) + ' · ' : '') + (lp ? practisedText(lp) : 'Not practised yet')
@@ -196,7 +196,7 @@ const FIND = (() => {
     if (k === 'lyrics')
       return R.lyrics.map((r, i) =>
         row(
-          'data-zk="fl:' + i + '" data-a="findLyr" data-k="' + r.s.id + '" data-o="' + esc(r.o) + '"',
+          'data-zk="fl:' + i + '" data-push data-a="findLyr" data-k="' + r.s.id + '" data-o="' + esc(r.o) + '"',
           TILE.lyric,
           '<span class="fline">' + hlWords(r.t, toks) + '</span>',
           esc(songTitle(r.s)) + ' · ' + esc(occLabel(r.s, r.oi))
@@ -205,7 +205,7 @@ const FIND = (() => {
     if (k === 'exercises')
       return R.exercises.map((r) =>
         row(
-          'data-zk="ex:' + r.e.id + '" data-a="openEx" data-k="' + r.e.id + '"',
+          'data-zk="ex:' + r.e.id + '" data-push data-a="openEx" data-k="' + r.e.id + '"',
           tile(r.e),
           hlWords(r.e.name, toks),
           r.lab

@@ -112,7 +112,7 @@ def session(b, t):
     drag(pg, x, y, x - 150, y - 150, steps=3, ms=0)
     ok(pg.evaluate("FW.corner") == 'tl' and at_corner(pg, 'tl'), 'a quick flick up and left lands in the top left')
     x, y = centre(pg)
-    drag(pg, x, y, x + 30, y + 20, steps=12, ms=40)
+    drag(pg, x, y, x + 20, y + 14, steps=12, ms=40)  # (3.23: the corners sit 21 pt in on iPhone, a little closer)
     ok(pg.evaluate("FW.corner") == 'tl', 'a slow short drag springs back to its corner')
     ok(pg.evaluate(CLEAR) == [], 'in the top corner it stays below the top bar')
     t.shot(pg, 'top-left')

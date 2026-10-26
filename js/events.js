@@ -108,9 +108,9 @@ document.addEventListener('click', (e) => {
     case 'tab':
       U.clock = false;
       if (sgTabTap(v)) break;
-      if (tabMin && !MQ.reg.matches && $('dock').querySelector('.tabbar')) {
-        tabMin = false;
-        $('dock').querySelector('.tabbar').classList.remove('min');
+      // the collapsed bar's pill (or any tab while it's collapsed) brings the bar back first (3.23, Q08)
+      if (tabMin && !MQ.reg.matches && $('dock').querySelector('.dockrow')) {
+        setTabMin(false);
         break;
       }
       go(() => {

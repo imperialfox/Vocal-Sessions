@@ -17,6 +17,10 @@ QUIET = "!document.getAnimations().some(a=>(a.playState==='running'||a.playState
 CLEAN = "!document.querySelector('.zm')&&!document.querySelector('.zm-src')&&!ZOOM.busy()"
 GROWING = "(()=>{const c=document.querySelector('.zm .zm-c');return !!c&&c.getAnimations().length>0})()"
 BACK = '#barL [aria-label^="Back"]'
+# 3.23 (Q08): the Exercises list, songs and Settings rows push (test_native.py); Today's suggested rotation still zooms
+# into an exercise page, so the zoom's own checks start there
+SUG = '.dash [data-zk^="ex:"]'
+TODAY = "go(()=>{U.tab='today';U.view=null})"
 # freeze every animation (after the zoom's first frames), to look at exact moments
 FREEZE = """async js=>{(new Function(js))();for(let i=0;i<3;i++)await new Promise(r=>requestAnimationFrame(r));
   window._an=document.getAnimations().filter(a=>a.effect.getTiming().iterations!==Infinity);window._an.forEach(a=>a.pause());return window._an.length}"""
@@ -55,14 +59,10 @@ def cards(b, t):
     quiet(pg)
     CASES = [
         # (name, how to get to the list, the card, the page it opens)
-        ('an exercise row in Exercises', "go(()=>{U.tab='exercises';U.view=null})", '[data-zk="ex:hinge"]', 'exercises|ex'),
+        # (3.23: rows in Exercises, songs, and Settings rows push instead: test_native.py)
         ('Today\'s suggested rotation', "go(()=>{U.tab='today';U.view=null})", '.dash [data-zk^="ex:"]', 'today|ex'),
-        ('a pinned song on Today', "go(()=>{U.tab='today';U.view=null})", '[data-zk="sg:g_1"]', 'songs|lyr'),
-        ('a song in Songs', "go(()=>{U.tab='songs';U.view=null})", '[data-zk="sg:g_x3"]', 'songs|lyr'),
         ('Show all sessions on Progress', "go(()=>{U.tab='history';U.view=null})", '[data-zk="all:sessions"]', 'history|all'),
-        ('Changelog in Settings', "go(()=>{U.tab='settings';U.view=null})", '[data-zk="log"]', 'settings|log'),
-        ('Backup in Settings (3.21)', "go(()=>{U.tab='settings';U.view=null})", '[data-zk="set:backup"]', 'settings|set'),
-        ('Accessibility in Settings (3.21)', "go(()=>{U.tab='settings';U.view=null})", '[data-zk="set:access"]', 'settings|set'),
+        ('Show all song practice on Progress', "go(()=>{U.tab='history';U.view=null})", '[data-zk="all:songs"]', 'history|all'),
         ('the Start session capsule', "go(()=>{U.tab='today';U.view=null})", '[data-zk="start"]', 'today|found'),
     ]
     for name, to, card, dest in CASES:
@@ -87,7 +87,7 @@ def cards(b, t):
         quiet(pg)
         ok(where(pg) == back_to and pg.evaluate(CLEAN), f'{name}: back on {back_to}, the card is shown again and nothing is left over')
         ok(abs(pg.evaluate("scrollY") - y0) < 2, f'{name}: the list is where it was ({y0:.0f}px down)')
-    ok(pg.evaluate("document.querySelector('#dock .tabbar')&&!document.querySelector('#dock .tabbar.min')") is not False,
+    ok(pg.evaluate("document.querySelector('#dock .tabbar')&&!document.querySelector('#dock .dockrow.min')") is not False,
        'putting the scroll back doesn\'t shrink the tab bar')
     # the arch zooms into Progress (a tab, so there is no Back to shrink it again)
     pg.evaluate("go(()=>{U.tab='today';U.view=null})")
@@ -106,30 +106,30 @@ def interrupt(b, t):
     ok = t.ok
     pg = page(b, t)
     quiet(pg)
-    pg.evaluate("go(()=>{U.tab='exercises';U.view=null})")
+    pg.evaluate(TODAY)
     quiet(pg)
     for wait, label in ((0, 'straight away'), (150, 'part way'), (900, 'nearly there')):
-        pg.click('[data-zk="ex:rung"]')
+        pg.click(SUG)
         pg.wait_for_timeout(wait)
         pg.click(BACK)
         ok(pg.locator('.zm').count() == 1, f'Back {label}: the same zoom turns round (one layer, not two)')
         quiet(pg)
-        ok(where(pg) == 'exercises|' and pg.evaluate(CLEAN) and pg.evaluate("ZOOM.stack().length") == 0,
-           f'Back {label}: back on Exercises with no stray page, copy or hidden card')
+        ok(where(pg) == 'today|' and pg.evaluate(CLEAN) and pg.evaluate("ZOOM.stack().length") == 0,
+           f'Back {label}: back on Today with no stray page, copy or hidden card')
     # tapping another tab mid-zoom just clears it
-    pg.click('[data-zk="ex:rung"]')
+    pg.click(SUG)
     pg.wait_for_timeout(100)
     pg.click('#dock [data-a=tab][data-v=today]', force=True)
     quiet(pg)
     ok(where(pg) == 'today|' and pg.evaluate(CLEAN), 'switching tabs mid-zoom leaves nothing behind')
     # scrolling mid-zoom finishes it at once
-    pg.evaluate("go(()=>{U.tab='exercises';U.view=null})")
+    pg.evaluate(TODAY)
     quiet(pg)
-    pg.click('[data-zk="ex:rung"]')
+    pg.click(SUG)
     pg.wait_for_timeout(80)
     pg.evaluate("scrollTo(0,200)")
     pg.wait_for_timeout(150)
-    ok(pg.evaluate(CLEAN) and where(pg) == 'exercises|ex', 'scrolling during a zoom finishes it straight away, on the page')
+    ok(pg.evaluate(CLEAN) and where(pg) == 'today|ex', 'scrolling during a zoom finishes it straight away, on the page')
     pg.context.close()
 
 
@@ -138,9 +138,9 @@ def swipes(b, t):
     ok = t.ok
     pg = page(b, t)
     quiet(pg)
-    pg.evaluate("go(()=>{U.tab='exercises';U.view=null})")
+    pg.evaluate(TODAY)
     quiet(pg)
-    pg.click('[data-zk="ex:rung"]')
+    pg.click(SUG)
     quiet(pg)
     # held part way: the page is lifted and follows the finger, smaller as it goes
     cdp = pg.context.new_cdp_session(pg)
@@ -154,25 +154,25 @@ def swipes(b, t):
     cdp.send('Input.dispatchTouchEvent', {'type': 'touchEnd', 'touchPoints': []})
     cdp.detach()
     quiet(pg)
-    ok(where(pg) == 'exercises|ex' and pg.evaluate(CLEAN), 'let go below the threshold: it springs back and stays')
+    ok(where(pg) == 'today|ex' and pg.evaluate(CLEAN), 'let go below the threshold: it springs back and stays')
     # far enough: closes into its card
     drag(pg, 60, 500, 300, 505, steps=12, ms=16)
-    ok(where(pg) == 'exercises|', 'past the threshold: it goes back')
+    ok(where(pg) == 'today|', 'past the threshold: it goes back')
     quiet(pg)
     ok(pg.evaluate(CLEAN), 'shrinking into its card, with nothing left over')
     # a quick flick, not far: also closes
-    pg.click('[data-zk="ex:rung"]')
+    pg.click(SUG)
     quiet(pg)
     drag(pg, 100, 400, 170, 400, steps=3, ms=0)
     quiet(pg)
-    ok(where(pg) == 'exercises|', 'a quick flick goes back even before the threshold')
+    ok(where(pg) == 'today|', 'a quick flick goes back even before the threshold')
     # gesture priority: a row's own swipe, a segmented control, a sheet
-    pg.click('[data-zk="ex:rung"]')
+    pg.click(SUG)
     quiet(pg)
     seg = pg.locator('#app .seg').first.bounding_box()
     drag(pg, seg['x'] + 20, seg['y'] + seg['height'] / 2, seg['x'] + 260, seg['y'] + seg['height'] / 2)
     quiet(pg)
-    ok(where(pg) == 'exercises|ex', 'a swipe that starts on a segmented control isn\'t a swipe back')
+    ok(where(pg) == 'today|ex', 'a swipe that starts on a segmented control isn\'t a swipe back')
     pg.click(BACK)
     quiet(pg)
     pg.evaluate("go(()=>{U.tab='history';U.view=null})")
@@ -217,11 +217,11 @@ def swipes(b, t):
     pg.context.close()
     # motion off: no copies are drawn, but the swipe still goes back
     pg = page(b, t, init=None)
-    pg.evaluate("go(()=>{U.tab='exercises';U.view=null})")
-    pg.click('[data-zk="ex:rung"]')
+    pg.evaluate(TODAY)
+    pg.click(SUG)
     pg.evaluate("window._zm=0;new MutationObserver(m=>m.forEach(r=>r.addedNodes.forEach(n=>{if(n.classList&&n.classList.contains('zm'))window._zm++}))).observe(document.body,{childList:true})")
     drag(pg, 60, 500, 300, 505)
-    ok(where(pg) == 'exercises|' and pg.evaluate("window._zm") == 0, 'motion off: the swipe goes back with nothing drawn')
+    ok(where(pg) == 'today|' and pg.evaluate("window._zm") == 0, 'motion off: the swipe goes back with nothing drawn')
     pg.context.close()
 
 
@@ -238,9 +238,9 @@ def shadow(b, t):
     ok = t.ok
     pg = page(b, t, init="try{localStorage.setItem('vocalMotion','1')}catch(e){}")
     quiet(pg)
-    pg.evaluate("go(()=>{U.tab='exercises';U.view=null})")
+    pg.evaluate(TODAY)
     quiet(pg)
-    pg.click('[data-zk="ex:slides"]')
+    pg.click(SUG)
     quiet(pg)
     for label, release in (('a swipe past the threshold', 30), ('a swipe let go early (springs back)', 7)):
         cdp = pg.context.new_cdp_session(pg)
@@ -265,15 +265,15 @@ def shadow(b, t):
         quiet(pg)
         ok(not off, f'{label}: once let go, the shadow stays the size of the page at every frame' + (f' (off by px at {off})' if off else ''))
         if release == 30:
-            ok(where(pg) == 'exercises|' and pg.evaluate(CLEAN), 'and it lands in its card with nothing left over')
-            pg.click('[data-zk="ex:slides"]')
+            ok(where(pg) == 'today|' and pg.evaluate(CLEAN), 'and it lands in its card with nothing left over')
+            pg.click(SUG)
             quiet(pg)
         else:
-            ok(where(pg) == 'exercises|ex' and pg.evaluate(CLEAN), 'and it settles back on the page with nothing left over')
+            ok(where(pg) == 'today|ex' and pg.evaluate(CLEAN), 'and it settles back on the page with nothing left over')
     # catching a page while it's still opening: the shadow starts at the page's size there and then
     pg.click(BACK)
     quiet(pg)
-    pg.click('[data-zk="ex:slides"]')
+    pg.click(SUG)
     pg.wait_for_timeout(90)
     cdp = pg.context.new_cdp_session(pg)
     cdp.send('Input.dispatchTouchEvent', {'type': 'touchStart', 'touchPoints': [{'x': 200, 'y': 600}]})
@@ -309,9 +309,9 @@ def frames(b, t):
         quiet(pg)
         ok(not low, f'{name}: the window is never an empty box' + (f' (thin at {low})' if low else ''))
 
-    pg.evaluate("go(()=>{U.tab='exercises';U.view=null})")
+    pg.evaluate(TODAY)
     quiet(pg)
-    watch("document.querySelector('[data-zk=\"ex:rung\"]').click()", 'dark, a row opening')
+    watch("document.querySelector('" + SUG + "').click()", 'dark, a row opening')
     watch("document.querySelector('" + BACK + "').click()", 'dark, a page closing into its row')
     pg.evaluate("go(()=>{U.tab='today';U.view=null})")
     quiet(pg)
@@ -419,20 +419,20 @@ def reduce(b, t):
     ok = t.ok
     pg = page(b, t, ctx_args={'reduced_motion': 'reduce'})
     quiet(pg)
-    pg.evaluate("go(()=>{U.tab='exercises';U.view=null})")
+    pg.evaluate(TODAY)
     quiet(pg)
-    pg.click('[data-zk="ex:rung"]')
+    pg.click(SUG)
     pg.wait_for_function("document.querySelector('.zm')&&document.querySelector('.zm .zm-win').getAnimations().length>0", timeout=5000)
     keys = pg.evaluate("[...document.querySelectorAll('.zm, .zm *')].flatMap(e=>e.getAnimations()).flatMap(a=>Object.keys(a.effect.getKeyframes()[0])).filter(k=>!['offset','easing','composite','computedOffset'].includes(k))")
     ok(keys and set(keys) == {'opacity'}, f'Reduce Motion: opening is a fade, nothing grows ({sorted(set(keys))})')
     quiet(pg)
-    ok(where(pg) == 'exercises|ex' and pg.evaluate(CLEAN), 'and lands on the page')
+    ok(where(pg) == 'today|ex' and pg.evaluate(CLEAN), 'and lands on the page')
     pg.click(BACK)
     keys = pg.evaluate("[...document.querySelectorAll('.zm, .zm *')].flatMap(e=>e.getAnimations()).flatMap(a=>Object.keys(a.effect.getKeyframes()[0])).filter(k=>!['offset','easing','composite','computedOffset'].includes(k))")
     ok(set(keys) <= {'opacity'}, 'closing is a fade too')
     quiet(pg)
-    ok(where(pg) == 'exercises|' and pg.evaluate(CLEAN), 'back on Exercises')
-    pg.click('[data-zk="ex:rung"]')
+    ok(where(pg) == 'today|' and pg.evaluate(CLEAN), 'back on Today')
+    pg.click(SUG)
     quiet(pg)
     cdp = pg.context.new_cdp_session(pg)
     cdp.send('Input.dispatchTouchEvent', {'type': 'touchStart', 'touchPoints': [{'x': 100, 'y': 500}]})
@@ -444,7 +444,7 @@ def reduce(b, t):
     cdp.send('Input.dispatchTouchEvent', {'type': 'touchEnd', 'touchPoints': []})
     cdp.detach()
     quiet(pg)
-    ok(where(pg) == 'exercises|ex' and pg.evaluate(CLEAN), 'and it settles back')
+    ok(where(pg) == 'today|ex' and pg.evaluate(CLEAN), 'and it settles back')
     pg.context.close()
 
 

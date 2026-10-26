@@ -61,6 +61,7 @@ function scrToday() {
   return (
     // 3.17: "Today" sits where every other main page's title sits; the date shares its row, tucked just above the
     // letters, and the chevron sits in the title's line, centred on its capital letters
+    SET.wash() + // 3.23 (Q08): the soft gradient behind the date and title (Settings › Appearance)
     '<div class="titlerow"><button class="dateline" data-rise data-a="openCal">' +
     dl +
     '</button><h1 data-rise><button class="tbtn" data-a="openCal">Today</button><button class="calbtn" data-a="openCal" aria-label="Open practice calendar">' +
@@ -756,7 +757,7 @@ function scrExercises() {
     (sp && e.id === U.exId ? ' sel' : '') +
     '" data-zk="ex:' +
     e.id +
-    '" data-a="openEx" data-k="' +
+    '" data-push data-a="openEx" data-k="' +
     e.id +
     '">' +
     tile(e) +

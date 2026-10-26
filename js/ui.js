@@ -182,10 +182,49 @@ function renderSide() {
       )
       .join('');
 }
+// 3.23 (Q08) the tab bar's collapse: the class lives on the row holding the bar, its pill and the search circle, so
+// the bar fades and scales away towards the left while the pill grows in where the active tab was (transforms and
+// opacity only). renderDock() keeps the row when nothing in it changed, so a collapse that's still moving carries on
+let dockKey = null;
+function setTabMin(b) {
+  tabMin = !!b;
+  const r = $('dock').querySelector('.dockrow');
+  if (r) r.classList.toggle('min', tabMin);
+}
+// how far the pill sits from the active tab: it grows in from there (layout positions, so a collapsed bar's own
+// scale doesn't count)
+function tabPillPlace(row) {
+  const nav = row.querySelector('.tabbar'),
+    on = nav && nav.querySelector('button.on'),
+    pill = row.querySelector('.tabpill');
+  if (!pill) return;
+  const x = on ? nav.offsetLeft + on.offsetLeft + on.offsetWidth / 2 - (pill.offsetLeft + pill.offsetWidth / 2) : 0;
+  row.style.setProperty('--pill-x', Math.round(x) + 'px');
+}
+// a page has real room to scroll when it can move at least a third of the screen's height (Ivan, 26 Oct 2026); a
+// shorter page keeps the full bar
+const tabRoom = () => document.documentElement.scrollHeight - window.innerHeight >= window.innerHeight / 3;
 function renderDock() {
+  const html = renderDock1();
+  if (html === null) {
+    dockKey = null; // something else took the bar's place
+    return;
+  }
+  const d = $('dock'),
+    row = d.querySelector('.dockrow');
+  if (html === dockKey && row) {
+    row.classList.toggle('min', tabMin); // the same bar: only its state, easing if it changed
+    tabPillPlace(row);
+    return;
+  }
+  dockKey = html;
+  d.innerHTML = tabMin ? html.replace('class="dockrow"', 'class="dockrow min"') : html; // drawn in its state, no replay
+  tabPillPlace(d.querySelector('.dockrow'));
+}
+function renderDock1() {
   if (U.sheet) {
     $('dock').innerHTML = '';
-    return;
+    return null;
   }
   // recording a section: the recording bar takes the place of the tab bar
   if (rec && rec.o) {
@@ -195,24 +234,24 @@ function renderDock() {
       '</span></span><span class="meter" id="recMeter" aria-hidden="true">' +
       '<i></i>'.repeat(14) +
       '</span><button class="stopb" data-a="sgStop" aria-label="Stop recording"><i></i></button></div>';
-    return;
+    return null;
   }
   // 3.18 Song Clock: the play-along transport, or Sync's pad, takes the place of the tab bar
   const ck = CLOCK.dock();
   if (ck) {
     $('dock').innerHTML = ck;
-    return;
+    return null;
   }
   // 3.19 the track player's transport
   const tk = TRACK.dock();
   if (tk) {
     $('dock').innerHTML = tk;
-    return;
+    return null;
   }
   // Recall: the hint capsule takes the place of the tab bar
   if (recallOn()) {
     $('dock').innerHTML = hintCapHTML();
-    return;
+    return null;
   }
   if (isFlow(U.view)) {
     const n = Object.keys(X.rot).length;
@@ -228,24 +267,24 @@ function renderDock() {
       '" data-a="cta">' +
       lab +
       '</button>';
-    return;
+    return null;
   }
   if (MQ.reg.matches) {
     $('dock').innerHTML = '';
-    return;
+    return null;
   }
   const songList = U.tab === 'songs' && !U.view;
   // iPhone: searching songs, selecting them or editing one takes the place of the tab bar
   if ((songList && (U.sFocus || U.sList)) || (U.view === 'lyr' && U.sEdit)) {
     $('dock').innerHTML = '';
-    return;
+    return null;
   }
-  if (window.scrollY < 60 || U.tab === 'find') tabMin = false; // never leave it shrunk at the top of a page, or on Search
-  const cur = tabOf(U.tab);
+  // never left collapsed at the top of a page, on Search, on a page too short to scroll, or in landscape (3.23)
+  if (window.scrollY < 60 || U.tab === 'find' || !tabRoom() || !document.body.classList.contains('phone')) tabMin = false;
+  const cur = tabOf(U.tab),
+    curTab = TABS().find((t) => t[0] === cur);
   const nav =
-    '<nav class="tabbar glass' +
-    (tabMin ? ' min' : '') +
-    '" aria-label="Tabs">' +
+    '<nav class="tabbar glass" aria-label="Tabs">' +
     TABS()
       .map(
         (t) =>
@@ -262,8 +301,14 @@ function renderDock() {
       )
       .join('') +
     '</nav>';
+  // 3.23 (Q08) iPhone upright: the collapsed tab bar, a pill at the left edge holding the active tab's icon. Tapping it
+  // brings the bar back
+  const pill =
+    document.body.classList.contains('phone') && curTab
+      ? '<button class="tabpill glass" data-a="tab" data-v="' + cur + '" aria-label="Show tabs"><span>' + curTab[2] + '</span></button>'
+      : '';
   // 3.22 Search: its own circle beside the tab bar, on every screen that has the tab bar
-  $('dock').innerHTML = '<div class="dockrow">' + nav + FIND.circle() + '</div>';
+  return '<div class="dockrow">' + nav + pill + FIND.circle() + '</div>';
 }
 function sheetWrap(title, body, label, tools) {
   return (

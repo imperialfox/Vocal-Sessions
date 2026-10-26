@@ -67,8 +67,9 @@ def ripple(b, t):
     ok(pg.evaluate(GONE), 'the launch screen is gone afterwards')
     ok(pg.evaluate(SETTLED), 'and nothing is left hidden or offset')
     # 3.14: once the ripple is over, the arch fills and the week row ripples; wait for those, then nothing should move
-    pg.wait_for_function("!document.getAnimations().some(a=>a.playState==='running'||a.playState==='pending')", timeout=15000)
-    ok(not pg.evaluate("document.getAnimations().filter(a=>a.playState!=='finished').length"), 'and nothing is still animating')
+    # (3.23: Today's gradient drifts endlessly; endless animations don't count)
+    pg.wait_for_function("!document.getAnimations().some(a=>(a.playState==='running'||a.playState==='pending')&&a.effect.getTiming().iterations!==Infinity)", timeout=15000)
+    ok(not pg.evaluate("document.getAnimations().filter(a=>a.playState!=='finished'&&a.effect.getTiming().iterations!==Infinity).length"), 'and nothing is still animating')
 
     # only on a cold launch
     pg.evaluate("go(()=>{U.tab='songs'})"); pg.wait_for_timeout(100); pg.evaluate("go(()=>{U.tab='today'})"); pg.wait_for_timeout(100)

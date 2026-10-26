@@ -48,7 +48,24 @@
   /* 3.21 Settings: View on GitHub's near-black tile */
   --tile-ink: #1c1c1e;
   --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', system-ui, sans-serif;
+  /* 3.23 (Q08) the safe areas as variables, so the bars can be placed from them (and tests can stand in an iPhone's) */
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  /* where the tab bar (and everything that takes its place) sits above the bottom edge, and its side margins */
+  --dockb: calc(12px + var(--sab));
+  --dockl: max(16px, env(safe-area-inset-left, 0px));
+  --dockr: max(16px, env(safe-area-inset-right, 0px));
+  /* the top bar's circles sit 6 pt higher on iPhone upright, as Apple's do */
+  --barup: 0px;
   color-scheme: light;
+}
+/* 3.23 (Q08) iPhone upright: the tab bar 21 pt from the bottom edge (inside the home indicator's area, as in Music
+   and Notes) with 21 pt margins, and the top circles centred 84 pt from the top. iPad, Mac and landscape unchanged */
+body.phone {
+  --dockb: 21px;
+  --dockl: max(21px, env(safe-area-inset-left, 0px));
+  --dockr: max(21px, env(safe-area-inset-right, 0px));
+  --barup: min(6px, var(--sat));
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -118,7 +135,7 @@ body {
   -webkit-font-smoothing: antialiased;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
-  padding-top: env(safe-area-inset-top, 0px);
+  padding-top: var(--sat);
 }
 button,
 input,
@@ -214,22 +231,32 @@ svg.i {
     background: var(--accent);
   }
 }
+/* 3.23 (Q08) the soft edge: once a page scrolls, a full-width blur starts behind the status bar and fades out at its
+   lower edge, with no line, and the page scrolls under it. The bar itself stays clear; its circles are glass.
+   WebKit has no progressive blur, so it's one backdrop blur masked from solid at the top to clear at the bottom,
+   with a light wash of the page colour so the circles and the title read over busy content */
 .edge {
   position: fixed;
   left: 0;
   right: 0;
   top: 0;
-  height: calc(96px + env(safe-area-inset-top, 0px));
+  height: calc(var(--sat) + 96px);
   z-index: 15;
   pointer-events: none;
   opacity: 0;
   transition: opacity 0.25s;
-  background: linear-gradient(var(--bg) 40%, transparent);
-  -webkit-mask: linear-gradient(#000 55%, transparent);
-  mask: linear-gradient(#000 55%, transparent);
+  background: linear-gradient(
+    color-mix(in srgb, var(--bg) 72%, transparent),
+    color-mix(in srgb, var(--bg) 50%, transparent) calc(var(--sat) + 46px),
+    transparent
+  );
+  -webkit-backdrop-filter: blur(12px) saturate(170%);
+  backdrop-filter: blur(12px) saturate(170%);
+  -webkit-mask-image: linear-gradient(#000 calc(var(--sat) + 40px), transparent);
+  mask-image: linear-gradient(#000 calc(var(--sat) + 40px), transparent);
 }
 body.scrolled .edge {
-  opacity: 0.9;
+  opacity: 1;
 }
 .wrap {
   transition:
@@ -243,28 +270,26 @@ body.sheet-open .wrap {
 
 .bar {
   position: sticky;
-  top: env(safe-area-inset-top, 0px);
+  top: calc(var(--sat) - var(--barup));
   z-index: 20;
   height: 56px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  margin: 0 -8px;
+  margin: calc(-1 * var(--barup)) -8px 0;
   padding: 0 8px;
-  border-radius: 0 0 22px 22px;
-  transition:
-    background 0.25s,
-    box-shadow 0.25s;
 }
-.bar:not(.scrolled) {
+/* 3.23 (Q08): no rounded card any more when scrolled; the soft edge (.edge) sits behind the bar instead */
+.bar.glass,
+.bar.glass.scrolled {
   background: transparent;
   box-shadow: none;
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
-.bar:not(.scrolled)::before,
-.bar:not(.scrolled)::after {
+.bar.glass::before,
+.bar.glass::after {
   display: none;
 }
 .bar .mt {
@@ -1122,7 +1147,7 @@ html.motion-reduced .tl-item.now .tl-node::after {
 }
 
 main {
-  padding-bottom: calc(130px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(118px + var(--dockb));
 }
 .dock {
   position: fixed;
@@ -1130,8 +1155,7 @@ main {
   right: 0;
   bottom: 0;
   z-index: 30;
-  padding: 0 max(16px, env(safe-area-inset-right, 0px)) calc(12px + env(safe-area-inset-bottom, 0px))
-    max(16px, env(safe-area-inset-left, 0px));
+  padding: 0 var(--dockr) var(--dockb) var(--dockl);
   pointer-events: none;
 }
 .dock .in {
@@ -1178,22 +1202,74 @@ main {
   color: var(--accent);
   background: var(--fill);
 }
-.tabbar.min {
+/* the Songs search's circle (.sgbar): a tab bar showing only Songs, as a circle */
+.sgbar .tabbar.min {
   gap: 0;
 }
-.tabbar.min button {
+.sgbar .tabbar.min button {
   height: 48px;
 }
-.tabbar.min button:not(.on) {
+.sgbar .tabbar.min button:not(.on) {
   max-width: 0;
   opacity: 0;
   pointer-events: none;
 }
-.tabbar.min button.on {
+.sgbar .tabbar.min button.on {
   width: 48px;
   max-width: 48px;
   font-size: 0;
   gap: 0;
+}
+/* 3.23 (Q08) the tab bar's collapse, as in Music: the bar fades and scales away towards the left while a pill holding
+   only the active tab's icon grows in from that tab's place to the left edge; the search circle stays at the right.
+   Transforms and opacity only (nothing re-lays out or changes size), on the gentle spring, and the row keeps its
+   height so nothing resting on the bar moves */
+.dockrow {
+  position: relative;
+}
+.dockrow .tabbar {
+  transform-origin: 0 50%;
+  transition:
+    transform var(--dur-gentle) var(--ease-gentle),
+    opacity calc(var(--dur-gentle) * 0.45) ease;
+}
+.dockrow.min .tabbar {
+  opacity: 0;
+  transform: scale(0.62);
+  pointer-events: none;
+}
+.tabpill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 64px;
+  height: 64px;
+  border-radius: 999px;
+  padding: 5px;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(var(--pill-x, 0px)) scale(0.84);
+  transition:
+    transform var(--dur-gentle) var(--ease-gentle),
+    opacity calc(var(--dur-gentle) * 0.45) ease;
+}
+.tabpill span {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: var(--fill);
+  color: var(--accent);
+}
+.dockrow.min .tabpill {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+.dockrow.min .tabpill:active {
+  transform: scale(0.93);
+  transition-duration: 0.12s;
 }
 
 .sw {
@@ -2621,6 +2697,29 @@ html.motion-reduced *::after {
   flex: 0 1 72px;
   min-width: 0;
 }
+/* 3.23 (Q08) iPhone upright: the tabs share the bar's full width, and with the search circle beside it the bar
+   narrows to make room, like Notes' search field beside its compose button: 12 pt apart, the circle as tall as the bar */
+body.phone .dock .tabbar {
+  width: 100%;
+  max-width: none;
+}
+body.phone .dock .tabbar button {
+  width: auto;
+  max-width: none;
+  flex: 1 1 0;
+  min-width: 0;
+}
+body.phone .dockrow {
+  gap: 12px;
+}
+body.phone .dockrow .tabbar {
+  flex: 1 1 auto;
+}
+body.phone .dock .scirc {
+  width: 64px;
+  height: 64px;
+  flex: none;
+}
 .scirc {
   width: 64px;
   height: 64px;
@@ -2737,14 +2836,14 @@ body.land .dockrow .tabbar button {
   position: fixed;
   left: 0;
   right: 0;
-  bottom: calc(12px + env(safe-area-inset-bottom, 0px) + var(--kb, 0px));
+  bottom: calc(var(--dockb) + var(--kb, 0px));
   z-index: 30;
   display: flex;
   align-items: center;
   gap: 8px;
   max-width: 430px;
   margin: 0 auto;
-  padding: 0 max(16px, env(safe-area-inset-right, 0px)) 0 max(16px, env(safe-area-inset-left, 0px));
+  padding: 0 var(--dockr) 0 var(--dockl);
 }
 .sgbar[hidden] {
   display: none;
@@ -3108,7 +3207,7 @@ mark.sgmk {
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
-  bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+  bottom: calc(2px + var(--dockb));
   z-index: 30;
   border-radius: 999px;
   display: flex;
@@ -4200,7 +4299,7 @@ textarea.field.sglyr {
   transition: none !important;
 }
 .zm-edge {
-  opacity: 0.9 !important;
+  opacity: 1 !important;
   transition: none !important;
 }
 .zm-title {
@@ -4223,6 +4322,26 @@ textarea.field.sglyr {
 .zm-hid,
 .zm-src {
   visibility: hidden !important;
+}
+/* 3.23 (Q08) native push: the pushed page (.zm-page) slides in from the right over the page it came from (.zm-under),
+   which moves about a third of the way left and dims (.zm-dim). zoom.js moves them with transforms and opacity only */
+.zm.push .zm-under {
+  will-change: transform;
+}
+.zm-dim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: #000;
+  opacity: 0;
+}
+.zm-page {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: var(--bg);
+  box-shadow: 0 0 32px rgba(0, 0, 0, 0.16);
+  will-change: transform;
 }
 .zm-day {
   position: absolute;
@@ -4929,7 +5048,7 @@ textarea.field.sglyr {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+  bottom: calc(84px + var(--dockb));
   margin: 0;
   text-align: center;
   font-size: 13px;
@@ -5005,7 +5124,7 @@ html.ckplay body {
 }
 /* Sync */
 body.cksyncon main {
-  padding-bottom: calc(236px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(224px + var(--dockb));
 }
 .cksync h1 {
   margin-bottom: 6px;
@@ -6392,4 +6511,100 @@ html.motion-reduced .knob.squish {
 }
 .setuse > *::before {
   display: none;
+}
+
+/* ===== 3.23 (Q08) Today's gradient (Settings › Appearance › Gradient background) =====
+   A wash behind the date and title, fading out about a third of the way down the screen. It scrolls away with the
+   page (it isn't fixed), and the cards, rows and Start session stay exactly as they are. Three soft blobs drift very
+   slowly (only transforms animate) over a faint grain. Reduce motion and motion off hold it still. */
+:root {
+  --tg1: rgba(255, 128, 104, 0.34);
+  --tg2: rgba(10, 132, 255, 0.22);
+  --tg3: rgba(255, 186, 120, 0.3);
+  --tg-grain: 0.05;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --tg1: rgba(255, 100, 72, 0.26);
+    --tg2: rgba(10, 132, 255, 0.22);
+    --tg3: rgba(255, 150, 70, 0.14);
+    --tg-grain: 0.07;
+  }
+}
+/* behind everything on the page: the body's own background steps aside (the page colour behind it is the same) */
+body:has(.tgrad) {
+  background: transparent;
+}
+.tgrad {
+  position: absolute;
+  z-index: -1;
+  top: calc(-1 * var(--sat));
+  left: calc(50% - 50vw);
+  width: 100vw;
+  height: 300px;
+  overflow: hidden;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(#000 30%, transparent);
+  mask-image: linear-gradient(#000 30%, transparent);
+}
+.tgrad i {
+  position: absolute;
+  border-radius: 50%;
+  will-change: transform;
+}
+.tgrad .tg1 {
+  left: -22%;
+  top: -34%;
+  width: 82%;
+  height: 120%;
+  background: radial-gradient(closest-side, var(--tg1), transparent);
+  animation: tgA 19s ease-in-out infinite alternate;
+}
+.tgrad .tg2 {
+  right: -26%;
+  top: -18%;
+  width: 78%;
+  height: 112%;
+  background: radial-gradient(closest-side, var(--tg2), transparent);
+  animation: tgB 24s ease-in-out infinite alternate;
+}
+.tgrad .tg3 {
+  left: 18%;
+  top: 14%;
+  width: 72%;
+  height: 96%;
+  background: radial-gradient(closest-side, var(--tg3), transparent);
+  animation: tgC 31s ease-in-out infinite alternate;
+}
+/* the grain: a tile of SVG noise */
+.tgrad::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: var(--tg-grain);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 160px 160px;
+}
+@keyframes tgA {
+  to {
+    transform: translate(14%, 8%) scale(1.12);
+  }
+}
+@keyframes tgB {
+  to {
+    transform: translate(-12%, 10%) scale(0.92);
+  }
+}
+@keyframes tgC {
+  to {
+    transform: translate(-10%, -12%) scale(1.15);
+  }
+}
+html.motion-reduced .tgrad i,
+html.motion-off .tgrad i {
+  animation: none;
+}
+/* in a zoom's or a push's still copy the wash sits behind the copied page, not behind the whole layer */
+.zm main {
+  isolation: isolate;
 }

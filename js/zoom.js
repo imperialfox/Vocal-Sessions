@@ -16,17 +16,25 @@
    - Reduce Motion: the zoom becomes a short cross-fade; a swipe back still follows your finger, sideways only.
      Motion off (the tests): nothing is drawn, but the bookkeeping still happens (Back returns to where the list was).
    How a card opts in: give it data-zk="<key>" (a key that's the same on the screen you come back to). go() in ui.js
-   does the rest: ZOOM.before() just before a change of screen, ZOOM.after() just after it's drawn. */
+   does the rest: ZOOM.before() just before a change of screen, ZOOM.after() just after it's drawn.
+   Native push (3.23, Q08): a door that also has data-push (or code that calls ZOOM.armPush(key)) pushes its page in
+   from the right edge instead, as iOS does: the page underneath moves about a third of the way left and dims a little,
+   on the nav spring. Back and swipe back reverse it (the page follows the finger, the one underneath slides back), and
+   it can be interrupted both ways. It's a second kind of entry on the same stack ({…, kind: 'push'}), so Back, swipe
+   back, scroll restore and the random-tap checks work as they do for zooms. iPhone only: iPad and Mac keep the zoom.
+   Reduce Motion: a short fade. Motion off: instant. */
 const ZOOM = (() => {
   const SWIPE_CLOSE = 0.22, // of the width
     FLICK = 0.45, // px per ms, to the right
+    PUSH_UNDER = 0.3, // how far left the page underneath moves, of the width
+    PUSH_DIM = 0.12; // and how much it dims
     // things with their own sideways gesture: a swipe back never starts on them
     OWN =
       '.sw, .srow, input, textarea, select, [contenteditable], .fw, #pchart, #lgchart, .chart, .seg, .dock, .crow, ' +
       '.lifted, .scrim, .clockscrim, [data-own-gesture]';
   let armed = null; // the card just tapped: {key, el}
   let backing = false; // this change of screen is a Back
-  let stack = []; // [{key, from, to, y}]: cards opened into pages, so Back can shrink each page into its card
+  let stack = []; // [{key, from, to, y, kind}]: pages opened from cards (kind 'zoom') or pushed ('push'), for Back
   const prev = new Map(); // place -> {box, from}: a still of the screen you came from, shown under a swipe back
   let Z = null; // the zoom (or swipe) on screen now
   let SB = null; // a swipe back in progress
@@ -383,6 +391,10 @@ const ZOOM = (() => {
   // ctx.z: a zoom or a swipe already on screen, carried on from where it is; otherwise the still of the page you left
   function close(ctx, key, opts) {
     let z = ctx.z;
+    if (z && z.push) {
+      end(z);
+      z = null;
+    }
     const card = cardEl(key),
       R = card && rect(card),
       onScreen = R && R.w && R.b > 0 && R.t < vh();
@@ -439,6 +451,14 @@ const ZOOM = (() => {
     z.closing = true;
     z.drag = false;
     Z = z;
+    if (z.push) {
+      // a pushed page with nowhere to slide back to: it fades
+      z.under.remove();
+      z.dim.remove();
+      to(z, z.page, 'opacity', '0', { ms: reduced() ? 180 : 220, easing: 'ease-out' });
+      whenDone(z, () => end(z));
+      return true;
+    }
     if (z.under) {
       z.under.remove();
       z.under = null;
@@ -450,6 +470,128 @@ const ZOOM = (() => {
     return true;
   }
 
+  /* ----- native push (3.23, Q08): the page slides in from the right over the one it came from ----- */
+  const pushing = (a) => !!(a && a.push) && !MQ.reg.matches; // iPhone only; iPad and Mac keep the zoom
+  // o: under (a still of the page underneath), page (a still of the pushed page)
+  function pbuild(under, page) {
+    const z = { anims: [], cs: [], push: true, layer: div('zm push'), y: window.scrollY };
+    z.layer.setAttribute('aria-hidden', 'true');
+    z.under = div('zm-under', z.layer);
+    if (under) z.under.appendChild(under.box);
+    z.dim = div('zm-dim', z.layer);
+    z.page = div('zm-page', z.layer);
+    if (page) z.page.appendChild(page.box);
+    document.body.appendChild(z.layer);
+    return z;
+  }
+  // the pushed page x px from the left edge (0: fully in, the width: gone); the page underneath and its dimming follow
+  function pset(z, x, t) {
+    const W = vw(),
+      p = Math.max(0, Math.min(1, 1 - x / W));
+    to(z, z.page, 'transform', 'translateX(' + x.toFixed(2) + 'px)', t);
+    to(z, z.under, 'transform', 'translateX(' + (-PUSH_UNDER * W * p).toFixed(2) + 'px)', t);
+    to(z, z.dim, 'opacity', (PUSH_DIM * p).toFixed(4), t);
+  }
+  const pnow = (z) => new DOMMatrix(getComputedStyle(z.page).transform).m41;
+  // stop the springs where they are, so a finger or a reverse carries on from there
+  function hold(z) {
+    z.anims.forEach((a) => {
+      try {
+        a.commitStyles();
+      } catch (e) {}
+      a.cancel();
+    });
+    z.anims = [];
+    z.gen = (z.gen || 0) + 1;
+    if (z.stop) z.stop();
+    z.stop = null;
+  }
+  function pushOpen(ctx) {
+    const page = shot();
+    if (!page || !ctx.shot) return false;
+    const z = pbuild(ctx.shot, page);
+    z.kind = 'push';
+    Z = z;
+    // however it ends, keep the screen you came from for swiping back
+    const pl = here();
+    z.then = () => pl === here() && remember(pl, ctx.shot, ctx.place);
+    if (reduced()) {
+      z.page.style.opacity = '0';
+      requestAnimationFrame(() => {
+        to(z, z.page, 'opacity', '1', { ms: 200, easing: 'ease-out' });
+        whenDone(z, () => end(z));
+      });
+      return true;
+    }
+    pset(z, vw());
+    // a frame later (the copies are built and painted), it slides in
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => {
+        if (Z !== z || z.ended || z.drag || z.closing) return;
+        pset(z, 0, { spring: 'nav' });
+        whenDone(z, () => end(z));
+      })
+    );
+    return true;
+  }
+  // Back: the pushed page slides away to the right, from wherever it is (mid-push, or let go of by a swipe, carrying
+  // on at the finger's speed), and the page underneath slides back into place
+  function pushClose(ctx) {
+    let z = ctx.z;
+    if (z && !z.push) return close(ctx, null); // (a zoom caught by Back: shrink as a zoom does)
+    if (!z) {
+      if (!ctx.shot) return false;
+      z = pbuild(shot(), ctx.shot);
+      pset(z, 0);
+    } else hold(z);
+    z.kind = 'push';
+    z.closing = true;
+    z.drag = false;
+    z.y = window.scrollY; // the list was just put back where it was
+    Z = z;
+    if (reduced()) {
+      to(z, z.under, 'transform', 'none');
+      to(z, z.dim, 'opacity', '0');
+      to(z, z.page, 'opacity', '0', { ms: 180, easing: 'ease-out' });
+      whenDone(z, () => end(z));
+      return true;
+    }
+    const v = z.v || 0;
+    z.v = 0;
+    if (v > 0) {
+      const W = vw();
+      z.stop = MOTION.spring({ x: pnow(z) }, { x: W }, { x: v * 1000 }, {
+        spring: 'nav',
+        frame: (p) => pset(z, Math.min(W, p.x)),
+        done: () => Z === z && end(z),
+      });
+      return true;
+    }
+    pset(z, vw(), { spring: 'nav' });
+    whenDone(z, () => end(z));
+    return true;
+  }
+  // the swipe on a pushed page: lift it (catching a push still opening where it is)
+  function pgrab() {
+    let z = Z;
+    if (z && z.push && !z.closing) hold(z);
+    else {
+      if (z) end(z);
+      const p = prev.get(here());
+      z = pbuild(p ? { box: p.box.cloneNode(true) } : null, shot());
+      pset(z, 0);
+    }
+    z.kind = 'push';
+    z.drag = true;
+    z.x0 = reduced() ? 0 : pnow(z);
+    z.d = { x: z.x0 };
+    Z = z;
+  }
+  const isPushPage = () => {
+    const top = stack[stack.length - 1];
+    return !!(top && top.kind === 'push' && top.to === stackHere());
+  };
+
   /* ----- going from screen to screen (go() in ui.js) ----- */
   // just before the change: what's on screen now
   function before() {
@@ -457,11 +599,11 @@ const ZOOM = (() => {
     armed = null;
     backing = false;
     // a Back while a zoom or a swipe is on screen carries on from there; anything else clears it away
-    if (Z && !(ctx.back && (Z.drag || Z.kind === 'open'))) end(Z);
+    if (Z && !(ctx.back && (Z.drag || Z.kind === 'open' || Z.kind === 'push'))) end(Z);
     ctx.z = Z;
     if (!moving()) return ctx;
     const a = ctx.armed;
-    if (a && a.el && a.el.isConnected) {
+    if (a && a.el && a.el.isConnected && !pushing(a)) {
       a.R = rect(a.el);
       a.lb = labelRect(a.el);
       a.rad = radiusOf(a.el, a.R);
@@ -484,15 +626,19 @@ const ZOOM = (() => {
       kept = false;
     const top = stack[stack.length - 1];
     if (ctx.back && top && top.to === ctx.sp && top.from === nsp) {
-      // Back to the card it came from: back to where that list was, and the page shrinks into the card
+      // Back to the card it came from: back to where that list was, and the page shrinks into the card (or a pushed
+      // page slides away to the right)
       stack.pop();
       window.scrollTo(0, top.y);
       lastY = window.scrollY; // a scroll put back, not one you made: the tab bar stays as it is
-      if (moving()) zoomed = close(ctx, top.key);
+      if (moving()) zoomed = top.kind === 'push' ? pushClose(ctx) : close(ctx, top.key);
+    } else if (ctx.armed && ctx.armed.replace && top && top.to === ctx.sp) {
+      top.to = nsp; // a pushed page that became another (Sync finishing into Check timing): Back still slides it away
     } else if (ctx.armed && ctx.armed.key) {
-      stack.push({ key: ctx.armed.key, from: ctx.sp, to: nsp, y: ctx.y });
+      const push = pushing(ctx.armed);
+      stack.push({ key: ctx.armed.key, from: ctx.sp, to: nsp, y: ctx.y, kind: push ? 'push' : 'zoom' });
       if (stack.length > 8) stack.shift();
-      if (moving() && ctx.armed.R && ctx.shot) zoomed = kept = open(ctx);
+      if (moving() && ctx.shot && (push || ctx.armed.R)) zoomed = kept = push ? pushOpen(ctx) : open(ctx);
     } else {
       // anything else: keep only the cards still on the way back to here
       const i = stack.findIndex((e) => e.to === nsp);
@@ -508,8 +654,13 @@ const ZOOM = (() => {
   // a tap: remember the card (data-zk) and whether it's a Back button, for the change of screen it causes
   function tap(el) {
     const c = el && el.closest && el.closest('[data-zk]');
-    armed = c ? { key: c.dataset.zk, el: c } : null;
-    backing = !!(el && el.closest && el.closest('#barL') && /^Back/.test(el.getAttribute('aria-label') || ''));
+    armed = c ? { key: c.dataset.zk, el: c, push: c.hasAttribute('data-push') } : null;
+    // a Back button, or a button that leaves a pushed page the same way (Sync's ✕, Check timing's Done: data-pop)
+    backing = !!(
+      el &&
+      el.closest &&
+      ((el.closest('#barL') && /^Back/.test(el.getAttribute('aria-label') || '')) || el.closest('[data-pop]'))
+    );
     setTimeout(() => {
       armed = null;
       backing = false;
@@ -517,7 +668,16 @@ const ZOOM = (() => {
   }
   // for code that opens a page itself (the new song's row): this card is the one to zoom from
   function arm(el) {
-    if (el && el.dataset && el.dataset.zk) armed = { key: el.dataset.zk, el };
+    if (el && el.dataset && el.dataset.zk) armed = { key: el.dataset.zk, el, push: el.hasAttribute('data-push') };
+  }
+  // for code that opens a page with no card (Song Clock's Sync and Check timing from a song page): push it
+  function armPush(key) {
+    armed = { key, el: null, push: true };
+  }
+  // the pushed page on screen is being replaced by another (Sync → Check timing): Back from the new one slides it
+  // away to where the first was pushed from
+  function retarget() {
+    armed = { replace: true };
   }
 
   /* ----- Finish: the session shrinks back into Start session (song practice into its row) ----- */
@@ -639,6 +799,7 @@ const ZOOM = (() => {
   // the finger has gone sideways: lift the page (a zoom still opening is caught where it is)
   function grab() {
     if (!moving()) return;
+    if (isPushPage()) return pgrab();
     let z = Z;
     if (z && z.kind === 'open' && !z.closing) {
       z.anims.forEach((a) => {
@@ -677,6 +838,12 @@ const ZOOM = (() => {
   function follow(dx, dy) {
     const z = Z;
     if (!z || !z.drag) return;
+    if (z.push) {
+      // the page follows the finger, sideways only; the page underneath slides back as it goes
+      z.d = { x: Math.max(0, Math.min(vw(), z.x0 + dx)) };
+      pset(z, z.d.x);
+      return;
+    }
     const p = Math.max(0, Math.min(1, dx / vw()));
     z.d = reduced() ? { x: Math.max(0, dx), y: 0, s: 1 } : { x: Math.max(0, dx) * 0.55, y: dy * 0.2, s: 1 - 0.28 * p };
     z.win.style.transform = T2(z.d.x, z.d.y) + ' scale(' + z.d.s + ')';
@@ -685,6 +852,15 @@ const ZOOM = (() => {
   function springBack(z, v) {
     if (!z || z.ended) return;
     z.drag = false;
+    if (z.push) {
+      // not far enough: the page springs back to cover the screen, at the finger's speed
+      z.stop = MOTION.spring({ x: (z.d && z.d.x) || 0 }, { x: 0 }, { x: (v || 0) * 1000 }, {
+        spring: 'nav',
+        frame: (p) => pset(z, Math.max(0, p.x)),
+        done: () => Z === z && !z.closing && end(z),
+      });
+      return;
+    }
     const d = z.d || { x: 0, y: 0, s: 1 };
     // a zoom caught while it opened finishes opening
     win(z, FULL(), { spring: 'nav' });
@@ -754,6 +930,7 @@ const ZOOM = (() => {
     const dx = s.lx - s.x;
     if (dx / vw() > SWIPE_CLOSE || (s.v > FLICK && dx > 24)) {
       const b = backBtn();
+      if (Z && Z.push) Z.v = Math.max(0, s.v); // a pushed page finishes leaving at the finger's speed
       if (b) b.click();
       if (Z && Z.drag) springBack(Z, 0); // Back didn't go anywhere
     } else if (Z && Z.drag) springBack(Z, s.v);
@@ -784,6 +961,8 @@ const ZOOM = (() => {
     after,
     tap,
     arm,
+    armPush,
+    retarget,
     swallow,
     finishing,
     finished,
@@ -793,6 +972,7 @@ const ZOOM = (() => {
     busy: () => !!Z,
     end: () => Z && end(Z),
     stack: () => stack.map((e) => Object.assign({}, e)),
+    kind: () => (Z ? Z.kind : null), // 3.23: what's on screen now ('open', 'push', 'swipe'…), for the tests
     swiping: () => !!(SB && SB.lock),
   };
 })();

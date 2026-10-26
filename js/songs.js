@@ -870,7 +870,7 @@ function songRowHTML(s, hit, toks, pm) {
     (open ? ' sel' : '') +
     (SG.ctx === s.id ? ' lifted' : '') +
     '"' +
-    (ed ? '' : ' data-zk="sg:' + s.id + '"') +
+    (ed ? '' : ' data-zk="sg:' + s.id + '" data-push') + // 3.23 (Q08): a song pushes in from the right
     ' data-a="' +
     (ed ? 'sgToggle' : 'sgOpen') +
     '" data-k="' +
@@ -965,7 +965,7 @@ function pinnedCard() {
           s.id +
           '" data-zk="sg:' +
           s.id +
-          '" data-a="sgOpen" data-k="' +
+          '" data-push data-a="sgOpen" data-k="' +
           s.id +
           '" data-v="today" role="button" tabindex="0"><span class="lbl">' +
           esc(songTitle(s)) +
@@ -979,7 +979,7 @@ function pinnedCard() {
         );
       })
       .join('') +
-    '<button class="row" data-zk="songs" data-a="sgAll"><span class="lbl acc">Show all songs</span>' +
+    '<button class="row" data-zk="songs" data-push data-a="sgAll"><span class="lbl acc">Show all songs</span>' +
     chev +
     '</button></div>'
   );

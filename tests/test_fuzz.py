@@ -65,6 +65,8 @@ INV=r"""(()=>{const p=[];const L=document.getElementById('layer');
  if(U.tab==='find'&&!U.view&&!document.getElementById('fq'))p.push('Search without its field');
  if(U.tab==='find'&&!U.view&&!document.querySelector('[data-a=findOpen].on,[data-a=findOpen][aria-current=page]')&&document.querySelector('[data-a=findOpen]'))p.push('Search open but its circle not selected');
  {const c=document.querySelector('#dock .scirc');if(FW.shown&&c&&!FW.drag&&!FW.stopSpring&&!fw.getAnimations().length&&!c.getAnimations().length){const a=fw.getBoundingClientRect(),q=c.getBoundingClientRect();if(!(a.right<=q.left||q.right<=a.left||a.bottom<=q.top||q.bottom<=a.top))p.push('floating window over the search circle')}}
+ {const r=document.querySelector('#dock .dockrow');if(r&&r.classList.contains('min')){if(U.tab==='find'||U.sheet||!tabRoom()||!document.body.classList.contains('phone'))p.push('tab bar collapsed where it never should (Search, a sheet, a short page, not iPhone upright)');if(!r.querySelector('.tabpill'))p.push('tab bar collapsed with no pill to bring it back');}}
+ if(document.querySelector('.zm.push')&&!ZOOM.busy())p.push('a push layer left behind');
  try{JSON.parse(localStorage.getItem('vocalTracker'))}catch(e){p.push('saved data unreadable')}
  const sumOk=Object.keys(D.months).length>=0;
  return p;})()"""

@@ -213,6 +213,7 @@ function layout() {
   b.toggle('reg', MQ.reg.matches);
   b.toggle('wide', MQ.wide.matches);
   b.toggle('land', MQ.land.matches && !MQ.reg.matches);
+  b.toggle('phone', !MQ.reg.matches && !MQ.land.matches); // 3.23 (Q08): iPhone upright, where the bars sit as Apple's do
 }
 // 3.17: Today, Progress, Songs, Exercises (the tab bar, iPad's top capsule, the sidebar and Cmd/Ctrl + 1–4)
 const TABS = () => [

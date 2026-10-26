@@ -1,6 +1,6 @@
 # Render queue
 
-App work Ivan has queued, in the order he wants it built. Each item is one build, in a fresh chat, started from a handoff (see [HANDOFF.md](HANDOFF.md)). Last checked against `main` at **3.22** (26 Oct 2026). **Shipped:** Q01 · Search: Global Find in 3.22.
+App work Ivan has queued, in the order he wants it built. Each item is one build, in a fresh chat, started from a handoff (see [HANDOFF.md](HANDOFF.md)). Last checked against `main` at **3.23** (26 Oct 2026). **Shipped:** Q01 · Search: Global Find in 3.22; Q08 · Interface: Native iOS Polish in 3.23.
 
 - **Every item has two separate gates.** `Awaiting Render` means it is not approved. Ivan's **Render** approves only the named item's exact scope and moves it to `Approved — awaiting Build`; it does not start work or authorize a push. A separate **Build** instruction starts implementation for that approved item. Do not treat approval of one item as approval of the whole queue.
 - **The code wins on what's built.** This is a summary, not a spec. Check each note against the code before relying on it.
@@ -14,8 +14,8 @@ Every queued item has a queue ID and a standard name, used in the queue, in hand
 
 - **Items:** `Q[##] · [Subsystem]: [Feature Name]`, e.g. `Q02 · Track: Waveform Sections`.
 - **Files** (handoffs, specs, wireframes, prototypes): `q##_[subsystem]_[feature]_[type].[ext]`, lower case with underscores, e.g. `q02_track_waveform_sections_handoff.md`.
-- **Releases:** the shipped version's `CHANGELOG.md` headline ends with the queue ID in brackets, e.g. `*Waveform sections on the track player (Q02)*` under `## 3.23 · 27 Oct 2026` (the `##` line keeps its exact format for the app's Changelog page). That's the bridge from queue ID to version. Q01 shipped as 3.22, headline `*Search, from every tab (Q01)*`.
-- **New items:** an idea gets its ID when Ivan says **Render** for it, taking the next unused number (the next is **Q08**). IDs are never reused or renumbered, even when the queue is reordered or an item ships.
+- **Releases:** the shipped version's `CHANGELOG.md` headline ends with the queue ID in brackets, e.g. `*Waveform sections on the track player (Q02)*` under `## 3.23 · 27 Oct 2026` (the `##` line keeps its exact format for the app's Changelog page). That's the bridge from queue ID to version. Q01 shipped as 3.22, headline `*Search, from every tab (Q01)*`; Q08 as 3.23.
+- **New items:** an idea gets its ID when Ivan says **Render** for it, taking the next unused number (the next is **Q09**). IDs are never reused or renumbered, even when the queue is reordered or an item ships.
 
 Older chats, notes and prototypes use working names. They map like this:
 
@@ -28,6 +28,7 @@ Older chats, notes and prototypes use working names. They map like this:
 | Q05 | Song Clock: Tap Re-Anchor | Song Clock A2, Render 6, Line pass and retime |
 | Q06 | Song Clock: Timeline View | Song Clock B, Render 7, Section starts and wheels |
 | Q07 | Song Clock: Dynamic Sync | Song Clock C, Render 8, Paced Recall |
+| Q08 | Interface: Native iOS Polish | Native bars, iOS 27 polish (shipped in 3.23) |
 
 Work shipped before this standard (for example Track 1 and Song Clock A1) keeps its version numbers and has no queue ID.
 
@@ -45,7 +46,7 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 ## Q02 · Track: Waveform Sections
 
 **Status:** Approved — awaiting Build. **Render:** Approved by Ivan on 26 Oct 2026 for the scope below, including the refinements listed here.
-**Needs:** Track 1 live; verified on `main` from the 3.21.1 changelog entry on 26 Oct 2026. A separate Build instruction is still required.
+**Needs:** Track 1 live; verified on `main` from the 3.21.1 changelog entry on 26 Oct 2026. A separate Build instruction is still required. Q08 (3.23) moved the dock: the tab bar sits 21 pt from the bottom with 21 pt margins on iPhone (`--dockb`, `--dockl`, `--dockr`), so Q02's transport and jog positions build on those.
 
 - **Goal:** set a song's timing by scrubbing its track instead of tapping along live.
 - **Scope:**
@@ -203,4 +204,3 @@ Kept so they aren't lost. None are queued; ask Ivan before planning any of them.
   - A demo recording on each mark's guide page.
   - Mark selections across a line break.
   - "Shift all timings" when a re-imported track is a different length.
-  - A moving gradient background on Today (Ivan wants to rethink the colours first).

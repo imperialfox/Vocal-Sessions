@@ -2,9 +2,9 @@
 
 A mobile-first companion for structured vocal practice, styled like a native iOS app. It's a single HTML file with no install, no backend and no account. It's designed to live on your iPhone Home Screen.
 
-![Version 3.22](https://img.shields.io/badge/version-3.22-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
+![Version 3.23](https://img.shields.io/badge/version-3.23-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
 
-**Current version: 3.22 · 26 Oct 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
+**Current version: 3.23 · 26 Oct 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
 
 ---
 
@@ -39,6 +39,7 @@ And **Songs**, for learning a song: paste the lyrics, and they're split into lab
 - A Song practice card with its own weekly stats. It opens the Songs tab, where every song's page is the place to practise it (song practice already going carries on from its song).
 - **Pinned songs:** up to 3 songs you're working on, each with a play button for its track, and **Show all songs**
 - **Settings** is the gear at the top right
+- A soft moving wash of colour behind the date and title (Settings › Appearance can switch it off)
 - Pull down to refresh. This also checks for a newer version of the app and loads it.
 
 **Progress**
@@ -114,6 +115,7 @@ And **Songs**, for learning a song: paste the lyrics, and they're split into lab
 - **Storage** (a page with a short explanation at the top): one bar showing what's using space (recordings, song tracks, the coach video, and sessions and songs), then recordings (how many takes and how much space), **Review old takes** (unstarred takes with no comments, oldest first, to clear by hand: nothing is ever removed for you), and **Storage protection**, which shows whether iOS has agreed not to clear the app's data when space runs low
 - **Recall › Peek length:** how long a tapped line shows in Recall (1, 2, 3 or 5 seconds)
 - **Coach video:** add, replace or remove it (see Coach video below)
+- **Appearance:** **Gradient background**, the soft moving wash behind Today's header, on unless you switch it off. For this device only, not in backups.
 - **Accessibility:** **Reduce motion** (Match iPhone, On or Off) swaps zooms and slides for short fades; **Slow motion** plays every animation four times slower, for checking how it feels. Both are for this device only and aren't in backups.
 - **Changelog:** every version on a timeline, with a growth chart of improvements by area. It's built from [CHANGELOG.md](CHANGELOG.md).
 - **View on GitHub:** this repo
@@ -159,14 +161,14 @@ The layout follows the device, like a native Apple app:
 
 | Screen | Layout |
 |---|---|
-| iPhone | A floating tab bar at the bottom |
+| iPhone | A floating tab bar at the bottom, placed as in Apple's own apps, with the search circle beside it. Scrolling down a long page shrinks it to a small pill at the left; scrolling up, or tapping the pill, brings it back |
 | iPhone on its side | A compact tab bar, with Today in two columns |
 | iPad, or a narrower Mac window | Tabs at the top, a dashboard on Today, and split views for History, Exercises and Songs |
 | Mac, or iPad in landscape | A sidebar |
 
 Opening the app shows a short launch screen with the app icon, in light or dark to match your phone. On a fresh open, the icon's sound-wave bars pulse one after another (the launch ripple), then the screen fades with a slight zoom and Today's blocks rise in from top to bottom. It plays again after an update loads or a backup is imported, but not when switching tabs or coming back to the app. With Reduce Motion on, the launch screen just fades. The launch images iOS shows before the app starts are in the `splash` folder.
 
-Cards that open a page zoom into it, like iPhone apps do: an exercise, a song, Show all sessions, Changelog, the weekly goal arc, and the Start session button, which expands into the session (the Song practice card switches to the Songs tab). Back shrinks the page into the card it came from, with the list where you left it, and finishing a session shrinks it back into Start session. You can swipe back from anywhere on a page with a Back button, not just the edge: the page follows your finger and goes back past about a fifth of the screen or with a quick flick, otherwise it settles back. A row's own swipe (pin or delete), sliders and charts you slide across always come first. Tapping a day in the practice calendar grows its sessions out of the day, and a new song's paste sheet shrinks into its row before the song opens.
+Lists push their pages in from the right, as on iPhone: a song from Songs, Today's pinned songs, Show all songs, Search's songs, lyrics and exercises, the Exercises list, Sync by sections and Check timing from a song, and Settings' rows and Changelog. The page underneath slides a little to the left and dims. Other cards that open a page zoom into it: the suggested rotation, Song practice and the track on a song's page, the coach video, Show all sessions, the weekly goal arc, and the Start session button, which expands into the session. Back reverses either, with the list where you left it, and finishing a session shrinks it back into Start session. You can swipe back from anywhere on a page with a Back button, not just the edge: the page follows your finger and goes back past about a fifth of the screen or with a quick flick, otherwise it settles back. Scrolled down, the top bar becomes a soft blur that fades out under the status bar. A row's own swipe (pin or delete), sliders and charts you slide across always come first. Tapping a day in the practice calendar grows its sessions out of the day, and a new song's paste sheet shrinks into its row before the song opens.
 
 Small movements show what changed: deleted rows shrink away and the gap closes, a pinned song travels into Pinned, the Progress bars ripple to new heights in the direction of time, the weekly goal arc fills after launch, and Recall hides lyrics word by word. Anything you drag or scrub follows your finger instantly, and nothing moves while you record or perform. With Reduce Motion on, changes fade instead of moving (zooms become a short fade, and a swipe back moves sideways only).
 
@@ -245,7 +247,7 @@ A small service worker (`sw.js`) keeps a copy of the app on your device. When yo
 
 ## Stack
 
-Vanilla HTML, CSS and JavaScript, with no frameworks or build step: `index.html`, one stylesheet in `css/` and a dozen plain scripts in `js/`. It uses the iOS system font and a CSS imitation of Liquid Glass: rim light, inner glow, a shrinking tab bar, sliding glass pickers and springy motion.
+Vanilla HTML, CSS and JavaScript, with no frameworks or build step: `index.html`, one stylesheet in `css/` and a dozen plain scripts in `js/`. It uses the iOS system font and a CSS imitation of Liquid Glass: rim light, inner glow, a collapsing tab bar, a soft blurred edge under the top bar, sliding glass pickers and springy motion.
 
 ---
 

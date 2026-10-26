@@ -15,11 +15,11 @@ def main_list(b, t):
     pg = t.page(b, w=375, h=812, data=d)
     pg.evaluate(MAIN); pg.wait_for_timeout(200)
     keys = pg.evaluate("[...document.querySelectorAll('#app [data-a=setPg]')].map(r=>r.dataset.v)")
-    ok(keys == ['backup', 'storage', 'recall', 'coach', 'access'], f'the main list opens Backup, Storage, Recall, Coach video and Accessibility ({keys})')
+    ok(keys == ['backup', 'storage', 'recall', 'coach', 'appear', 'access'], f'the main list opens Backup, Storage, Recall, Coach video, Appearance and Accessibility ({keys})')
     ok(pg.evaluate("[...document.querySelectorAll('#app .grp')].slice(0,3).every(g=>g.classList.contains('tiled'))"),
        'in three groups of icon rows (separators start after the icons)')
     tiles = pg.evaluate("[...document.querySelectorAll('#app .grp.tiled .row')].map(r=>{const s=r.querySelector('.tile');return s?getComputedStyle(s).backgroundColor+'|'+s.innerHTML:''})")
-    ok(len(tiles) == 7 and all(tiles) and len(set(tiles)) == 7, 'every row has its own icon tile: no colour and glyph used twice')
+    ok(len(tiles) == 8 and all(tiles) and len(set(tiles)) == 8, 'every row has its own icon tile: no colour and glyph used twice')
     ok(pg.evaluate("[...document.querySelectorAll('#app .grp.tiled .tile svg')].every(s=>s.getBoundingClientRect().width>15)"), 'and the glyphs draw')
     ok(pg.evaluate(VALUE, 'backup') == 'Yesterday' and pg.locator('#app [data-zk="set:backup"] .setwarn').count() == 0,
        'Backup shows when you last backed up: “Yesterday”')
@@ -54,7 +54,7 @@ def pages(b, t):
     for sc in ('light', 'dark'):
         pg = t.page(b, w=375, h=812, sc=sc)
         for k, title, hero in (('backup', 'Backup', True), ('storage', 'Storage', True), ('recall', 'Recall', False),
-                               ('coach', 'Coach video', False), ('access', 'Accessibility', False)):
+                               ('coach', 'Coach video', False), ('appear', 'Appearance', False), ('access', 'Accessibility', False)):
             pg.evaluate(MAIN); pg.wait_for_timeout(150)
             pg.click(f'#app [data-zk="set:{k}"]'); pg.wait_for_timeout(250)
             ok(pg.evaluate("U.view+'/'+U.setPg") == 'set/' + k, f'{sc}: the {title} row opens its page')

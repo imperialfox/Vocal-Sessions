@@ -9,6 +9,35 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.23 · 26 Oct 2026
+*Bars, pages and Today that feel like iOS 27 (Q08)*
+<!-- area: look -->
+
+**The bars where Apple's are**
+- On iPhone, the tab bar now sits low, 21 points from the bottom edge in the home indicator's area, with 21-point margins either side, as in Music and Notes. The four tabs share the bar's width, and the search circle beside it is as tall as the bar.
+- The buttons at the top (the gear, Back and the step pill) sit 6 points higher, where Apple's do.
+- Everything that rests on the tab bar moved down with it: the floating window, a session's button, Song Clock's and the track player's controls, and Recall's capsule. iPad, Mac and landscape are unchanged.
+
+**A soft edge when you scroll**
+- Scrolling a page no longer turns the top bar into a rounded card. Instead, a full-width blur starts behind the status bar and fades away at its lower edge, with no line, and the page scrolls softly under it. The buttons stay glass and the title sits in the middle.
+
+**Today's gradient**
+- A soft wash of coral, blue and orange now sits behind Today's date and title, fading out about a third of the way down. Three blobs of colour drift very slowly over a faint grain, and it scrolls away with the page. The cards and Start session are exactly as they were.
+- With Reduce motion on it holds still.
+- **Settings › Appearance** is new, with one switch: **Gradient background**, on unless you switch it off. It's for this device only and isn't in backups.
+
+**Pages that push in, as on iPhone**
+- Songs, Today's pinned songs, Show all songs, Search's songs, lyrics and exercises, the Exercises list, Sync by sections and Check timing from a song, and Settings' rows and Changelog now push their page in from the right. The page underneath slides a little to the left and dims, on the same spring as the zooms.
+- Back and swipe back reverse it: the page follows your finger and the one underneath slides back. Let go past about a fifth of the screen, or with a flick, and it finishes at your finger's speed; otherwise it settles back. You can turn it round halfway, either way.
+- Everything else that opened with a zoom still does: Song practice, the track, the coach video, Start session, the weekly goal, Show all sessions and the suggested rotation.
+- With Reduce motion on, pushes become a short fade.
+
+**The tab bar's collapse**
+- Scrolling down a long page now shrinks the tab bar to a small pill at the left, holding the tab you're on, with the search circle staying at the right, the same height. Scrolling up, or tapping the pill, brings it back.
+- It moves smoothly now: the bar fades and slides away towards the left while the pill grows in, with no wobble, no jumping icon and nothing else on screen moving.
+- It waits for about 30 points of steady scrolling down and comes back after about 20 points up, so a small nudge or the bounce at either end of a page doesn't make it flicker. Scrolls the app makes itself (like going back to where a list was) don't count.
+- It only happens on pages with real room to scroll, never in the first 120 points, and never on Search, while you're typing or with a sheet open. Every new page starts with the full bar.
+
 ## 3.22 · 26 Oct 2026
 *Search, from every tab (Q01)*
 

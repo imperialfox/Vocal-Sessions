@@ -2,9 +2,11 @@
    Settings as a main list of icon rows, each opening its own page, like the iPhone's Settings app.
    - Main list: Backup and Storage; Recall, Coach video and Accessibility; Changelog and View on GitHub; the two resets;
      then the app's icon, name and version at the bottom.
-   - Pages are U.view = 'set' with U.setPg = 'backup' | 'storage' | 'recall' | 'coach' | 'access'. Backup and Storage
-     open with a hero card (big icon, title and a short explanation); the others are plain pages.
-   - Every row zooms into its page (data-zk="set:<page>") and Back shrinks it back into the row.
+   - Pages are U.view = 'set' with U.setPg = 'backup' | 'storage' | 'recall' | 'coach' | 'appear' | 'access'. Backup
+     and Storage open with a hero card (big icon, title and a short explanation); the others are plain pages.
+   - Every row pushes its page in from the right (data-zk="set:<page>" with data-push, 3.23) and Back slides it away.
+   - Appearance (3.23, Q08) holds this device's look: Gradient background, the soft moving wash behind Today's header
+     (on unless switched off; localStorage 'vocalLook', never in a backup). Later look options join that page.
    - Accessibility holds this device's motion settings: Reduce motion (Match iPhone, On or Off, kept in localStorage
      'vocalReduce') and Slow motion (MOTION speed 4). Neither is ever in a backup.
    Plain script (not a module): files share one global scope and load in the order listed in index.html. */
@@ -20,6 +22,9 @@ const SET = (() => {
       '<svg viewBox="0 0 24 24"><path d="M2.6 12s3.5-6.4 9.4-6.4 9.4 6.4 9.4 6.4-3.5 6.4-9.4 6.4S2.6 12 2.6 12z"/><circle cx="12" cy="12" r="2.8"/></svg>',
     coach:
       '<svg viewBox="0 0 24 24"><rect x="3" y="5.5" width="18" height="13" rx="3.2"/><path d="M10.4 9.4v5.2l4.3-2.6z"/></svg>',
+    // 3.23 Appearance: a soft wash with a sparkle, for the gradient behind Today's header
+    appear:
+      '<svg viewBox="0 0 24 24"><path d="M3.6 15.4c2.6-1.9 5.2-1.9 7.8 0s5.2 1.9 7.8 0"/><path d="M3.6 19.6c2.6-1.9 5.2-1.9 7.8 0s5.2 1.9 7.8 0"/><path d="M15.8 3.4l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z"/><path d="M7 6.2v3.2M5.4 7.8h3.2"/></svg>',
     access:
       '<svg viewBox="0 0 24 24"><circle cx="14" cy="4.9" r="1.9"/><path d="M9.3 9.4h9.4M14 9.4v4.4l-2.6 5.6M14 13.8l2.6 5.6"/><path d="M3.4 11.2h3.2M2.6 14.8h3"/></svg>',
     log: '<svg viewBox="0 0 24 24"><path d="M10 7h10M10 12h10M10 17h7"/><path d="M5 4.6l.7 1.5 1.5.7-1.5.7L5 9l-.7-1.5-1.5-.7 1.5-.7z"/><path d="M5 15.6v2.8M3.6 17h2.8"/></svg>',
@@ -30,11 +35,19 @@ const SET = (() => {
     storage: '#8e8e93',
     recall: '#5856d6',
     coach: '#ff9500',
+    appear: '#ff6b57',
     access: '#007aff',
     log: '#af52de',
     code: 'var(--tile-ink)',
   };
-  const TITLE = { backup: 'Backup', storage: 'Storage', recall: 'Recall', coach: 'Coach video', access: 'Accessibility' };
+  const TITLE = {
+    backup: 'Backup',
+    storage: 'Storage',
+    recall: 'Recall',
+    coach: 'Coach video',
+    appear: 'Appearance',
+    access: 'Accessibility',
+  };
   const PAGES = Object.keys(TITLE);
   const ico = (k, big) => '<span class="tile' + (big ? ' big' : '') + '" style="background:' + COL[k] + '" aria-hidden="true">' + G[k] + '</span>';
   const out = '<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 16L16 8M9.5 8H16v6.5"/></svg>';
@@ -57,6 +70,31 @@ const SET = (() => {
     MOTION.publish();
   }
   const slow = () => MOTION.speed() === 4;
+
+  /* ----- this device's look (3.23, Q08): localStorage 'vocalLook', an object so later options can join it ----- */
+  const LKEY = 'vocalLook';
+  function look() {
+    try {
+      const o = JSON.parse(localStorage.getItem(LKEY) || '{}');
+      return o && typeof o === 'object' && !Array.isArray(o) ? o : {};
+    } catch (e) {
+      return {};
+    }
+  }
+  const gradOn = () => look().grad !== false; // on unless switched off
+  function setGrad(on) {
+    const o = look();
+    if (on) delete o.grad;
+    else o.grad = false;
+    try {
+      if (Object.keys(o).length) localStorage.setItem(LKEY, JSON.stringify(o));
+      else localStorage.removeItem(LKEY);
+    } catch (e) {}
+  }
+  // the wash behind Today's header: three soft blobs drifting very slowly, and a faint grain. It scrolls with the
+  // page; Reduce motion (and motion off) holds the blobs still
+  const wash = () =>
+    gradOn() ? '<div class="tgrad" aria-hidden="true"><i class="tg1"></i><i class="tg2"></i><i class="tg3"></i></div>' : '';
   const REDUCE = [
     ['system', () => 'Match ' + deviceName()],
     ['on', () => 'On'],
@@ -96,6 +134,7 @@ const SET = (() => {
       storage: { t: mb(total()) },
       recall: { t: peekSecs() + ' s' },
       coach: { t: COACH.busy() ? 'Adding…' : COACH.has() ? 'Added' : 'Not added' },
+      appear: { t: '' },
       access: { t: { system: 'System', on: 'On', off: 'Off' }[reduceMode()] },
     };
   }
@@ -107,7 +146,7 @@ const SET = (() => {
       k +
       '" data-zk="set:' +
       k +
-      '">' +
+      '" data-push>' +
       ico(k) +
       '<span class="lbl">' +
       TITLE[k] +
@@ -131,10 +170,11 @@ const SET = (() => {
       '<div class="grp tiled setgap">' +
       row('recall', v.recall) +
       row('coach', v.coach) +
+      row('appear', v.appear) +
       row('access', v.access) +
       '</div>' +
       '<div class="grp tiled setgap">' +
-      '<button class="row" data-zk="log" data-a="openLog">' +
+      '<button class="row" data-zk="log" data-push data-a="openLog">' +
       ico('log') +
       '<span class="lbl">Changelog</span><span class="mut">' +
       APP_VERSION +
@@ -151,7 +191,7 @@ const SET = (() => {
       '<div class="grp setgap">' +
       '<button class="row" data-a="sheet" data-v="resetMonth"><span class="lbl dng">Reset this month’s minutes</span></button>' +
       '<button class="row" data-a="sheet" data-v="resetAll"><span class="lbl dng">Reset all data</span></button></div>' +
-      '<button class="setfoot" data-a="openLog" aria-label="Vocal Sessions ' +
+      '<button class="setfoot" data-zk="log" data-push data-a="openLog" aria-label="Vocal Sessions ' +
       APP_VERSION +
       ', ' +
       RELEASE_DATE +
@@ -291,6 +331,20 @@ const SET = (() => {
     return '<h1>Coach video</h1>' + COACH.settings(true);
   }
 
+  function appear() {
+    const g = gradOn();
+    return (
+      '<h1>Appearance</h1>' +
+      '<div class="grp setgap">' +
+      '<button class="row" data-a="setGrad" role="switch" aria-checked="' +
+      g +
+      '"><span class="lbl">Gradient background</span><span class="tgl" aria-checked="' +
+      g +
+      '" aria-hidden="true"></span></button></div>' +
+      '<p class="foot">A soft moving wash behind Today’s header.</p>'
+    );
+  }
+
   function access() {
     const m = reduceMode();
     return (
@@ -329,7 +383,7 @@ const SET = (() => {
   }
 
   function page() {
-    const f = { backup, storage, recall, coach, access }[U.setPg];
+    const f = { backup, storage, recall, coach, appear, access }[U.setPg];
     return f ? f() : main();
   }
   const title = () => TITLE[U.setPg] || 'Settings';
@@ -364,9 +418,13 @@ const SET = (() => {
       MOTION.setSpeed(slow() ? 1 : 4);
       rerender();
     },
+    setGrad: () => {
+      setGrad(!gradOn());
+      rerender();
+    },
   });
 
-  return { main, page, title, open, back, shown, reduceMode, setReduce, sizes, PAGES };
+  return { main, page, title, open, back, shown, reduceMode, setReduce, sizes, PAGES, gradOn, setGrad, wash };
 })();
 
 function scrSettings() {

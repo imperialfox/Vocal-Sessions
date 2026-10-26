@@ -13,7 +13,8 @@ SKIP = "['offset','easing','composite','computedOffset']"
 # the animations running on matching elements, as {delay, props}
 ANIM = f"""sel=>[...document.querySelectorAll(sel)].flatMap(el=>el.getAnimations().map(a=>({{d:a.effect.getTiming().delay,
   k:Object.keys(a.effect.getKeyframes()[0]).filter(x=>!{SKIP}.includes(x)).join()}})))"""
-QUIET = "!document.getAnimations().some(a=>a.playState==='running'||a.playState==='pending')"
+# settled: nothing moving (3.23: endless ones, like Today's gradient drifting, don't count)
+QUIET = "!document.getAnimations().some(a=>(a.playState==='running'||a.playState==='pending')&&a.effect.getTiming().iterations!==Infinity)"
 
 
 def daily():
