@@ -163,7 +163,9 @@ def swipes(b, t):
     # a quick flick, not far: also closes
     pg.click(SUG)
     quiet(pg)
-    drag(pg, 100, 400, 170, 400, steps=3, ms=0)
+    # (3.23: flicked on the title, since on GitHub's fonts y 400 can land on the page's segmented control, which owns it)
+    fy = pg.evaluate("(()=>{const r=document.querySelector('#app h1').getBoundingClientRect();return r.top+r.height/2})()")
+    drag(pg, 100, fy, 170, fy, steps=3, ms=0)
     quiet(pg)
     ok(where(pg) == 'today|', 'a quick flick goes back even before the threshold')
     # gesture priority: a row's own swipe, a segmented control, a sheet
