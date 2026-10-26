@@ -10,7 +10,7 @@ App work Ivan has queued, in the order he wants it built. Each item is one build
 
 Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAINING.md#tests), [rules that keep old data working](MAINTAINING.md#rules-that-keep-old-data-working), [changelog](MAINTAINING.md#the-changelog-page), [releasing](MAINTAINING.md#releasing) and [style](MAINTAINING.md#style). On top of that:
 
-- **Check the previous build is live first.** Look for its version in `CHANGELOG.md` on `main`. If it isn't there, stop and tell Ivan.
+- **Check the previous build is live first.** Use the item's **Needs** line. If it records that its required version was verified on `main`, that satisfies this check; otherwise look for the version in `CHANGELOG.md` on `main`. If it isn't there, stop and tell Ivan.
 - **Never push with failing tests.** If something can't be finished, commit nothing, leave the item here and report plainly.
 - **Everything that moves uses the shared springs.** Every new sound starts through `NOW.start()`.
 - **The repo is public.**
