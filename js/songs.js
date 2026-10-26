@@ -237,8 +237,9 @@ function cleanSong(x) {
     if (l) s.loop = l;
     else delete s.loop;
   }
-  // the chip a loop belongs to must still be a marker with that range's end
-  if (s.loop && s.loop.mk && !(s.markers || []).some((m) => m.id === s.loop.mk && m.end != null)) delete s.loop.mk;
+  // the marker a loop belongs to must still be a marker (Q02: one without an end loops to the next marker, from the
+  // Markers grid; 3.20–3.22 needed an end)
+  if (s.loop && s.loop.mk && !(s.markers || []).some((m) => m.id === s.loop.mk)) delete s.loop.mk;
   // 3.20 takes' names and timestamped comments live with the song, so they're in every backup (cleanTakeNotes, takes.js)
   if ('takeNotes' in s) {
     const n = cleanTakeNotes(s.takeNotes);
@@ -672,7 +673,8 @@ function sgp() {
   // Stay awake and the pinned icons
   // (3.19: and the track player's zoom level and speed, checked in track.js)
   // (3.22: and Search's recent searches, findRecent, checked in search.js)
-  ['marksPlaying', 'blurAhead', 'snapping', 'stayAwake', 'pins', 'trkLevel', 'trkSpeed', 'findRecent'].forEach((k) => {
+  // (Q02: and the track player's jog wheel side, Song lyrics and the levels' layout version, checked in track.js)
+  ['marksPlaying', 'blurAhead', 'snapping', 'stayAwake', 'pins', 'trkLevel', 'trkSpeed', 'findRecent', 'trkJogPos', 'trkSongLyrics', 'trkLvV'].forEach((k) => {
     if (k in o) SGP[k] = o[k];
   });
   return SGP;

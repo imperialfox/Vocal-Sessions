@@ -197,7 +197,8 @@ def sounds(pg):
     }
 PLAYING = {
     'take': "!!player&&!player.paused&&playingId==='w1'",
-    'track': "TRACK.state().playing",
+    # Q02: play-along of a song with its track plays that track under Song Clock (along); that's the clock's sound
+    'track': "TRACK.state().playing&&!TRACK.state().along",
     'video': "!COACH.el().paused",
     'clock': "CLOCK.state().run",
 }
@@ -782,11 +783,12 @@ def markers(b, t):
     ok(w[0] > w[1] and w[2] < 45 and w[3] <= w[4], f'with many chips the row scrolls sideways in one line, the page doesn’t ({w})')
     ok(pg.get_attribute('#trkMk', 'data-own-gesture') is not None, 'the chip row has its own gesture')
     t.shot(pg, 'chips')
-    for lv in (2, 3):
+    # (Q02: Song is the only row view now; Markers is a grid)
+    for lv in (2,):
         pg.click(f'#app .trklv button[data-v="{lv}"]'); pg.wait_for_timeout(200)
         r = pg.evaluate("(()=>{const c=document.querySelectorAll('#app .trkrow canvas')[0].getBoundingClientRect();return [c.left+c.width*0.25,c.top+c.height/2]})()")
         pg.mouse.click(r[0], r[1]); pg.wait_for_timeout(200)
-        ok(pg.evaluate("TRACK.level()") == lv, f'a tap in {"Section" if lv == 2 else "Song"} view moves the playhead and stays there')
+        ok(pg.evaluate("TRACK.level()") == lv, 'a tap in Song view moves the playhead and stays there')
     pg.click('#app .trklv button[data-v="0"]'); pg.wait_for_timeout(200)
     ok(pg.evaluate("TRACK.level()") == 0 and pg.evaluate(FITS), 'the pills change the zoom')
     pg.context.close()
