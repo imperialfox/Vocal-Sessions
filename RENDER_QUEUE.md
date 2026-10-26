@@ -55,7 +55,7 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 
 ## 2 · Sections on the waveform (Track 2)
 
-**Status:** Approved — awaiting Build. **Render:** Approved by Ivan on 25 Oct 2026 for the scope below.
+**Status:** Approved — awaiting Build. **Render:** Approved by Ivan on 26 Oct 2026 for the scope below, including the refinements listed here.
 **Needs:** Track 1 live (it is). A separate Build instruction is still required.
 
 - **Goal:** set a song's timing by scrubbing its track instead of tapping along live.
@@ -74,6 +74,9 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
   - Marker data remains `sg.markers = [{ id, t, end?, name? }]`; no migration is needed for existing 3.20 markers or backups.
   - Device-only preferences `trkSongLyrics` and `trkJogPos` live in `vocalSongPrefs`.
   - Pinch stays beside the level pills.
+  - A marker without an explicit `end` loops from its start to the next marker; the last marker loops to the track duration.
+  - Marker selection and playback have separate visual states. The selected marker stays identified for actions; the playing marker follows the playhead. Both states can appear at once.
+  - Song overview uses duration-driven 24-second rows. The last row is partial when needed and ends at the track duration (for example, a 3:14 track has a final 3:12–3:14 row).
 - **Out of scope:**
   - Editing lyrics or section names from the waveform.
   - Cloud syncing audio or peaks; audio remains device-local in IndexedDB `vocalTracks`.
