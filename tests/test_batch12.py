@@ -634,8 +634,10 @@ def replay(b, t):
     pg.wait_for_function("!player", timeout=5000); pg.wait_for_timeout(300)
     pg.evaluate("closeSheet()"); pg.wait_for_timeout(150)
     pg.evaluate("playTake('r1')"); pg.wait_for_function("!!player&&!player.paused", timeout=5000)
+    # the take's length is known only once its metadata has loaded (slow on a busy runner): wait for it
+    pg.wait_for_function("!!player&&isFinite(player.duration)&&player.duration>0", timeout=10000)
     pg.evaluate("player.pause();player.currentTime=player.duration"); pg.wait_for_timeout(200)
-    pg.evaluate("FW_KINDS[0].toggle()"); pg.wait_for_function("!!player&&!player.paused", timeout=5000)
+    pg.evaluate("FW_KINDS[0].toggle()"); pg.wait_for_function("!!player&&!player.paused", timeout=10000)
     ok(pg.evaluate("player.currentTime") < 0.6, 'from the floating window too')
     pg.evaluate("stopPlayback()")
     # the track
