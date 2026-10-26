@@ -55,35 +55,36 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 
 ## 2 · Sections on the waveform (Track 2)
 
-**Status:** Awaiting Render. **Approval:** Not yet given. Queued 23 Oct 2026. **Not scheduled until Ivan has used Track 1** (the track player, 3.19).
-**Needs:** Track 1 live (it is).
+**Status:** Approved — awaiting Build. **Render:** Approved by Ivan on 25 Oct 2026 for the scope below.
+**Needs:** Track 1 live (it is). A separate Build instruction is still required.
 
 - **Goal:** set a song's timing by scrubbing its track instead of tapping along live.
 - **Scope:**
-  - Set section starts by scrubbing the waveform, written into Song Clock's timing (one timing system: `ckStore` / `ckModel`).
-  - Lyrics under the rows, and the current line above the strip.
-  - Play-along runs off the in-app track.
-  - Jog wheel left, right or bottom.
-  - A marker chip's hold menu gains "Make this the <section> start". This writes its time into the timing and removes the marker.
+  - Absorb Song Clock Phase B's timeline into the waveform; use one timing model through `ckModel()` and `ckStore()`.
+  - Four views: Phrase (6 s), Line (16 s), Song (fixed 24 s overview rows), and Markers (two-column grid).
+  - Show a three-line lyric context card above the 148 px Phrase/Line strip; show toggleable lyrics under Song rows.
+  - Set section starts from marker chips through a section picker in `sg.order`; enforce chronological order, remove the promoted chip and provide one Undo that restores both timing and marker.
+  - Play along from the in-app track, with backing audio on by default and a mute control.
+  - Add the Marker grid's large rehearsal tiles, per-marker loop toggles, Replay / Play-Pause / Next transport, active state and quick-add tile.
+  - Support Left, Right and Bottom jog positions, with touch expansion for the edge wheels and a full-width Bottom roller.
+  - Use red playhead styling and resync looping and the playhead after device sleep.
 - **Decided:**
-  - Ivan prefers scrubbing the waveform to tapping along live.
-  - Song Clock B's Timeline is absorbed here (the waveform is the timeline).
+  - Scrubbing the waveform replaces Song Clock B's Timeline.
+  - `sg.timing` remains the only timing model; take undo snapshots before edits.
+  - Marker data remains `sg.markers = [{ id, t, end?, name? }]`; no migration is needed for existing 3.20 markers or backups.
+  - Device-only preferences `trkSongLyrics` and `trkJogPos` live in `vocalSongPrefs`.
   - Pinch stays beside the level pills.
-- **Open questions:**
-  - Has Ivan used Track 1 enough to schedule this?
-  - *Unresolved:* how the jog wheel's left / right / bottom choice is offered.
-- **Notes from earlier builds:**
-  - The strip and rows draw on canvases in `draw()`.
-  - Play-along should follow `TRACK.now()` when `TRACK.has(id)`.
-  - The jog wheel is currently fixed on the right.
-- **Next action:** ask Ivan whether he's ready to schedule it. Then ask for the track player design notes ("Track 2, for later").
+- **Out of scope:**
+  - Editing lyrics or section names from the waveform.
+  - Cloud syncing audio or peaks; audio remains device-local in IndexedDB `vocalTracks`.
+  - Pitch-altering time stretch.
+- **Next action:** after Ivan separately says Build, implement this approved scope in a fresh chat with Claude as the sole builder. Check that 3.21 is live first.
 - **Done when:**
-  - Sections set on the waveform appear in Song Clock's timing.
-  - A chip promotes into a section start.
-  - Play-along follows the track.
-  - Old songs and backups still load.
+  - Sections set on the waveform appear in Song Clock timing, and marker promotion is undoable without data loss.
+  - Phrase, Line, Song and Markers views meet the approved layout and interaction requirements.
+  - Play-along follows track time; sleep/wake looping is verified on iPhone.
+  - Existing markers, untimed songs, songs without lyrics and old backups load without error.
   - The full suite passes.
-  - *Unresolved:* finer criteria.
 
 ## 3 · Layered marks (Marks 1)
 
