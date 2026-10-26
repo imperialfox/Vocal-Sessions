@@ -15,7 +15,7 @@ Every queued item has a queue ID and a standard name, used in the queue, in hand
 - **Items:** `Q[##] · [Subsystem]: [Feature Name]`, e.g. `Q02 · Track: Waveform Sections`.
 - **Files** (handoffs, specs, wireframes, prototypes): `q##_[subsystem]_[feature]_[type].[ext]`, lower case with underscores, e.g. `q02_track_waveform_sections_handoff.md`.
 - **Releases:** the shipped version's `CHANGELOG.md` headline ends with the queue ID in brackets, e.g. `*Waveform sections on the track player (Q02)*` under `## 3.23 · 27 Oct 2026` (the `##` line keeps its exact format for the app's Changelog page). That's the bridge from queue ID to version. Q01 shipped as 3.22, headline `*Search, from every tab (Q01)*`; Q08 as 3.23.
-- **New items:** an idea gets its ID when Ivan says **Render** for it, taking the next unused number (the next is **Q09**). IDs are never reused or renumbered, even when the queue is reordered or an item ships.
+- **New items:** an idea gets its ID when Ivan says **Render** for it, taking the next unused number (the next is **Q10**). IDs are never reused or renumbered, even when the queue is reordered or an item ships.
 
 Older chats, notes and prototypes use working names. They map like this:
 
@@ -60,6 +60,8 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
   - Make left/right jog dials expand by 35–40% while touched or held, without shifting their edge position.
   - Move the Lyrics pill to the top-right of the Song overview card.
   - Add a smooth lyric-line transition and subtle pulse when the active teleprompter line changes.
+- **Notes against 3.24** (checked 26 Oct): tiles are 96 px in 3.24 (`.trktl`), not 76 px; the target is still 108 px. The jog's drag style is `translateX(-22px) scale(1.12)`; Q09 drops the slide and grows about 1.35–1.4× in place. The handoff (`q09_track_waveform_sections_followup_handoff.md`, in Ivan's project notes) has code pointers.
+- *Unresolved (default recorded):* **Backing Sound pill.** The 3.24 track player has no sound toggle (mute exists only for Song Clock play-along). Default: mutes the track while the playhead, loop and Next keep running; on by default. Confirm with Ivan at the start of the build.
 - **Out of scope:** Rebuilding Q02 areas already present in 3.24, including unified timing and section promotion/undo, 24-second Song rows, red playhead styling and play-along synchronization.
 - **Next action:** Start a fresh Claude build chat from the Q09 handoff and approved Q02 wireframe/spec. Do not edit the app until Ivan separately says **Build**.
 - **Done when:** The Markers dock, Replay/Next behavior, tile dimensions, jog expansion, Lyrics placement and lyric transitions meet this scope; loop playback has a reduced boundary pause without losing pitch at slower speeds. Follow the checks and release process in [MAINTAINING.md](MAINTAINING.md).
