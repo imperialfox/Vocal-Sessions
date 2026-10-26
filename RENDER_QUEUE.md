@@ -6,7 +6,30 @@ App work Ivan has queued, in the order he wants it built. Each item is one build
 - **The code wins on what's built.** This is a summary, not a spec. Check each note against the code before relying on it.
 - **Detailed design notes live in Ivan's private project notes, not in this repo.** Where an item names one, ask Ivan to paste or attach it. Anything not settled here is marked *Unresolved*.
 - **Ivan can reorder the queue.** Versions follow build order: each build takes the next minor version when it's built.
-- **When an item ships,** remove it from this file in the same push and say which version it shipped in.
+- **When an item ships,** remove it from this file in the same push and say which version it shipped in. Its `CHANGELOG.md` title ends with its queue ID, e.g. `## 3.22 · Waveform sections on the track player (Q02)`.
+
+## Naming
+
+Every queued item has a queue ID and a standard name, used in the queue, in handoffs, in commit messages and in file names. Use these, not the older working names.
+
+- **Items:** `Q[##] · [Subsystem]: [Feature Name]`, e.g. `Q02 · Track: Waveform Sections`.
+- **Files** (handoffs, specs, wireframes, prototypes): `q##_[subsystem]_[feature]_[type].[ext]`, lower case with underscores, e.g. `q02_track_waveform_sections_handoff.md`.
+- **Releases:** the shipped version's `CHANGELOG.md` title ends with the queue ID in brackets, e.g. `3.22 · Waveform sections on the track player (Q02)`. That's the bridge from queue ID to version.
+- **New items:** an idea gets its ID when Ivan says **Render** for it, taking the next unused number (the next is **Q08**). IDs are never reused or renumbered, even when the queue is reordered or an item ships.
+
+Older chats, notes and prototypes use working names. They map like this:
+
+| Queue ID | Standard name | Earlier working names |
+|---|---|---|
+| Q01 | Search: Global Find | Render 10, Search, Global Search |
+| Q02 | Track: Waveform Sections | Track 2, Sections on the waveform |
+| Q03 | Marks: Layered Annotations | Marks 1, Layered marks |
+| Q04 | Marks: Practice Guide | Marks 2, Marks help, Marks guide |
+| Q05 | Song Clock: Tap Re-Anchor | Song Clock A2, Render 6, Line pass and retime |
+| Q06 | Song Clock: Timeline View | Song Clock B, Render 7, Section starts and wheels |
+| Q07 | Song Clock: Dynamic Sync | Song Clock C, Render 8, Paced Recall |
+
+Work shipped before this standard (for example Track 1 and Song Clock A1) keeps its version numbers and has no queue ID.
 
 Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAINING.md#tests), [rules that keep old data working](MAINTAINING.md#rules-that-keep-old-data-working), [changelog](MAINTAINING.md#the-changelog-page), [releasing](MAINTAINING.md#releasing) and [style](MAINTAINING.md#style). On top of that:
 
@@ -19,7 +42,7 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 
 ---
 
-## 1 · Search (Render 10)
+## Q01 · Search: Global Find
 
 **Status:** Awaiting Render. **Approval:** Not yet given. Wireframe approved 22 Oct 2026.
 **Needs:** 3.21 live (it is).
@@ -53,7 +76,7 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
   - The full suite passes.
   - *Unresolved:* any finer criteria in the design notes.
 
-## 2 · Sections on the waveform (Track 2)
+## Q02 · Track: Waveform Sections
 
 **Status:** Approved — awaiting Build. **Render:** Approved by Ivan on 26 Oct 2026 for the scope below, including the refinements listed here.
 **Needs:** Track 1 live; verified on `main` from the 3.21.1 changelog entry on 26 Oct 2026. A separate Build instruction is still required.
@@ -69,7 +92,7 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
   - Support Left, Right and Bottom jog positions, with touch expansion for the edge wheels and a full-width Bottom roller.
   - Use red playhead styling and best-effort loop/playhead resync after device sleep.
 - **Decided:**
-  - Scrubbing the waveform replaces Song Clock B's Timeline.
+  - Scrubbing the waveform replaces the Timeline planned for Q06 (Song Clock B).
   - `sg.timing` remains the only timing model; take undo snapshots before edits.
   - Marker data remains `sg.markers = [{ id, t, end?, name? }]`; no migration is needed for existing 3.20 markers or backups.
   - Device-only preferences `trkSongLyrics` and `trkJogPos` live in `vocalSongPrefs`.
@@ -93,10 +116,10 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
   - Existing markers, untimed songs, songs without lyrics and old backups load without error.
   - The full suite passes.
 
-## 3 · Layered marks (Marks 1)
+## Q03 · Marks: Layered Annotations
 
 **Status:** Awaiting Render. **Approval:** Not yet given. Wireframes, prototype and plan approved 22 Oct 2026; a build handoff exists in Ivan's project notes.
-**Needs:** Song Clock A1 live (it is). Planned after Search, or before it if Ivan asks (nothing depends on Search).
+**Needs:** Song Clock A1 live (it is). Planned after Q01, or before it if Ivan asks (nothing depends on Q01).
 
 - **Goal:** marks that match how a song is learned, one layer at a time.
 - **Decided:**
@@ -118,7 +141,7 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 - **Notes from earlier builds:**
   - Add `'active'` to the Marks while playing cycle (`ckTileAct('marks')`, `CK_MPNAME`) and draw the active layer in `ckBuild()`.
   - Replace the pencil row's Edit lyrics / Marks pills with the Marks · Lyrics switch.
-- **Next action:** after Ivan gives Render approval for this item and separately says Build, implement it in a fresh chat from the Marks 1 build handoff, which Ivan pastes in.
+- **Next action:** after Ivan gives Render approval for this item and separately says Build, implement it in a fresh chat from the Q03 build handoff (written earlier as the Marks 1 handoff), which Ivan pastes in.
 - **Done when:**
   - Everything decided above works.
   - Existing marks carry across without loss.
@@ -126,10 +149,10 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
   - The full suite passes.
   - *Unresolved:* finer criteria in the build handoff.
 
-## 4 · Marks help (Marks 2)
+## Q04 · Marks: Practice Guide
 
 **Status:** Awaiting Render. **Approval:** Not yet given. Guide text and prototype approved 22 Oct 2026; a build handoff exists in Ivan's project notes.
-**Needs:** Marks 1 live.
+**Needs:** Q03 live.
 
 - **Goal:** explain each mark where it's used.
 - **Decided:**
@@ -139,17 +162,17 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
   - A How to mark a song walkthrough.
   - All of these are reachable from several places in the app.
 - **Assumptions:** the guide's wording is original writing and safe to commit.
-- **Next action:** after Ivan gives Render approval for this item and separately says Build, implement it in a fresh chat from the Marks 2 build handoff and guide wording, which Ivan pastes in.
+- **Next action:** after Ivan gives Render approval for this item and separately says Build, implement it in a fresh chat from the Q04 build handoff (written earlier as the Marks 2 handoff) and guide wording, which Ivan pastes in.
 - **Done when:**
   - Every door opens the right help.
   - Every mark has its page.
   - The full suite passes.
   - *Unresolved:* finer criteria.
 
-## 5 · Song Clock A2 (Render 6)
+## Q05 · Song Clock: Tap Re-Anchor
 
 **Status:** Awaiting Render. **Approval:** Not yet given. Planned, not scheduled.
-**Needs:** Marks 1 live.
+**Needs:** Q03 live.
 
 - **Goal:** time songs line by line, and fix lines in place.
 - **Scope:**
@@ -158,32 +181,32 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
   - Suggested breaths from the line pass. They only become marks when Ivan taps them.
 - **Decided:** timing says when, marks say how.
 - **Open questions:**
-  - **The line pass is to be re-scoped with Ivan after Track 2**, because he prefers scrubbing the waveform to tapping along live.
-  - *Unresolved:* whether A2's "markers" are separate from the track player's markers (3.20).
+  - **The line pass is to be re-scoped with Ivan after Q02**, because he prefers scrubbing the waveform to tapping along live.
+  - *Unresolved:* whether Q05's "markers" are separate from the track player's markers (3.20).
 - **Notes from earlier builds:**
   - Suggested breaths go with the timing, per line, checked in `cleanTiming()`.
   - Punch-in goes on the play-along layer, and the Flag goes beside the transport.
   - "Time each line" on Check timing only shows a toast until this build.
   - Tests use the test clock (`CLOCK.fake`, `CLOCK.advance`).
-- **Next action:** after Track 2, re-scope with Ivan. Don't build until then.
+- **Next action:** after Q02, re-scope with Ivan. Don't build until then.
 - **Done when:** *Unresolved* until it's re-scoped.
 
-## 6 · Song Clock B (Render 7)
+## Q06 · Song Clock: Timeline View
 
 **Status:** Awaiting Render. **Approval:** Not yet given. Dates to confirm with Ivan.
 
 - **Scope:**
   - What's left of B: section starts, wheel pickers and Retime routes.
-  - The Timeline itself is absorbed by Track 2.
-- **Open questions:** the rest of B is to be re-scoped with Ivan after Track 2.
+  - The Timeline itself is absorbed by Q02.
+- **Open questions:** the rest of B is to be re-scoped with Ivan after Q02.
 - **Notes from earlier builds:** these were left waiting for B:
   - Snapping is in the grid but does nothing yet.
   - Check timing's lines aren't tappable yet.
   - Section starts is still a plain row.
-- **Next action:** re-scope with Ivan after Track 2.
+- **Next action:** re-scope with Ivan after Q02.
 - **Done when:** *Unresolved.*
 
-## 7 · Song Clock C (Render 8)
+## Q07 · Song Clock: Dynamic Sync
 
 **Status:** Awaiting Render. **Approval:** Not yet given. Dates to confirm with Ivan.
 

@@ -11,6 +11,11 @@ How to pass Vocal Sessions work between AI models (Gemini, ChatGPT, Claude) or i
   - The code on `main`, the [README](README.md), [MAINTAINING.md](MAINTAINING.md) and the [CHANGELOG](CHANGELOG.md) say what exists.
   - A handoff only summarises what one task needs: what's agreed, what's done and what's next.
   - If a handoff and the code disagree about what's built, the code wins. If they disagree about what Ivan decided, ask him.
+- **Name work by its queue ID.**
+  - Queued items are named `Q[##] · [Subsystem]: [Feature Name]` (e.g. `Q02 · Track: Waveform Sections`). Use that name in handoffs, commit messages and conversation, not older working names like "Track 2".
+  - Handoff, spec, wireframe and prototype files are named `q##_[subsystem]_[feature]_[type].[ext]` (e.g. `q02_track_waveform_sections_handoff.md`).
+  - On release, the version's `CHANGELOG.md` title ends with the queue ID, e.g. `3.22 · Waveform sections on the track player (Q02)`.
+  - A new idea gets the next unused ID when Ivan says **Render** for it. [RENDER_QUEUE.md](RENDER_QUEUE.md#naming) has the full rules and the table from older working names to IDs.
 - **Use the call signs consistently.**
   - **Recon:** investigation and research, usually Gemini. No repository edits.
   - **Blueprint:** turn findings and Ivan's request into a scoped plan or handoff, usually ChatGPT. No repository edits.
@@ -41,12 +46,12 @@ How to pass Vocal Sessions work between AI models (Gemini, ChatGPT, Claude) or i
 
 ## Building a queued item
 
-1. Pick the item from [RENDER_QUEUE.md](RENDER_QUEUE.md). Normally that's the first one, unless Ivan reorders.
+1. Pick the item from [RENDER_QUEUE.md](RENDER_QUEUE.md) by its queue ID (e.g. "Build Q02" means the item headed `Q02 ·`). Normally that's the first approved one, unless Ivan reorders. If Ivan uses an older working name, map it with the table in [RENDER_QUEUE.md](RENDER_QUEUE.md#naming) and confirm the ID before starting.
 2. Copy its fields into the template below. Add any design notes Ivan has for it; the queue says where he has them.
 3. Confirm the handoff records Ivan's **Render** approval, its date and exact scope. Without that, planning or prototyping may continue, but do not edit the app in the repo.
-4. Start a **fresh build chat** with the handoff as its first message. Name the model that owns this change.
+4. Start a **fresh build chat** with the handoff as its first message. Name the model that owns this change. If the handoff is kept as a file, name it `q##_[subsystem]_[feature]_handoff.md`.
 5. Wait for Ivan's separate **Build** instruction for this item. Then check the previous version is live and implement only the approved scope.
-6. When it ships, remove the item from the queue in the same push and record the version it shipped in. If it has Render approval but no Build instruction yet, leave it queued as `Approved — awaiting Build`.
+6. When it ships, remove the item from the queue in the same push and record the version it shipped in. The changelog title ends with the queue ID, e.g. `## 3.22 · Waveform sections on the track player (Q02)`. If it has Render approval but no Build instruction yet, leave it queued as `Approved — awaiting Build`.
 
 ## Receiving one
 
@@ -73,7 +78,7 @@ Copy this into the new chat. Fill in what applies and delete what doesn't.
 - Link to longer notes rather than pasting them.
 
 ```markdown
-# Handoff · <task> · <date>
+# Handoff · Q## · <Subsystem>: <Feature Name> · <date>
 
 > **Render:** <Awaiting | Approved by Ivan on <date/time> for <exact scope>>
 > **Build:** <Awaiting Ivan's instruction | Given by Ivan for this approved scope>
@@ -82,7 +87,7 @@ Copy this into the new chat. Fill in what applies and delete what doesn't.
 **For:** <model> · **Job:** <explore / challenge the scope / review / build>
 **Builder for this change:** <one model>
 **Repo:** imperialfox/Vocal-Sessions, `main` at <version or commit>
-**Queue item:** <RENDER_QUEUE.md item, or none>
+**Queue item:** <Q## from RENDER_QUEUE.md, or none>
 
 **Goal:** <what this work is for, in a line or two>
 **Current task:** <the part this chat does>
