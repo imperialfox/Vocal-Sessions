@@ -9,6 +9,32 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.24 · 26 Oct 2026
+*Waveform sections on the track player (Q02)*
+
+<!-- area: songs -->
+**Section starts on the waveform**
+- Hold a marker and choose **Make this a section start…**, then pick the section. The marker becomes that section's start in Song Clock, so there's one timing for the song, and the toast's **Undo** puts back both the timing and the marker.
+- Starts stay in time order: a section that would start before an earlier one (or after a later one) is greyed in the picker, with the reason.
+- On a song that's already timed, that section moves to the marker and the other starts stay where they are. On one that isn't, its lines are spread from there, as Sync by sections does.
+- Section starts show on the waveform as blue lines with their names. Scrubbing the waveform takes the place of the Timeline that was planned for Song Clock.
+
+**Four views**
+- **Phrase** (6 s) and **Line** (16 s): a taller strip, with a card above it showing the line before, the line at the playhead (with its section) and the next.
+- **Song**: the whole song in rows of 24 s. The last row ends at the track's end (a 3:14 track ends with a 3:12–3:14 row). The lyrics sit under each row; tap one to go to it, or hide them with the **Lyrics** pill.
+- **Markers**: a big tile for each marker. Tap one to play it and loop it to its own end, or to the next marker (the last one runs to the track's end). Markers under half a second apart don't loop. Each tile has its own loop button, the one you picked is outlined and the one playing is tinted, and the last tile adds a marker at the playhead. Its transport is Replay, Play/Pause and Next.
+- The view you used before this update is reset to Line, once.
+
+**Play along with the track**
+- When the song's track is on this device, play-along plays it and the lyrics follow the track's time. It's on to start with, and the new button beside −0.2 and +0.2 mutes it. Without the track, play-along works as before, lyrics only.
+- Pausing play-along pauses the track, and pausing the track (from the lock screen, say) pauses play-along.
+
+<!-- area: look -->
+**The player**
+- The jog wheel can sit on the left, on the right, or as a full-width roller under the strip (the player's ⋯ menu). The edge wheels slide further in under your finger.
+- The playhead is red, in light and dark.
+- With the screen locked, the loop is kept as well as iOS allows, and waking puts a playhead that drifted out of the loop back at its start.
+
 ## 3.23 · 26 Oct 2026
 *Bars, pages and Today that feel like iOS 27 (Q08)*
 <!-- area: look -->
