@@ -14,7 +14,7 @@ How to pass Vocal Sessions work between AI models (Gemini, ChatGPT, Claude) or i
 - **Name work by its queue ID.**
   - Queued items are named `Q[##] · [Subsystem]: [Feature Name]` (e.g. `Q02 · Track: Waveform Sections`). Use that name in handoffs, commit messages and conversation, not older working names like "Track 2".
   - Handoff, spec, wireframe and prototype files are named `q##_[subsystem]_[feature]_[type].[ext]` (e.g. `q02_track_waveform_sections_handoff.md`).
-  - On release, the version's `CHANGELOG.md` title ends with the queue ID, e.g. `3.22 · Waveform sections on the track player (Q02)`.
+  - On release, the version's `CHANGELOG.md` headline (the `*…*` line under `## version · date`) ends with the queue ID, e.g. `*Waveform sections on the track player (Q02)*`.
   - A new idea gets the next unused ID when Ivan says **Render** for it. [RENDER_QUEUE.md](RENDER_QUEUE.md#naming) has the full rules and the table from older working names to IDs.
 - **Use the call signs consistently.**
   - **Recon:** investigation and research, usually Gemini. No repository edits.
@@ -51,7 +51,7 @@ How to pass Vocal Sessions work between AI models (Gemini, ChatGPT, Claude) or i
 3. Confirm the handoff records Ivan's **Render** approval, its date and exact scope. Without that, planning or prototyping may continue, but do not edit the app in the repo.
 4. Start a **fresh build chat** with the handoff as its first message. Name the model that owns this change. If the handoff is kept as a file, name it `q##_[subsystem]_[feature]_handoff.md`.
 5. Wait for Ivan's separate **Build** instruction for this item. Then check the previous version is live and implement only the approved scope.
-6. When it ships, remove the item from the queue in the same push and record the version it shipped in. The changelog title ends with the queue ID, e.g. `## 3.22 · Waveform sections on the track player (Q02)`. If it has Render approval but no Build instruction yet, leave it queued as `Approved — awaiting Build`.
+6. When it ships, remove the item from the queue in the same push and record the version it shipped in. The changelog headline ends with the queue ID, e.g. `*Waveform sections on the track player (Q02)*` under `## 3.23 · 27 Oct 2026`. If it has Render approval but no Build instruction yet, leave it queued as `Approved — awaiting Build`.
 
 ## Receiving one
 

@@ -270,7 +270,7 @@ window.addEventListener(
     $('bar').classList.toggle('scrolled', sc);
     document.body.classList.toggle('scrolled', sc);
     const tb = $('dock').querySelector('.tabbar');
-    if (tb && !U.sheet && !document.body.classList.contains('land')) {
+    if (tb && !U.sheet && !document.body.classList.contains('land') && U.tab !== 'find') {
       if (y > lastY + 6 && y > 120) tabMin = true;
       else if (y < lastY - 6 || y < 60) tabMin = false;
       tb.classList.toggle('min', tabMin);

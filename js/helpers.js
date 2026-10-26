@@ -354,6 +354,9 @@ const freshU = () => ({
   sSec: null,
   sHint: 0,
   sOrder: 'start',
+  fq: '', // 3.22 Search: what's typed on the search page, the groups showing all, and focus on the next draw
+  fAll: [],
+  fFocus: false,
 });
 let U = freshU();
 let E = null,

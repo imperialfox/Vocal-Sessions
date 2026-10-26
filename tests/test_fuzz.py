@@ -61,6 +61,10 @@ INV=r"""(()=>{const p=[];const L=document.getElementById('layer');
  if(typeof player!=='undefined'&&player&&!player.paused&&ck.run)p.push('two sounds at once (take and play-along)');
  if(tk.loaded&&!songById(tk.id))p.push('a deleted song’s track still loaded');
  if(U.view==='trk'&&!U.sheet&&TRACK.has(U.songId)&&tk.loaded&&tk.id===U.songId&&!document.querySelector('#dock .trktr'))p.push('track player without its transport');
+ if(document.querySelector('#dock .tabbar')&&!document.querySelector('#dock [data-a=findOpen]'))p.push('tab bar without the search circle');
+ if(U.tab==='find'&&!U.view&&!document.getElementById('fq'))p.push('Search without its field');
+ if(U.tab==='find'&&!U.view&&!document.querySelector('[data-a=findOpen].on,[data-a=findOpen][aria-current=page]')&&document.querySelector('[data-a=findOpen]'))p.push('Search open but its circle not selected');
+ {const c=document.querySelector('#dock .scirc');if(FW.shown&&c&&!FW.drag&&!FW.stopSpring&&!fw.getAnimations().length&&!c.getAnimations().length){const a=fw.getBoundingClientRect(),q=c.getBoundingClientRect();if(!(a.right<=q.left||q.right<=a.left||a.bottom<=q.top||q.bottom<=a.top))p.push('floating window over the search circle')}}
  try{JSON.parse(localStorage.getItem('vocalTracker'))}catch(e){p.push('saved data unreadable')}
  const sumOk=Object.keys(D.months).length>=0;
  return p;})()"""
@@ -78,7 +82,9 @@ HEAVY = ('sgOpen','sgSec','sgTakes','playTake','star','sgMode','sgHint','sgHMenu
          'trkOpen','trkPP','trkLoop','trkSet','trkLevel','trkRow','trkToStart','trkSpeed','trkMenu','trkBack',
          # 3.20 songs, takes and markers
          'sgRowPlay','fwX','tkOpenAll','tkTab','tkTap','tkPlay','tkSkip','tkStar','tkCollapse','tkRename','tkNameDone','tkPost','tkStamp','tkNudge','tkCJump','tkDel','tkReview',
-         'sgAddMode','sgAddLen','sgLenUnlinkYes','sgLenRelinkYes','ckRelink','trkMkAdd','trkChip','trkChipLoop','trkEndHere','trkMkMove','trkMkDel')
+         'sgAddMode','sgAddLen','sgLenUnlinkYes','sgLenRelinkYes','ckRelink','trkMkAdd','trkChip','trkChipLoop','trkEndHere','trkMkMove','trkMkDel',
+         # 3.22 Search
+         'findOpen','findMore','findLyr','findTake','findRecent','findRmRecent','findClear','findCancel')
 
 def run(b, t):
     found = collections.OrderedDict()

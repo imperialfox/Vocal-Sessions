@@ -2642,6 +2642,96 @@ body.land .scirc {
 body.land .dockrow .tabbar button {
   flex: 0 0 auto;
 }
+/* 3.22 Search: the circle beside the tab bar, tinted while Search is open */
+.scirc {
+  display: grid;
+  place-items: center;
+}
+.scirc .ring {
+  position: absolute;
+  inset: 5px;
+  border-radius: 50%;
+  background: transparent;
+  transition: background 0.2s;
+}
+.scirc svg.i {
+  position: relative;
+  width: 24px;
+  height: 24px;
+}
+.scirc.on {
+  color: var(--accent);
+}
+.scirc.on .ring {
+  background: var(--fill);
+}
+/* iPad: a circle at the end of the floating top capsule */
+.toptabs .tsr {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: var(--fg);
+  transition: background 0.2s;
+}
+.toptabs .tsr svg.i {
+  width: 19px;
+  height: 19px;
+}
+.toptabs .tsr.on {
+  background: var(--fill);
+  color: var(--accent);
+}
+@media (hover: hover) and (pointer: fine) {
+  .toptabs .tsr:not(.on):hover {
+    background: color-mix(in srgb, transparent 92%, var(--fg));
+  }
+}
+/* the search page: the field with Cancel, then the grouped results */
+.fbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+}
+.fbar .sfield.inl {
+  margin: 0;
+}
+.fbar .scancel {
+  display: none;
+  height: 40px;
+}
+.fbar.on .scancel {
+  display: block;
+}
+.frow .lbl {
+  min-width: 0;
+}
+.fline,
+.fsnip {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.fsnip i {
+  font-style: normal;
+  color: var(--fg3);
+}
+.fnote {
+  margin-top: 10px;
+}
+/* the Songs list keeps its own filter: on iPhone, a field under the title that opens it */
+.sgqbtn {
+  width: 100%;
+  margin: 6px 0 10px;
+  font-size: 17px;
+  text-align: left;
+  color: var(--fg2);
+  cursor: pointer;
+}
 /* iPhone search: the tab bar shrinks to a circle and the field sits beside it */
 .sgbar {
   position: fixed;

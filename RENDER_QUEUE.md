@@ -1,12 +1,12 @@
 # Render queue
 
-App work Ivan has queued, in the order he wants it built. Each item is one build, in a fresh chat, started from a handoff (see [HANDOFF.md](HANDOFF.md)). Last checked against `main` at **3.21.1** (25 Oct 2026).
+App work Ivan has queued, in the order he wants it built. Each item is one build, in a fresh chat, started from a handoff (see [HANDOFF.md](HANDOFF.md)). Last checked against `main` at **3.22** (26 Oct 2026). **Shipped:** Q01 · Search: Global Find in 3.22.
 
 - **Every item has two separate gates.** `Awaiting Render` means it is not approved. Ivan's **Render** approves only the named item's exact scope and moves it to `Approved — awaiting Build`; it does not start work or authorize a push. A separate **Build** instruction starts implementation for that approved item. Do not treat approval of one item as approval of the whole queue.
 - **The code wins on what's built.** This is a summary, not a spec. Check each note against the code before relying on it.
 - **Detailed design notes live in Ivan's private project notes, not in this repo.** Where an item names one, ask Ivan to paste or attach it. Anything not settled here is marked *Unresolved*.
 - **Ivan can reorder the queue.** Versions follow build order: each build takes the next minor version when it's built.
-- **When an item ships,** remove it from this file in the same push and say which version it shipped in. Its `CHANGELOG.md` title ends with its queue ID, e.g. `## 3.22 · Waveform sections on the track player (Q02)`.
+- **When an item ships,** remove it from this file in the same push and say which version it shipped in. Its `CHANGELOG.md` headline (the `*…*` line under the version) ends with its queue ID, e.g. `*Waveform sections on the track player (Q02)*`. The `##` line itself stays `## 3.23 · 27 Oct 2026`, which the app's Changelog page reads.
 
 ## Naming
 
@@ -14,7 +14,7 @@ Every queued item has a queue ID and a standard name, used in the queue, in hand
 
 - **Items:** `Q[##] · [Subsystem]: [Feature Name]`, e.g. `Q02 · Track: Waveform Sections`.
 - **Files** (handoffs, specs, wireframes, prototypes): `q##_[subsystem]_[feature]_[type].[ext]`, lower case with underscores, e.g. `q02_track_waveform_sections_handoff.md`.
-- **Releases:** the shipped version's `CHANGELOG.md` title ends with the queue ID in brackets, e.g. `3.22 · Waveform sections on the track player (Q02)`. That's the bridge from queue ID to version.
+- **Releases:** the shipped version's `CHANGELOG.md` headline ends with the queue ID in brackets, e.g. `*Waveform sections on the track player (Q02)*` under `## 3.23 · 27 Oct 2026` (the `##` line keeps its exact format for the app's Changelog page). That's the bridge from queue ID to version. Q01 shipped as 3.22, headline `*Search, from every tab (Q01)*`.
 - **New items:** an idea gets its ID when Ivan says **Render** for it, taking the next unused number (the next is **Q08**). IDs are never reused or renumbered, even when the queue is reordered or an item ships.
 
 Older chats, notes and prototypes use working names. They map like this:
@@ -41,41 +41,6 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
   - Never commit with Ivan's personal email. Claude commits as `Claude <noreply@anthropic.com>`.
 
 ---
-
-## Q01 · Search: Global Find
-
-**Status:** Approved — awaiting Build. **Render:** Approved by Ivan on 26 Oct 2026 for the scope below. Wireframe approved 22 Oct 2026. A separate Build instruction is still required.
-**Needs:** 3.21 live (it is).
-
-- **Goal:** find anything in the app from one place.
-- **Scope:**
-  - A permanent search circle beside the tab bar (iOS 26 style), and a search page.
-  - It searches songs, lyrics, exercises and sessions, grouped.
-  - **Takes group** (added 23 Oct): take names and comment text.
-    - Each row shows the name or comment with the match highlighted, then "Song · Take n · when", plus the time for a comment.
-    - Tapping a take opens its song with the takes sheet on All takes and that take expanded.
-    - Tapping a comment also moves the playhead to its time, with the comment showing.
-- **Not in scope:**
-  - Settings pages aren't search content (a hit that should open a setting uses `SET.open(k)`).
-  - A song's track isn't search content.
-- **Decided:**
-  - The circle is its own control, not a tab.
-  - The circle appears on every main tab.
-  - Search covers everything above, grouped.
-  - The Songs tab keeps its own list filter.
-- **Unresolved:** any finer criteria in the design notes.
-- **Notes from earlier builds:**
-  - The circle isn't a `TABS()` entry.
-  - It must clear the song rows' play buttons, and `fwBounds()` must keep the floating window clear of it.
-  - Take names and comments are plain strings in `sg.takeNotes`; default names come from `TAKE.nameOf(id)`.
-- **Next action:** after Ivan separately says Build, implement the approved scope in a fresh chat. Ask Ivan for the search design notes (UI refresh handoff item 4, and item 12 of the songs, takes and markers handoff) before building.
-- **Done when:**
-  - Every group finds its matches.
-  - Take and comment hits open as described above.
-  - The circle never covers controls or the floating window.
-  - Every screen works at every size in light and dark.
-  - The full suite passes.
-  - *Unresolved:* any finer criteria in the design notes.
 
 ## Q02 · Track: Waveform Sections
 
@@ -120,7 +85,7 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 ## Q03 · Marks: Layered Annotations
 
 **Status:** Awaiting Render. **Approval:** Not yet given. Wireframes, prototype and plan approved 22 Oct 2026; a build handoff exists in Ivan's project notes.
-**Needs:** Song Clock A1 live (it is). Planned after Q01, or before it if Ivan asks (nothing depends on Q01).
+**Needs:** Song Clock A1 live (it is). Q01 shipped in 3.22.
 
 - **Goal:** marks that match how a song is learned, one layer at a time.
 - **Decided:**

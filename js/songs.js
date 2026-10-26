@@ -671,7 +671,8 @@ function sgp() {
   // 3.18 Song Clock's settings live here too (checked in clock.js): Marks while playing, Blur ahead, Snapping,
   // Stay awake and the pinned icons
   // (3.19: and the track player's zoom level and speed, checked in track.js)
-  ['marksPlaying', 'blurAhead', 'snapping', 'stayAwake', 'pins', 'trkLevel', 'trkSpeed'].forEach((k) => {
+  // (3.22: and Search's recent searches, findRecent, checked in search.js)
+  ['marksPlaying', 'blurAhead', 'snapping', 'stayAwake', 'pins', 'trkLevel', 'trkSpeed', 'findRecent'].forEach((k) => {
     if (k in o) SGP[k] = o[k];
   });
   return SGP;
@@ -786,7 +787,15 @@ function songListCol() {
         '>' +
         SGI.xc +
         '</button></label>';
-  } else if (!U.sFocus) h += '<h1>' + (U.sList ? (n ? n + ' selected' : 'Select songs') : 'Songs') + '</h1>';
+  } else if (!U.sFocus) {
+    h += '<h1>' + (U.sList ? (n ? n + ' selected' : 'Select songs') : 'Songs') + '</h1>';
+    // 3.22: the Songs list keeps its own filter; on iPhone its field sits under the title (Search has the circle)
+    if (D.songs.length && !U.sList)
+      h +=
+        '<button class="sfield inl sgqbtn" data-a="sgSearch" aria-label="Search songs">' +
+        SGI.search +
+        '<span>Search songs</span></button>';
+  }
   if (!D.songs.length)
     return (
       h +
@@ -3387,7 +3396,7 @@ document.addEventListener('paste', (e) => {
 });
 
 /* ===== Songs: keyboard =====
-   Escape closes menus, the selected word and search. Cmd/Ctrl+F searches songs, Cmd/Ctrl+N adds one,
+   Escape closes menus, the selected word and search. Cmd/Ctrl+F opens Search (3.22), Cmd/Ctrl+N adds one,
    Cmd/Ctrl+E edits the open song (and again for Done), and ↑ ↓ move between songs on iPad and Mac. */
 document.addEventListener(
   'keydown',
@@ -3423,15 +3432,10 @@ document.addEventListener(
     if (!mod || U.sheet || rec || (X && isFlow(U.view))) return;
     const k = e.key.toLowerCase();
     if (k === 'f') {
+      // 3.22: Cmd/Ctrl+F opens Search (search.js)
       e.preventDefault();
       if (U.sEdit) sgEndEdit(true);
-      if (U.tab !== 'songs' || U.view) {
-        U.clock = false;
-        U.tab = 'songs';
-        U.view = null;
-        render();
-      }
-      startSearch();
+      FIND.open();
     } else if (k === 'n' && U.tab === 'songs' && !U.sEdit) {
       e.preventDefault();
       SG_ACT.sgNew();

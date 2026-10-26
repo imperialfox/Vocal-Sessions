@@ -9,6 +9,28 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.22 · 26 Oct 2026
+*Search, from every tab (Q01)*
+
+<!-- area: look -->
+**The search circle**
+- A search circle now sits beside the tab bar on every tab, like the iPhone's own apps. It stays beside the tab bar when that shrinks as you scroll, and it's tinted while Search is open.
+- On iPad it's a circle at the end of the tab capsule at the top; on a Mac-sized window it's a Search row at the top of the sidebar. Cmd/Ctrl+F opens it from a keyboard.
+- The floating window keeps clear of it, in every corner.
+
+<!-- area: songs -->
+**The search page**
+- Before you type: your recent searches and your pinned songs. Recent searches stay on this device and aren't in backups.
+- As you type, results appear straight away, grouped: Songs, Lyrics, Exercises, Sessions and Takes. Each group shows its top three, with "Show all" to see the rest in place.
+- Lyrics show the matching line, highlighted, with the song and section under it. Exercises match their names and their write-ups, and say which part matched. Sessions match their notes and feedback words. Takes match the names you've given them and your comments.
+- The matching is as forgiving as the Songs list's: capitals, punctuation, accents, word order and a slipped letter in longer words don't matter.
+- A song or an exercise zooms open from its result, and Back shrinks it into the same result, with your search still there. A lyric opens its song in Practise, scrolled to that section with it focused. A session opens its details.
+- A take opens its song with the takes sheet on All takes and that take expanded. A comment does the same, with the playhead at its time and the comment showing.
+- Cancel clears the search and puts the keyboard away.
+
+**The Songs list**
+- Songs keeps its own search for filtering the list, now a field under the title on iPhone (the circle beside the tab bar is Search).
+
 ## 3.21.1 · 24 Oct 2026
 *Exercise pages that read like Apple Health*
 <!-- area: look -->

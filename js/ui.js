@@ -134,7 +134,7 @@ function renderBar() {
     }
     $('barT').textContent =
       x.t ||
-      { today: 'Today', history: 'Progress', exercises: 'Exercises', songs: 'Songs', settings: 'Settings' }[U.tab];
+      { today: 'Today', history: 'Progress', exercises: 'Exercises', songs: 'Songs', settings: 'Settings', find: 'Search' }[U.tab];
     if (x.always) bar.classList.add('always');
   }
 }
@@ -154,6 +154,7 @@ const topTabs = () =>
         '</button>'
     )
     .join('') +
+  FIND.capsuleBtn() + // 3.22 Search: a circle at the end of the capsule
   '</nav>';
 function renderSide() {
   const el = $('side');
@@ -163,6 +164,7 @@ function renderSide() {
   }
   el.innerHTML =
     '<div class="sbt">Vocal Sessions</div>' +
+    FIND.sideRow() + // 3.22 Search: a row at the top
     TABS()
       .map(
         (t) =>
@@ -238,7 +240,7 @@ function renderDock() {
     $('dock').innerHTML = '';
     return;
   }
-  if (window.scrollY < 60) tabMin = false; // never leave it shrunk at the top of a page
+  if (window.scrollY < 60 || U.tab === 'find') tabMin = false; // never leave it shrunk at the top of a page, or on Search
   const cur = tabOf(U.tab);
   const nav =
     '<nav class="tabbar glass' +
@@ -260,14 +262,8 @@ function renderDock() {
       )
       .join('') +
     '</nav>';
-  $('dock').innerHTML =
-    songList && D.songs.length
-      ? '<div class="dockrow">' +
-        nav +
-        '<button class="circ glass scirc" data-a="sgSearch" aria-label="Search songs">' +
-        SGI.search +
-        '</button></div>'
-      : nav;
+  // 3.22 Search: its own circle beside the tab bar, on every screen that has the tab bar
+  $('dock').innerHTML = '<div class="dockrow">' + nav + FIND.circle() + '</div>';
 }
 function sheetWrap(title, body, label, tools) {
   return (
@@ -1150,11 +1146,13 @@ function render(keepScroll) {
                   exercises: scrExercises,
                   songs: scrSongs,
                   settings: scrSettings,
+                  find: FIND.page,
                 }[U.tab]();
   $('app').className =
     (isFlow(v) ? 'flow' : 'tabv') +
     (isFlow(v) ||
     (!v && U.tab === 'settings') ||
+    (!v && U.tab === 'find') ||
     v === 'set' ||
     v === 'log' ||
     v === 'coach' ||
@@ -1176,6 +1174,7 @@ function render(keepScroll) {
   CLOCK.after(); // 3.18 Song Clock: the play-along view, the current line when paused, the wake lock
   TRACK.after(); // 3.19 the track player: its waveform, and letting go of a deleted song's track
   TAKE.after(); // 3.20 the takes sheet: the expanded take's waveform and the field being typed in
+  FIND.after(); // 3.22 Search: the field focused when the page is opened from its circle
   fwUpdate();
   DET.dockSwap(dk);
   DET.play();

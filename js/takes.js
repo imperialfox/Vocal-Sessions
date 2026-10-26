@@ -792,10 +792,33 @@ const TAKE = (() => {
     pos[openId] = cur;
     paint();
   }
-  function show(text) {
-    pop = { text, until: Date.now() + 2000 };
+  function show(text, ms) {
+    ms = ms || 2000;
+    pop = { text, until: Date.now() + ms };
     paint();
-    setTimeout(paint, 2050);
+    setTimeout(paint, ms + 50);
+  }
+  // 3.22 Search: the takes sheet on All takes with this take expanded, not playing. For a comment, the playhead
+  // goes to its time and the comment shows for a few seconds
+  function openAt(id, at) {
+    const t = TAKES.find((x) => x.id === id);
+    if (!t) return;
+    U.sheet = 'sgTakes';
+    U.sd = { k: t.songId, all: true };
+    tab = 'all';
+    openId = id;
+    renaming = null;
+    draft = null;
+    rerender();
+    if (at != null && isFinite(at)) {
+      seekTo(id, at);
+      const c = comments(songById(t.songId), id).find((x) => Math.abs(x.t - at) < 0.05);
+      if (c) show(fmt(c.t) + '  ' + c.text, 3500);
+    }
+    requestAnimationFrame(() => {
+      const r = document.querySelector('#layer .tkr.open');
+      if (r && r.scrollIntoView) r.scrollIntoView({ block: 'nearest' });
+    });
   }
   // after every redraw: the expanded take's waveform, and the field being typed in
   function after() {
@@ -1311,5 +1334,6 @@ const TAKE = (() => {
     now,
     seekTo,
     shown,
+    openAt,
   };
 })();

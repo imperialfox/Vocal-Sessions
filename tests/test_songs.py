@@ -328,11 +328,17 @@ def run(b, t):
         t.shot(pg, name + '-edit')
         pg.keyboard.press('Escape'); pg.wait_for_timeout(200); ok(pg.locator('#emenu').count() == 0, f'{name}: Escape closes it')
         pg.keyboard.press('Control+e'); pg.wait_for_timeout(250); ok(pg.evaluate("U.sEdit") is None, f'{name}: Cmd+E again is Done')
-        pg.keyboard.press('Control+f'); pg.wait_for_timeout(200)
-        ok(pg.evaluate("document.activeElement.id") == 'sgqi', f'{name}: Cmd+F searches songs')
+        # 3.22: Cmd+F opens Search; the Songs list keeps its own filter field
+        pg.keyboard.press('Control+f'); pg.wait_for_timeout(250)
+        ok(pg.evaluate("document.activeElement.id") == 'fq' and pg.evaluate("U.tab") == 'find', f'{name}: Cmd+F opens Search (3.22)')
         pg.keyboard.type('turn'); pg.wait_for_timeout(200)
+        ok('Kitchen Radio' in pg.inner_text('#flist') and pg.evaluate("document.activeElement.id") == 'fq',
+           f'{name}: Search updates as you type, keeping the keyboard')
+        pg.keyboard.press('Escape'); pg.wait_for_timeout(150)
+        pg.keyboard.press('Control+3'); pg.wait_for_timeout(300)
+        pg.click('#sgqi'); pg.keyboard.type('turn'); pg.wait_for_timeout(200)
         ok(pg.evaluate("[...document.querySelectorAll('#slist .rowc b')].map(x=>x.textContent)") == ['Kitchen Radio'] and pg.evaluate("document.activeElement.id") == 'sgqi',
-           f'{name}: results update as you type, keeping the keyboard')
+           f'{name}: the Songs list still filters in place as you type, keeping the keyboard')
         pg.keyboard.press('Escape'); pg.wait_for_timeout(200)
         pg.locator('body').click(position={'x': w - 40, 'y': h - 40}); pg.wait_for_timeout(100)
         cur = pg.evaluate("U.songId"); pg.keyboard.press('ArrowDown'); pg.wait_for_timeout(250)

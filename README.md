@@ -2,9 +2,9 @@
 
 A mobile-first companion for structured vocal practice, styled like a native iOS app. It's a single HTML file with no install, no backend and no account. It's designed to live on your iPhone Home Screen.
 
-![Version 3.21.1](https://img.shields.io/badge/version-3.21.1-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
+![Version 3.22](https://img.shields.io/badge/version-3.22-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
 
-**Current version: 3.21.1 · 24 Oct 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
+**Current version: 3.22 · 26 Oct 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
 
 ---
 
@@ -56,12 +56,18 @@ And **Songs**, for learning a song: paste the lyrics, and they're split into lab
 - Every summary leads to the same lists and details, from wherever it appears: Progress, the calendar, Today and Exercises.
 - Pull down to refresh
 
+**Search** (the circle beside the tab bar)
+- A search circle sits beside the tab bar on every tab (iPad: at the end of the tabs at the top; a wide window: a Search row at the top of the sidebar; Cmd + F from a keyboard).
+- Before you type: your recent searches (kept on this device only) and your pinned songs.
+- As you type, results appear grouped: **Songs**, **Lyrics** (the line, highlighted, with its song and section), **Exercises** (their names and write-ups), **Sessions** (their notes and feedback words) and **Takes** (names you've given them and your comments). Each group shows its top three, with **Show all**.
+- A song or exercise zooms open from its result, and Back returns to the same results. A lyric opens its song scrolled to that section, focused. A session opens its details. A take opens its song's takes with that take expanded; a comment also moves to its time and shows it.
+
 **Songs**
 - **New song (+):** one button, two ways in. **Add media** (the default) picks the song's audio from Files: once it's read, the form opens with the length taken from the file (linked to it) and the title empty (left blank, it uses the file's name, since metadata can't be trusted). Lyrics are optional; save and the song opens, ready to paste them later. **Manually** is the form below, as it always was. Nothing is stored until you save.
 - **Lyrics:** paste lyrics from anywhere. Labels like `[Chorus]`, `Verse 2:` or `PRECHORUS` start sections, and blank lines split them too. Website clutter (links, "You might also like", "Embed") is removed, a chorus that repeats itself is split in two, and exact repeats are linked. Check the labels, change any marked **Guessed**, and save. The original paste is kept untouched.
 - **The list:** up to 3 pinned songs at the top, then the rest sorted by Recently practised, Recently added or Title A–Z (tap the heading). Each row says when you last practised it and how many takes it has ("Practised today · 2 takes", or "Not practised yet"), never graded, and has a **play button** for the song's track (greyed, with "Upload a track to play", when there's no track on this device).
   - Swipe right to pin, left to delete. Press and hold (or right-click) for Pin, Rename and Delete. **Edit** selects several songs to pin or delete.
-  - **Search** titles, artists and lyrics. It ignores case, punctuation and accents, finds words in any order, even across lines, and forgives a slipped letter in longer words. Lyric matches show the line with the words highlighted.
+  - **Search songs** (the field under the title) filters the list by titles, artists and lyrics. It ignores case, punctuation and accents, finds words in any order, even across lines, and forgives a slipped letter in longer words. Lyric matches show the line with the words highlighted.
 - **A song:** one continuous page, one phrase per line, with a small label above each section, repeats numbered (Chorus 1, Chorus 2) and linked sections marked with a chain.
   - **Tap a section to focus it:** a soft patch appears behind it with **Record**, its takes and **Marks** (which opens Annotate there). The rest of the song dims and softly blurs with distance, while labels stay sharp. Tap it again, or away from the lyrics, to clear it. With Reduce Motion on, the rest only dims.
   - **Takes** beside the title opens every take of the song (see Takes below).
@@ -170,7 +176,7 @@ Sheets open as centred cards on bigger screens. With a mouse or trackpad, rows h
 |---|---|
 | Cmd + 1 to 4 | Today, Progress, Songs, Exercises |
 | Cmd + , | Settings |
-| Cmd + F | Search songs |
+| Cmd + F | Search |
 | Cmd + N | New song (in Songs) |
 | Cmd + E | Edit the open song, and again for Done |
 | ↑ ↓ | Move between songs (iPad and Mac) |
