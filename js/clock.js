@@ -35,11 +35,26 @@ const CK = {
   wlBusy: false,
   pk: null, // the length picker on screen
   lastTxt: '',
+  trk: false, // Q02: play-along follows the song's track on this device (backing audio), not its own clock
+  mute: false, // Q02: the backing audio muted (this time only; it starts on)
 };
 
 /* ===== Song Clock: the clock ===== */
 const ckMs = () => (CK.fake != null ? CK.fake : performance.now());
-const ckNow = (c) => (c.run ? c.base + (ckMs() - c.perf) / 1000 : c.base);
+const ckClk = (c) => (c.run ? c.base + (ckMs() - c.perf) / 1000 : c.base);
+// Q02: while play-along plays the song's track, its time is the track's (so speed, a stall or a seek all follow);
+// until the audio is playing, Song Clock's own clock carries on
+function ckNow(c) {
+  if (c === CK.pc && c.run && CK.trk) {
+    const v = TRACK.alongNow(CK.songId);
+    if (v != null) return v;
+  }
+  return ckClk(c);
+}
+// the track stopped under play-along (lock screen, another sound, the end of the track): play-along pauses too
+function ckAlongStopped() {
+  if (CK.pc.run) ckPause();
+}
 function ckSet(c, t) {
   c.base = Math.max(0, t);
   c.perf = ckMs();
@@ -264,8 +279,11 @@ function ckStore(sg, L, T, anch, marks, flags) {
   );
   save();
 }
-function ckSnap(sg) {
-  CK.undo.push({ id: sg.id, t: JSON.stringify(sg.timing || null) });
+// withMarks (Q02): a marker made into a section start; the same Undo puts the marker (and its loop) back too
+function ckSnap(sg, withMarks) {
+  const u = { id: sg.id, t: JSON.stringify(sg.timing || null) };
+  if (withMarks) u.mk = JSON.stringify({ markers: sg.markers || null, loop: sg.loop || null });
+  CK.undo.push(u);
   if (CK.undo.length > 40) CK.undo.shift();
 }
 function ckUndo() {
@@ -275,6 +293,13 @@ function ckUndo() {
   const t = JSON.parse(u.t);
   if (t) sg.timing = t;
   else delete sg.timing;
+  if (u.mk) {
+    const o = JSON.parse(u.mk);
+    if (o.markers) sg.markers = o.markers;
+    else delete sg.markers;
+    if (o.loop) sg.loop = o.loop;
+    else delete sg.loop;
+  }
   save();
   CK.lastA = -2;
   CK.sig = '';
@@ -406,6 +431,8 @@ function ckOn(sg) {
   CK.songId = sg.id;
   CK.on = true;
   CK.ever = false;
+  CK.trk = TRACK.has(sg.id);
+  CK.mute = false;
   ckHalt(CK.pc);
   const M = ckModel(sg);
   ckSet(CK.pc, M.T.length ? M.T[0][0] : 0);
@@ -419,6 +446,7 @@ function ckOff() {
   CK.on = false;
   CK.ever = false;
   ckHalt(CK.pc);
+  TRACK.alongPause();
   CK.sig = '';
   ckWake();
   rerender();
@@ -434,6 +462,14 @@ function ckPlay(i) {
   NOW.start('clock', sg.id, () => ckPause()); // one sound at a time (3.20)
   CK.ever = true;
   ckGo(CK.pc);
+  // Q02: with the song's track on this device, play-along plays it and follows its time (lyric-only without it)
+  // (where it should be is fixed now: a redraw below would otherwise read the track's old place back)
+  CK.trk = TRACK.has(sg.id);
+  if (CK.trk) {
+    const t0 = ckClk(CK.pc),
+      m0 = ckMs();
+    TRACK.along(sg.id, () => t0 + (ckMs() - m0) / 1000, CK.mute);
+  }
   CK.lastA = -2;
   if (ckHere()) rerender();
   else fwUpdate();
@@ -446,6 +482,7 @@ function ckPause() {
   const cur = document.querySelector('#ckpa:not([hidden]) .ckl.now'),
     y = cur ? cur.getBoundingClientRect().top : null;
   ckHalt(CK.pc);
+  TRACK.alongPause();
   ckWake();
   NOW.ended('clock');
   fwPaused('clock'); // 3.20: paused anywhere but the window (or lock screen): no window follows
@@ -529,6 +566,14 @@ function ckSig(sg) {
 }
 // draw the current line, word fill, distance blur and dots; called every frame while the clock runs
 function ckTick() {
+  // Q02: Song Clock's own clock keeps up with the track, so a jump or a pause carries on from the right place
+  if (CK.pc.run && CK.trk) {
+    const v = TRACK.alongNow(CK.songId);
+    if (v != null) {
+      CK.pc.base = v;
+      CK.pc.perf = ckMs();
+    }
+  }
   const el = $('ckpa');
   const sg = ckSong();
   if (el && !el.hidden && sg) {
@@ -656,6 +701,7 @@ function ckStartSync(sg, keepRet) {
     CK.on = false;
     CK.ever = false;
     ckHalt(CK.pc);
+    TRACK.alongPause();
   }
   NOW.stop(); // timing with music in another app: nothing here keeps playing
   const n = sg.order.length;
@@ -1082,6 +1128,10 @@ const CKI = {
   sync: '<svg class="i" viewBox="0 0 24 24"><path d="M19.5 12a7.5 7.5 0 11-2.3-5.4"/><path d="M19.5 4v4.5H15"/></svg>',
   lyrics: '<svg class="i" viewBox="0 0 24 24"><path d="M4 6h16M4 11h16M4 16h9"/><path d="M16.5 16.5l3 3-3 .6.6-3z"/></svg>',
   track: '<svg class="i" viewBox="0 0 24 24"><path d="M3.5 12h1M7 8.5v7M10.5 5v14M14 9v6M17.5 6.5v11M21 10.5v3"/></svg>',
+  // Q02 the backing track's sound, and muted
+  sound:
+    '<svg class="i" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4.5 4.5 0 010 6M18 6.5a8 8 0 010 11"/></svg>',
+  muted: '<svg class="i" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/></svg>',
 };
 const CK_MPNAME = { off: 'Off', breaths: 'Breaths only', active: 'Active layer' };
 // each tile: its label, icon, whether it's on (blue), and its value line where it has one
@@ -1436,6 +1486,7 @@ const CLOCK = {
     if (CK.on && !hasLyrics(ckSong())) {
       CK.on = false;
       ckHalt(CK.pc);
+      TRACK.alongPause();
     }
     const el = ckLayer(),
       sg = ckSong(),
@@ -1499,7 +1550,20 @@ const CLOCK = {
       (CK.pc.run ? ICON.pause : ICON.play) +
       '<span id="ckT">' +
       ckFmt(ckNow(CK.pc)) +
-      '</span></button><button class="cknb" data-a="ckNudge" data-v="0.2" aria-label="Move all lyrics 0.2 seconds later">+0.2</button></div>'
+      '</span></button><button class="cknb" data-a="ckNudge" data-v="0.2" aria-label="Move all lyrics 0.2 seconds later">+0.2</button>' +
+      // Q02: the song's track plays under play-along (on by default); without it on this device, no mute button
+      (TRACK.has(CK.songId)
+        ? '<button class="cknb ckmute' +
+          (CK.mute ? ' on' : '') +
+          '" id="ckMute" data-a="ckMute" aria-pressed="' +
+          CK.mute +
+          '" aria-label="' +
+          (CK.mute ? 'Unmute the track' : 'Mute the track') +
+          '">' +
+          (CK.mute ? CKI.muted : CKI.sound) +
+          '</button>'
+        : '') +
+      '</div>'
     );
   },
   bar() {
@@ -1568,12 +1632,15 @@ const CLOCK = {
     wake: CK.wlWant,
     picker: !!CK.pk,
     undo: CK.undo.length,
+    trk: CK.trk,
+    mute: CK.mute,
   }),
   // stop everything (Reset all data, a restore)
   reset() {
     CK.on = CK.ever = false;
     ckHalt(CK.pc);
     ckHalt(CK.sc);
+    TRACK.alongPause();
     CK.P = null;
     CK.head = false;
     CK.undo = [];
@@ -1644,6 +1711,19 @@ Object.assign(SG_ACT, {
   },
   ckNudge(el, v) {
     ckNudge(+v);
+  },
+  // Q02: mute the track under play-along (the lyrics still follow its time)
+  ckMute() {
+    CK.mute = !CK.mute;
+    TRACK.alongMute(CK.mute);
+    const b = $('ckMute');
+    if (b) {
+      b.classList.toggle('on', CK.mute);
+      b.setAttribute('aria-pressed', CK.mute);
+      b.setAttribute('aria-label', CK.mute ? 'Unmute the track' : 'Mute the track');
+      b.innerHTML = CK.mute ? CKI.muted : CKI.sound;
+    }
+    toast(CK.mute ? 'Track muted' : 'Track on');
   },
   ckSyncX() {
     ckLeave();

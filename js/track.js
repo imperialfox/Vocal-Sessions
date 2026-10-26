@@ -9,12 +9,17 @@
    Plain script (not a module): files share one global scope and load in the order listed in index.html. */
 
 /* ===== Track player: the numbers ===== */
+// Q02 (Track: Waveform Sections): Phrase and Line are the strip, Song is the whole song in 24 s rows, and Markers is
+// a grid of rehearsal tiles. (3.19–3.22 had Section 20 s and Song 30 s rows; the saved level is reset once, below.)
 const TRK_LEVELS = [
   { id: 'phrase', name: 'Phrase', win: 6 }, // a scrolling strip, 6 s on screen
   { id: 'line', name: 'Line', win: 16 }, // a scrolling strip, 16 s on screen
-  { id: 'section', name: 'Section', row: 20 }, // rows of 20 s, the whole song
-  { id: 'song', name: 'Song', row: 30 }, // rows of 30 s, the whole song
+  { id: 'song', name: 'Song', row: 24 }, // rows of 24 s, the whole song (the last one ends at the track's end)
+  { id: 'markers', name: 'Markers', grid: true }, // the markers as large tiles, two columns
 ];
+const TRK_LV_DEFAULT = 1; // Line: section starts are set with the lyric card above the strip
+const TRK_LV_V = 2; // the levels' layout version: a level saved by 3.19–3.22 is reset to the default once
+const TRK_JOGS = ['left', 'right', 'bottom'];
 const TRK_SPEEDS = [1, 0.75, 0.5];
 const TRK_RATE = 50; // waveform peaks a second
 const TRK_SR = 8000; // the sample rate the waveform is read at (mono-ish, small: a 4-minute song isn't ~85 MB of floats)
@@ -88,17 +93,31 @@ const TRACK = (() => {
   const pos = {}; // where each track was left, this time the app is open
   let mkCur = null; // 3.20: the chip last tapped, outlined: {id: song id, mk: marker id}
   let mkHold = null; // holding a chip for its menu
+  let along = null; // Q02: Song Clock's play-along is driving this audio ({id}); play-along owns the sound
+  let alongEnd = false; // a play-along reached the track's end (its pause came before the ended event)
+  let mdl = null; // Q02: the song's timing (ckModel), kept until the next redraw or change
+  let ctxAt = null; // the line the lyric card last showed
 
-  /* ----- this device's settings: zoom level and speed (vocalSongPrefs, never backed up) ----- */
+  /* ----- this device's settings: zoom level, speed, jog wheel and Song lyrics (vocalSongPrefs, never backed up) ----- */
   function prefs() {
     const p = sgp();
-    if (!(Number.isInteger(p.trkLevel) && p.trkLevel >= 0 && p.trkLevel < TRK_LEVELS.length)) p.trkLevel = 1;
+    // Q02: the levels changed, so a level saved before is reset to the default, once
+    if (p.trkLvV !== TRK_LV_V) {
+      p.trkLevel = TRK_LV_DEFAULT;
+      p.trkLvV = TRK_LV_V;
+      saveSGP();
+    }
+    if (!(Number.isInteger(p.trkLevel) && p.trkLevel >= 0 && p.trkLevel < TRK_LEVELS.length)) p.trkLevel = TRK_LV_DEFAULT;
     if (!TRK_SPEEDS.includes(p.trkSpeed)) p.trkSpeed = 1;
+    if (!TRK_JOGS.includes(p.trkJogPos)) p.trkJogPos = 'right';
+    if (typeof p.trkSongLyrics !== 'boolean') p.trkSongLyrics = true;
     return p;
   }
   const lv = () => prefs().trkLevel;
   const speed = () => prefs().trkSpeed;
+  const jogPos = () => prefs().trkJogPos;
   const strip = () => !!TRK_LEVELS[lv()].win;
+  const grid = () => !!TRK_LEVELS[lv()].grid;
 
   /* ----- stored on the device: its own database, apart from recordings, the coach video and backups ----- */
   let dbp = null;
@@ -243,21 +262,47 @@ const TRACK = (() => {
       draw();
     });
     el.addEventListener('play', () => {
-      woke = true;
-      media();
+      // Q02: playing along, the sound is Song Clock's: its window and its lock screen buttons
+      if (!along) {
+        woke = true;
+        media();
+      }
       frames();
       paintRows();
       changed();
     });
     el.addEventListener('pause', () => {
       if (cur) pos[cur.id] = el.currentTime;
+      // Q02: stopped from outside play-along (the lock screen, another sound): play-along pauses with it. (A pause
+      // event that arrives after play-along has started the audio again is an older one, from what played before.)
+      if (along && el.paused) {
+        along = null;
+        el.muted = false;
+        if (el.ended) alongEnd = true;
+        if (typeof ckAlongStopped === 'function') ckAlongStopped();
+      }
       // paused on its own screen: you meant to stop, so no window follows you out
       if (here()) woke = false;
       if (!el.ended) fwPaused('track'); // 3.20: paused anywhere but the window: no window either
       paintRows();
       changed();
     });
+    // Q02 sleep: with the screen locked there are no animation frames, so the loop is also kept on timeupdate
+    el.addEventListener('timeupdate', () => {
+      if (!raf || document.hidden) keepLoop(false);
+    });
     el.addEventListener('ended', () => {
+      // the end of a play-along (its pause came first): the player's own loop doesn't take over
+      if (alongEnd || along) {
+        alongEnd = false;
+        if (along) {
+          along = null;
+          el.muted = false;
+          if (typeof ckAlongStopped === 'function') ckAlongStopped();
+        }
+        paintRows();
+        return changed();
+      }
       const L = loopNow();
       if (L && L.on && L.end >= len() - 0.1) {
         seek(L.start);
@@ -305,6 +350,29 @@ const TRACK = (() => {
     const sg = song();
     return sg && sg.loop && sg.loop.end > sg.loop.start ? sg.loop : null;
   };
+  /* ----- Q02 the song's timing, from Song Clock (one timing model: ckModel reads it, ckStore writes it) ----- */
+  function model() {
+    const sg = song();
+    if (!sg || !hasLyrics(sg)) return null;
+    if (!mdl || mdl.sg !== sg) mdl = ckModel(sg);
+    return mdl;
+  }
+  const timed = () => {
+    const sg = song();
+    return !!(sg && ckSynced(sg));
+  };
+  // the section starts that are set (Song Clock's anch): [{k, t, label}] in running order
+  function secStarts() {
+    const M = model();
+    if (!M || !timed()) return [];
+    const out = [];
+    M.anch.forEach((a, k) => {
+      if (!a) return;
+      const i = ckFirst(M.L, k);
+      if (i >= 0 && M.T[i][0] != null) out.push({ k, t: M.T[i][0], label: occLabel(M.sg, k) });
+    });
+    return out;
+  }
 
   // load a song's track into the player (from IndexedDB; the peaks were saved at import)
   async function open1(id) {
@@ -342,6 +410,58 @@ const TRACK = (() => {
     pitch();
     if (U.view === 'trk' && U.songId === id) rerender();
   }
+  // load a song's track once, however many callers are waiting for it
+  let loadP = null;
+  function ensure(id) {
+    if (cur && cur.id === id) return Promise.resolve();
+    if (loading === id && loadP) return loadP;
+    loadP = open1(id);
+    return loadP;
+  }
+
+  /* ----- Q02 play-along from the track: Song Clock owns the sound (NOW kind 'clock') and the lyrics follow the
+     track's time. getT() is where Song Clock wants it to be when the audio is ready. ----- */
+  async function alongPlay(id, getT, mute) {
+    if (!have.has(id)) return false;
+    along = { id };
+    alongEnd = false;
+    await ensure(id);
+    if (!along || along.id !== id || !cur || cur.id !== id) return false;
+    const v = audio();
+    v.muted = !!mute;
+    v.playbackRate = speed();
+    pitch();
+    seek(getT());
+    try {
+      await v.play();
+    } catch (e) {
+      if (along && along.id === id) {
+        along = null;
+        v.muted = false;
+        if (typeof ckAlongStopped === 'function') ckAlongStopped();
+      }
+      return false;
+    }
+    return true;
+  }
+  // play-along paused or stopped: the track stops quietly (Song Clock already knows)
+  function alongPause() {
+    if (!along) return;
+    along = null;
+    if (el) {
+      el.pause();
+      el.muted = false;
+    }
+  }
+  // the track's time while it drives play-along, else null (Song Clock uses its own clock until the audio plays)
+  const alongNow = (id) =>
+    along && along.id === id && cur && cur.id === id && el && el.readyState >= 1 && pend == null && !el.paused
+      ? el.currentTime
+      : null;
+  function alongMute(on) {
+    if (along && el) el.muted = !!on;
+  }
+
   function unload() {
     if (!cur) return;
     if (el) {
@@ -398,18 +518,37 @@ const TRACK = (() => {
   // every frame while playing: the loop, the waveform and the time
   function frame() {
     if (!cur || !el) return;
-    const L = loopNow();
-    let t = el.currentTime;
-    if (L && L.on && !(drag && drag.kind !== 'handle') && prevT < L.end && t >= L.end - 0.005) {
-      el.currentTime = L.start;
-      t = L.start;
-    }
-    prevT = t;
-    pos[cur.id] = t;
+    keepLoop(false);
     draw();
     paint();
     if (FW.shown === 'track') fwTick();
   }
+  // the loop's boundary: wrap when playback crosses its end. Q02: also on timeupdate (no frames while the screen is
+  // locked) and, waking, a playhead found outside the loop goes back to its start (best effort: iOS decides how
+  // often a locked page hears anything)
+  function keepLoop(wake) {
+    if (!cur || !el) return;
+    const L = loopNow();
+    let t = el.currentTime;
+    if (L && L.on && !along && !(drag && drag.kind !== 'handle')) {
+      if (prevT < L.end && t >= L.end - 0.005) {
+        el.currentTime = L.start;
+        t = L.start;
+      } else if (wake && !el.paused && (t < L.start - 0.05 || t > L.end + 0.05)) {
+        el.currentTime = L.start;
+        t = L.start;
+      }
+    }
+    prevT = t;
+    pos[cur.id] = t;
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden || !cur || !el) return;
+    keepLoop(true);
+    draw();
+    paint();
+    if (playing()) frames();
+  });
   function frames() {
     cancelAnimationFrame(raf);
     const f = () => {
@@ -537,15 +676,13 @@ const TRACK = (() => {
     if (i === was) return;
     prefs().trkLevel = i;
     saveSGP();
-    const box = $('trkWave');
-    if (!box) return;
+    if (!$('trkWave')) return;
     const b = document.querySelector('#app .trklv button[data-v="' + i + '"]');
     if (b) segPick(b);
-    box.innerHTML = waveHTML();
-    const h = $('trkHint');
-    if (h) h.textContent = hint();
-    draw();
-    paint();
+    body();
+    // Q02: Markers has its own transport (replay, play, next)
+    if (!!TRK_LEVELS[was].grid !== grid()) renderDock();
+    const box = $('trkWave');
     showHead();
     // eases on gentle (Reduce Motion: a short fade; motion off: a jump). Never while playing: stillness while singing
     if (anim === false || playing()) return;
@@ -584,9 +721,12 @@ const TRACK = (() => {
       fg: g('--fg', '#000'),
       dim: g('--trk-dim', '#bbb'),
       loop: g('--trk-loop', '#ff9500'),
-      head: g('--trk-head', '#d65a00'),
+      head: g('--trk-playhead', '#ff3b30'), // Q02: the playhead is red in both themes
       mk: g('--trk-mk', '#8e44ec'),
       mkfg: g('--trk-mkfg', '#fff'),
+      sec: g('--trk-sec', '#007aff'),
+      secfg: g('--trk-secfg', '#fff'),
+      font: getComputedStyle(document.body).fontFamily || 'sans-serif',
     };
   }
   function fit(c) {
@@ -663,6 +803,34 @@ const TRACK = (() => {
     });
     g.restore();
   }
+  // Q02 section starts: blue lines, with the section's name on a tab (strip) or just the line (rows)
+  function secs(g, X, w, h, tab) {
+    const S = secStarts();
+    if (!S.length) return;
+    g.save();
+    g.font = '600 11px ' + C.font;
+    g.textBaseline = 'middle';
+    S.forEach((s) => {
+      const x = X(s.t);
+      if (x < -160 || x > w + 20) return;
+      g.fillStyle = C.sec;
+      g.globalAlpha = 0.9;
+      g.fillRect(x - 0.75, 0, 1.5, h);
+      g.globalAlpha = 1;
+      if (!tab) return;
+      const tw = Math.min(140, g.measureText(s.label).width + 12);
+      g.fillStyle = C.sec;
+      rr(g, x - 0.75, tab, tw, 18, 4);
+      g.fillStyle = C.secfg;
+      g.save();
+      g.beginPath();
+      g.rect(x, tab, tw - 6, 18);
+      g.clip();
+      g.fillText(s.label, x + 5, tab + 9.5);
+      g.restore();
+    });
+    g.restore();
+  }
   function draw() {
     if (U.view !== 'trk' || !cur || U.songId !== cur.id) return;
     if (!C) colours();
@@ -675,7 +843,8 @@ const TRACK = (() => {
         pps = w / win,
         hx = w * TRK_HEAD,
         x0 = hx - t * pps; // where 0:00 is
-      bars(g, t - hx / pps, t + (w - hx) / pps + 0.1, 4, 3, pps, x0, h / 2 - 3, h / 2 - 15, L);
+      bars(g, t - hx / pps, t + (w - hx) / pps + 0.1, 4, 3, pps, x0, h / 2 + 6, h / 2 - 24, L);
+      secs(g, (v) => x0 + v * pps, w, h, 18);
       if (L)
         [L.start, L.end].forEach((v) => {
           const x = x0 + v * pps;
@@ -685,7 +854,7 @@ const TRACK = (() => {
           rr(g, x - 6.5, h - 17, 13, 17, 4);
         });
       marks(g, (v) => x0 + v * pps, w, h, 14);
-      // the playhead: the darker orange, with a small dot above
+      // the playhead: red (Q02), with a small dot above
       g.fillStyle = C.head;
       g.fillRect(hx - 1, 8, 2, h - 8);
       g.beginPath();
@@ -696,6 +865,7 @@ const TRACK = (() => {
       return;
     }
     const rs = TRK_LEVELS[lv()].row;
+    if (!rs) return;
     document.querySelectorAll('#app .trkrow canvas').forEach((cv) => {
       const r = +cv.parentNode.dataset.r,
         a = r * rs,
@@ -712,6 +882,7 @@ const TRACK = (() => {
           g.fillRect(x - 1, 0, 2, h);
           rr(g, x - 4.5, h - 9, 9, 9, 3);
         });
+      secs(g, (v) => (v < a || v > b ? -999 : x0 + v * pps), w, h, 0);
       marks(g, (v) => (v < a || v > b ? -999 : x0 + v * pps), w, h, 11);
       if (t >= a && (t < b || (b >= len() && t <= b))) {
         g.fillStyle = C.head;
@@ -759,6 +930,97 @@ const TRACK = (() => {
       lb.classList.toggle('on', on);
       lb.setAttribute('aria-pressed', on);
       lb.setAttribute('aria-label', L ? 'Loop ' + fmt1(L.start) + ' to ' + fmt1(L.end) : 'Loop (set a start and end first)');
+    }
+    paintCtx();
+    paintTiles();
+  }
+
+  /* ----- Q02 the lyric card above the strip: the line before, the line at the playhead, the line after ----- */
+  function ctxLines() {
+    const M = model();
+    if (!M || !timed()) return null;
+    const a = ckAt(M.T, now()),
+      line = (i) => (i >= 0 && i < M.L.length ? M.L[i].words.join(' ') : '');
+    return {
+      a,
+      p: line(a - 1),
+      c: a >= 0 ? line(a) : '',
+      n: line(a + 1),
+      lab: a >= 0 ? occLabel(M.sg, M.L[a].k) : M.L.length ? 'Before ' + occLabel(M.sg, M.L[0].k) : '',
+    };
+  }
+  function ctxInner() {
+    const sg = song();
+    if (!sg || !hasLyrics(sg)) return '';
+    const x = ctxLines();
+    if (!x)
+      return '<p class="trkcl trkcx">Add markers, then hold one to make it a section start. The lyrics follow here.</p>';
+    return (
+      '<p class="trkcl trkcp">' +
+      esc(x.p) +
+      '</p><p class="trkcl trkcc"><span class="trkct">' +
+      (x.c ? esc(x.c) : '<span class="mut">…</span>') +
+      '</span><span class="trkcs">' +
+      esc(x.lab) +
+      '</span></p><p class="trkcl trkcn">' +
+      esc(x.n) +
+      '</p>'
+    );
+  }
+  function ctxHTML() {
+    const h = ctxInner();
+    return h ? '<div class="trkctx" id="trkCtx">' + h + '</div>' : '';
+  }
+  function paintCtx() {
+    const box = $('trkCtx');
+    if (!box) return;
+    const x = ctxLines(),
+      key = x ? x.a : 'none';
+    if (key === ctxAt) return;
+    ctxAt = key;
+    box.innerHTML = ctxInner();
+  }
+
+  /* ----- Q02 the Markers grid: where each marker's rehearsal loop runs, and which one the playhead is in ----- */
+  // to its own end, else the next marker, else the track's end; too short (under 0.5 s) to loop
+  function rangeOf(m) {
+    const M = mks(),
+      i = M.indexOf(m),
+      nx = M.slice(i + 1).find((x) => x.t > m.t + 1e-6),
+      e = m.end != null ? m.end : nx ? nx.t : len();
+    return { s: m.t, e, ok: e - m.t >= TRK_MIN - 1e-6 };
+  }
+  function playingMk() {
+    const t = now();
+    let at = null;
+    mks().forEach((m) => {
+      const r = rangeOf(m);
+      if (t >= m.t - 0.01 && t < r.e) at = m;
+    });
+    return at;
+  }
+  function paintTiles() {
+    const box = $('trkGrid');
+    if (!box) return;
+    const p = playing() ? playingMk() : null,
+      c = curMk(),
+      id = p ? p.id : '';
+    box.querySelectorAll('.trktl[data-mk]').forEach((tl) => {
+      const k = tl.dataset.mk,
+        m = mkById(k),
+        on = !!(m && chipLoopOn(m));
+      tl.classList.toggle('play', k === id);
+      tl.classList.toggle('sel', !!(c && c.id === k));
+      const lb = tl.querySelector('.trktlo');
+      if (lb && lb.classList.contains('on') !== on) {
+        lb.classList.toggle('on', on);
+        lb.setAttribute('aria-pressed', on);
+      }
+    });
+    const q = $('trkQaT');
+    if (q) {
+      const v = fmt1(now());
+      if (q.textContent !== v) q.textContent = v;
     }
   }
 
@@ -894,6 +1156,21 @@ const TRACK = (() => {
   }
   // the chip row and the buttons row, in place (the page itself isn't redrawn)
   function chips(added) {
+    // Q02: the Markers grid shows the markers as tiles instead
+    const gw = grid() && $('trkGrid');
+    if (gw) {
+      $('trkWave').innerHTML = gridHTML();
+      paintTiles();
+      if (added && !playing()) {
+        const c = document.querySelector('#trkGrid .trktl[data-mk="' + added + '"]');
+        if (c)
+          MOTION.animate(c, [{ opacity: 0, transform: 'scale(.9)' }, { opacity: 1, transform: 'none' }], {
+            spring: 'gentle',
+            fade: true,
+          });
+      }
+      return;
+    }
     const box = $('trkMk');
     if (!box) return;
     const sl = box.scrollLeft;
@@ -915,7 +1192,7 @@ const TRACK = (() => {
   }
   function endHere() {
     const b = $('trkBtns');
-    if (!b) return;
+    if (!b || !b.querySelector('.trkaddmk')) return;
     const old = $('trkEndH'),
       h = endHereHTML();
     if (!h) {
@@ -1021,6 +1298,124 @@ const TRACK = (() => {
     save();
   }
 
+  /* ----- Q02 the Markers grid's taps ----- */
+  // a tile: select it, loop its range (if it's long enough) and play from its start
+  function tileTap(id) {
+    const m = mkById(id),
+      sg = song();
+    if (!m || !sg) return;
+    const r = rangeOf(m);
+    mkCur = { id: sg.id, mk: m.id };
+    if (r.ok) setLoop(r.s, r.e, true, m.id);
+    else if (sg.loop) sg.loop.on = false; // too short to loop: it just plays from there
+    save();
+    seek(m.t);
+    prevT = m.t;
+    play();
+    paint();
+    draw();
+  }
+  // a tile's loop button: its loop on or off, without starting anything
+  function tileLoop(id) {
+    const m = mkById(id),
+      sg = song();
+    if (!m || !sg) return;
+    const r = rangeOf(m);
+    if (!r.ok) return toast('Too short to loop: under half a second to the next marker');
+    if (chipLoopOn(m)) sg.loop.on = false;
+    else setLoop(r.s, r.e, true, m.id);
+    mkCur = { id: sg.id, mk: m.id };
+    save();
+    prevT = now();
+    paint();
+    draw();
+  }
+  // Replay: back to the start of the marker the playhead is in (or the selected one), playing
+  function replay() {
+    const m = playingMk() || curMk();
+    if (!m) return toStart();
+    seek(m.t);
+    prevT = m.t;
+    if (!playing()) play();
+  }
+  // Next: the next marker after the playhead; a marker loop moves on to it, otherwise it just goes there
+  function nextMk() {
+    const t = now(),
+      n = mks().find((m) => m.t > t + 0.05);
+    if (!n) return toast('That’s the last marker');
+    const L = loopNow();
+    if (L && L.on && L.mk) return tileTap(n.id);
+    mkCur = { id: cur.id, mk: n.id };
+    seek(n.t);
+    prevT = n.t;
+    if (!playing()) play();
+    paint();
+  }
+
+  /* ----- Q02 a marker becomes a section start (one timing model: written through ckStore) ----- */
+  // which places in the running order this marker could start: in time order with the starts already set
+  function secChoices(m) {
+    const sg = song(),
+      S = secStarts(),
+      out = [];
+    if (!sg || !hasLyrics(sg)) return out;
+    sg.order.forEach((x, k) => {
+      const before = S.filter((s) => s.k < k && s.t >= m.t - CK_MIN + 1e-6).pop(),
+        after = S.find((s) => s.k > k && s.t <= m.t + CK_MIN - 1e-6),
+        mine = S.find((s) => s.k === k);
+      out.push({
+        k,
+        label: occLabel(sg, k),
+        set: mine ? mine.t : null,
+        why: before
+          ? 'Must come after ' + before.label + ' (' + fmt1(before.t) + ')'
+          : after
+            ? 'Must come before ' + after.label + ' (' + fmt1(after.t) + ')'
+            : '',
+      });
+    });
+    return out;
+  }
+  function promote(id, k) {
+    const sg = song(),
+      m = mkById(id);
+    if (!sg || !m || !hasLyrics(sg) || !sg.order[k]) return;
+    const ch = secChoices(m)[k];
+    if (!ch || ch.why) return toast(ch ? ch.why : 'That section isn’t in the song');
+    const t = m.t,
+      M = ckModel(sg),
+      anch = M.anch.slice();
+    // one Undo restores the timing and the marker together
+    ckSnap(sg, true);
+    // the marker goes: its time is the section's start now
+    sg.markers = mks().filter((x) => x.id !== id);
+    if (!sg.markers.length) delete sg.markers;
+    if (sg.loop && sg.loop.mk === id) delete sg.loop.mk;
+    if (mkCur && mkCur.mk === id) mkCur = null;
+    anch[k] = true;
+    if (ckSynced(sg)) {
+      // already timed: this section moves to the marker, the other set starts stay, and the lines between stretch
+      const f = (j) => M.T[ckFirst(M.L, j)][0],
+        pts = [];
+      M.anch.forEach((a, j) => a && j !== k && pts.push([f(j), f(j)]));
+      pts.push([f(k), t]);
+      const w = ckWarp(pts),
+        T = M.T.map((r) => [w(r[0]), r[1] == null ? null : w(r[1])]);
+      ckStore(sg, M.L, ckOrder(T), anch, M.marks);
+    } else {
+      // not timed yet: the lines are spread from this start, as Sync by sections does
+      const starts = sg.order.map(() => null);
+      starts[k] = t;
+      ckStore(sg, M.L, ckSpread(sg, M.L, starts), anch, M.marks, { est: true });
+    }
+    mdl = null;
+    ctxAt = null;
+    U.sheet = null;
+    U.sd = {};
+    rerender();
+    ckToast(occLabel(sg, k) + ' starts at ' + fmt1(t), ckUndo);
+  }
+
   /* ----- screens ----- */
   const WAVE =
     '<svg class="i" viewBox="0 0 24 24"><path d="M3 12h1.5M6.5 8v8M10 5v14M13.5 9v6M17 6.5v11M20.5 10.5v3"/></svg>';
@@ -1030,33 +1425,130 @@ const TRACK = (() => {
   const LOOP =
     '<svg class="i" viewBox="0 0 24 24"><path d="M17 2l3 3-3 3M4 11V9a4 4 0 0 1 4-4h12M7 22l-3-3 3-3M20 13v2a4 4 0 0 1-4 4H4"/></svg>';
   const JOG = '<svg class="trkjogi" viewBox="0 0 12 20" aria-hidden="true"><path d="M2 7l4-4 4 4M2 13l4 4 4-4"/></svg>';
-  const hint = () => (strip() ? 'Drag the jog wheel · double-tap outside the loop to clear' : 'Tap to move the playhead there');
+  const REPLAY =
+    '<svg class="i" viewBox="0 0 24 24"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3"/><path d="M4.5 4v4.5H9"/></svg>';
+  const NEXT = '<svg class="i" viewBox="0 0 24 24"><path d="M5 5l10 7-10 7z" fill="currentColor" stroke="none"/><path d="M18.5 5v14"/></svg>';
+  const hint = () =>
+    grid()
+      ? 'Tap a marker to loop it · hold for more'
+      : strip()
+        ? (jogPos() === 'bottom' ? 'Drag the roller' : 'Drag the jog wheel') + ' · double-tap outside the loop to clear'
+        : 'Tap to move the playhead there';
   const mb = (b) => (b / 1048576).toFixed(b >= 10 * 1048576 ? 0 : 1) + ' MB';
+  const ROLL = '<svg class="trkjogi" viewBox="0 0 20 12" aria-hidden="true"><path d="M7 2L3 6l4 4M13 2l4 4-4 4"/></svg>';
 
   function waveHTML() {
-    if (strip())
+    if (grid()) return gridHTML();
+    if (strip()) {
+      const jp = jogPos();
       return (
-        '<div class="trkstrip" id="trkStrip" data-own-gesture role="slider" tabindex="0" aria-label="Track position" aria-valuetext="' +
+        '<div class="trkstrip jog-' +
+        jp +
+        '" id="trkStrip" data-own-gesture role="slider" tabindex="0" aria-label="Track position" aria-valuetext="' +
         fmt(now()) +
-        '"><canvas id="trkC" aria-hidden="true"></canvas><div class="trkjog" id="trkJog" data-own-gesture aria-hidden="true"><span class="trkjogr"></span>' +
-        JOG +
-        '</div></div>'
+        '"><canvas id="trkC" aria-hidden="true"></canvas>' +
+        (jp === 'bottom'
+          ? ''
+          : '<div class="trkjog" id="trkJog" data-own-gesture aria-hidden="true"><span class="trkjogr"></span>' + JOG + '</div>') +
+        '</div>' +
+        (jp === 'bottom'
+          ? '<div class="trkroll" id="trkJog" data-own-gesture aria-hidden="true"><span class="trkrollr"></span>' + ROLL + '</div>'
+          : '')
       );
+    }
     const rs = TRK_LEVELS[lv()].row,
-      n = Math.max(1, Math.ceil(len() / rs - 1e-6));
-    let h = '<div class="trkrows" id="trkRows" data-own-gesture>';
-    for (let r = 0; r < n; r++)
+      d = len(),
+      n = Math.max(1, Math.ceil(d / rs - 1e-6)),
+      M = prefs().trkSongLyrics && timed() ? model() : null;
+    let h = '<div class="trkrows' + (M ? ' ly' : '') + '" id="trkRows" data-own-gesture>';
+    for (let r = 0; r < n; r++) {
+      const a = r * rs,
+        b = Math.min(d, (r + 1) * rs);
       h +=
         '<button class="trkrow" data-a="trkRow" data-r="' +
         r +
         '" aria-label="' +
-        fmt(r * rs) +
+        fmt(a) +
         ' to ' +
-        fmt(Math.min(len(), (r + 1) * rs)) +
+        fmt(b) +
         '. Move the playhead here"><span class="trkg">' +
-        fmt(r * rs) +
+        fmt(a) +
         '</span><canvas aria-hidden="true"></canvas></button>';
+      if (M) h += rowLyrics(M, a, r === n - 1 ? Infinity : (r + 1) * rs);
+    }
     return h + '</div>';
+  }
+  // Q02 Song: the lines that start in a row, under it; a section's name where it starts. Tap a line to go to it
+  function rowLyrics(M, a, b) {
+    let h = '';
+    M.L.forEach((l, i) => {
+      const s = M.T[i][0];
+      if (s == null || s < a || s >= b) return;
+      if (i === ckFirst(M.L, l.k)) h += '<span class="trkls">' + esc(occLabel(M.sg, l.k)) + '</span>';
+      h +=
+        '<button class="trkll" data-a="trkLyr" data-v="' +
+        s +
+        '" aria-label="' +
+        esc(l.words.join(' ')) +
+        ', at ' +
+        fmt(s) +
+        '">' +
+        esc(l.words.join(' ')) +
+        '</button>';
+    });
+    return h ? '<div class="trkly">' + h + '</div>' : '';
+  }
+  // Q02 Markers: a tile per marker (tap: play and loop it; its loop button: loop on or off; hold: its menu), then a
+  // tile that adds one at the playhead
+  function gridHTML() {
+    const M = mks();
+    let h = '<div class="trkgrid" id="trkGrid">';
+    M.forEach((m, i) => {
+      const n = i + 1,
+        r = rangeOf(m),
+        on = chipLoopOn(m),
+        lab = fmt1(m.t) + '–' + fmt1(r.e);
+      h +=
+        '<div class="trktl" data-mk="' +
+        m.id +
+        '"><button class="trktlb" data-a="trkTile" data-k="' +
+        m.id +
+        '" aria-label="Marker ' +
+        n +
+        (m.name ? ', ' + esc(m.name) : '') +
+        ', ' +
+        lab +
+        '. Tap to play' +
+        (r.ok ? ' and loop it' : '') +
+        ', hold for more"><b>' +
+        n +
+        '</b><span class="trktn">' +
+        esc(m.name || 'Marker ' + n) +
+        '</span><span class="trktm">' +
+        lab +
+        '</span></button><button class="trktlo' +
+        (on ? ' on' : '') +
+        (r.ok ? '' : ' off') +
+        '" data-a="trkTileLoop" data-k="' +
+        m.id +
+        '" aria-pressed="' +
+        on +
+        '" aria-label="Loop marker ' +
+        n +
+        '"' +
+        (r.ok ? '' : ' aria-disabled="true"') +
+        '>' +
+        LOOP +
+        '</button></div>';
+    });
+    h +=
+      '<button class="trktl trkqa" data-a="trkMkAdd" aria-label="Add a marker at the playhead">' +
+      ICON.plus +
+      '<span>Marker at <span id="trkQaT">' +
+      fmt1(now()) +
+      '</span></span></button></div>';
+    if (!M.length) h += '<p class="foot trkgf">Add markers while it plays, then tap one to loop it.</p>';
+    return h;
   }
   function emptyHTML(sg) {
     const miss = !!sg.track;
@@ -1097,23 +1589,9 @@ const TRACK = (() => {
           l.name +
           '</button>'
       ).join('') +
-      '</div><div class="trkwave" id="trkWave">' +
-      waveHTML() +
-      '</div><div class="trkinfo"><span class="trkt" id="trkT">' +
-      fmt1(now()) +
-      '</span><span class="trkhint" id="trkHint">' +
-      hint() +
-      '</span></div><div class="trkmk" id="trkMk" data-own-gesture>' +
-      chipsHTML() +
-      '</div><div class="trkchips" id="trkBtns"><button class="cvpill" data-a="trkSet" data-v="start">Set start</button><button class="cvpill" data-a="trkSet" data-v="end">Set end</button><button class="cvpill trkaddmk" data-a="trkMkAdd" aria-label="Add marker at the playhead">' +
-      MKI +
-      'Marker</button>' +
-      endHereHTML() +
-      '<span class="sp"></span><button class="cvpill" id="trkSpd" data-a="trkSpeed" aria-label="Speed ' +
-      spTxt(speed()) +
-      '. Tap to change">' +
-      spTxt(speed()) +
-      '</button></div><p class="foot trkfoot">' +
+      '</div><div class="trkbody" id="trkBody">' +
+      bodyHTML() +
+      '</div><p class="foot trkfoot">' +
       esc(m.name) +
       ' · ' +
       fmt(m.dur) +
@@ -1121,6 +1599,58 @@ const TRACK = (() => {
       deviceName() +
       ', not in backups</p></div>'
     );
+  }
+  // everything that changes with the level: the lyric card, the waveform (or the grid), chips and buttons
+  function bodyHTML() {
+    const g = grid(),
+      sg = song(),
+      lyT = TRK_LEVELS[lv()].row && sg && hasLyrics(sg) && timed(),
+      lyOn = prefs().trkSongLyrics;
+    ctxAt = null;
+    return (
+      (strip() ? ctxHTML() : '') +
+      '<div class="trkwave" id="trkWave">' +
+      waveHTML() +
+      '</div><div class="trkinfo"><span class="trkt" id="trkT">' +
+      fmt1(now()) +
+      '</span><span class="trkhint" id="trkHint">' +
+      hint() +
+      '</span>' +
+      // Markers: the speed sits here, since the grid has its own add tile and no Set start / Set end
+      (g ? spdHTML() : '') +
+      (lyT
+        ? '<button class="cvpill trklyt' +
+          (lyOn ? ' on' : '') +
+          '" data-a="trkSongLyrics" aria-pressed="' +
+          lyOn +
+          '">Lyrics</button>'
+        : '') +
+      '</div>' +
+      (g ? '' : '<div class="trkmk" id="trkMk" data-own-gesture>' + chipsHTML() + '</div>') +
+      (g
+        ? ''
+        : '<div class="trkchips" id="trkBtns"><button class="cvpill" data-a="trkSet" data-v="start">Set start</button><button class="cvpill" data-a="trkSet" data-v="end">Set end</button><button class="cvpill trkaddmk" data-a="trkMkAdd" aria-label="Add marker at the playhead">' +
+          MKI +
+          'Marker</button>' +
+          endHereHTML() +
+          '<span class="sp"></span>' +
+          spdHTML() +
+          '</div>')
+    );
+  }
+  const spdHTML = () =>
+    '<button class="cvpill trkspd" id="trkSpd" data-a="trkSpeed" aria-label="Speed ' +
+    spTxt(speed()) +
+    '. Tap to change">' +
+    spTxt(speed()) +
+    '</button>';
+  // redraw the level's parts in place (the page itself and its scroll stay)
+  function body() {
+    const b = $('trkBody');
+    if (!b) return;
+    b.innerHTML = bodyHTML();
+    draw();
+    paint();
   }
   function bar() {
     const sg = songById(U.songId);
@@ -1138,6 +1668,21 @@ const TRACK = (() => {
     if (U.view !== 'trk' || !cur || U.songId !== cur.id || U.sheet) return '';
     const on = playing(),
       L = loopNow();
+    // Q02 Markers: replay the marker, play or pause, go to the next marker
+    if (grid())
+      return (
+        '<div class="trktr glass" role="group" aria-label="Markers"><button class="trkb" data-a="trkReplay" aria-label="Replay this marker">' +
+        REPLAY +
+        '</button><button class="trkpp" id="trkPP" data-a="trkPP" data-on="' +
+        on +
+        '" aria-label="' +
+        (on ? 'Pause' : 'Play') +
+        '">' +
+        (on ? ICON.pause : ICON.play) +
+        '</button><button class="trkb" data-a="trkNext" aria-label="Next marker">' +
+        NEXT +
+        '</button></div>'
+      );
     return (
       '<div class="trktr glass" role="group" aria-label="Track player"><button class="trkb" data-a="trkToStart" aria-label="Back to the loop start">' +
       TOSTART +
@@ -1217,6 +1762,27 @@ const TRACK = (() => {
           (sg.markers && sg.markers.length
             ? '<div class="grp"><button class="row" data-a="sheet" data-v="trkMkClear"><span class="lbl dng">Clear all markers…</span></button></div>'
             : '') +
+          // Q02: which side the jog wheel sits on (this device only)
+          '<div class="hdr">Jog wheel</div><div class="grp" role="radiogroup" aria-label="Jog wheel">' +
+          [
+            ['left', 'Left'],
+            ['right', 'Right'],
+            ['bottom', 'Bottom roller'],
+          ]
+            .map(
+              (j) =>
+                '<button class="row" data-a="trkJogPos" data-v="' +
+                j[0] +
+                '" role="radio" aria-checked="' +
+                (jogPos() === j[0]) +
+                '"><span class="lbl">' +
+                j[1] +
+                '</span><span class="acc setchk" aria-hidden="true">' +
+                (jogPos() === j[0] ? ICON.check : '') +
+                '</span></button>'
+            )
+            .join('') +
+          '</div>' +
           '<p class="foot">Stays on this ' +
           deviceName() +
           ' and isn’t included in backups. The loop and the song’s timings stay with the song.</p>'
@@ -1240,13 +1806,57 @@ const TRACK = (() => {
         '<button class="row" data-a="' + a + '" data-k="' + m.id + '"><span class="lbl' + (cls ? ' ' + cls : '') + '">' + l + '</span></button>';
       return sheetWrap(
         'Marker ' + n,
-        '<div class="grp">' +
+        // Q02: the first door from a marker into the song's timing
+        (hasLyrics(sg)
+          ? '<div class="grp"><button class="row" data-a="trkMkSec" data-k="' +
+            m.id +
+            '"><span class="lbl acc">Make this a section start…<small>' +
+            fmt1(m.t) +
+            ' becomes where a section starts in Song Clock</small></span>' +
+            chev +
+            '</button></div>'
+          : '') +
+          '<div class="grp">' +
           row('trkMkRename', 'Rename', 'acc') +
           row('trkMkMove', 'Move to playhead', 'acc') +
           (m.end != null ? row('trkMkNoEnd', 'Remove end', 'acc') : row('trkMkEnd', 'Set end here', 'acc')) +
           row('trkMkDel', 'Delete marker', 'dng') +
           '</div><div class="grp"><button class="row" data-a="sheet" data-v="trkMkClear"><span class="lbl dng">Clear all markers…</span></button></div>',
         'Marker ' + n
+      );
+    }
+    // Q02 the section picker: places in the running order, those that would break the time order greyed with why
+    if (s === 'trkMkSec' && sg) {
+      const m = (sg.markers || []).find((x) => x.id === sd.k);
+      if (!m || !hasLyrics(sg)) return '';
+      const C2 = secChoices(m);
+      return sheetWrap(
+        'Section start',
+        '<p class="note trksecn">Marker ' +
+          (sg.markers.indexOf(m) + 1) +
+          ' at ' +
+          fmt1(m.t) +
+          '. Pick the section that starts here. The marker becomes its start, and Undo puts it back.</p><div class="grp">' +
+          C2.map(
+            (c) =>
+              '<button class="row' +
+              (c.why ? ' off' : '') +
+              '" data-a="trkMkSecPick" data-k="' +
+              m.id +
+              '" data-v="' +
+              c.k +
+              '"' +
+              (c.why ? ' aria-disabled="true"' : '') +
+              '><span class="lbl">' +
+              esc(c.label) +
+              '<small>' +
+              esc(c.why || (c.set != null ? 'Starts at ' + fmt1(c.set) + ' now' : 'Not set yet')) +
+              '</small></span>' +
+              (c.set != null && !c.why ? '<span class="trkadot" aria-label="Start set"></span>' : '') +
+              '</button>'
+          ).join('') +
+          '</div>',
+        'Section start'
       );
     }
     if (s === 'trkMkName' && sg) {
@@ -1485,6 +2095,8 @@ const TRACK = (() => {
   function after() {
     // the song went (deleted, Reset all data, a restore without it): stop and let go of its audio
     if (cur && !songById(cur.id)) unload();
+    mdl = null; // Q02: the song's timing is read again after any change
+    ctxAt = null;
     if (U.view === 'trk') {
       const sg = songById(U.songId);
       if (sg && have.has(sg.id) && (!cur || cur.id !== sg.id)) open1(sg.id);
@@ -1500,7 +2112,7 @@ const TRACK = (() => {
 
   /* ----- 3.20 holding a chip opens its menu ----- */
   document.addEventListener('pointerdown', (e) => {
-    const c = e.target.closest && e.target.closest('#trkMk .trkchb');
+    const c = e.target.closest && e.target.closest('#trkMk .trkchb, #trkGrid .trktlb');
     if (!c || e.button > 0) return;
     const id = c.dataset.k,
       x = e.clientX,
@@ -1547,7 +2159,7 @@ const TRACK = (() => {
     true
   );
   document.addEventListener('contextmenu', (e) => {
-    if (e.target.closest && e.target.closest('#trkMk')) e.preventDefault();
+    if (e.target.closest && e.target.closest('#trkMk, #trkGrid')) e.preventDefault();
   });
 
   /* ----- fingers: the strip (scrub, handles, double-tap), the jog wheel, rows, pinch ----- */
@@ -1593,13 +2205,15 @@ const TRACK = (() => {
       dy = e.clientY - drag.y;
     drag.moved = Math.max(drag.moved, Math.hypot(dx, dy));
     if (drag.kind === 'jog') {
-      // down moves later, up earlier; slow drags are precise, quick ones skim
-      seek(drag.t + (dy * (TRK_LEVELS[lv()].win || 16)) / TRK_JOG);
+      // down moves later, up earlier; slow drags are precise, quick ones skim. Q02 the bottom roller: right is later
+      const bot = jogPos() === 'bottom',
+        d = bot ? dx : dy;
+      seek(drag.t + (d * (TRK_LEVELS[lv()].win || 16)) / TRK_JOG);
       const j = $('trkJog');
       if (j) {
-        j.dataset.rot = drag.rot + dy;
-        const r = j.querySelector('.trkjogr');
-        if (r) r.style.transform = 'rotate(' + (drag.rot + dy) + 'deg)';
+        j.dataset.rot = drag.rot + d;
+        const r = j.querySelector(bot ? '.trkrollr' : '.trkjogr');
+        if (r) r.style[bot ? 'backgroundPositionX' : 'transform'] = bot ? drag.rot + d + 'px' : 'rotate(' + (drag.rot + d) + 'deg)';
       }
     } else if (drag.kind === 'scrub') {
       if (drag.moved > 2) seek(drag.t - dx / pps(drag.w));
@@ -1910,6 +2524,46 @@ const TRACK = (() => {
     sgRowPlay(el, v, k) {
       playSong(k);
     },
+    // Q02 the Markers grid and its transport
+    trkTile(el, v, k) {
+      tileTap(k);
+    },
+    trkTileLoop(el, v, k) {
+      tileLoop(k);
+    },
+    trkReplay() {
+      replay();
+    },
+    trkNext() {
+      nextMk();
+    },
+    // Q02 a marker into a section start
+    trkMkSec(el, v, k) {
+      U.sheet = 'trkMkSec';
+      U.sd = { k };
+      rerender();
+    },
+    trkMkSecPick(el, v, k) {
+      promote(k, +v);
+    },
+    // Q02 the jog wheel's side, and lyrics under the Song rows
+    trkJogPos(el, v) {
+      if (!TRK_JOGS.includes(v)) return;
+      prefs().trkJogPos = v;
+      saveSGP();
+      rerender();
+    },
+    trkSongLyrics() {
+      const p = prefs();
+      p.trkSongLyrics = !p.trkSongLyrics;
+      saveSGP();
+      body();
+      showHead();
+    },
+    trkLyr(el, v) {
+      seek(+v);
+      prevT = now();
+    },
   });
 
   return {
@@ -1961,6 +2615,28 @@ const TRACK = (() => {
     attach,
     linkLen,
     peaks: () => (cur ? cur.peaks : null),
+    // Q02
+    along: alongPlay,
+    alongPause,
+    alongNow,
+    alongMute,
+    following: () => (along ? along.id : null),
+    promote,
+    secChoices: (id) => {
+      const m = mkById(id);
+      return m ? secChoices(m) : [];
+    },
+    secStarts: () => secStarts().map((s) => ({ k: s.k, t: s.t, label: s.label })),
+    rangeOf: (id) => {
+      const m = mkById(id);
+      return m ? rangeOf(m) : null;
+    },
+    tileTap,
+    tileLoop,
+    replay,
+    nextMk,
+    jogPos,
+    ctx: () => ctxLines(),
     state: () => ({
       id: cur ? cur.id : null,
       loaded: !!cur,
@@ -1971,6 +2647,8 @@ const TRACK = (() => {
       speed: speed(),
       woke,
       busy: !!busy,
+      along: along ? along.id : null,
+      muted: !!(el && el.muted),
     }),
   };
 })();

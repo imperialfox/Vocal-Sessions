@@ -40,11 +40,15 @@
   --grid: rgba(60, 60, 67, 0.14);
   /* 3.19 the track player: the loop's orange, the playhead's darker orange, and audio outside the loop */
   --trk-loop: #ff9500;
-  --trk-head: #c85400;
+  --trk-head: #c85400; /* (until 3.22; the playhead is --trk-playhead since Q02) */
   --trk-dim: rgba(60, 60, 67, 0.26);
   /* 3.20 markers on the track: purple, never the loop's orange */
   --trk-mk: #8944e0;
   --trk-mkfg: #ffffff;
+  /* Q02: the playhead is red in both themes; section starts set on the waveform are blue */
+  --trk-playhead: #ff3b30;
+  --trk-sec: #007aff;
+  --trk-secfg: #ffffff;
   /* 3.21 Settings: View on GitHub's near-black tile */
   --tile-ink: #1c1c1e;
   --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', system-ui, sans-serif;
@@ -111,6 +115,9 @@ body.phone {
     --trk-dim: rgba(235, 235, 245, 0.24);
     --trk-mk: #b07bff;
     --trk-mkfg: #1c0b33;
+    --trk-playhead: #ff453a;
+    --trk-sec: #0a84ff;
+    --trk-secfg: #ffffff;
     --tile-ink: #48484a;
   }
 }
@@ -5472,10 +5479,11 @@ body.cksyncon main {
 .trkwave {
   margin-top: 14px;
 }
-/* Phrase and Line: a strip with a fixed playhead, the waveform moving under it; the jog wheel half off the edge */
+/* Phrase and Line: a strip with a fixed playhead, the waveform moving under it; the jog wheel half off the edge
+   (Q02: 148 px tall, and the wheel on the left, the right or as a roller under the strip) */
 .trkstrip {
   position: relative;
-  height: 96px;
+  height: 148px;
   margin: 0 -16px;
   border-top: 0.5px solid var(--sep);
   border-bottom: 0.5px solid var(--sep);
@@ -5496,12 +5504,19 @@ body.reg .trkstrip {
   height: 100%;
   transform-origin: 40% 50%;
 }
+.trkstrip.jog-left #trkC {
+  left: 48px;
+}
+.trkstrip.jog-bottom #trkC {
+  width: 100%;
+}
 .trkjog {
   position: absolute;
-  top: 0;
+  top: 26px;
   right: -48px;
   width: 96px;
   height: 96px;
+  transition: transform var(--dur-gentle, 0.4s) var(--ease-gentle, ease);
   border-radius: 50%;
   background: var(--fill);
   box-shadow:
@@ -5533,6 +5548,286 @@ body.reg .trkstrip {
 }
 .trkjog.drag {
   background: var(--hx);
+}
+/* Q02: the wheel slides further in under the finger, for a bigger grip */
+.trkjog.drag {
+  transform: translateX(-22px) scale(1.12);
+}
+.jog-left .trkjog {
+  right: auto;
+  left: -48px;
+}
+.jog-left .trkjog.drag {
+  transform: translateX(22px) scale(1.12);
+}
+.jog-left .trkjogi {
+  left: auto;
+  right: 12px;
+}
+html.motion-reduced .trkjog {
+  transition: background 0.2s;
+}
+html.motion-reduced .trkjog.drag {
+  transform: none;
+}
+/* Q02 Bottom: a full-width roller under the strip; drag right for later */
+.trkroll {
+  position: relative;
+  height: 44px;
+  margin: 10px -16px 0;
+  border-radius: 0;
+  background: var(--fill);
+  box-shadow:
+    inset 0 0.5px 0 var(--sep),
+    inset 0 -0.5px 0 var(--sep);
+  overflow: hidden;
+  touch-action: none;
+  cursor: ew-resize;
+  -webkit-user-select: none;
+  user-select: none;
+}
+body.reg .trkroll {
+  margin: 10px 0 0;
+  border-radius: 12px;
+}
+.trkrollr {
+  position: absolute;
+  inset: 8px 0;
+  background: repeating-linear-gradient(90deg, var(--fg3) 0 1.5px, transparent 1.5px 12px);
+  opacity: 0.6;
+  -webkit-mask: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
+  mask: linear-gradient(90deg, transparent, #000 18%, #000 82%, transparent);
+}
+.trkroll .trkjogi {
+  left: 50%;
+  top: 16px;
+  width: 20px;
+  height: 12px;
+  margin-left: -10px;
+}
+.trkroll.drag {
+  background: var(--hx);
+}
+/* Q02 the lyric card above the strip: the line before, the line at the playhead (with its section) and the next */
+.trkctx {
+  margin-top: 14px;
+  padding: 8px 14px;
+  border-radius: 14px;
+  background: var(--surface);
+}
+.trkcl {
+  margin: 0;
+  min-height: 21px;
+  font-size: 14px;
+  line-height: 21px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--fg3);
+}
+.trkcc {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 17px;
+  line-height: 26px;
+  min-height: 26px;
+  font-weight: 600;
+  color: var(--fg);
+}
+.trkct {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.trkcs {
+  flex: none;
+  max-width: 40%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--trk-sec);
+}
+.trkcx {
+  white-space: normal;
+  color: var(--fg2);
+  font-size: 13px;
+  line-height: 18px;
+}
+/* Q02 Song: lyrics under each row, toggled with the Lyrics pill */
+.trkly {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 2px 0 8px 44px;
+  border-bottom: 0.5px solid var(--sep);
+}
+.trkls {
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--trk-sec);
+}
+.trkll {
+  max-width: 100%;
+  padding: 3px 0;
+  font-size: 14px;
+  line-height: 18px;
+  text-align: left;
+  color: var(--fg2);
+}
+.trkrows.ly .trkrow {
+  border-bottom: 0;
+}
+.trklyt {
+  flex: none;
+  align-self: center;
+}
+.trklyt.on {
+  background: var(--accent);
+  color: #fff;
+}
+/* Q02 Markers: a two-column grid of rehearsal tiles, and a tile that adds one */
+.trkgrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.trktl {
+  position: relative;
+  min-height: 96px;
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: inset 0 0 0 2px transparent;
+  transition: box-shadow 0.2s;
+  -webkit-touch-callout: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.trktl.sel {
+  box-shadow: inset 0 0 0 2px var(--trk-mk);
+}
+.trktl.play {
+  background: color-mix(in srgb, var(--trk-mk) 14%, var(--surface));
+}
+.trktl.play .trktlb b {
+  background: var(--trk-playhead);
+  color: #fff;
+}
+.trktlb {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  width: 100%;
+  min-height: 96px;
+  padding: 12px;
+  text-align: left;
+}
+.trktlb b {
+  display: grid;
+  place-items: center;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--trk-mk);
+  color: var(--trk-mkfg);
+  font-size: 14px;
+  transition: background 0.2s;
+}
+.trktn {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 16px;
+  font-weight: 600;
+}
+.trktm {
+  white-space: nowrap;
+  font-size: 13px;
+  color: var(--fg2);
+  font-variant-numeric: tabular-nums;
+}
+.trktlo {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--fill);
+  color: var(--fg2);
+}
+.trktlo svg.i {
+  width: 17px;
+  height: 17px;
+}
+.trktlo.on {
+  background: var(--trk-loop);
+  color: #fff;
+}
+.trktlo.off {
+  opacity: 0.35;
+}
+.trkqa {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 500;
+  background: transparent;
+  box-shadow: inset 0 0 0 1.5px var(--fill);
+}
+.trkqa svg.i {
+  width: 22px;
+  height: 22px;
+}
+.trkqa #trkQaT {
+  font-variant-numeric: tabular-nums;
+}
+.trkgf {
+  margin-top: 10px;
+  text-align: center;
+}
+/* Q02 the section picker: places that would break the time order are greyed */
+.trksecn {
+  margin: 0 4px 12px;
+}
+.row.off .lbl {
+  opacity: 0.45;
+}
+.trkadot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--trk-sec);
+}
+/* Q02 play-along: the track's mute button beside the nudges */
+.cktr:has(.ckmute) {
+  width: 316px;
+}
+.ckmute {
+  display: grid;
+  place-items: center;
+}
+.ckmute svg.i {
+  width: 20px;
+  height: 20px;
+}
+.ckmute.on {
+  color: var(--fg2);
 }
 /* Section and Song: rows showing the whole song, each a time gutter and that stretch of waveform */
 .trkrows {
@@ -6607,4 +6902,7 @@ html.motion-off .tgrad i {
 /* in a zoom's or a push's still copy the wash sits behind the copied page, not behind the whole layer */
 .zm main {
   isolation: isolate;
+.trkinfo .trkspd {
+  flex: none;
+  align-self: center;
 }
