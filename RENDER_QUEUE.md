@@ -44,7 +44,7 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 
 ## Q01 · Search: Global Find
 
-**Status:** Awaiting Render. **Approval:** Not yet given. Wireframe approved 22 Oct 2026.
+**Status:** Approved — awaiting Build. **Render:** Approved by Ivan on 26 Oct 2026 for the scope below. Wireframe approved 22 Oct 2026. A separate Build instruction is still required.
 **Needs:** 3.21 live (it is).
 
 - **Goal:** find anything in the app from one place.
@@ -60,14 +60,15 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
   - A song's track isn't search content.
 - **Decided:**
   - The circle is its own control, not a tab.
+  - The circle appears on every main tab.
   - Search covers everything above, grouped.
-- **Assumptions:** the Songs tab keeps its own list filter. This was an interpretation, not Ivan's decision.
-- **Open questions:** which screens show the circle. Earlier build notes say it fits beside the Song Clock transport and the track player's transport at 375 px "if shown there", so this hasn't been decided.
+  - The Songs tab keeps its own list filter.
+- **Unresolved:** any finer criteria in the design notes.
 - **Notes from earlier builds:**
   - The circle isn't a `TABS()` entry.
   - It must clear the song rows' play buttons, and `fwBounds()` must keep the floating window clear of it.
   - Take names and comments are plain strings in `sg.takeNotes`; default names come from `TAKE.nameOf(id)`.
-- **Next action:** after Ivan gives Render approval for this item and separately says Build, implement it in a fresh chat. Ask Ivan for the search design notes (UI refresh handoff item 4, and item 12 of the songs, takes and markers handoff).
+- **Next action:** after Ivan separately says Build, implement the approved scope in a fresh chat. Ask Ivan for the search design notes (UI refresh handoff item 4, and item 12 of the songs, takes and markers handoff) before building.
 - **Done when:**
   - Every group finds its matches.
   - Take and comment hits open as described above.
