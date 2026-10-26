@@ -56,7 +56,7 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 ## 2 · Sections on the waveform (Track 2)
 
 **Status:** Approved — awaiting Build. **Render:** Approved by Ivan on 26 Oct 2026 for the scope below, including the refinements listed here.
-**Needs:** Track 1 live (it is). A separate Build instruction is still required.
+**Needs:** Track 1 live; verified on `main` from the 3.21.1 changelog entry on 26 Oct 2026. A separate Build instruction is still required.
 
 - **Goal:** set a song's timing by scrubbing its track instead of tapping along live.
 - **Scope:**
@@ -85,7 +85,7 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
   - Editing lyrics or section names from the waveform.
   - Cloud syncing audio or peaks; audio remains device-local in IndexedDB `vocalTracks`.
   - Pitch-altering time stretch.
-- **Next action:** after Ivan separately says Build, implement this approved scope in a fresh chat with Claude as the sole builder. Check that 3.21 is live first.
+- **Next action:** after Ivan separately says Build, implement this approved scope in a fresh chat with Claude as the sole builder.
 - **Done when:**
   - Sections set on the waveform appear in Song Clock timing, and marker promotion is undoable without data loss.
   - Phrase, Line, Song and Markers views meet the approved layout and interaction requirements.
