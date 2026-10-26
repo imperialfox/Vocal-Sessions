@@ -64,7 +64,7 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
   - Four views: Phrase (6 s), Line (16 s), Song (fixed 24 s overview rows), and Markers (two-column grid).
   - Show a three-line lyric context card above the 148 px Phrase/Line strip; show toggleable lyrics under Song rows.
   - Set section starts from marker chips through a section picker in `sg.order`; enforce chronological order, remove the promoted chip and provide one Undo that restores both timing and marker.
-  - Play along from the in-app track, with backing audio on by default and a mute control.
+  - Play along from the in-app track when its local audio is available, with backing audio on by default and a mute control. Without local audio, retain the existing lyric-only Song Clock playback; hide or disable the audio mute control.
   - Add the Marker grid's large rehearsal tiles, per-marker loop toggles, Replay / Play-Pause / Next transport, active state and quick-add tile.
   - Support Left, Right and Bottom jog positions, with touch expansion for the edge wheels and a full-width Bottom roller.
   - Use red playhead styling and resync looping and the playhead after device sleep.
@@ -73,8 +73,12 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
   - `sg.timing` remains the only timing model; take undo snapshots before edits.
   - Marker data remains `sg.markers = [{ id, t, end?, name? }]`; no migration is needed for existing 3.20 markers or backups.
   - Device-only preferences `trkSongLyrics` and `trkJogPos` live in `vocalSongPrefs`.
+  - Reset the device-local `trkLevel` zoom preference to the new default when this version is introduced.
+  - Promotion Undo is one operation: the `ckSnap()` snapshot and Undo action preserve and restore both `sg.timing` and the promoted marker.
+  - Sleep looping is best-effort: enforce boundaries on `timeupdate`, resync/clamp on `visibilitychange`, and verify locked-screen behavior on iPhone; do not promise a fixed event cadence.
+  - Use the `--trk-playhead` CSS token for the red playhead in both themes.
   - Pinch stays beside the level pills.
-  - A marker without an explicit `end` loops from its start to the next marker; the last marker loops to the track duration.
+  - Tapping a marker starts playback and loops from its start to its explicit `end`, or to the next marker if no `end` is saved; the last marker without an `end` loops to track duration. Disable looping when the derived range is shorter than the 0.5-second minimum. Existing marker chips remain intact.
   - Marker selection and playback have separate visual states. The selected marker stays identified for actions; the playing marker follows the playhead. Both states can appear at once.
   - Song overview uses duration-driven 24-second rows. The last row is partial when needed and ends at the track duration (for example, a 3:14 track has a final 3:12–3:14 row).
 - **Out of scope:**
@@ -85,7 +89,7 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 - **Done when:**
   - Sections set on the waveform appear in Song Clock timing, and marker promotion is undoable without data loss.
   - Phrase, Line, Song and Markers views meet the approved layout and interaction requirements.
-  - Play-along follows track time; sleep/wake looping is verified on iPhone.
+  - Play-along follows track time when local audio is available and falls back to lyric-only Song Clock playback otherwise; sleep/wake looping is verified on iPhone as a best-effort safeguard.
   - Existing markers, untimed songs, songs without lyrics and old backups load without error.
   - The full suite passes.
 
