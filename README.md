@@ -10,7 +10,7 @@ A mobile-first companion for structured vocal practice, styled like a native iOS
 
 ## What it does
 
-It guides you through a three-step practice session, keeps a history of every session, and produces ready-to-paste [Toggl Track](https://toggl.com/track/) entries with `#tags` inline.
+It brings guided practice sessions, progress tracking, and song practice together in one web app. Your sessions, exercises, songs, timing, takes and recordings stay in one place.
 
 | Step | What | Time |
 |---|---|---|
@@ -51,7 +51,6 @@ And **Songs**, for learning a song: paste the lyrics, and they're split into lab
 - **Filled in at the end:** if you don't tap through each step (for example, following the coach video in the car), the app notices and shows that session as a blended bar. Its time is still split using the coach video's length for each exercise and the levels you did, with Application as whatever's left. Sessions from before this version are split the same way.
 - **Song practice:** this week's and this month's totals, your last 3 song practices, and **Show all song practice**
 - **All sessions:** a **Sessions | Song practice** list, grouped by month. Open any session to:
-  - Copy it for Toggl again
   - Edit it with the pencil: date, minutes, levels, notes, how it went, and how its time was split between the steps. Totals, streak and last-done dates update to match.
   - Delete it
 - Every summary leads to the same lists and details, from wherever it appears: Progress, the calendar, Today and Exercises.
@@ -146,19 +145,6 @@ And **Songs**, for learning a song: paste the lyrics, and they're split into lab
   - Tap a take to add notes, such as "Flat on the high note"
   - Each take can be shared (Save to Files or iCloud Drive) or deleted
   - Leaving the app while recording stops the take and saves it
-- **Toggl copy:** one line per block, for example:
-
-```
-Foundation: Vocal slides L3, Humming L3, Lip bubbling L3, Singing through a straw L2 #foundation #cord-closure
-Vertical mouth L2/3 #rotation #resonance
-Application: Versace on the Floor · bridge — pitch 2, tone 3, ease 2 #application
-How it went: In control, Bit tight
-```
-
-Notes appear next to their exercise, and skipped exercises say "skipped". Song practice copies as one line tagged `#song-practice`.
-
-Paste into Toggl's description field; the `#` triggers tag autocomplete.
-
 ---
 
 ## iPhone, iPad and Mac
@@ -212,7 +198,7 @@ Removing a Home Screen app deletes its data, so always export first.
 
 ## Adapting it for yourself
 
-Everything to edit is in `js/content.js`, which starts with a guide to what's safe to change: `VIDEO` (your coach video), `TARGET` and `WEEK_TARGET` (minutes), the `FOUND` and `ROT` exercise lists, `DESC` (the write-up shown on each exercise's Summary tab), `EX_WORDS` (quick words for each exercise) and `HOW_WORDS` (the "How did it go?" words), plus `TOGGL` (the Toggl tags) and `VID` (how long each exercise runs in the coach video). Run `python tests/run.py content` after editing to check it all fits together.
+Everything to edit is in `js/content.js`, which starts with a guide to what's safe to change: `VIDEO` (your coach video), `TARGET` and `WEEK_TARGET` (minutes), the `FOUND` and `ROT` exercise lists, `DESC` (the write-up shown on each exercise's Summary tab), `EX_WORDS` (quick words for each exercise) and `HOW_WORDS` (the "How did it go?" words), and `VID` (how long each exercise runs in the coach video). Run `python tests/run.py content` after editing to check it all fits together.
 
 ---
 
