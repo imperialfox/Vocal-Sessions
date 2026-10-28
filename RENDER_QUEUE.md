@@ -146,7 +146,7 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 
 ## Q10 · Interface: HIG Foundations Pass
 
-**Status:** Approved — awaiting Build. **Approval:** Render given by Ivan on 28 Oct 2026 for the scope below. Its wireframes (eight boards, each showing now and proposed) were approved the same day and are in Ivan's private design canvas; he shares them when the build starts.
+**Status:** Building (Build given by Ivan on 28 Oct 2026). **Approval:** Render given by Ivan on 28 Oct 2026 for the scope below. Its wireframes (eight boards, each showing now and proposed) were approved the same day and are in Ivan's private design canvas; he shares them when the build starts.
 **Needs:** 3.25 live (verified on `main` at `d807d12`, 28 Oct 2026).
 
 - **Goal:** bring the app's design foundations in line with Apple's HIG where the iOS styles in Ivan's Obsidian vault already go further: one set of text sizes, Apple's system colours, layered backgrounds, layout that fits each part's own space, and four smaller touches.
@@ -168,11 +168,11 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
   - The Progress gradient's A stop shares the loop's orange. They're on different screens.
   - Dark mode uses Apple's dark-mode partner of each colour; no separate dark wireframes.
 - **Out of scope:** Increase Contrast, Reduce Transparency, text-size scaling (Dynamic Type), Bold Text and Button Shapes; pinch-zoom behaviour; anything beyond the eight parts.
-- **Open questions:**
-  - *Unresolved:* where fold-out rows are used. The wireframe uses a song's sections and takes as an example, not checked against the current song page.
-  - *Unresolved:* which icon-only buttons get hover hints beyond the transport, and their wording.
+- **Answered at Build (28 Oct 2026):**
+  - Fold-out rows go in the takes sheet's **All takes**: one row per section with its take count, folding open to its takes.
+  - Hover hints go on both track player transports (the round one and the Markers pads) and the top bar's glass circles (Back, ⋯, Search). Wording matches each button's existing spoken label.
 - **Assumptions:** the wireframes use generic phone frames rather than the iPhone 17 Pro viewport in [PROTOTYPE_DEFAULTS.md](PROTOTYPE_DEFAULTS.md); they show layout and intent, not exact sizes.
-- **Next action:** when Ivan says Build for Q10, implement it in a fresh chat from a Q10 handoff, with the wireframes.
+- **Next action:** build, test and release as 3.26.
 - **Done when:**
   - All eight parts work in light and dark mode on iPhone, iPad and Mac.
   - Font sizes in `css/app.css` come only from the named set, and colours from the tokens.
