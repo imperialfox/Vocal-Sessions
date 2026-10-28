@@ -32,12 +32,12 @@ const SET = (() => {
   };
   const COL = {
     backup: '#2ea596',
-    storage: '#8e8e93',
-    recall: '#5856d6',
-    coach: '#ff9500',
+    storage: 'var(--sys-gray)',
+    recall: 'var(--sys-indigo)',
+    coach: 'var(--sys-orange)',
     appear: '#ff6b57',
-    access: '#007aff',
-    log: '#af52de',
+    access: 'var(--sys-blue)',
+    log: 'var(--sys-purple)',
     code: 'var(--tile-ink)',
   };
   const TITLE = {

@@ -353,3 +353,56 @@ document.addEventListener('visibilitychange', () => {
     }
   }
 });
+
+/* ===== Q10 Hover hints on a Mac =====
+   With a mouse or trackpad (never on touch), resting the pointer on an icon-only button shows a short label after a
+   pause, as on the Mac. The label is the button's own spoken label (aria-label), so the two always agree. Used on
+   both track player transports and the top bar's glass circles. */
+const HINT_SEL = '#bar .circ[aria-label], .scirc[aria-label], .trktr button[aria-label], .trkpads button[aria-label]';
+const HINT_WAIT = 600;
+const HINT = { el: null, on: null, t: 0 };
+const hintPointer = () => window.matchMedia && matchMedia('(hover: hover) and (pointer: fine)').matches;
+function hintShow(btn) {
+  const text = btn.getAttribute('aria-label');
+  if (!text || !btn.isConnected) return;
+  let h = HINT.el;
+  if (!h) {
+    h = HINT.el = document.createElement('div');
+    h.className = 'hint';
+    h.id = 'hint';
+    h.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(h);
+  }
+  h.textContent = text;
+  h.classList.remove('show');
+  const r = btn.getBoundingClientRect(),
+    w = h.offsetWidth,
+    hh = h.offsetHeight,
+    below = r.top < 140, // the top bar's circles: below them; the transports at the bottom: above
+    x = Math.max(8, Math.min(innerWidth - w - 8, r.left + r.width / 2 - w / 2)),
+    y = below ? r.bottom + 8 : r.top - hh - 8;
+  h.style.left = Math.round(x) + 'px';
+  h.style.top = Math.round(y) + 'px';
+  void h.offsetWidth;
+  h.classList.add('show');
+  HINT.on = btn;
+}
+function hintHide() {
+  clearTimeout(HINT.t);
+  HINT.t = 0;
+  HINT.on = null;
+  if (HINT.el) HINT.el.classList.remove('show');
+}
+document.addEventListener('pointerover', (e) => {
+  if (e.pointerType !== 'mouse' || !hintPointer()) return;
+  const b = e.target.closest && e.target.closest(HINT_SEL);
+  if (!b || b === HINT.on) return;
+  hintHide();
+  HINT.t = setTimeout(() => hintShow(b), HINT_WAIT);
+});
+document.addEventListener('pointerout', (e) => {
+  const b = e.target.closest && e.target.closest(HINT_SEL);
+  if (b && !(e.relatedTarget && b.contains(e.relatedTarget))) hintHide();
+});
+['pointerdown', 'keydown', 'wheel'].forEach((k) => document.addEventListener(k, hintHide, { passive: true, capture: true }));
+document.addEventListener('scroll', hintHide, { passive: true, capture: true });

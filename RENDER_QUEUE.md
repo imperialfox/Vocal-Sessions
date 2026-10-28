@@ -1,6 +1,6 @@
 # Render queue
 
-App work Ivan has queued, in the order he wants it built. Each item is one build, in a fresh chat, started from a handoff (see [HANDOFF.md](HANDOFF.md)). Last checked against `main` at **3.25** (26 Oct 2026). **Shipped:** Q01 · Search: Global Find in 3.22; Q08 · Interface: Native iOS Polish in 3.23; Q02 · Track: Waveform Sections in 3.24; Q09 · Track: Waveform Sections Follow-up in 3.25.
+App work Ivan has queued, in the order he wants it built. Each item is one build, in a fresh chat, started from a handoff (see [HANDOFF.md](HANDOFF.md)). Last checked against `main` at **3.26** (28 Oct 2026). **Shipped:** Q01 · Search: Global Find in 3.22; Q08 · Interface: Native iOS Polish in 3.23; Q02 · Track: Waveform Sections in 3.24; Q09 · Track: Waveform Sections Follow-up in 3.25; Q10 · Interface: HIG Foundations Pass in 3.26.
 
 - **Every item has two separate gates.** `Awaiting Render` means it is not approved. Ivan's **Render** approves only the named item's exact scope and moves it to `Approved — awaiting Build`; it does not start work or authorize a push. A separate **Build** instruction starts implementation for that approved item. Do not treat approval of one item as approval of the whole queue.
 - **The code wins on what's built.** This is a summary, not a spec. Check each note against the code before relying on it.
@@ -30,7 +30,7 @@ Older chats, notes and prototypes use working names. They map like this:
 | Q07 | Song Clock: Dynamic Sync | Song Clock C, Render 8, Paced Recall |
 | Q08 | Interface: Native iOS Polish | Native bars, iOS 27 polish (shipped in 3.23) |
 | Q09 | Track: Waveform Sections Follow-up | Giant 3-Pad dock, Q02 follow-up (shipped in 3.25) |
-| Q10 | Interface: HIG Foundations Pass | Vault ideas wireframes |
+| Q10 | Interface: HIG Foundations Pass | Vault ideas wireframes (shipped in 3.26) |
 
 Work shipped before this standard (for example Track 1 and Song Clock A1) keeps its version numbers and has no queue ID.
 
@@ -143,42 +143,6 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 - **Decided:** marks over Recall's pills stay still while words reveal (a test, not new behaviour).
 - **Next action:** confirm dates and scope with Ivan.
 - **Done when:** *Unresolved.*
-
-## Q10 · Interface: HIG Foundations Pass
-
-**Status:** Building (Build given by Ivan on 28 Oct 2026). **Approval:** Render given by Ivan on 28 Oct 2026 for the scope below. Its wireframes (eight boards, each showing now and proposed) were approved the same day and are in Ivan's private design canvas; he shares them when the build starts.
-**Needs:** 3.25 live (verified on `main` at `d807d12`, 28 Oct 2026).
-
-- **Goal:** bring the app's design foundations in line with Apple's HIG where the iOS styles in Ivan's Obsidian vault already go further: one set of text sizes, Apple's system colours, layered backgrounds, layout that fits each part's own space, and four smaller touches.
-- **Approved scope (all eight parts, as wireframed):**
-  1. **Text sizes:** replace the app's many fixed font sizes (about 20, including off-scale ones like 10, 14, 18, 19, 24, 25 and 30) with one named set taken from Apple's text styles. Sizes stay fixed; no text scaling.
-  2. **System colours:** add Apple's system colours, light and dark, and point the app's own colours at them:
-     - coral → red; marker purple → purple; star and pause → orange (`#ff9500`; they currently use the dark-mode orange in light mode);
-     - the Progress gradient's R → teal and A → orange; F stays indigo, and its dark value becomes Apple's dark indigo;
-     - the warning banner → an orange tint with dark text.
-     - Marker chips become tinted (a light purple wash, dark label, purple dot), because white text on Apple's purple is too faint for small labels.
-  3. **Background layers:** add the deeper grouped-background and faint-label levels. A box inside a card uses the darker grey with no outline instead of a second outlined white box, and an empty value shows a faint dash.
-  4. **Layout per part:** parts adapt to their own width rather than only the whole window's. The approved example is the iPad/Mac marker tiles: three across with room, one across without.
-  5. **Sideways scroll hint:** a soft fade on whichever edge of a sideways-scrolling row has more behind it, starting with the track player's marker chips.
-  6. **Selection tint:** selected text in a light wash of the accent, in the lyrics editor and text fields (selection stays off elsewhere).
-  7. **Fold-out rows:** a row that folds open, with a tinted chevron that turns down when open and a count of what's inside, for pages that get long.
-  8. **Hover hints on Mac:** a short label on icon-only buttons after a pause, on pointer devices only. The approved example is the track player's transport.
-- **Decided:**
-  - One queue item for all eight parts, including the two that were optional (7 and 8).
-  - The Progress gradient's A stop shares the loop's orange. They're on different screens.
-  - Dark mode uses Apple's dark-mode partner of each colour; no separate dark wireframes.
-- **Out of scope:** Increase Contrast, Reduce Transparency, text-size scaling (Dynamic Type), Bold Text and Button Shapes; pinch-zoom behaviour; anything beyond the eight parts.
-- **Answered at Build (28 Oct 2026):**
-  - Fold-out rows go in the takes sheet's **All takes**: one row per section with its take count, folding open to its takes.
-  - Hover hints go on both track player transports (the round one and the Markers pads) and the top bar's glass circles (Back, ⋯, Search). Wording matches each button's existing spoken label.
-- **Assumptions:** the wireframes use generic phone frames rather than the iPhone 17 Pro viewport in [PROTOTYPE_DEFAULTS.md](PROTOTYPE_DEFAULTS.md); they show layout and intent, not exact sizes.
-- **Next action:** build, test and release as 3.26.
-- **Done when:**
-  - All eight parts work in light and dark mode on iPhone, iPad and Mac.
-  - Font sizes in `css/app.css` come only from the named set, and colours from the tokens.
-  - Marker chip labels meet 4.5:1 contrast.
-  - Anything new that moves follows `html.motion-reduced`.
-  - The full suite passes.
 
 ---
 

@@ -2,9 +2,9 @@
 
 A mobile-first companion for structured vocal practice, styled like a native iOS app. It's a single HTML file with no install, no backend and no account. It's designed to live on your iPhone Home Screen.
 
-![Version 3.25](https://img.shields.io/badge/version-3.25-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
+![Version 3.26](https://img.shields.io/badge/version-3.26-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
 
-**Current version: 3.25 · 26 Oct 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
+**Current version: 3.26 · 28 Oct 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
 
 ---
 
@@ -85,7 +85,7 @@ And **Songs**, for learning a song: paste the lyrics, and they're split into lab
   - The pencil edits the title, artist and length in place, with **Edit lyrics**, **Marks** and **Done**. **Marks** opens **Annotate**: tap a word for Breath, Run, Higher, Lower, Sing as (a vowel) or a Note. A sing-as label sits above its word like a chord over lyrics, and the word makes room for it, so labels never overlap. Add a cue to a section, unlink a repeat to give it its own copy, or hold a section to move it. Undo steps back through changes.
   - **Lyrics** edits the words. Marked words are highlighted, marks follow their words, and a mark whose word changed is flagged to check. One whose word was removed waits at the top of its section to be moved or removed.
   - **Record a section:** in Practise or Perform, focus a section, then **Record**. The screen stays on that section while it records, with a recording bar at the bottom (time, level meter, Stop). Stopping opens the takes for that section over the song, with the new take ready to play. Each repeat keeps its own takes, even when linked. A take on any song page starts (or carries on) song practice for that song, timed from that first take.
-  - **Takes:** a switch between this section's takes and **All takes**, newest first. Tap a take to expand and play it: a waveform you drag to scrub, −5 s and +5 s, and its name (tap to rename; the original details stay underneath). **Comments** are stamped with the time: the moment you start typing, the playhead's time is locked (tap it for −1 s, +1 s or Use current time). While it plays, each comment pops up as the playhead passes it; dots under the waveform jump to them. Swipe a take right to star it, left to delete it, or hold it for both. Names and comments are in every backup.
+  - **Takes:** a switch between this section's takes and **All takes**, newest first. All takes is grouped by section: a row for each with its count, folding open to its takes (the section you came from starts open). Tap a take to expand and play it: a waveform you drag to scrub, −5 s and +5 s, and its name (tap to rename; the original details stay underneath). **Comments** are stamped with the time: the moment you start typing, the playhead's time is locked (tap it for −1 s, +1 s or Use current time). While it plays, each comment pops up as the playhead passes it; dots under the waveform jump to them. Swipe a take right to star it, left to delete it, or hold it for both. Names and comments are in every backup.
   - **Song practice** at the bottom starts song practice with that song picked.
   - **Track** (beside it) adds the song's audio from Files, then opens the **track player**:
     - **Views:** **Phrase** (6 s) and **Line** (16 s) are a strip moving under a red playhead, with a three-line lyric card above it: the line before, the line at the playhead (with its section) and the next. **Song** shows the whole song in rows of 24 s, the last one ending at the track's end, with the lyrics under each row (the **Lyrics** pill hides them; tap a line to go to it). **Markers** is a grid of tiles (below). Tap a row to move the playhead there (the view stays). Change the view with the level pills, or pinch. Section starts set in Song Clock show as blue lines with their names.
@@ -175,7 +175,9 @@ Lists push their pages in from the right, as on iPhone: a song from Songs, Today
 
 Small movements show what changed: deleted rows shrink away and the gap closes, a pinned song travels into Pinned, the Progress bars ripple to new heights in the direction of time, the weekly goal arc fills after launch, and Recall hides lyrics word by word. Anything you drag or scrub follows your finger instantly, and nothing moves while you record or perform. With Reduce Motion on, changes fade instead of moving (zooms become a short fade, and a swipe back moves sideways only).
 
-Sheets open as centred cards on bigger screens. With a mouse or trackpad, rows highlight on hover. Keyboard shortcuts (Cmd on a Mac, Ctrl elsewhere):
+Sheets open as centred cards on bigger screens. With a mouse or trackpad, rows highlight on hover, and resting on an icon-only button (the top bar's round buttons and the track player's) shows what it does after a moment. On iPad and Mac the track player's marker tiles go three across when their side of the screen has room.
+
+Text sizes, colours and backgrounds follow Apple's: one set of text styles, Apple's system colours in light and dark, and darker grey for anything inside a card. Keyboard shortcuts (Cmd on a Mac, Ctrl elsewhere):
 
 | Keys | Does |
 |---|---|

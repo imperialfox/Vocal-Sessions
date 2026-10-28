@@ -53,6 +53,7 @@ const TAKE = (() => {
   const reading = new Set();
   let openId = null; // the expanded take
   let tab = null; // the sheet's switch: 'sec' or 'all'
+  let folds = null; // Q10 All takes: the sections folded open (their occurrence ids), set when the sheet opens
   const pos = {}; // where each take's playhead was left (not playing)
   let prevT = 0; // the last frame's time, so a comment pops up only when playback passes it
   let pop = null; // {text, until}
@@ -335,6 +336,51 @@ const TAKE = (() => {
       on = tab || (sd.all || !sd.o ? 'all' : 'sec');
     return { all, sec, on: sec ? on : 'all', list: (sec && on === 'sec' ? sec : all).slice().reverse() };
   }
+  // Q10 All takes as fold-out rows: one row per section with takes (in song order), and any takes without a section
+  // last. Returns null when there's only one group, so a short list stays a plain list
+  // a take's group: its section's occurrence id, or '' for takes from no section (or one that's gone)
+  const foldOf = (sg, t) => (t.o && hasLyrics(sg) && occIdx(sg, t.o) >= 0 ? t.o : '');
+  function groupsFor(sg, list) {
+    if (!sg || !hasLyrics(sg)) return null;
+    const by = new Map();
+    list.forEach((t) => {
+      const k = foldOf(sg, t),
+        i = k ? occIdx(sg, k) : -1;
+      if (!by.has(k)) by.set(k, { o: k, i, label: i < 0 ? 'Other takes' : occLabel(sg, i), takes: [] });
+      by.get(k).takes.push(t);
+    });
+    if (by.size < 2) return null;
+    return [...by.values()].sort((a, b) => (a.i < 0 ? 1e9 : a.i) - (b.i < 0 ? 1e9 : b.i));
+  }
+  function foldHTML(sg, g) {
+    const open = folds.has(g.o),
+      n = g.takes.length,
+      id = 'tkf' + (g.o || 'x');
+    return (
+      '<div class="tkfold' +
+      (open ? ' open' : '') +
+      '" data-fold="' +
+      esc(g.o) +
+      '"><button class="row tkfh" data-a="tkFold" data-v="' +
+      esc(g.o) +
+      '" aria-expanded="' +
+      open +
+      '" aria-controls="' +
+      id +
+      '"><span class="lbl">' +
+      esc(g.label) +
+      '</span><span class="mut">' +
+      n +
+      (n === 1 ? ' take' : ' takes') +
+      '</span><span class="tkchev" aria-hidden="true">' +
+      ICON.fwd +
+      '</span></button>' +
+      (open
+        ? '<div class="tkfin" id="' + id + '">' + g.takes.map((t) => rowHTML(sg, t, false)).join('') + '</div>'
+        : '') +
+      '</div>'
+    );
+  }
   function rowHTML(sg, t, showWhere) {
     const open = openId === t.id,
       cm = comments(sg, t.id),
@@ -579,10 +625,23 @@ const TAKE = (() => {
         '">All takes · ' +
         L.all.length +
         '</button></div>';
+    const G = L.on === 'all' ? groupsFor(sg, L.list) : null;
+    if (G && !folds) {
+      // opens with the expanded take's section folded open (from Search, say), or the section the sheet came from
+      const ot = openId && L.list.find((t) => t.id === openId),
+        want = ot ? G.find((g) => g.takes.includes(ot)) : G.find((g) => g.o && g.o === sd.o);
+      folds = new Set(want ? [want.o] : []);
+    }
+    if (G && openId) {
+      const og = G.find((g) => g.takes.some((t) => t.id === openId));
+      if (og) folds.add(og.o);
+    }
     if (L.list.length)
       h +=
-        '<div class="grp tkgrp">' +
-        L.list.map((t) => rowHTML(sg, t, L.on === 'all')).join('') +
+        '<div class="grp tkgrp' +
+        (G ? ' tkfolds' : '') +
+        '">' +
+        (G ? G.map((g) => foldHTML(sg, g)).join('') : L.list.map((t) => rowHTML(sg, t, L.on === 'all')).join('')) +
         '</div>' +
         '<p class="foot">' +
         (fresh ? 'Fresh ears help. Try listening again tomorrow. ' : '') +
@@ -688,7 +747,7 @@ const TAKE = (() => {
       fg: g('--fg', '#000'),
       dim: g('--trk-dim', '#bbb'),
       head: g('--accent', '#007aff'),
-      dot: g('--star', '#ff9f0a'),
+      dot: g('--star', '#ff9500'),
     };
   }
   function draw() {
@@ -807,6 +866,7 @@ const TAKE = (() => {
     U.sd = { k: t.songId, all: true };
     tab = 'all';
     openId = id;
+    folds = null;
     renaming = null;
     draft = null;
     rerender();
@@ -826,6 +886,7 @@ const TAKE = (() => {
       if (U.sheet !== 'sgTakeMenu' && U.sheet !== 'sgTakeDel' && U.sheet !== 'sgCmtMenu') {
         openId = null;
         tab = null;
+        folds = null;
         renaming = null;
         draft = null;
       }
@@ -1130,7 +1191,59 @@ const TAKE = (() => {
       U.sd = { k: k || U.songId, all: true };
       tab = 'all';
       openId = null;
+      folds = null;
       rerender();
+    },
+    // Q10 a section's row in All takes folds its takes open or shut. The chevron turns and the takes arrive (or
+    // leave) on the shared springs; a section with the expanded take in it collapses that take as it shuts
+    tkFold(el, v) {
+      if (!folds) folds = new Set();
+      const o = v || '',
+        open = !folds.has(o),
+        box = el.closest('.tkfold');
+      if (open) folds.add(o);
+      else {
+        folds.delete(o);
+        const t = openId && TAKES.find((x) => x.id === openId),
+          sg = songById((U.sd || {}).k);
+        if (t && sg && foldOf(sg, t) === o) openId = null;
+      }
+      const leaving = !open && box && box.querySelector('.tkfin');
+      const go = () => {
+        rerender();
+        const nb = document.querySelector('#layer .tkfold[data-fold="' + CSS.escape(o) + '"]');
+        if (!nb) return;
+        const ch = nb.querySelector('.tkchev');
+        if (ch)
+          MOTION.animate(
+            ch,
+            [{ transform: 'rotate(' + (open ? 0 : 90) + 'deg)' }, { transform: 'rotate(' + (open ? 90 : 0) + 'deg)' }],
+            {
+              spring: 'gentle',
+            }
+          );
+        if (open)
+          nb.querySelectorAll('.tkfin > .tkr').forEach((r, i) =>
+            MOTION.animate(
+              r,
+              [
+                { opacity: 0, transform: 'translateY(-6px)' },
+                { opacity: 1, transform: 'none' },
+              ],
+              {
+                spring: 'gentle',
+                delay: MOTION.stagger(i, 'row'),
+                fade: true,
+              }
+            )
+          );
+      };
+      // shutting: the takes fade out quickly first (exits are quicker than entrances), then the list closes up
+      const a = leaving
+        ? MOTION.animate(leaving, [{ opacity: 1 }, { opacity: 0 }], { ms: 140, easing: 'ease-in', fill: 'forwards' })
+        : null;
+      if (a && a.finished) a.finished.then(go, go);
+      else go();
     },
     tkTab(el, v) {
       tab = v === 'sec' ? 'sec' : 'all';

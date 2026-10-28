@@ -200,7 +200,7 @@ const ICON = {
   circleOn:
     '<svg class="i" viewBox="0 0 24 24" style="width:24px;height:24px"><circle cx="12" cy="12" r="10" fill="currentColor" stroke="none"/><path d="M7.5 12.2l3 3 6-6.4" stroke="#fff"/></svg>',
 };
-const chev = '<span class="mut" aria-hidden="true" style="font-size:20px">›</span>';
+const chev = '<span class="mut" aria-hidden="true" style="font-size:var(--t-title3)">›</span>';
 /* Layout: phone (compact), phone on its side (land), iPad or Mac window (reg), wide enough for a sidebar (wide) */
 const MQ = {
   reg: matchMedia('(min-width:700px) and (min-height:501px)'),

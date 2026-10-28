@@ -397,7 +397,7 @@ function renderSheet() {
     h =
       '<div class="scrim" data-a="close"><div class="sheet glass" role="dialog" aria-modal="true" aria-label="How did it go?"><div class="shead"><div class="grab"></div><div class="shtop"><button class="shbtn glass" data-a="skipHow" aria-label="Skip and save">' +
       ICON.x +
-      '</button><span class="mut" style="font-size:13px">' +
+      '</button><span class="mut" style="font-size:var(--t-footnote)">' +
       (isSong() ? 'Song practice' : 'Session') +
       ' · ' +
       hm(finalMins()) +
@@ -933,7 +933,7 @@ function sessionBody(ss, mode) {
     '<div class="grp"><div class="row"><span class="lbl">Total time</span><span class="mut">' +
     hm(ss.mins) +
     '</span></div>' +
-    '<div class="row" style="display:block;padding:12px 16px"><div style="display:flex;justify-content:space-between;font-size:15px"><span>Time per step</span><span class="mut" style="font-size:13px">' +
+    '<div class="row" style="display:block;padding:12px 16px"><div style="display:flex;justify-content:space-between;font-size:var(--t-subhead)"><span>Time per step</span><span class="mut" style="font-size:var(--t-footnote)">' +
     (spl.mixed ? 'Filled in at the end' : 'Timed') +
     '</span></div>' +
     '<div class="mini" style="max-width:none;height:6px;margin-top:8px" aria-hidden="true">' +
@@ -1214,6 +1214,8 @@ function render(keepScroll) {
   renderSide();
   if (keepScroll) window.scrollTo(0, y);
   placeKnobs();
+  edgeFades();
+  if (HINT.on && !HINT.on.isConnected) hintHide(); // Q10 a hover hint never outlives its button
   logReveal();
   songsAfter();
   CLOCK.after(); // 3.18 Song Clock: the play-along view, the current line when paused, the wake lock
@@ -1294,3 +1296,25 @@ function segPick(el) {
   placeKnob(sg, true);
 }
 window.addEventListener('resize', () => placeKnobs());
+
+/* ===== Q10 Sideways scroll hints =====
+   A row that scrolls sideways (marked data-edge-fade) gets a soft fade on whichever edge has more behind it:
+   the right at the start, both in the middle, the left at the end, and none when everything fits. */
+function edgeFade(el) {
+  const max = el.scrollWidth - el.clientWidth,
+    x = Math.abs(el.scrollLeft);
+  el.classList.toggle('fadel', max > 1 && x > 1);
+  el.classList.toggle('fader', max > 1 && x < max - 1);
+}
+function edgeFades(root) {
+  (root || document).querySelectorAll('[data-edge-fade]').forEach(edgeFade);
+}
+document.addEventListener(
+  'scroll',
+  (e) => {
+    const el = e.target;
+    if (el && el.nodeType === 1 && el.hasAttribute('data-edge-fade')) edgeFade(el);
+  },
+  { passive: true, capture: true }
+);
+window.addEventListener('resize', () => edgeFades());

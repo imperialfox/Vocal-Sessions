@@ -18,11 +18,11 @@ const isFlow = (v) => !!FLOW[v];
 
 /* One glyph per exercise; tile colour = focus area */
 const FOCUS_COL = {
-  'cord-closure': '#007aff',
+  'cord-closure': 'var(--sys-blue)',
   register: '#8e5cf7',
   resonance: '#16a8a0',
   agility: '#f2a20c',
-  blend: '#f0524a',
+  blend: 'var(--coral)',
 };
 const GL = (p) => '<svg viewBox="0 0 24 24" aria-hidden="true">' + p + '</svg>';
 const GLYPH = {
@@ -56,7 +56,7 @@ const tile = (e, big) =>
   '<span class="tile' +
   (big ? ' big' : '') +
   '" style="background:' +
-  (FOCUS_COL[e.focus] || '#8e8e93') +
+  (FOCUS_COL[e.focus] || 'var(--sys-gray)') +
   '">' +
   (GLYPH[e.id] || GLYPH.custom) +
   '</span>';

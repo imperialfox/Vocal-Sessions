@@ -9,6 +9,36 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.26 · 28 Oct 2026
+*Apple's text sizes, colours and layers throughout (Q10)*
+
+<!-- area: look -->
+**Text and colour**
+- Every piece of text now uses one of Apple's text styles, from Large Title down to Caption, so the same kind of text is always the same size. In-between sizes are gone, so some text moves by a point or two: notes and banners go from 14 to 15, the big lines in Song Clock settle at 28, and the numbers on Progress at 22.
+- The app's colours are now Apple's own, in light and dark: red for recording and songs, orange for stars, pause and the loop, purple for markers, and indigo, teal and orange for the Progress bar (its last colour is the loop's orange).
+- Stars and pause were using the dark-mode orange in light mode; they're the proper light orange now.
+- Warnings are a soft orange tint with dark text.
+
+**Markers**
+- A marker's number sits on a light purple wash in dark text, with a purple dot, so it's easy to read at a glance. The marker playing has a red dot.
+- The numbered tabs on the waveform use a deeper purple for the same reason.
+- On an iPad or a Mac, the marker tiles follow how wide their side of the screen is: three across with room, one across when it's narrow.
+- The row of marker chips under the waveform fades softly at whichever edge has more chips behind it.
+
+**Layers**
+- A box inside a card is a slightly darker grey with no outline, as in Apple's apps (the song's title fields while you edit them in Song Clock, the takes inside a section).
+- An empty value in a list shows a faint dash instead of a gap.
+- Selected text in the lyrics editor and text boxes is a light wash of the app's blue.
+
+<!-- area: recordings -->
+**All takes**
+- All takes is grouped by section: a row for each section with how many takes it has. Tap one to fold its takes open; the blue chevron turns down. More than one can be open.
+- It opens with the section you came from already open, and a take opened from Search shows inside its section. A song whose takes are all from one section keeps the plain list.
+
+<!-- area: look -->
+**On a Mac**
+- Resting the pointer on an icon-only button shows what it does after a moment: the track player's buttons, and the round buttons in the top bar (Back, ⋯ and Search). Never on touch.
+
 ## 3.25 · 26 Oct 2026
 *Bigger rehearsal controls on the track player (Q09)*
 

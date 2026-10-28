@@ -774,8 +774,10 @@ const TRACK = (() => {
       dim: g('--trk-dim', '#bbb'),
       loop: g('--trk-loop', '#ff9500'),
       head: g('--trk-playhead', '#ff3b30'), // Q02: the playhead is red in both themes
-      mk: g('--trk-mk', '#8e44ec'),
-      mkfg: g('--trk-mkfg', '#fff'),
+      mk: g('--trk-mk', '#af52de'),
+      // Q10: a marker's numbered tab is filled with the higher-contrast purple, so its number stays readable
+      mkink: g('--trk-mk-ink', '#8944ab'),
+      mkinkfg: g('--trk-mk-inkfg', '#fff'),
       sec: g('--trk-sec', '#007aff'),
       secfg: g('--trk-secfg', '#fff'),
       font: getComputedStyle(document.body).fontFamily || 'sans-serif',
@@ -849,8 +851,9 @@ const TRACK = (() => {
       g.fillStyle = C.mk;
       g.fillRect(x - 1, 0, 2, h);
       const tw = tab + (i >= 9 ? 4 : 0);
+      g.fillStyle = C.mkink;
       rr(g, x - 1, 0, tw, tab, 3);
-      g.fillStyle = C.mkfg;
+      g.fillStyle = C.mkinkfg;
       g.fillText(String(i + 1), x - 1 + tw / 2, tab / 2 + 0.5);
     });
     g.restore();
@@ -1266,6 +1269,7 @@ const TRACK = (() => {
     const sl = box.scrollLeft;
     box.innerHTML = chipsHTML();
     box.scrollLeft = sl;
+    edgeFade(box);
     endHere();
     if (added && !playing()) {
       const c = box.querySelector('.trkchip[data-mk="' + added + '"]');
@@ -1654,7 +1658,8 @@ const TRACK = (() => {
   // tile that adds one at the playhead
   function gridHTML() {
     const M = mks();
-    let h = '<div class="trkgrid" id="trkGrid">';
+    // Q10: the tiles sit in a box that measures its own width, so they go three across with room and one without
+    let h = '<div class="trkgw"><div class="trkgrid" id="trkGrid">';
     M.forEach((m, i) => {
       const n = i + 1,
         r = rangeOf(m),
@@ -1698,7 +1703,7 @@ const TRACK = (() => {
       ICON.plus +
       '<span>Marker at <span id="trkQaT">' +
       fmt1(now()) +
-      '</span></span></button></div>';
+      '</span></span></button></div></div>';
     if (!M.length) h += '<p class="foot trkgf">Add markers while it plays, then tap one to loop it.</p>';
     return h;
   }
@@ -1768,7 +1773,7 @@ const TRACK = (() => {
       // Markers: the speed sits here, since the grid has its own add tile and no Set start / Set end
       (g ? spdHTML() : '') +
       '</div>' +
-      (g ? '' : '<div class="trkmk" id="trkMk" data-own-gesture>' + chipsHTML() + '</div>') +
+      (g ? '' : '<div class="trkmk" id="trkMk" data-own-gesture data-edge-fade>' + chipsHTML() + '</div>') +
       (g
         ? ''
         : '<div class="trkchips" id="trkBtns"><button class="cvpill" data-a="trkSet" data-v="start">Set start</button><button class="cvpill" data-a="trkSet" data-v="end">Set end</button><button class="cvpill trkaddmk" data-a="trkMkAdd" aria-label="Add marker at the playhead">' +
