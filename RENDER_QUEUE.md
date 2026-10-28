@@ -15,7 +15,7 @@ Every queued item has a queue ID and a standard name, used in the queue, in hand
 - **Items:** `Q[##] · [Subsystem]: [Feature Name]`, e.g. `Q02 · Track: Waveform Sections`.
 - **Files** (handoffs, specs, wireframes, prototypes): `q##_[subsystem]_[feature]_[type].[ext]`, lower case with underscores, e.g. `q02_track_waveform_sections_handoff.md`.
 - **Releases:** the shipped version's `CHANGELOG.md` headline ends with the queue ID in brackets, e.g. `*Waveform sections on the track player (Q02)*` under `## 3.23 · 27 Oct 2026` (the `##` line keeps its exact format for the app's Changelog page). That's the bridge from queue ID to version. Q01 shipped as 3.22, headline `*Search, from every tab (Q01)*`; Q08 as 3.23.
-- **New items:** an idea gets its ID when Ivan says **Render** for it, taking the next unused number (the next is **Q10**). IDs are never reused or renumbered, even when the queue is reordered or an item ships.
+- **New items:** an idea gets its ID when Ivan says **Render** for it, taking the next unused number (the next is **Q11**). IDs are never reused or renumbered, even when the queue is reordered or an item ships.
 
 Older chats, notes and prototypes use working names. They map like this:
 
@@ -30,6 +30,7 @@ Older chats, notes and prototypes use working names. They map like this:
 | Q07 | Song Clock: Dynamic Sync | Song Clock C, Render 8, Paced Recall |
 | Q08 | Interface: Native iOS Polish | Native bars, iOS 27 polish (shipped in 3.23) |
 | Q09 | Track: Waveform Sections Follow-up | Giant 3-Pad dock, Q02 follow-up (shipped in 3.25) |
+| Q10 | Interface: HIG Foundations Pass | Vault ideas wireframes |
 
 Work shipped before this standard (for example Track 1 and Song Clock A1) keeps its version numbers and has no queue ID.
 
@@ -142,6 +143,42 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 - **Decided:** marks over Recall's pills stay still while words reveal (a test, not new behaviour).
 - **Next action:** confirm dates and scope with Ivan.
 - **Done when:** *Unresolved.*
+
+## Q10 · Interface: HIG Foundations Pass
+
+**Status:** Approved — awaiting Build. **Approval:** Render given by Ivan on 28 Oct 2026 for the scope below. Its wireframes (eight boards, each showing now and proposed) were approved the same day and are in Ivan's private design canvas; he shares them when the build starts.
+**Needs:** 3.25 live (verified on `main` at `d807d12`, 28 Oct 2026).
+
+- **Goal:** bring the app's design foundations in line with Apple's HIG where the iOS styles in Ivan's Obsidian vault already go further: one set of text sizes, Apple's system colours, layered backgrounds, layout that fits each part's own space, and four smaller touches.
+- **Approved scope (all eight parts, as wireframed):**
+  1. **Text sizes:** replace the app's many fixed font sizes (about 20, including off-scale ones like 10, 14, 18, 19, 24, 25 and 30) with one named set taken from Apple's text styles. Sizes stay fixed; no text scaling.
+  2. **System colours:** add Apple's system colours, light and dark, and point the app's own colours at them:
+     - coral → red; marker purple → purple; star and pause → orange (`#ff9500`; they currently use the dark-mode orange in light mode);
+     - the Progress gradient's R → teal and A → orange; F stays indigo, and its dark value becomes Apple's dark indigo;
+     - the warning banner → an orange tint with dark text.
+     - Marker chips become tinted (a light purple wash, dark label, purple dot), because white text on Apple's purple is too faint for small labels.
+  3. **Background layers:** add the deeper grouped-background and faint-label levels. A box inside a card uses the darker grey with no outline instead of a second outlined white box, and an empty value shows a faint dash.
+  4. **Layout per part:** parts adapt to their own width rather than only the whole window's. The approved example is the iPad/Mac marker tiles: three across with room, one across without.
+  5. **Sideways scroll hint:** a soft fade on whichever edge of a sideways-scrolling row has more behind it, starting with the track player's marker chips.
+  6. **Selection tint:** selected text in a light wash of the accent, in the lyrics editor and text fields (selection stays off elsewhere).
+  7. **Fold-out rows:** a row that folds open, with a tinted chevron that turns down when open and a count of what's inside, for pages that get long.
+  8. **Hover hints on Mac:** a short label on icon-only buttons after a pause, on pointer devices only. The approved example is the track player's transport.
+- **Decided:**
+  - One queue item for all eight parts, including the two that were optional (7 and 8).
+  - The Progress gradient's A stop shares the loop's orange. They're on different screens.
+  - Dark mode uses Apple's dark-mode partner of each colour; no separate dark wireframes.
+- **Out of scope:** Increase Contrast, Reduce Transparency, text-size scaling (Dynamic Type), Bold Text and Button Shapes; pinch-zoom behaviour; anything beyond the eight parts.
+- **Open questions:**
+  - *Unresolved:* where fold-out rows are used. The wireframe uses a song's sections and takes as an example, not checked against the current song page.
+  - *Unresolved:* which icon-only buttons get hover hints beyond the transport, and their wording.
+- **Assumptions:** the wireframes use generic phone frames rather than the iPhone 17 Pro viewport in [PROTOTYPE_DEFAULTS.md](PROTOTYPE_DEFAULTS.md); they show layout and intent, not exact sizes.
+- **Next action:** when Ivan says Build for Q10, implement it in a fresh chat from a Q10 handoff, with the wireframes.
+- **Done when:**
+  - All eight parts work in light and dark mode on iPhone, iPad and Mac.
+  - Font sizes in `css/app.css` come only from the named set, and colours from the tokens.
+  - Marker chip labels meet 4.5:1 contrast.
+  - Anything new that moves follows `html.motion-reduced`.
+  - The full suite passes.
 
 ---
 
