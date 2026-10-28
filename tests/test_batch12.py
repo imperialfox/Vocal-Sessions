@@ -419,12 +419,14 @@ def takes(b, t):
     ok(pg.evaluate("(()=>{const h=document.querySelector('#app .sgtrow h1').getBoundingClientRect(),b=document.querySelector('#app .sgtkb').getBoundingClientRect();return b.left>=h.right-1&&Math.abs((b.top+b.bottom)/2-(h.top+h.bottom)/2)<14})()"),
        'beside the title, on its line')
     hb.click(); pg.wait_for_timeout(300)
-    ok(pg.evaluate("U.sheet") == 'sgTakes' and pg.locator('.sheet .tkr').count() == 5 and pg.locator('.sheet .tkseg').count() == 0,
-       'it opens the takes sheet on All takes')
+    heads = pg.evaluate("[...document.querySelectorAll('.sheet .tkfh')].map(b=>b.querySelector('.lbl').textContent+' · '+b.querySelector('.mut').textContent)")
+    ok(pg.evaluate("U.sheet") == 'sgTakes' and pg.locator('.sheet .tkseg').count() == 0 and pg.locator('.sheet .tkr').count() == 0
+       and heads == ['Verse 1 · 2 takes', 'Chorus 1 · 2 takes', 'Other takes · 1 take'],
+       f'it opens the takes sheet on All takes, a folded row per section (Q10): {heads}')
+    pg.evaluate("""[...document.querySelectorAll('.sheet .tkfh[aria-expanded=false]')].map(b=>b.dataset.v).forEach(v=>SG_ACT.tkFold(document.querySelector('.sheet .tkfh[data-v=\"'+v+'\"]'),v))"""); pg.wait_for_timeout(200)
     names = pg.evaluate("[...document.querySelectorAll('.sheet .tkr .tktx b')].map(b=>b.textContent)")
-    ok(names[0].startswith('Take 5') and names[-1].startswith('Take 1'), f'newest first, numbered: {names}')
-    sub = pg.inner_text('.sheet .tkr >> nth=0')
-    ok('Verse 1' in sub, 'with All takes, each row’s subtitle says its section: ' + sub.replace('\n', ' | '))
+    ok(len(names) == 5 and names[0].startswith('Take 5') and names[1].startswith('Take 1') and names[-1].startswith('Take 4'),
+       f'sections in song order, newest first inside each, numbered: {names}')
     pg.evaluate("closeSheet()"); pg.wait_for_timeout(200)
     # from a section: the switch
     pg.evaluate("o=>{U.sSec=o;rerender()}", o[1]); pg.wait_for_timeout(200)
@@ -434,7 +436,8 @@ def takes(b, t):
        'from a section, the switch reads “Chorus 1 · 2 | All takes · 5” and opens on the section: ' + seg.replace('\n', ' | '))
     ok(pg.locator('.sheet .tkr').count() == 2, 'with that section’s takes')
     pg.click('.sheet [data-a=tkTab][data-v=all]'); pg.wait_for_timeout(250)
-    ok(pg.locator('.sheet .tkr').count() == 5 and pg.locator('.sheet .tkseg').count() == 1, 'All takes switches in place')
+    ok(pg.locator('.sheet .tkfh').count() == 3 and pg.locator('.sheet .tkr').count() == 2 and pg.locator('.sheet .tkseg').count() == 1,
+       'All takes switches in place, with the section it came from folded open')
     pg.click('.sheet [data-a=tkTab][data-v=sec]'); pg.wait_for_timeout(250)
     # tap a row: it expands and plays
     pg.click('.sheet .tkr >> nth=0 >> .tkhead .tktx'); pg.wait_for_function("!!player&&!player.paused", timeout=5000); pg.wait_for_timeout(300)
@@ -527,6 +530,7 @@ def takes(b, t):
        'a collapsed row shows its name and a comment icon with the count')
     # swipes: right stars, left deletes; only that side's colour shows
     pg.click('.sheet [data-a=tkTab][data-v=all]'); pg.wait_for_timeout(250)
+    pg.evaluate("""[...document.querySelectorAll('.sheet .tkfh[aria-expanded=false]')].map(b=>b.dataset.v).forEach(v=>SG_ACT.tkFold(document.querySelector('.sheet .tkfh[data-v=\"'+v+'\"]'),v))"""); pg.wait_for_timeout(200)  # Q10: every section folded open, so the swipes run inside them
 
     def swipe(tk, dx, hold=False):
         bb = pg.locator(f'.sheet .tkr[data-tk={tk}]').bounding_box()

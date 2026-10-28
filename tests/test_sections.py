@@ -119,8 +119,11 @@ def run(b, t):
     ok('Verse 1 · 3' in txt and 'All takes · 5' in txt and pg.locator('.sheet .tkr').count() == 3,
        'the sheet switches between this section’s takes and all of them: ' + txt.replace('\n', ' | ')[:120])
     pg.click('.sheet [data-a=tkTab][data-v=all]'); pg.wait_for_timeout(250)
-    ok(pg.locator('.sheet .tkr').count() == 5 and 'Chorus 2' in pg.text_content('.sheet .tkr:last-child small'),
-       'All takes lists every take, each saying its section')
+    ok(pg.locator('.sheet .tkr').count() == 3 and pg.get_attribute('.sheet .tkfh >> nth=0', 'aria-expanded') == 'true',
+       'All takes opens with this section folded open (Q10)')
+    pg.evaluate("""[...document.querySelectorAll('.sheet .tkfh[aria-expanded=false]')].map(b=>b.dataset.v).forEach(v=>SG_ACT.tkFold(document.querySelector('.sheet .tkfh[data-v=\"'+v+'\"]'),v))"""); pg.wait_for_timeout(200)
+    ok(pg.locator('.sheet .tkr').count() == 5 and 'Chorus 2' in pg.text_content('.sheet .tkfold:last-child .tkfh'),
+       'All takes lists every take, under its section')
     pg.click('.sheet .xbtn'); pg.wait_for_timeout(200)
 
     # older takes without a place belong to the whole song, and still show in song practice
