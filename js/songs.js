@@ -95,11 +95,7 @@ function occLabel(sg, idx) {
 function checkCount(sg) {
   if (!hasLyrics(sg)) return 0;
   let n = 0;
-  for (const k in sg.sections) {
-    const s = sg.sections[k];
-    n += s.orphans.length;
-    for (const a in s.ann) if (s.ann[a].check) n++;
-  }
+  for (const k in sg.sections) n += MARKS.checks(sg.sections[k]); // Q03: marks.js
   return n;
 }
 const takesOf = (id) => TAKES.filter((t) => t.songId === id).length;
@@ -166,22 +162,6 @@ const titleCase = (t) =>
     .map((w) => (w && w === w.toLowerCase() ? w.replace(/^(\P{L}*)(\p{L})/u, (m, a, b) => a + b.toUpperCase()) : w))
     .join(' ');
 const songTitle = (s) => (s && s.name && s.name.trim()) || 'Untitled song';
-const isEmptyMark = (a) => !a.br && !a.run && !a.up && !a.dn && !a.v && !a.nt;
-function markText(a) {
-  return (
-    [
-      a.up ? '↑' : '',
-      a.dn ? '↓' : '',
-      a.br ? 'Breath' : '',
-      a.run ? 'Run' : '',
-      a.v ? '“' + a.v + '”' : '',
-      a.nt ? 'Note' : '',
-    ]
-      .filter(Boolean)
-      .join(', ') || 'Mark'
-  );
-}
-
 /* ===== Songs: checking saved songs =====
    Each song is checked on its own, so one damaged song can't affect the others. Fields this version doesn't know
    about are kept, so a backup from a newer version loses nothing. If a song's lyrics are damaged but its original
@@ -272,41 +252,19 @@ function cleanSection(c) {
     .map((l) => l.filter((w) => typeof w === 'string' && w.trim()).map((w) => w.trim()))
     .filter((l) => l.length);
   if (!lines.length) return null;
-  const ann = {};
-  if (c.ann && typeof c.ann === 'object')
-    for (const k in c.ann) {
-      const m = /^(\d+):(\d+)$/.exec(k);
-      if (!m || !lines[+m[1]] || +m[2] >= lines[+m[1]].length) continue;
-      const a = cleanMark(c.ann[k]);
-      if (a) ann[k] = a;
-    }
-  const orphans = (Array.isArray(c.orphans) ? c.orphans : [])
-    .filter((o) => o && typeof o.id === 'string')
-    .map((o) => ({ id: o.id, was: typeof o.was === 'string' ? o.was : '', ann: cleanMark(o.ann) }))
-    .filter((o) => o.ann);
+  // Q03: the layered marks (marks.js), moved across from the older `ann` the first time; `ann` and `orphans` are
+  // kept in the older shape beside them, so a backup made now still opens in 3.26
+  const mk = MARKS.clean(c, lines);
   return Object.assign({}, c, {
     label: typeof c.label === 'string' && c.label.trim() ? c.label.trim().slice(0, 30) : 'Verse',
     cue: typeof c.cue === 'string' ? c.cue.slice(0, 200) : '',
     lines,
-    ann,
-    orphans,
+    marks: mk.marks,
+    held: mk.held,
+    ann: mk.ann,
+    orphans: mk.orphans,
   });
 }
-function cleanMark(a) {
-  if (!a || typeof a !== 'object' || Array.isArray(a)) return null;
-  const b = Object.assign({}, a);
-  ['br', 'run', 'up', 'dn', 'check'].forEach((k) => {
-    if (b[k]) b[k] = 1;
-    else delete b[k];
-  });
-  if (typeof b.v === 'string' && b.v.trim()) b.v = b.v.trim().slice(0, 20);
-  else delete b.v;
-  if (typeof b.nt === 'string' && b.nt.trim()) b.nt = b.nt.trim().slice(0, 200);
-  else delete b.nt;
-  if (typeof b.was !== 'string' || !b.check) delete b.was;
-  return isEmptyMark(b) ? null : b;
-}
-
 /* ===== Songs: reading pasted lyrics =====
    Cleans the paste (links, website clutter, curly quotes), finds section labels anywhere ([Chorus], Verse 2:, PRECHORUS),
    splits a chorus that repeats itself into two, links exact repeats so marks are added once, and flags guesses. */
@@ -448,7 +406,7 @@ function buildLyrics(blocks) {
     else {
       const sid = sgId('x');
       sidFor[i] = sid;
-      sections[sid] = { label: b.label, cue: '', lines: toLines(b.text), ann: {}, orphans: [] };
+      sections[sid] = { label: b.label, cue: '', lines: toLines(b.text), marks: [], held: [], ann: {}, orphans: [] };
     }
     order.push({ o: sgId('o'), sid: sidFor[i] });
   });
@@ -456,8 +414,9 @@ function buildLyrics(blocks) {
 }
 
 /* ===== Songs: marks follow their words =====
-   When lyrics change, a word-level comparison moves each mark to where its word went. A mark whose word changed is
-   flagged to check; one whose word was removed waits at the top of its section to be moved or removed. */
+   When lyrics change, a word-level comparison moves each mark to where its word went (MARKS.relink in marks.js). A
+   mark whose word changed is flagged to check; one whose word was removed waits at the top of its section to be moved
+   or removed. */
 function flat(lines) {
   const t = [];
   lines.forEach((l, li) => l.forEach((w, wi) => t.push({ li, wi, w, n: sgNorm(w) })));
@@ -487,44 +446,10 @@ function align(a, b) {
 }
 function relink(sec, nl) {
   const A = flat(sec.lines),
-    B = flat(nl),
-    ops = align(A, B),
-    ann = {};
-  let flagged = 0,
-    dels = [],
-    ins = [];
-  const flush = () => {
-    dels.forEach((i, k) => {
-      const a = sec.ann[A[i].li + ':' + A[i].wi];
-      if (!a) return;
-      if (ins[k] != null) {
-        const t = B[ins[k]];
-        ann[t.li + ':' + t.wi] = Object.assign({}, a, { check: 1, was: a.was || A[i].w });
-      } else {
-        const c = Object.assign({}, a);
-        delete c.check;
-        delete c.was;
-        sec.orphans.push({ id: sgId('r'), was: a.was || A[i].w, ann: c });
-      }
-      flagged++;
-    });
-    dels = [];
-    ins = [];
-  };
-  ops.forEach((op) => {
-    if (op[0] === '=') {
-      flush();
-      const a = sec.ann[A[op[1]].li + ':' + A[op[1]].wi];
-      if (a) {
-        const t = B[op[2]];
-        ann[t.li + ':' + t.wi] = a;
-      }
-    } else if (op[0] === '-') dels.push(op[1]);
-    else ins.push(op[1]);
-  });
-  flush();
-  sec.ann = ann;
+    B = flat(nl);
+  const flagged = MARKS.relink(sec, A, B, align(A, B)); // Q03: every layer's marks follow their words (marks.js)
   sec.lines = nl.length ? nl : [['…']];
+  MARKS.mirror(sec);
   return flagged;
 }
 // read the lyrics editors on screen back into the song
@@ -674,7 +599,21 @@ function sgp() {
   // (3.19: and the track player's zoom level and speed, checked in track.js)
   // (3.22: and Search's recent searches, findRecent, checked in search.js)
   // (Q02: and the track player's jog wheel side, Song lyrics and the levels' layout version, checked in track.js)
-  ['marksPlaying', 'blurAhead', 'snapping', 'stayAwake', 'pins', 'trkLevel', 'trkSpeed', 'findRecent', 'trkJogPos', 'trkSongLyrics', 'trkLvV'].forEach((k) => {
+  // (Q03: and the marks layer shown, mkLayer, checked in marks.js)
+  [
+    'marksPlaying',
+    'blurAhead',
+    'snapping',
+    'stayAwake',
+    'pins',
+    'trkLevel',
+    'trkSpeed',
+    'findRecent',
+    'trkJogPos',
+    'trkSongLyrics',
+    'trkLvV',
+    'mkLayer',
+  ].forEach((k) => {
     if (k in o) SGP[k] = o[k];
   });
   return SGP;
@@ -988,32 +927,38 @@ function pinnedCard() {
 }
 
 /* ===== Songs: one song ===== */
-function marksHTML(a) {
-  return (
-    (a.up ? '<span class="m">↑</span>' : '') +
-    (a.dn ? '<span class="m">↓</span>' : '') +
-    (a.br ? '<span class="m br" aria-label="breath">' + SG_BR + '</span>' : '') +
-    (a.nt ? '<span class="m nt" aria-label="note">' + SGI.note + '</span>' : '')
-  );
+// Q03: which marks the song page draws: the chosen layer (plus Notes) in Practise and while marking, brackets, chains,
+// breaths and Notes in Recall, and in Perform what Marks while playing allows (marks.js)
+function sgShow() {
+  if (U.sEdit === 'annotate') return MARKS.show('layer', MARKS.layer());
+  if (recallOn()) return MARKS.show('recall');
+  if (U.sMode === 'perform' && !U.sEdit) {
+    const mp = ckPrefs().marksPlaying;
+    return MARKS.show(mp === 'off' ? 'none' : mp === 'breaths' ? 'breaths' : 'active', MARKS.layer());
+  }
+  return MARKS.show('layer', MARKS.layer());
 }
-function sgWord(o, sid, li, wi, w, sec, mask) {
-  const a = sec.ann[li + ':' + wi] || {},
-    s = SG.word,
+// one word on the song page: d is what it wears (marks.js), mask hides its letters in Recall
+function sgWord(o, sid, li, wi, w, mask, d, chk) {
+  const s = SG.sel,
     ed = U.sEdit === 'annotate';
-  const hit = ed && s && s.sid === sid && s.li === li && s.wi === wi,
+  const hit = ed && s && s.sid === sid && s.li === li && wi >= s.w0 && wi <= s.w1,
     on = hit && s.o === o,
     echo = hit && !on;
-  const pl = SG.pulse && SG.pulse.sid === sid && SG.pulse.li === li && SG.pulse.wi === wi && SG.pulse.o !== o;
+  const p = SG.pulse,
+    pl = p && p.sid === sid && p.li === li && wi >= p.w0 && wi <= p.w1 && p.o !== o;
+  const lab = MARKS.labRow(d),
+    txt = mask ? maskText(w, mask) : esc(w);
   return (
     '<span class="w' +
-    (a.v ? ' hv' : '') +
-    (a.run ? ' run' : '') +
-    (a.check && ed ? ' chk' : '') +
+    (lab ? ' hv' : '') +
+    (d.cls.length ? ' ' + d.cls.join(' ') : '') +
+    (chk && ed ? ' chk' : '') +
     (on ? ' on' : '') +
     (echo ? ' echo' : '') +
     (pl ? ' pulse' : '') +
     '"' +
-    (on ? ' id="sgselw"' : '') +
+    (on && wi === s.w0 ? ' id="sgselw"' : '') +
     (ed
       ? ' role="button" tabindex="0" data-a="sgWord" data-o="' +
         o +
@@ -1023,21 +968,44 @@ function sgWord(o, sid, li, wi, w, sec, mask) {
         li +
         '" data-wi="' +
         wi +
-        '"'
+        '"' +
+        (on ? ' aria-pressed="true"' : '')
       : '') +
     '>' +
-    // 3.17: a word with a sing-as label is a little column, the label above the word (like a chord sheet)
-    (a.v
-      ? '<span class="v">' +
-        (mask === 'all' ? maskText(a.v, 'all') : esc(a.v)) +
-        '</span><span class="wt">' +
-        (mask ? maskText(w, mask) : esc(w)) +
-        '</span>'
-      : mask
-        ? maskText(w, mask)
-        : esc(w)) +
-    '</span>' +
-    marksHTML(a)
+    // 3.17: a word with a label is a little column, the label above the word (like a chord sheet); Q03: every
+    // layer's labels sit there, joined with " · ", with the peak tick first
+    (lab ? lab + '<span class="wt">' + txt + '</span>' : txt) +
+    '</span>'
+  );
+}
+// the words of a line that have a mark to check, on any layer (shown while editing)
+function sgChecks(sec, li) {
+  const b = new Set();
+  (sec.marks || []).forEach((m) => {
+    if (m.check && m.line === li) for (let w = m.w0; w <= m.w1; w++) b.add(w);
+  });
+  return b;
+}
+// the layer chips, 1–4, above the lyrics in Practise and while marking
+function sgLayerChips() {
+  const L = MARKS.layer();
+  return (
+    '<div class="mkchips" role="tablist" aria-label="Marks layer">' +
+    MK_LAYERS.map(
+      (x, i) =>
+        '<button class="mkchip' +
+        (x[0] === L ? ' on' : '') +
+        '" role="tab" aria-selected="' +
+        (x[0] === L) +
+        '" data-a="mkLayer" data-v="' +
+        x[0] +
+        '"><i>' +
+        (i + 1) +
+        '</i>' +
+        x[1] +
+        '</button>'
+    ).join('') +
+    '</div>'
   );
 }
 function sgSection(sg, idx) {
@@ -1077,10 +1045,10 @@ function sgSection(sg, idx) {
   else if (n && !sel) h += '<span class="shared">' + nTakes(n) + '</span>';
   h += '</div>';
   if (ed)
-    sec.orphans.forEach((op) => {
+    (sec.held || []).forEach((op) => {
       h +=
         '<div class="sgwarn"><span>' +
-        esc(markText(op.ann)) +
+        esc(MARKS.name(op)) +
         ' was on “' +
         esc(op.was) +
         '”, which was removed</span><span class="sgbtns"><button class="sgpill sm" data-a="sgOMove" data-k="' +
@@ -1093,6 +1061,10 @@ function sgSection(sg, idx) {
         op.id +
         '">Remove</button></span></div>';
     });
+  // Q03: Delivery's Intention, one italic line under the section label
+  const show = sgShow(),
+    it = MARKS.intention(sec);
+  if (it && show(it)) h += '<p class="mint">' + (hintLv() >= 2 ? maskText(it.text, 'all') : esc(it.text)) + '</p>';
   // Recall: 1 word shapes, 2 first words, 3 cues only, 4 blank. Marks stay visible
   const lv = hintLv(),
     mk = (wi) => (!lv ? null : lv === 1 ? 'shape' : lv === 2 && wi === 0 ? null : 'all'),
@@ -1100,10 +1072,11 @@ function sgSection(sg, idx) {
   if (sec.cue) h += '<p class="sgcue">' + (lv >= 4 ? maskText(sec.cue, 'all') : esc(sec.cue)) + '</p>';
   h += '<div class="sglines">';
   sec.lines.forEach((ln, li) => {
-    const hasv = ln.some((w, wi) => (sec.ann[li + ':' + wi] || {}).v);
+    const chk = ed ? sgChecks(sec, li) : null,
+      r = MARKS.line(sec, li, show, (wi, w, d) => sgWord(o, sid, li, wi, w, mk(wi), d, chk && chk.has(wi)));
     h +=
       '<p class="sgl' +
-      (hasv ? ' hasv' : '') +
+      (r.labelled ? ' hasv' : '') +
       (lv ? ' rl' : '') +
       '" data-o="' +
       o +
@@ -1112,22 +1085,24 @@ function sgSection(sg, idx) {
       '"' +
       peek +
       '>' +
-      ln.map((w, wi) => sgWord(o, sid, li, wi, w, sec, mk(wi))).join(' ') +
+      r.html +
       '</p>';
-    ln.forEach((w, wi) => {
-      const a = sec.ann[li + ':' + wi];
-      if (a && a.nt)
+    r.notes
+      .slice()
+      .sort((p, q) => p.w1 - q.w1)
+      .forEach((m) => {
         h +=
           '<p class="sgnote' +
           (lv ? ' rl' : '') +
           '"' +
           peek +
           '>' +
-          SGI.note +
+          MKI.bookmark +
           '<span>' +
-          (lv >= 2 ? maskText(a.nt, 'all') : esc(a.nt)) +
+          (m.opt ? '<b>' + esc(m.opt) + '</b> ' : '') +
+          (lv >= 2 ? maskText(m.text, 'all') : esc(m.text)) +
           '</span></p>';
-    });
+      });
   });
   h += '</div>';
   // the focused section's controls sit on its soft patch (3.11): Record, its takes, and Marks
@@ -1158,7 +1133,9 @@ function lyricsEditHTML(sg) {
       .map(
         (ln, li) =>
           '<div>' +
-          ln.map((w, wi) => (sec.ann[li + ':' + wi] ? '<span class="mk">' + esc(w) + '</span>' : esc(w))).join(' ') +
+          ((mk) => ln.map((w, wi) => (mk[wi] ? '<span class="mk">' + esc(w) + '</span>' : esc(w))).join(' '))(
+            MARKS.marked(sec, li)
+          ) +
           '</div>'
       )
       .join('');
@@ -1189,11 +1166,12 @@ function songControls(sg) {
         (SG.undo.length ? '' : ' disabled') +
         '>' +
         SGI.undo +
-        '</button>',
+        '</button>' +
+        CLOCK.timerPill(), // Q03 marking while listening: the play-along clock carries on, as a pill
       t:
         '<div class="seg sgseg" role="tablist"><span class="knob" aria-hidden="true"></span>' +
         [
-          ['annotate', 'Annotate'],
+          ['annotate', 'Marks'], // Q03: Marks · Lyrics (U.sEdit stays 'annotate' inside the code)
           ['lyrics', 'Lyrics'],
         ]
           .map(
@@ -1222,13 +1200,13 @@ function songControls(sg) {
     t: '',
     r:
       hasLyrics(sg) && !CLOCK.editingHead()
-      ? '<button class="circ glass" data-a="ckPencil" aria-label="Edit' +
-        (cc ? ', ' + cc + ' mark' + (cc > 1 ? 's' : '') + ' to check' : '') +
-        '">' +
-        SGI.pen +
-        (cc ? '<span class="sgbadge">' + cc + '</span>' : '') +
-        '</button>'
-      : '',
+        ? '<button class="circ glass" data-a="ckPencil" aria-label="Edit' +
+          (cc ? ', ' + cc + ' mark' + (cc > 1 ? 's' : '') + ' to check' : '') +
+          '">' +
+          SGI.pen +
+          (cc ? '<span class="sgbadge">' + cc + '</span>' : '') +
+          '</button>'
+        : '',
   };
 }
 function songViewBar() {
@@ -1286,7 +1264,11 @@ function songBody(sg, inPane) {
     h += head
       ? CLOCK.titleInput(sg)
       : // 3.20: the Takes button sits beside the title, so takes are one tap away without scrolling
-        '<div class="sgtrow"><h1>' + esc(songTitle(sg)) + '</h1>' + (ed || recHere(sg) ? '' : TAKE.headBtn(sg)) + '</div>';
+        '<div class="sgtrow"><h1>' +
+        esc(songTitle(sg)) +
+        '</h1>' +
+        (ed || recHere(sg) ? '' : TAKE.headBtn(sg)) +
+        '</div>';
   // 3.18: "Artist · 3:58", the pinned icons and ⋯ (Song Clock, clock.js); songs without lyrics keep the plain line
   if (!ed && hasLyrics(sg)) h += CLOCK.headHTML(sg);
   else if (!ed && (sg.artist || (sg.timing && sg.timing.len))) {
@@ -1340,14 +1322,17 @@ function songBody(sg, inPane) {
         : '') +
       '</div>' +
       // no tip line when the level changes, so the lyrics never move down (3.10.2)
-      (U.sMode === 'recall' && U.sOrder === 'end' ? '<p class="sgsub">Working from the end.</p>' : '');
+      (U.sMode === 'recall' && U.sOrder === 'end' ? '<p class="sgsub">Working from the end.</p>' : '') +
+      // Q03: the layer chips in Practise (one layer shows at a time)
+      (U.sMode === 'practise' && !recHere(sg) ? sgLayerChips() : '');
   else
     h +=
+      (ed === 'annotate' ? sgLayerChips() : '') +
       '<p class="sgsub">' +
       (ed === 'annotate'
         ? SG.pend
           ? 'Tap the word to move the mark to.'
-          : 'Tap a word to mark it. Hold a section to move it.'
+          : 'Tap words to mark them. Hold a section to move it.'
         : 'Marked words are highlighted. If you change one, its mark is flagged to check.') +
       '</p>';
   if (ed === 'lyrics') return h + lyricsEditHTML(sg);
@@ -1376,7 +1361,18 @@ function songBody(sg, inPane) {
     );
   const perf = U.sMode === 'perform' && !ed;
   h += '<div class="sgsong' + (perf ? ' perform' : '') + (ed ? ' editing' : '') + '">';
-  if (perf) h += '<p class="sgbanner">Technical marks hidden. Expressive cues only.</p>';
+  if (perf) {
+    // Q03: Perform shows what Marks while playing allows
+    const mp = ckPrefs().marksPlaying;
+    h +=
+      '<p class="sgbanner">' +
+      (mp === 'off'
+        ? 'Marks hidden. Cues only.'
+        : mp === 'breaths'
+          ? 'Breaths and cues only.'
+          : mkLayerName(MARKS.layer()) + ' marks, breaths and cues.') +
+      '</p>';
+  }
   const idx = sg.order.map((_, i) => i);
   if (recallOn() && U.sOrder === 'end') idx.reverse();
   idx.forEach((i) => (h += sgSection(sg, i)));
@@ -1448,31 +1444,40 @@ function songSheet(s) {
     );
   }
   if (s === 'sgKey') {
-    const rows = [
-      ['<span class="m br">' + SG_BR + '</span>', 'Breath', 'Take a breath after this word'],
-      ['<span class="w run">ooh</span>', 'Run', 'A run or riff on this word'],
-      ['<span class="m">↑</span>', 'Higher', 'Aim the pitch up here'],
-      ['<span class="m">↓</span>', 'Lower', 'Aim the pitch down here'],
-      ['<span class="sgvk">ah</span>', 'Sing as', 'The vowel shape to aim for'],
-      ['<span class="m nt">' + SGI.note + '</span>', 'Note', 'Your own reminder, shown under the line'],
-      ['<span class="mut">' + SGI.link + '</span>', 'Linked', 'A section shared with its repeats'],
-    ];
+    // Q03: the four layers and what each mark looks like (the full guide is Q04)
+    const ex = {
+      phrase: '<span class="mph">so</span>',
+      stress: '<span class="mst">so</span>',
+      hold: '<span class="w mhold">so</span>',
+    };
     return sheetWrap(
       'Marks key',
-      '<div class="grp">' +
-        rows
-          .map(
-            (r) =>
-              '<div class="row sgkey"><span class="g">' +
-              r[0] +
-              '</span><span class="lbl">' +
-              r[1] +
-              '<small>' +
-              r[2] +
-              '</small></span></div>'
-          )
-          .join('') +
-        '</div><p class="foot">Add or change marks with the pencil.</p>'
+      MK_LAYERS.concat([['note', 'Every layer']])
+        .map(
+          (x, i) =>
+            '<div class="hdr">' +
+            (x[0] === 'note' ? '' : i + 1 + ' · ') +
+            x[1] +
+            '</div><div class="grp">' +
+            (x[0] === 'note' ? ['note'] : MK_BY[x[0]])
+              .map(
+                (t) =>
+                  '<div class="row sgkey"><span class="g">' +
+                  (ex[t] || mkGlyph(t)) +
+                  '</span><span class="lbl">' +
+                  MK_DEF[t].n +
+                  '<small>' +
+                  esc(MK_DEF[t].opts.join(' · ') || (mkTakesText(t, '') ? 'Your own words' : 'One tap')) +
+                  '</small></span></div>'
+              )
+              .join('') +
+            '</div>'
+        )
+        .join('') +
+        '<div class="grp" style="margin-top:14px"><div class="row sgkey"><span class="g"><span class="mut">' +
+        SGI.link +
+        '</span></span><span class="lbl">Linked<small>A section shared with its repeats, and their marks</small></span></div></div>' +
+        '<p class="foot">Only one layer shows at a time. Add or change marks with the pencil.</p>'
     );
   }
   if (s === 'sgTakes') return TAKE.sheet(sd);
@@ -1513,23 +1518,6 @@ function songSheet(s) {
         '" placeholder="Open, hopeful" autocomplete="off"><div style="margin-top:14px"><button class="cta" data-a="sgSaveCue">Save cue</button></div>'
     );
   }
-  const a = sgCurMark() || {};
-  if (s === 'sgVowel')
-    return sheetWrap(
-      'Sing it as',
-      '<p class="note">The vowel shape to aim for, shown above the word.</p><input class="field" id="sgVIn" maxlength="20" value="' +
-        esc(a.v || '') +
-        '" placeholder="ah" autocomplete="off" autocapitalize="none"><div style="margin-top:14px"><button class="cta" data-a="sgSaveVowel">Save</button></div>' +
-        (a.v ? '<button class="ghost" data-a="sgClearVowel" style="color:var(--danger)">Remove</button>' : '')
-    );
-  if (s === 'sgNote')
-    return sheetWrap(
-      'Note',
-      '<p class="note">A reminder for this word, shown under the line.</p><textarea class="field" id="sgNIn" maxlength="200" placeholder="Breath runs out before the end">' +
-        esc(a.nt || '') +
-        '</textarea><div style="margin-top:14px"><button class="cta" data-a="sgSaveNote">Save note</button></div>' +
-        (a.nt ? '<button class="ghost" data-a="sgUnnote" style="color:var(--danger)">Remove note</button>' : '')
-    );
   if (s === 'sgUnlink') {
     const i = hasLyrics(sg) ? occIdx(sg, sd.k) : -1;
     if (i < 0) return '';
@@ -1781,66 +1769,105 @@ function sgSnap() {
   SG.undo.push(JSON.stringify(sg));
   if (SG.undo.length > 40) SG.undo.shift();
 }
-function sgCurMark() {
-  const w = SG.word,
-    sg = songById(U.songId);
-  if (!w || !hasLyrics(sg) || !sg.sections[w.sid]) return null;
-  return sg.sections[w.sid].ann[w.li + ':' + w.wi] || null;
+/* ===== Songs: marking words (Q03) =====
+   SG.sel = {o, sid, li, w0, w1, a}: the selected words, one line of one place in the song (a is the word the selection
+   grew from). Repeats of a linked section show the same marks, so the same words light up in every copy. */
+function sgSecOf(sel) {
+  const sg = songById(U.songId);
+  return sel && hasLyrics(sg) && sg.sections[sel.sid] ? sg.sections[sel.sid] : null;
 }
-function setMark(fn) {
-  const w = SG.word,
-    sg = songById(U.songId);
-  if (!w || !hasLyrics(sg) || !sg.sections[w.sid]) return;
-  sgSnap();
-  const s = sg.sections[w.sid],
-    k = w.li + ':' + w.wi,
-    a = Object.assign({}, s.ann[k] || {});
-  fn(a);
-  if (isEmptyMark(a)) delete s.ann[k];
-  else s.ann[k] = a;
-  save();
-  if (uses(sg, w.sid) > 1) {
-    SG.pulse = Object.assign({}, w);
-    setTimeout(() => (SG.pulse = null), 950);
-    if (!SG.told) {
-      SG.told = true;
-      const n = uses(sg, w.sid) - 1;
-      setTimeout(() => toast('Also updated in ' + n + ' linked section' + (n > 1 ? 's' : '')), 50);
-    }
+// after a change on a linked section: its repeats pulse once, and the first time a toast says so
+function sgLinked(sel) {
+  const sg = songById(U.songId);
+  if (!sg || uses(sg, sel.sid) < 2) return;
+  SG.pulse = Object.assign({}, sel);
+  setTimeout(() => (SG.pulse = null), 950);
+  if (!SG.told) {
+    SG.told = true;
+    const n = uses(sg, sel.sid) - 1;
+    setTimeout(() => toast('Also updated in ' + n + ' linked section' + (n > 1 ? 's' : '')), 2000);
   }
 }
+// tap a word: select it; another word on the same line extends the selection to it; a word inside a selection of
+// several starts again from it; the only selected word clears it; a word on another line starts a new selection
 function selectWord(w) {
   const sg = songById(U.songId);
   if (!hasLyrics(sg) || !sg.sections[w.sid]) return;
   if (SG.pend) {
     const pm = SG.pend,
       src = sg.sections[pm.sid],
-      op = src && src.orphans.find((x) => x.id === pm.id);
+      op = src && (src.held || []).find((x) => x.id === pm.id);
     SG.pend = null;
     if (op) {
       sgSnap();
-      const dst = sg.sections[w.sid],
-        k = w.li + ':' + w.wi;
-      dst.ann[k] = Object.assign({}, dst.ann[k] || {}, op.ann);
-      delete dst.ann[k].check;
-      delete dst.ann[k].was;
-      src.orphans = src.orphans.filter((x) => x !== op);
+      const dst = sg.sections[w.sid];
+      src.held = src.held.filter((x) => x !== op);
+      MARKS.mirror(src);
+      const r = MARKS.add(dst, { li: w.li, w0: w.wi, w1: w.wi }, op.type, op.opt, op.text);
+      if (r) r.m.id = op.id;
+      const m = op;
       save();
-      SG.word = w;
+      SG.sel = { o: w.o, sid: w.sid, li: w.li, w0: w.wi, w1: w.wi, a: w.wi };
+      if (m.L !== 'note' && m.L !== MARKS.layer()) MARKS.setLayer(m.L);
       rerender();
       toast('Mark moved');
       return;
     }
   }
-  const s = SG.word;
-  SG.word = s && s.o === w.o && s.li === w.li && s.wi === w.wi ? null : w;
+  const s = SG.sel,
+    wi = w.wi;
+  if (s && s.o === w.o && s.li === w.li) {
+    if (s.w0 === s.w1 && s.w0 === wi) SG.sel = null;
+    else if (wi >= s.w0 && wi <= s.w1) SG.sel = Object.assign({}, s, { w0: wi, w1: wi, a: wi });
+    else SG.sel = Object.assign({}, s, { w0: Math.min(s.w0, wi), w1: Math.max(s.w1, wi) });
+  } else SG.sel = { o: w.o, sid: w.sid, li: w.li, w0: wi, w1: wi, a: wi };
+  MK.open = null;
+  MK.err = '';
   rerender();
+}
+// the marks sheet's own state: the mark whose options are open, a message under the text field
+const MK = { open: null, err: '' };
+// "Added Peak" with Undo (the same toast as Song Clock's nudges)
+function mkUndoToast(text, undo) {
+  ckToast(text, () => {
+    undo();
+    save();
+    rerender();
+    toast('Undone');
+  });
+}
+// add a mark to the selection (from the sheet)
+function mkPut(type, opt, text) {
+  const sel = SG.sel,
+    sec = sgSecOf(sel);
+  if (!sec) return;
+  if (mkNeedsText(type, opt) && !(text || '').trim()) {
+    MK.err = 'Type something first';
+    return rerender();
+  }
+  sgSnap();
+  const r = MARKS.add(sec, sel, type, opt, text);
+  save();
+  MK.open = null;
+  MK.err = '';
+  sgLinked(sel);
+  MARKS.fresh = r.m.id;
+  rerender();
+  setTimeout(() => (MARKS.fresh = null), 50);
+  const sid = sel.sid;
+  mkUndoToast('Added ' + MK_DEF[type].n, () => {
+    const s2 = songById(U.songId),
+      c = s2 && s2.sections[sid];
+    if (!c) return;
+    c.marks = c.marks.filter((x) => x.id !== r.m.id).concat(r.gone);
+    MARKS.mirror(c);
+  });
 }
 function sgEndEdit(quiet) {
   let f = 0;
   if (U.sEdit === 'lyrics') f = applyLyrics();
   U.sEdit = null;
-  SG.word = null;
+  SG.sel = null;
   SG.pend = null;
   SG.drag = null;
   save();
@@ -2463,7 +2490,7 @@ const SG_ACT = {
     if (rec) return toast('Stop recording first');
     U.sSec = null;
     U.sEdit = 'annotate';
-    SG.word = null;
+    SG.sel = null;
     SG.undo = [];
     SG.pend = null;
     SG.told = false;
@@ -2475,7 +2502,7 @@ const SG_ACT = {
     if (U.sEdit === 'lyrics') f = applyLyrics();
     segPick(el);
     U.sEdit = v;
-    SG.word = null;
+    SG.sel = null;
     SG.pend = null;
     setTimeout(rerender, 180);
     if (f) toast(f + ' mark' + (f > 1 ? 's' : '') + ' to check');
@@ -2491,7 +2518,7 @@ const SG_ACT = {
       i = D.songs.findIndex((s) => s.id === prev.id);
     if (i > -1) D.songs[i] = prev;
     save();
-    SG.word = null;
+    SG.sel = null;
     SG.noSync = true; // the editors on screen still show the text being undone
     rerender();
     toast('Undone');
@@ -2499,66 +2526,91 @@ const SG_ACT = {
   sgWord(el) {
     selectWord({ o: el.dataset.o, sid: el.dataset.k, li: +el.dataset.li, wi: +el.dataset.wi });
   },
-  sgMark(el, v) {
-    if (v === 'v' || v === 'nt') {
-      U.sheet = v === 'v' ? 'sgVowel' : 'sgNote';
-      U.sd = { focus: v === 'v' ? 'sgVIn' : 'sgNIn' };
-      return rerender();
+  // Q03 the layer chips: switch layer in place, keeping the line you're looking at where it is
+  mkLayer(el, v) {
+    if (!MK_BY[v] || v === MARKS.layer()) return;
+    const anchor =
+      document.querySelector('.w.on') ||
+      [...document.querySelectorAll('#app .sgl')].find((l) => l.getBoundingClientRect().top >= 90);
+    const line = anchor && (anchor.closest('.sgl') || anchor),
+      key = line && line.dataset.o + '|' + line.dataset.li,
+      y0 = line ? line.getBoundingClientRect().top : 0;
+    MARKS.setLayer(v);
+    MK.open = null;
+    MK.err = '';
+    CK.sig = '';
+    rerender();
+    if (key) {
+      const [o, li] = key.split('|'),
+        l2 = document.querySelector('.sgl[data-o="' + o + '"][data-li="' + li + '"]');
+      if (l2) window.scrollBy(0, l2.getBoundingClientRect().top - y0);
     }
-    setMark((a) => {
-      if (a[v]) delete a[v];
-      else {
-        a[v] = 1;
-        if (v === 'up') delete a.dn;
-        if (v === 'dn') delete a.up;
-      }
-    });
+  },
+  // a mark button in the sheet: added at once, or its options shown underneath (tap again to close them)
+  mkPick(el, v) {
+    const d = MK_DEF[v];
+    if (!d || !SG.sel) return;
+    if (!d.opts.length && !mkTakesText(v, '')) return mkPut(v, '', '');
+    MK.open = MK.open && MK.open.type === v ? null : { type: v, opt: d.opts.length ? null : '' };
+    MK.err = '';
     rerender();
+    sgFocusMk();
   },
-  sgSaveVowel() {
-    const v = (($('sgVIn') || {}).value || '').trim();
-    setMark((a) => {
-      if (v) a.v = v.slice(0, 20);
-      else delete a.v;
-    });
-    closeSheet();
-  },
-  sgClearVowel() {
-    setMark((a) => delete a.v);
-    closeSheet();
-  },
-  sgSaveNote() {
-    const n = (($('sgNIn') || {}).value || '').trim();
-    setMark((a) => {
-      if (n) a.nt = n.slice(0, 200);
-      else delete a.nt;
-    });
-    closeSheet();
-  },
-  sgUnnote() {
-    setMark((a) => delete a.nt);
-    closeSheet();
-  },
-  sgCKeep() {
-    setMark((a) => {
-      delete a.check;
-      delete a.was;
-    });
+  // an option chip: added at once, or its text field shown
+  mkOpt(el, v) {
+    const o = MK.open;
+    if (!o) return;
+    if (!mkTakesText(o.type, v)) return mkPut(o.type, v, '');
+    o.opt = v;
+    MK.err = '';
     rerender();
+    sgFocusMk();
   },
-  sgCRemove() {
-    const w = SG.word,
-      sg = songById(U.songId);
-    if (!w || !hasLyrics(sg) || !sg.sections[w.sid]) return;
+  mkText() {
+    const o = MK.open;
+    if (!o || o.opt == null) return;
+    mkPut(o.type, o.opt, (($('mkIn') || {}).value || '').trim());
+  },
+  // remove a mark from "On these words"
+  mkRm(el, v) {
+    const sec = sgSecOf(SG.sel);
+    if (!sec) return;
     sgSnap();
-    delete sg.sections[w.sid].ann[w.li + ':' + w.wi];
+    const m = MARKS.remove(sec, v);
+    if (!m) return;
     save();
-    SG.word = null;
+    sgLinked(SG.sel);
+    rerender();
+    const sid = SG.sel.sid;
+    mkUndoToast('Removed ' + MK_DEF[m.type].n, () => {
+      const s2 = songById(U.songId),
+        c = s2 && s2.sections[sid];
+      if (!c) return;
+      c.marks = c.marks.concat(m);
+      MARKS.mirror(c);
+    });
+  },
+  // a mark flagged after a lyric edit: it's right where it is
+  mkKeep(el, v) {
+    const sec = sgSecOf(SG.sel),
+      m = sec && sec.marks.find((x) => x.id === v);
+    if (!m) return;
+    sgSnap();
+    delete m.check;
+    delete m.was;
+    MARKS.mirror(sec);
+    save();
+    rerender();
+  },
+  mkClear() {
+    SG.sel = null;
+    MK.open = null;
+    MK.err = '';
     rerender();
   },
   sgOMove(el, v, k) {
     SG.pend = { sid: k, id: v };
-    SG.word = null;
+    SG.sel = null;
     rerender();
     toast('Tap a word to move it to');
   },
@@ -2567,12 +2619,13 @@ const SG_ACT = {
       s = hasLyrics(sg) && sg.sections[k];
     if (!s) return;
     sgSnap();
-    s.orphans = s.orphans.filter((x) => x.id !== v);
+    s.held = (s.held || []).filter((x) => x.id !== v);
+    MARKS.mirror(s);
     save();
     rerender();
   },
   sgCue(el, v, k) {
-    SG.word = null;
+    SG.sel = null;
     U.sheet = 'sgCue';
     U.sd = { k, focus: 'sgCueIn' };
     rerender();
@@ -2614,7 +2667,7 @@ const SG_ACT = {
     closeSheet();
   },
   sgUnlink(el, v, k) {
-    SG.word = null;
+    SG.sel = null;
     U.sheet = 'sgUnlink';
     U.sd = { k };
     rerender();
@@ -2677,41 +2730,129 @@ function sgEnsure() {
     visualViewport.addEventListener('scroll', vv);
   }
 }
+function mkCapHTML() {
+  return (
+    '<div class="mkcap glass" id="mkcap" role="status">' +
+    (SG.pend ? 'Tap the word to move the mark to' : 'Select words to mark') +
+    '</div>'
+  );
+}
+function mkSheetHTML(sg) {
+  const sel = SG.sel,
+    sec = sg.sections[sel.sid];
+  if (!sec || !sec.lines[sel.li]) return '';
+  const L = MARKS.layer(),
+    words = sec.lines[sel.li].slice(sel.w0, sel.w1 + 1).join(' '),
+    on = MARKS.onSel(sec, sel, L),
+    o = MK.open;
+  let h =
+    '<div class="mksheet glass" id="mksheet" role="dialog" aria-label="Marks for ' +
+    esc(words) +
+    '"><div class="mkhd"><span class="mkwd">“' +
+    esc(words) +
+    '”<small>' +
+    mkLayerNum(L) +
+    ' · ' +
+    mkLayerName(L) +
+    '</small></span><button class="circ glass sm" data-a="mkClear" aria-label="Clear the selection">' +
+    ICON.x +
+    '</button></div>';
+  if (on.length)
+    h +=
+      '<div class="mkon"><span class="mkonl">On these words</span>' +
+      on
+        .map(
+          (m) =>
+            '<span class="mkchipx' +
+            (m.check ? ' chk' : '') +
+            '"><span>' +
+            (m.L !== L && m.L !== 'note' ? mkLayerNum(m.L) + ' · ' : '') +
+            esc(MARKS.name(m)) +
+            (m.check ? ' · was “' + esc(m.was || '') + '”' : '') +
+            '</span>' +
+            (m.check ? '<button class="mkkeep" data-a="mkKeep" data-v="' + m.id + '">Keep</button>' : '') +
+            '<button class="mkx" data-a="mkRm" data-v="' +
+            m.id +
+            '" aria-label="Remove ' +
+            esc(MARKS.name(m)) +
+            '">' +
+            ICON.x +
+            '</button></span>'
+        )
+        .join('') +
+      '</div>';
+  h +=
+    '<div class="mkbtns">' +
+    MK_BY[L].concat('note')
+      .map(
+        (t) =>
+          '<button class="mkb' +
+          (o && o.type === t ? ' open' : '') +
+          '" data-a="mkPick" data-v="' +
+          t +
+          '" aria-expanded="' +
+          !!(o && o.type === t) +
+          '"><span class="mkt" aria-hidden="true">' +
+          mkGlyph(t) +
+          '</span><span>' +
+          MK_DEF[t].n +
+          '</span></button>'
+      )
+      .join('') +
+    '</div>';
+  if (o) {
+    const d = MK_DEF[o.type];
+    if (d.opts.length)
+      h +=
+        '<div class="mkopts" role="group" aria-label="' +
+        d.n +
+        '">' +
+        d.opts
+          .map(
+            (x) =>
+              '<button class="mkopt' +
+              (o.opt === x ? ' on' : '') +
+              '" data-a="mkOpt" data-v="' +
+              esc(x) +
+              '">' +
+              esc(x) +
+              '</button>'
+          )
+          .join('') +
+        '</div>';
+    if (o.opt != null && mkTakesText(o.type, o.opt)) {
+      const ph =
+        { say: 'mor-nin', intention: 'Who you’re singing to', vowel: o.opt === 'Sing as…' ? 'wah' : 'ah→ee' }[o.type] ||
+        'A reminder (optional)';
+      h +=
+        '<div class="mktxt"><input class="field" id="mkIn" maxlength="' +
+        mkMax(o.type) +
+        '" placeholder="' +
+        esc(ph) +
+        '" autocomplete="off" enterkeyhint="done" aria-label="' +
+        esc(d.n + (o.opt ? ' · ' + o.opt : '')) +
+        '"><button class="sgpill blue" data-a="mkText">Add</button></div>' +
+        (MK.err ? '<p class="mkerr" role="alert">' + esc(MK.err) + '</p>' : '');
+    }
+  }
+  return h + '</div>';
+}
+// the text field in the sheet takes the focus when it appears (and keeps what was typed after a message)
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && e.target && e.target.id === 'mkIn') {
+    e.preventDefault();
+    SG_ACT.mkText();
+  }
+});
+function sgFocusMk() {
+  const i = $('mkIn');
+  if (i) i.focus({ preventScroll: true });
+}
 function slayerHTML() {
   let h = '';
   const sg = songShown();
-  if (sg && U.sEdit === 'annotate' && SG.word && !U.sheet && !SG.drag) {
-    const a = sgCurMark() || {};
-    const MENU = [
-      ['br', '<span class="m br" style="margin:0">' + SG_BR + '</span>', 'Breath'],
-      ['run', '~', 'Run'],
-      ['up', '↑', 'Higher'],
-      ['dn', '↓', 'Lower'],
-      ['v', 'Aa', 'Sing as'],
-      ['nt', SGI.note, 'Note'],
-    ];
-    h +=
-      '<div class="emenu glass" id="emenu" role="toolbar" aria-label="Marks">' +
-      (a.check
-        ? '<div class="chkrow"><span>Was on “' +
-          esc(a.was || '') +
-          '”</span><span class="sgbtns"><button class="sgpill sm" data-a="sgCKeep">Keep</button><button class="sgpill sm" data-a="sgCRemove">Remove</button></span></div>'
-        : '') +
-      '<div class="items">' +
-      MENU.map(
-        (m) =>
-          '<button data-a="sgMark" data-v="' +
-          m[0] +
-          '" aria-pressed="' +
-          !!a[m[0]] +
-          '"><b>' +
-          m[1] +
-          '</b><span>' +
-          m[2] +
-          '</span></button>'
-      ).join('') +
-      '</div><span class="tail"></span></div>';
-  }
+  // Q03 the marks sheet: rises when words are selected, in place of the dock; with nothing selected, a capsule
+  if (sg && U.sEdit === 'annotate' && !U.sheet && !SG.drag) h += SG.sel ? mkSheetHTML(sg) : mkCapHTML();
   if (sg && recallOn() && !U.sheet && !rec) {
     if (SG.rMenu)
       h +=
@@ -2866,7 +3007,14 @@ function sgRefocus() {
     if (lc) lc.remove();
     if (nc) {
       live.appendChild(nc);
-      MOTION.animate(nc, [{ opacity: 0, transform: 'translateY(-4px)' }, { opacity: 1, transform: 'none' }], { fade: true });
+      MOTION.animate(
+        nc,
+        [
+          { opacity: 0, transform: 'translateY(-4px)' },
+          { opacity: 1, transform: 'none' },
+        ],
+        { fade: true }
+      );
     }
   });
   const want = !rec && !hintLv() && !sg.order.some((x) => x.o === U.sSec),
@@ -2881,11 +3029,13 @@ function sgFocusPaint(animate) {
   if (!box) return;
   const sel = box.querySelector('.sgsec.sel'),
     rows = [];
-  box.querySelectorAll('.sgsec').forEach((sec) =>
-    sec.querySelectorAll('.sghead,.sgcue,.sgl,.sgnote').forEach((el) =>
-      rows.push({ el, own: sec === sel, label: el.classList.contains('sghead') })
-    )
-  );
+  box
+    .querySelectorAll('.sgsec')
+    .forEach((sec) =>
+      sec
+        .querySelectorAll('.sghead,.sgcue,.sgl,.sgnote')
+        .forEach((el) => rows.push({ el, own: sec === sel, label: el.classList.contains('sghead') }))
+    );
   let first = -1,
     last = -1;
   rows.forEach((r, i) => {
@@ -2936,26 +3086,26 @@ function sgFit() {
       });
   });
 }
+// Q03 the marks sheet and its capsule sit over the song's column, and the page leaves room under its last line
 function sgPlaceMenu() {
-  const m = $('emenu'),
-    w = $('sgselw');
-  if (!m || !w) return;
-  const r = w.getBoundingClientRect(),
-    mw = m.offsetWidth,
-    mh = m.offsetHeight,
-    vw = document.documentElement.clientWidth;
-  let left = r.left + r.width / 2 - mw / 2;
-  left = Math.max(10, Math.min(vw - mw - 10, left));
-  let top = r.top - mh - 12,
-    below = false;
-  if (top < 70) {
-    top = r.bottom + 12;
-    below = true;
+  const m = $('mksheet') || $('mkcap'),
+    col = document.querySelector('#app .sgsong') || document.querySelector('.sgsong');
+  document.body.classList.toggle('mkopen', !!$('mksheet'));
+  document.body.classList.toggle('mkcapon', !!$('mkcap'));
+  if (!m) return;
+  if (col && split()) {
+    // centred on the song's column (iPad and Mac), never past the screen's edges
+    const r = col.getBoundingClientRect(),
+      vw = document.documentElement.clientWidth,
+      w = Math.min(430, r.width + 16, vw - 16);
+    if (m.id === 'mksheet') m.style.width = w + 'px';
+    const half = (m.id === 'mksheet' ? w : m.offsetWidth) / 2;
+    m.style.left = Math.round(Math.max(8 + half, Math.min(vw - 8 - half, r.left + r.width / 2))) + 'px';
+  } else {
+    m.style.left = '';
+    m.style.width = '';
   }
-  m.classList.toggle('below', below);
-  m.style.left = left + 'px';
-  m.style.top = top + window.scrollY + 'px';
-  m.style.setProperty('--tx', r.left + r.width / 2 - left + 'px');
+  if ($('mksheet')) document.documentElement.style.setProperty('--mkh', $('mksheet').offsetHeight + 'px');
 }
 // the hint level menu opens above the hint capsule
 function sgPlaceHintMenu() {
@@ -3129,7 +3279,7 @@ function sgStartDrag() {
   const o = sgDL.o,
     y = sgDL.y;
   sgDL = null;
-  SG.word = null;
+  SG.sel = null;
   SG.drag = { o };
   rerender();
   const rows = [...document.querySelectorAll('.crow')],
@@ -3280,8 +3430,8 @@ document.addEventListener(
         if (best) selectWord({ o: best.dataset.o, sid: best.dataset.k, li: +best.dataset.li, wi: +best.dataset.wi });
         return;
       }
-      if (SG.word && !e.target.closest('#emenu')) {
-        SG.word = null;
+      if (SG.sel && !e.target.closest('#mksheet, .toast, #barL, #barR, #barT')) {
+        SG.sel = null;
         rerender();
       }
     }
@@ -3295,7 +3445,10 @@ function hxFadeIn() {
   void document.body.offsetWidth;
   document.body.classList.add('hxin');
   clearTimeout(hxFadeIn.t);
-  hxFadeIn.t = setTimeout(() => document.body.classList.remove('hxin'), 400 + 60 * MOTION.STAGGER.word * MOTION.speed());
+  hxFadeIn.t = setTimeout(
+    () => document.body.classList.remove('hxin'),
+    400 + 60 * MOTION.STAGGER.word * MOTION.speed()
+  );
 }
 // only the tapped line shows; tapping it again while it shows starts its time again
 function endPeeks(except) {
@@ -3424,8 +3577,8 @@ document.addEventListener(
       } else if (SG.pend) {
         SG.pend = null;
         rerender();
-      } else if (SG.word) {
-        SG.word = null;
+      } else if (SG.sel) {
+        SG.sel = null;
         rerender();
       } else if (U.tab === 'songs' && !U.view && (U.sFocus || (split() && U.sq))) endSearch();
       else if (U.sList) SG_ACT.sgListDone();

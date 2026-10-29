@@ -5,7 +5,7 @@ from harness import with_song_practice
 LYR = ("[Verse]\nPaper boats along the gutter\nRacing rain down Elmwood Lane\n\n[Chorus]\nCarry me over\nLet the river know\n\n"
        "[Verse]\nEvery window holds a candle\n\n[Chorus]\nCarry me over\nLet the river know\n\n[Outro]\nLet the river know my name")
 ADD = """l=>{U.sDraft={step:1,title:'river song',artist:'',text:l};U.sDraft.blocks=splitBlocks(l);U.sDraft.step=2;sgSaveDraft();
-  const s=songById(U.songId),sid=s.order[1].sid;s.sections[sid].ann['0:1']={br:1,v:'mee'};s.sections[sid].ann['1:3']={nt:'Lift the last word'};
+  const s=songById(U.songId),sid=s.order[1].sid;s.sections[sid].ann['0:1']={br:1,v:'mee'};s.sections[sid].ann['1:3']={nt:'Lift the last word'};MARKS.fromAnn(s.sections[sid]);
   s.sections[sid].cue='Open, full voice';save();rerender();return s.order.map(x=>x.o)}"""
 # the text a reader can see on the first chorus: hidden letters are transparent
 SEEN = """()=>{const s=document.querySelectorAll('.sgsec')[1];const c=s.cloneNode(true);c.querySelectorAll('.hx').forEach(x=>x.textContent='_'.repeat(x.textContent.length));
@@ -21,8 +21,11 @@ def run(b, t):
     order = pg.evaluate(ADD, LYR); pg.wait_for_timeout(300)
     ok(pg.locator('[data-a=sgMode]').count() == 3 and pg.locator('[data-a=sgMode][data-v=recall]').inner_text().strip() == 'Recall',
        'Recall sits between Practise and Perform')
-    sizes = pg.evaluate(BOXES)
     pg.click('[data-a=sgMode][data-v=recall]'); pg.wait_for_timeout(400)
+    # Q03: Recall draws only Phrasing's brackets, chains and breaths, and Notes, so the labels go when Recall starts;
+    # from then on, nothing moves between levels
+    sizes = pg.evaluate(BOXES)
+    ok(pg.locator('.sgl .w .v').count() == 0, 'Recall shows no labels above words (Q03)')
     ok(pg.evaluate("U.sMode") == 'recall' and pg.evaluate("U.sHint") == 0 and pg.locator('.hx').count() == 0, 'Recall starts at Full lyrics')
     ok(pg.locator('#dock .hcap').count() == 1 and pg.locator('#dock .tabbar').count() == 0 and 'Full lyrics' in pg.inner_text('.hcap'),
        'the hint capsule takes the place of the tab bar')
@@ -30,10 +33,10 @@ def run(b, t):
     ok(pg.locator('[data-a=sgKey]').count() == 0 and pg.locator('#sgrbtn').count() == 1, 'Recall has its options button instead of Key')
 
     expect = {
-        1: (['C____ m_ o___', 'L__ t__ r____ k___', 'Lift the last word', 'Open, full voice', 'v:mee'], 'Word shapes'),
-        2: (['Carry __ ____', 'Let ___ _____ ____', '____ ___ ____ ____', 'Open, full voice', 'v:___'], 'First words'),
-        3: (['_____ __ ____', '___ ___ _____ ____', '____ ___ ____ ____', 'Open, full voice', 'v:___'], 'Cues only'),
-        4: (['_____ __ ____', '___ ___ _____ ____', '____ ___ ____ ____', '____, ____ _____', 'v:___'], 'Blank'),
+        1: (['C____ m_ o___', 'L__ t__ r____ k___', 'Lift the last word', 'Open, full voice', 'v:'], 'Word shapes'),
+        2: (['Carry __ ____', 'Let ___ _____ ____', '____ ___ ____ ____', 'Open, full voice', 'v:'], 'First words'),
+        3: (['_____ __ ____', '___ ___ _____ ____', '____ ___ ____ ____', 'Open, full voice', 'v:'], 'Cues only'),
+        4: (['_____ __ ____', '___ ___ _____ ____', '____ ___ ____ ____', '____, ____ _____', 'v:'], 'Blank'),
     }
     for lv in range(1, 5):
         pg.click('.hcap [data-v="1"]'); pg.wait_for_timeout(250)
@@ -42,7 +45,7 @@ def run(b, t):
         ok(name in pg.inner_text('.hcap') and pg.locator('.hdots i.on').count() == 1, f'the capsule says {name}')
         ok(pg.evaluate(BOXES) == sizes, f'{name}: nothing moves')
     ok(pg.locator('.hcap [data-v="1"]').is_disabled(), 'Hide more is off at Blank')
-    ok(pg.locator('.sgsec >> nth=1 >> .m.br').count() == 1 and pg.locator('.sgsec >> nth=1 >> .m.nt').count() == 1, 'marks stay visible in Recall')
+    ok(pg.locator('.sgsec >> nth=1 >> .m.br').count() == 1 and pg.locator('.sgsec >> nth=1 >> .m.nt').count() == 1, 'breaths and Notes stay visible in Recall')
     t.shot(pg, 'blank', full_page=True)
 
     # peek

@@ -9,6 +9,28 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.27 · 29 Oct 2026
+*Marks in four layers, one stage of learning at a time (Q03)*
+
+<!-- area: songs -->
+**Four layers**
+- Marks now come in four layers, one for each stage of learning a song: **1 Notes** (pitch, slide, hold, ornament, rhythm), **2 Phrasing** (phrase, chain, peak, breath, shape), **3 Words** (vowel, carry, onset, stress, say) and **4 Delivery** (register, colour, vibrato, mic, intention). A **Note** bookmark works on every layer.
+- Only one layer shows at a time. Pick it with the chips 1–4 above the lyrics, in Practise and while marking; the app remembers it on this device. Switching keeps the line you're looking at where it is.
+- Labels sit above their words like chords over lyrics, with " · " between two on one word. Phrases are brackets over their words, stress is a thick line under them, and a hold is a line running past its word. Breaths, chains, carries and Notes sit just after their words. An intention is one line under its section's label.
+
+**Marking**
+- The edit switch is **Marks · Lyrics**, in the top bar and in the pencil's row on the song page.
+- Tap a word to select it, then tap another on the same line to select the words between. Tap inside to start again from that word, or the only selected word to clear it.
+- A sheet rises with the layer's five marks and Note. Marks with options show them underneath, one tap deep; Sing as, Say, Intention and Notes take a few words. **On these words** lists what's already there, each with ✕, and adding or removing a mark offers **Undo**.
+- Marks on a linked chorus show on every repeat, and selecting words lights them up in every copy.
+- A mark whose word changed is flagged on every layer, with **Keep** in the sheet; one whose word was removed waits at the top of its section, as before.
+- Your marks from before moved into their layers: breaths into Phrasing, runs and higher or lower into Notes, sing-as into Words, and notes became Notes. Nothing was lost.
+
+**While singing**
+- **Recall** shows phrase brackets, chains, breaths and Notes over the hidden words; they never move as you hide more.
+- **Marks while playing** has a third setting, **Active layer**: the chosen layer's marks show on the line you're singing and the next one, with breaths on every line. Lines never change height as the song moves on. **Perform** follows the same setting.
+- **Marking while listening:** tap the pencil while playing along and the Marks side opens with the song still going. The time is a pill at the top (tap to pause), and the line being sung is softly lit without the page moving.
+
 ## 3.26 · 28 Oct 2026
 *Apple's text sizes, colours and layers throughout (Q10)*
 

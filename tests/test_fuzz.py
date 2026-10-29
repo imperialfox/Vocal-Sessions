@@ -68,6 +68,10 @@ INV=r"""(()=>{const p=[];const L=document.getElementById('layer');
  {const c=document.querySelector('#dock .scirc');if(FW.shown&&c&&!FW.drag&&!FW.stopSpring&&!fw.getAnimations().length&&!c.getAnimations().length){const a=fw.getBoundingClientRect(),q=c.getBoundingClientRect();if(!(a.right<=q.left||q.right<=a.left||a.bottom<=q.top||q.bottom<=a.top))p.push('floating window over the search circle')}}
  {const r=document.querySelector('#dock .dockrow');if(r&&r.classList.contains('min')){if(U.tab==='find'||U.sheet||!tabRoom()||!document.body.classList.contains('phone'))p.push('tab bar collapsed where it never should (Search, a sheet, a short page, not iPhone upright)');if(!r.querySelector('.tabpill'))p.push('tab bar collapsed with no pill to bring it back');}}
  if(document.querySelector('.zm.push')&&!ZOOM.busy())p.push('a push layer left behind');
+ // Q03 marks: no marks sheet without a selection, no selection outside the Marks side, and every song's marks valid
+ if(document.getElementById('mksheet')&&!(SG.sel&&U.sEdit==='annotate'))p.push('marks sheet without a selection');
+ if(document.querySelector('#app .w.on')&&U.sEdit!=='annotate')p.push('selected words outside the Marks side');
+ for(const s of D.songs)for(const k in s.sections||{}){const c=s.sections[k];if(!Array.isArray(c.marks))p.push('a section without marks');else if(JSON.stringify(mkCleanList(c.marks,c.lines).map(m=>m.id))!==JSON.stringify(c.marks.map(m=>m.id)))p.push('a mark that isn’t valid: '+JSON.stringify(c.marks).slice(0,80));}
  try{JSON.parse(localStorage.getItem('vocalTracker'))}catch(e){p.push('saved data unreadable')}
  const sumOk=Object.keys(D.months).length>=0;
  return p;})()"""
@@ -77,7 +81,7 @@ VIS=r"""(()=>{const L=document.getElementById('layer');const root=L.querySelecto
  return els.map((e,i)=>{e.setAttribute('data-fz',i);return {i,a:e.dataset.a||e.tagName.toLowerCase(),v:e.dataset.v||'',k:e.dataset.k||'',id:e.id||'',type:e.type||''};});})()"""
 # no microphone here: Record shows on a selected section, but recording itself is covered by test_recording and test_sections
 SKIP = {'importPick', 'checkPick', 'exportSave', 'saveReadme', 'rec', 'sgRec', 'coachAdd', 'coachFS', 'trkAdd', 'trkReplace', 'sgAddPick'}
-HEAVY = ('sgOpen','sgSec','sgTakes','playTake','star','sgMode','sgHint','sgHMenu','sgSetHint','sgRMenu','sgOrder','sgAnywhere','sgEdit','sgWord','sgMark','sgEditMode','sgNew','sgSplit','sgSave','sgSearch','sgListEdit','sgToggle','sgCue','sgUnlink','start','songStart','resume','cta','confirmF','tog','rlv','flv','wTog','saveHow','skipHow','editSess','saveEdit','exNote','takeNote','addWord','saveWord',
+HEAVY = ('sgOpen','sgSec','sgTakes','playTake','star','sgMode','sgHint','sgHMenu','sgSetHint','sgRMenu','sgOrder','sgAnywhere','sgEdit','sgWord','sgEditMode','mkLayer','mkPick','mkOpt','mkText','mkRm','mkKeep','mkClear','sgOMove','sgORemove','sgNew','sgSplit','sgSave','sgSearch','sgListEdit','sgToggle','sgCue','sgUnlink','start','songStart','resume','cta','confirmF','tog','rlv','flv','wTog','saveHow','skipHow','editSess','saveEdit','exNote','takeNote','addWord','saveWord',
          'openNote','longOk','pauseToggle','fwOpen','fwToggle','clock','sheet','calDay','calSession','eflv','input','textarea',
          # 3.18 Song Clock
          'ckGrid','ckTile','ckPad','ckLine','ckPP','ckNudge','ckRedo','ckSyncPause','ckSyncUndo','ckFinish','ckSyncX','ckCheckDone','ckSyncAgain','ckLen','ckPickSet','ckPencil','ckHeadDone',

@@ -83,7 +83,7 @@ function saveDraft() {
 }
 /* Data version. When the shape of saved data has to change, add a numbered step to UPGRADES and raise SCHEMA.
    Steps may only add things, so older backups and the previous version of the app keep working. */
-const SCHEMA = 3,
+const SCHEMA = 4,
   PRE_UPGRADE = 'vocalBeforeUpgrade';
 const UPGRADES = {
   1: (d) => {}, // 3.7: saved data gets a version number. Nothing else changes.
@@ -105,6 +105,17 @@ const UPGRADES = {
   // 3.18: songs can carry timing (Song Clock), checked by cleanSong(). Songs from before have none, which means
   // not synced, so nothing changes in them.
   3: (d) => {},
+  // 3.27 (Q03): marks come in layers. Each section's older Annotate marks (`ann`, `orphans`) are moved across into
+  // `marks` and `held` by cleanSection() as the data loads (marks.js); this step makes sure every song has been, and
+  // the older shape is kept beside them, so nothing is lost and a backup still opens in 3.26.
+  4: (d) => {
+    (d.songs || []).forEach((s) => {
+      for (const k in s.sections || {}) {
+        const c = s.sections[k];
+        if (c && Array.isArray(c.lines) && !Array.isArray(c.marks)) MARKS.fromAnn(c);
+      }
+    });
+  },
 };
 function upgradeData() {
   const from = +D.schema || 0;

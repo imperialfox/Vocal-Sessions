@@ -1,6 +1,6 @@
 # Render queue
 
-App work Ivan has queued, in the order he wants it built. Each item is one build, in a fresh chat, started from a handoff (see [HANDOFF.md](HANDOFF.md)). Last checked against `main` at **3.26** (28 Oct 2026). **Shipped:** Q01 · Search: Global Find in 3.22; Q08 · Interface: Native iOS Polish in 3.23; Q02 · Track: Waveform Sections in 3.24; Q09 · Track: Waveform Sections Follow-up in 3.25; Q10 · Interface: HIG Foundations Pass in 3.26.
+App work Ivan has queued, in the order he wants it built. Each item is one build, in a fresh chat, started from a handoff (see [HANDOFF.md](HANDOFF.md)). Last checked against `main` at **3.27** (29 Oct 2026). **Shipped:** Q01 · Search: Global Find in 3.22; Q08 · Interface: Native iOS Polish in 3.23; Q02 · Track: Waveform Sections in 3.24; Q09 · Track: Waveform Sections Follow-up in 3.25; Q10 · Interface: HIG Foundations Pass in 3.26; Q03 · Marks: Layered Annotations in 3.27.
 
 - **Every item has two separate gates.** `Awaiting Render` means it is not approved. Ivan's **Render** approves only the named item's exact scope and moves it to `Approved — awaiting Build`; it does not start work or authorize a push. A separate **Build** instruction starts implementation for that approved item. Do not treat approval of one item as approval of the whole queue.
 - **The code wins on what's built.** This is a summary, not a spec. Check each note against the code before relying on it.
@@ -23,7 +23,7 @@ Older chats, notes and prototypes use working names. They map like this:
 |---|---|---|
 | Q01 | Search: Global Find | Render 10, Search, Global Search |
 | Q02 | Track: Waveform Sections | Track 2, Sections on the waveform |
-| Q03 | Marks: Layered Annotations | Marks 1, Layered marks |
+| Q03 | Marks: Layered Annotations | Marks 1, Layered marks (shipped in 3.27) |
 | Q04 | Marks: Practice Guide | Marks 2, Marks help, Marks guide |
 | Q05 | Song Clock: Tap Re-Anchor | Song Clock A2, Render 6, Line pass and retime |
 | Q06 | Song Clock: Timeline View | Song Clock B, Render 7, Section starts and wheels |
@@ -45,47 +45,10 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 
 ---
 
-## Q03 · Marks: Layered Annotations
-
-**Status:** Building (Build given by Ivan on 29 Oct 2026, 22:41, in the same message as Render). **Approval:** Render given by Ivan on 29 Oct 2026 (22:41) for the scope below: everything under **Decided**, with the two questions settled under **Settled at Render**. Wireframes, prototype and plan were approved 22 Oct 2026. The build handoff and design spec (recovered from the 22 Oct chat and updated for 3.26) are in Ivan's project notes as `q03_marks_layered_annotations_handoff.md` and `q03_marks_layered_annotations_spec.md`.
-**Needs:** 3.26 live (verified on `main` at `56da976`, 29 Oct 2026).
-
-- **Goal:** marks that match how a song is learned, one layer at a time.
-- **Decided:**
-  - **Four layers:**
-    - Notes, Phrasing, Words and Delivery.
-    - Tone and Feel are merged into Delivery, and rhythm is folded into Notes.
-    - Each layer has five marks plus a Note bookmark.
-    - Options are one tap deep, and only one layer shows at a time.
-  - **Editing:**
-    - One edit mode with a Marks · Lyrics switch.
-    - Phrases are brackets that chain.
-    - Repeated choruses share their marks.
-    - Marking while listening keeps the clock running.
-    - Annotate's old marks move across into the layers.
-  - **Display:**
-    - Word labels sit above the word, in the 3.17 sing-as style (not the prototype's inline chips).
-    - Marks show over Recall's pills.
-    - Marks while playing gains an "Active layer" setting.
-- **Settled at Render (Ivan, 29 Oct 2026):**
-  - The track player's lyrics (the card above the waveform, the lines under the Song rows) stay plain: no marks there.
-  - Note text isn't searchable in this item; pinned for later.
-- **Not in this item:** help screens (Q04); suggested breaths and the hold menu's Annotate (Q05); Delivery marks for one repeat only, demo recordings and selections across a line break (pinned).
-- **Notes from earlier builds:**
-  - Add `'active'` to the Marks while playing cycle (`ckTileAct('marks')`, `CK_MPNAME`) and draw the active layer in `ckBuild()`.
-  - Replace the pencil row's Edit lyrics / Marks pills with the Marks · Lyrics switch.
-- **Next action:** building now from the Q03 build handoff.
-- **Done when:**
-  - Everything decided above works.
-  - Existing marks carry across without loss.
-  - Old backups still restore.
-  - The full suite passes.
-  - *Unresolved:* finer criteria in the build handoff.
-
 ## Q04 · Marks: Practice Guide
 
 **Status:** Awaiting Render. **Approval:** Not yet given. Guide text and prototype approved 22 Oct 2026; a build handoff exists in Ivan's project notes.
-**Needs:** Q03 live.
+**Needs:** Q03 live (shipped in 3.27). Notes for it are in MAINTAINING.md › Marks ("For Q04"). The handoff from 22 Oct predates 3.27, so check it against the code.
 
 - **Goal:** explain each mark where it's used.
 - **Decided:**
@@ -105,7 +68,7 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 ## Q05 · Song Clock: Tap Re-Anchor
 
 **Status:** Awaiting Render. **Approval:** Not yet given. Planned, not scheduled.
-**Needs:** Q03 live.
+**Needs:** Q03 live (shipped in 3.27; where its parts plug in: MAINTAINING.md › Marks, "For Q05").
 
 - **Goal:** time songs line by line, and fix lines in place.
 - **Scope:**

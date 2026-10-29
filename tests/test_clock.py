@@ -224,7 +224,7 @@ def run(b, t):
         pg.click('#ckpad'); pg.evaluate(f"CLOCK.advance({g})")
     pg.wait_for_timeout(300); pg.click('[data-a=ckCheckDone]'); pg.wait_for_timeout(300)
     # Ivan's breath mark on the first line, a sing-as label and a run on the second
-    pg.evaluate("""(()=>{const s=songById(U.songId),a=s.sections[s.order[0].sid].ann;a['0:2']={br:1};a['1:0']={v:'kow',run:1,up:1,nt:'Soft'};
+    pg.evaluate("""(()=>{const s=songById(U.songId),a=s.sections[s.order[0].sid].ann;a['0:2']={br:1};a['1:0']={v:'kow',run:1,up:1,nt:'Soft'};MARKS.fromAnn(s.sections[s.order[0].sid]);
       // long gaps after line 0 (which has a breath mark) and line 2 (which has none)
       const v=s.timing.slots[s.order[0].o].lines,c=s.timing.slots[s.order[1].o].lines;v[0][1]=v[0][0]+2;c[0][1]=c[0][0]+1.5;save();rerender()})()""")
     pg.click('.ckrow [data-a=ckTile][data-v=timing]'); pg.wait_for_timeout(300)
@@ -247,7 +247,7 @@ def run(b, t):
     box = pg.evaluate("(()=>{const v=document.querySelector('#ckpa .ckview'),l=document.querySelector('#ckpa .ckl.now');return [v.getBoundingClientRect().top,v.clientHeight,l.getBoundingClientRect().top]})()")
     ok(abs(box[2] - box[0] - box[1] * 0.3) < 3, f'the current line sits at about 30% of the view ({box})')
     pg.evaluate("CLOCK.advance(11.5)"); pg.wait_for_timeout(150)
-    cls = pg.evaluate("[...document.querySelectorAll('#ckpa .ckl')].map(l=>l.className.replace('ckl ',''))")
+    cls = pg.evaluate("[...document.querySelectorAll('#ckpa .ckl')].map(l=>l.className.replace('ckl ','').replace(' nx',''))")
     ok(cls[:4] == ['past', 'past', 'now', 'fut'], f'past lines dim, the current one is clear, and upcoming lines wait ({cls[:4]})')
     blur = pg.evaluate("[...document.querySelectorAll('#ckpa .ckl.fut')].slice(0,3).map(l=>l.style.filter)")
     ok(blur[0] and blur[0] != blur[1] and all('blur' in b for b in blur), f'Blur ahead: upcoming lines blur more with distance ({blur})')
@@ -302,6 +302,8 @@ def run(b, t):
 
     # Marks while playing: Off hides breath marks and dots too; kept on this device, never in backups
     pg.click('[data-a=ckGrid]'); pg.wait_for_timeout(200); pg.click('.sheet [data-a=ckTile][data-v=marks]'); pg.wait_for_timeout(200)
+    ok(pg.inner_text('.sheet [data-v=marks] small') == 'Active layer', 'Marks while playing cycles to Active layer (Q03)')
+    pg.click('.sheet [data-a=ckTile][data-v=marks]'); pg.wait_for_timeout(200)
     ok(pg.inner_text('.sheet [data-v=marks] small') == 'Off' and pg.locator('.sheet [data-v=marks].on').count() == 0, 'Marks while playing cycles to Off')
     pg.click('.sheet [data-a=close]'); pg.wait_for_timeout(250)
     ok(pg.locator('#ckpa .ckbr, #ckpa .ckdot').count() == 0, 'Off hides breath marks and automatic dots')
@@ -371,7 +373,7 @@ def run(b, t):
                      "sections": {"x1": {"label": "Verse", "cue": "", "lines": [["One", "two"], ["Three", "four"]], "ann": {}, "orphans": []}},
                      "order": [{"o": "o1", "sid": "x1"}, {"o": "o2", "sid": "x1"}]}]
     p2 = t.page(b, data=old)
-    ok(p2.evaluate("D.schema") == 3 and 'timing' not in p2.evaluate("D.songs[0]"), 'data from before 3.18 upgrades to schema 3, and its songs have no timing (not synced)')
+    ok(p2.evaluate("D.schema") >= 3 and 'timing' not in p2.evaluate("D.songs[0]"), 'data from before 3.18 upgrades past schema 3, and its songs have no timing (not synced)')
     bad = copy.deepcopy(old); bad['schema'] = 3
     bad['songs'][0]['timing'] = {"len": "x", "real": 1, "est": True, "slots": {
         "o1": {"lines": [[1, 2], [0.5, 9], "junk", [4, 3]], "anch": True, "marks": [1, 7, 'a', 1]},

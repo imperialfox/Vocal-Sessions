@@ -1161,7 +1161,7 @@ function render(keepScroll) {
   SG.noSync = false;
   if (U.sEdit && !(U.view === 'lyr' || songOpenInPane())) {
     U.sEdit = null;
-    SG.word = null;
+    SG.sel = null;
     SG.drag = null;
   }
   const v = U.view;

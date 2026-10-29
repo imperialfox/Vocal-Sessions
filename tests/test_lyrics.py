@@ -98,7 +98,7 @@ def run(b, t):
     pg.click(sec(o[1]) + ' [data-a=sgMarks]'); pg.wait_for_timeout(900)
     top = pg.evaluate(f"document.querySelector('{sec(o[1])}').getBoundingClientRect().top")
     ok(pg.evaluate("U.sEdit") == 'annotate' and pg.evaluate("U.sSec") is None and 0 < top < 260,
-       'Marks opens Annotate, scrolled to that section')
+       'Marks opens the Marks side, scrolled to that section')
     ok(pg.evaluate("[...document.querySelectorAll('.sgsong .sgsec')].every(s=>getComputedStyle(s).backgroundColor==='rgba(0, 0, 0, 0)')"),
        'Annotate is the continuous page too')
     pg.click('[data-a=sgEditMode][data-v=lyrics]'); pg.wait_for_timeout(300)
@@ -161,6 +161,7 @@ SING_ANN = """()=>{const s=songById(U.songId),a=s.sections[s.order[0].sid].ann,c
   a['1:3']={v:'doooo-n'};a['1:4']={v:'saaa-wnd'};
   c['0:0']={v:'tuuuu'};c['0:1']={v:'yuh-ng'};c['0:13']={v:'bi-'};c['0:14']={v:'bigge'};c['0:15']={v:'naaa-w'};
   c['2:0']={v:'naaa-w'};c['2:1']={v:'mah'};
+  MARKS.fromAnn(s.sections[s.order[0].sid]);MARKS.fromAnn(s.sections[s.order[1].sid]);MARKS.setLayer('words');
   save();rerender();return s.order.map(x=>x.o)}"""
 # every label, every word's own text and every mark, then any two that overlap
 CLASH = """()=>{const R=e=>{const r=e.getBoundingClientRect();return {l:r.left,r:r.right,t:r.top,b:r.bottom,w:r.width}};
@@ -204,17 +205,17 @@ def singas(b, t):
               const a=m.getBoundingClientRect(),b=w.getBoundingClientRect();return [a.left>=b.right-.5,a.top<b.bottom&&a.bottom>b.top]}""")
             ok(nt[0] and nt[1], 'sing-as 375: the note marker sits next to its word')
             t.shot(pg, 'singas-practise')
-        # Recall level 1: labels masked in place, nothing moves
-        before = pg.evaluate(LINES)
+        # Recall (Q03): only Phrasing's brackets, chains, breaths and Notes, so no labels; nothing moves between levels
         pg.evaluate("U.sMode='recall';U.sHint=1;rerender()"); pg.wait_for_timeout(250)
+        before = pg.evaluate(LINES)
         c = pg.evaluate(CLASH)
-        ok(c['n'] == 12 and not c['out'], f'sing-as {name}: Recall level 1, still no overlaps')
-        # (a long wrapped line can re-break by a fraction of a pixel when letters are hidden, so those are left out)
-        ok([round(x['h']) for x in pg.evaluate(LINES) if not x['wrap']] == [round(x['h']) for x in before if not x['wrap']],
-           f'sing-as {name}: Recall keeps every unwrapped line where it was')
+        ok(c['n'] == 0 and not c['out'], f'sing-as {name}: Recall level 1 shows no labels, no overlaps')
         pg.evaluate("U.sHint=4;rerender()"); pg.wait_for_timeout(250)
         c = pg.evaluate(CLASH)
-        ok(pg.locator('#app .sgl .w .v:has(.hx)').count() == 12 and not c['out'], f'sing-as {name}: Recall level 4 masks the labels in place, no overlaps')
+        # (a long wrapped line can re-break by a fraction of a pixel when letters are hidden, so those are left out)
+        ok([round(x['h']) for x in pg.evaluate(LINES) if not x['wrap']] == [round(x['h']) for x in before if not x['wrap']],
+           f'sing-as {name}: Recall keeps every unwrapped line where it was, from level 1 to 4')
+        ok(not c['out'], f'sing-as {name}: Recall level 4, no overlaps')
         if name == '375': t.shot(pg, 'singas-recall')
         # Perform: bigger text, no labels, no extra height
         pg.evaluate("U.sMode='perform';U.sHint=0;rerender()"); pg.wait_for_timeout(250)

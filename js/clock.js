@@ -12,7 +12,7 @@ const CK_DOT = 1.2; // a gap after a line longer than this gets an automatic bre
 const CK_GAP = 0.35; // the gap left between lines spread evenly
 const CK_MAXLEN = 20 * 60 + 59; // the song length picker goes to 20:59
 const CK_TILES = ['timing', 'check', 'key', 'marks', 'blur', 'snap', 'awake', 'sync', 'lyrics', 'track']; // 3.19: track
-const CK_MP = ['off', 'breaths', 'active']; // Marks while playing ('active' arrives with Marks 1)
+const CK_MP = ['off', 'breaths', 'active']; // Marks while playing (Q03 added Active layer to the cycle)
 
 // what's on screen now; nothing here is saved
 const CK = {
@@ -76,7 +76,15 @@ const ckFmt = (t) => {
   return m + ':' + String(s).padStart(2, '0');
 };
 // vowel groups: how a line's time is shared between its words
-const ckSyl = (w) => Math.max(1, (String(w).toLowerCase().match(/[aeiouy]+/g) || []).length);
+const ckSyl = (w) =>
+  Math.max(
+    1,
+    (
+      String(w)
+        .toLowerCase()
+        .match(/[aeiouy]+/g) || []
+    ).length
+  );
 
 /* ===== Song Clock: this device's settings (in vocalSongPrefs, never backed up) ===== */
 function ckPrefs() {
@@ -162,7 +170,7 @@ function ckLines(sg) {
         k,
         words,
         syl: words.map(ckSyl),
-        br: words.map((w, wi) => !!(sec.ann[li + ':' + wi] || {}).br),
+        br: MARKS.breaths(sec, li), // Q03: the layered marks (marks.js)
       })
     );
   });
@@ -171,8 +179,7 @@ function ckLines(sg) {
 // a section's first line, as an index into ckLines
 const ckFirst = (L, k) => L.findIndex((l) => l.k === k);
 const ckEstDur = (l) => Math.max(1.2, l.syl.reduce((a, b) => a + b, 0) * 0.3);
-const ckSynced = (sg) =>
-  !!(sg && sg.timing && hasLyrics(sg) && ckRaw(sg, ckLines(sg)).some((t) => t[0] != null));
+const ckSynced = (sg) => !!(sg && sg.timing && hasLyrics(sg) && ckRaw(sg, ckLines(sg)).some((t) => t[0] != null));
 // the saved times, one [start, end] per line (null where there's none)
 function ckRaw(sg, L) {
   const s = (sg.timing && sg.timing.slots) || {};
@@ -496,10 +503,7 @@ function ckNudge(d) {
   if (!sg || !ckSynced(sg)) return;
   ckSnap(sg);
   const M = ckModel(sg),
-    T = M.raw.map((r) => [
-      r[0] == null ? null : Math.max(0, r[0] + d),
-      r[1] == null ? null : Math.max(0, r[1] + d),
-    ]);
+    T = M.raw.map((r) => [r[0] == null ? null : Math.max(0, r[0] + d), r[1] == null ? null : Math.max(0, r[1] + d)]);
   ckStore(sg, M.L, ckOrder(T), M.anch, M.marks);
   CK.lastA = -2;
   CK.sig = '';
@@ -529,32 +533,48 @@ function ckLayer() {
 }
 function ckBuild(sg) {
   const M = ckModel(sg),
-    mp = ckPrefs().marksPlaying;
+    mp = ckPrefs().marksPlaying,
+    L = MARKS.layer(),
+    // Q03 Active layer: the chosen layer's marks are drawn on every line, but show only on the line being sung and
+    // the next one (CSS, from .now and .nx), so lines never change height as the song moves on; breaths show on all
+    show = mp === 'active' ? (m) => m.L === L && m.type !== 'breath' : () => false;
   let h = '',
     lastK = -1;
   M.L.forEach((l, i) => {
     if (l.k !== lastK) {
       lastK = l.k;
       h += '<p class="cklab" data-k="' + l.k + '">' + esc(occLabel(sg, l.k)) + '</p>';
+      const it = mp === 'active' && L === 'delivery' && MARKS.intention(sg.sections[l.sid]);
+      if (it) h += '<p class="mint ckint" data-k="' + l.k + '">' + esc(it.text) + '</p>';
     }
     // Marks while playing, Breaths only: Ivan's breath marks on every line; an automatic dot only on a line with a
-    // long gap after it and no breath mark of his. Sing-as labels, runs, pitch and notes are hidden while playing.
+    // long gap after it and no breath mark of his. Bookmarks never show while playing.
     const mine = mp !== 'off' && l.br.some(Boolean),
       gap = i + 1 < M.T.length ? M.T[i + 1][0] - M.end(i) : 0,
       dot = mp !== 'off' && !l.br.some(Boolean) && gap > CK_DOT;
+    const r = MARKS.line(sg.sections[l.sid], l.li, show, (wi, w, d) => {
+      const lab = MARKS.labRow(d),
+        word = '<span class="ckw">' + esc(w) + '</span>',
+        br = mine && l.br[wi] ? '<span class="ckbr" aria-label="breath">' + SG_BR + '</span>' : '';
+      return (
+        (lab || d.cls.length
+          ? '<span class="ckwd' +
+            (lab ? ' hv' : '') +
+            (d.cls.length ? ' ' + d.cls.join(' ') : '') +
+            '">' +
+            lab +
+            word +
+            '</span>'
+          : word) + br
+      );
+    });
     h +=
-      '<p class="ckl fut" data-a="ckLine" data-i="' +
+      '<p class="ckl fut' +
+      (r.labelled ? ' hasv' : '') +
+      '" data-a="ckLine" data-i="' +
       i +
       '">' +
-      l.words
-        .map(
-          (w, wi) =>
-            '<span class="ckw">' +
-            esc(w) +
-            '</span>' +
-            (mine && l.br[wi] ? '<span class="ckbr" aria-label="breath">' + SG_BR + '</span>' : '')
-        )
-        .join(' ') +
+      r.html +
       (dot ? '<span class="ckdot" aria-label="breathe"></span>' : '') +
       '</p>';
   });
@@ -562,7 +582,21 @@ function ckBuild(sg) {
 }
 function ckSig(sg) {
   const p = ckPrefs();
-  return sg.id + '|' + JSON.stringify(sg.timing) + '|' + JSON.stringify(sg.order) + '|' + p.marksPlaying + '|' + p.blurAhead;
+  return (
+    sg.id +
+    '|' +
+    JSON.stringify(sg.timing) +
+    '|' +
+    JSON.stringify(sg.order) +
+    '|' +
+    p.marksPlaying +
+    '|' +
+    p.blurAhead +
+    '|' +
+    MARKS.layer() +
+    '|' +
+    sg.order.map((x) => JSON.stringify(sg.sections[x.sid].marks)).join()
+  );
 }
 // draw the current line, word fill, distance blur and dots; called every frame while the clock runs
 function ckTick() {
@@ -589,6 +623,7 @@ function ckTick() {
         ln.classList.toggle('past', i < a);
         ln.classList.toggle('now', i === a);
         ln.classList.toggle('fut', i > a);
+        ln.classList.toggle('nx', i === a + 1); // Q03 Active layer shows on this line and the next
         ln.style.opacity = i < a ? '0.4' : d > 0 && blurOn ? MOTION.dim(d) : '';
         const b = d > 0 && blurOn ? MOTION.blur(d) : 0;
         ln.style.filter = b ? 'blur(' + b + 'px)' : '';
@@ -632,6 +667,27 @@ function ckTick() {
   if (tt) {
     const v = ckFmt(ckNow(CK.pc));
     if (tt.textContent !== v) tt.textContent = v;
+  }
+  // Q03 marking while listening: the timer pill in the top bar, and a soft highlight on the line being sung (the page
+  // never scrolls by itself, so it stays where Ivan is marking)
+  const mt = $('mkT');
+  if (mt) {
+    const v = ckFmt(ckNow(CK.pc));
+    if (mt.textContent !== v) mt.textContent = v;
+  }
+  if (U.sEdit === 'annotate' && sg && ckHere()) {
+    const M = ckModel(sg),
+      a = CK.ever ? ckAt(M.T, ckNow(CK.pc)) : -1,
+      l = a >= 0 ? M.L[a] : null,
+      key = l ? l.o + '|' + l.li : '';
+    if (key !== CK.mkLine) {
+      CK.mkLine = key;
+      document.querySelectorAll('.sgl.mknow').forEach((x) => x.classList.remove('mknow'));
+      if (l) {
+        const line = document.querySelector('.sgl[data-o="' + l.o + '"][data-li="' + l.li + '"]');
+        if (line) line.classList.add('mknow');
+      }
+    }
   }
   const st = $('ckST');
   if (st && CK.P) {
@@ -931,11 +987,7 @@ function ckSyncPaint() {
 }
 function ckPadInner(sg) {
   const P = CK.P;
-  return (
-    '<b>Tap</b><span>' +
-    (P.idx < P.raw.length ? 'as “' + esc(occLabel(sg, P.idx)) + '” starts' : '') +
-    '</span>'
-  );
+  return '<b>Tap</b><span>' + (P.idx < P.raw.length ? 'as “' + esc(occLabel(sg, P.idx)) + '” starts' : '') + '</span>';
 }
 
 /* ===== Song Clock: Check timing ===== */
@@ -1013,11 +1065,10 @@ function ckHeadHTML(sg) {
       esc(sg.artist || '') +
       '"><span class="mut" aria-hidden="true">·</span><button class="cklen ed" data-a="ckLen" aria-label="Song length">' +
       (len ? ckFmt(len) : 'Add length') +
-      '</button></div><div class="ckerow"><button class="sgpill" data-a="ckHeadLyrics">Edit lyrics</button><button class="sgpill" data-a="ckHeadMarks">' +
-      SGI.pen +
+      '</button></div><div class="ckerow"><div class="cksw" role="group" aria-label="Edit"><button data-a="ckHeadMarks">' +
       'Marks' +
       (checkCount(sg) ? '<span class="sgbadge">' + checkCount(sg) + '</span>' : '') +
-      '</button><span class="sp"></span><button class="sgpill blue" data-a="ckHeadDone">Done</button></div>'
+      '</button><button data-a="ckHeadLyrics">Lyrics</button></div><span class="sp"></span><button class="sgpill blue" data-a="ckHeadDone">Done</button></div>'
     );
   const art = esc(sg.artist || ''),
     lenB = ckLenHTML(sg);
@@ -1070,7 +1121,9 @@ function ckLenHTML(sg) {
     ckFmt(len) +
     (st === 'on' ? '<span class="lnk on">' + SG_LNK + '</span>' : '') +
     '</button>' +
-    (st === 'off' ? '<button class="lnk off" data-a="ckRelink" aria-label="Relink to the track">' + SG_UNLNK + '</button>' : '')
+    (st === 'off'
+      ? '<button class="lnk off" data-a="ckRelink" aria-label="Relink to the track">' + SG_UNLNK + '</button>'
+      : '')
   );
 }
 function ckLenFoot(sg) {
@@ -1126,12 +1179,15 @@ const CKI = {
   awake:
     '<svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6L7 7M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4"/></svg>',
   sync: '<svg class="i" viewBox="0 0 24 24"><path d="M19.5 12a7.5 7.5 0 11-2.3-5.4"/><path d="M19.5 4v4.5H15"/></svg>',
-  lyrics: '<svg class="i" viewBox="0 0 24 24"><path d="M4 6h16M4 11h16M4 16h9"/><path d="M16.5 16.5l3 3-3 .6.6-3z"/></svg>',
-  track: '<svg class="i" viewBox="0 0 24 24"><path d="M3.5 12h1M7 8.5v7M10.5 5v14M14 9v6M17.5 6.5v11M21 10.5v3"/></svg>',
+  lyrics:
+    '<svg class="i" viewBox="0 0 24 24"><path d="M4 6h16M4 11h16M4 16h9"/><path d="M16.5 16.5l3 3-3 .6.6-3z"/></svg>',
+  track:
+    '<svg class="i" viewBox="0 0 24 24"><path d="M3.5 12h1M7 8.5v7M10.5 5v14M14 9v6M17.5 6.5v11M21 10.5v3"/></svg>',
   // Q02 the backing track's sound, and muted
   sound:
     '<svg class="i" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4.5 4.5 0 010 6M18 6.5a8 8 0 010 11"/></svg>',
-  muted: '<svg class="i" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/></svg>',
+  muted:
+    '<svg class="i" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/></svg>',
 };
 const CK_MPNAME = { off: 'Off', breaths: 'Breaths only', active: 'Active layer' };
 // each tile: its label, icon, whether it's on (blue), and its value line where it has one
@@ -1233,11 +1289,14 @@ function ckTileAct(id, fromGrid) {
       U.sd = {};
       return rerender();
     case 'marks': {
-      const n = p.marksPlaying === 'off' ? 'breaths' : 'off';
+      // Q03: Off → Breaths only → Active layer → Off
+      const n = CK_MP[(CK_MP.indexOf(p.marksPlaying) + 1) % CK_MP.length];
       ckPref('marksPlaying', n);
       CK.sig = '';
       rerender();
-      return toast('Marks while playing: ' + CK_MPNAME[n]);
+      return toast(
+        'Marks while playing: ' + CK_MPNAME[n] + (n === 'active' ? ' (' + mkLayerName(MARKS.layer()) + ')' : '')
+      );
     }
     case 'blur':
       ckPref('blurAhead', !p.blurAhead);
@@ -1355,10 +1414,17 @@ function ckPick(anchor, value, onSet) {
   pop.style.top = top + 'px';
   inits.forEach((f) => f());
   ckPickOut();
-  MOTION.animate(pop, [{ opacity: 0, transform: 'scale(.94)' }, { opacity: 1, transform: 'none' }], {
-    spring: 'gentle',
-    fade: true,
-  });
+  MOTION.animate(
+    pop,
+    [
+      { opacity: 0, transform: 'scale(.94)' },
+      { opacity: 1, transform: 'none' },
+    ],
+    {
+      spring: 'gentle',
+      fade: true,
+    }
+  );
   const first = el.querySelector('.ckwcol');
   try {
     first.focus({ preventScroll: true });
@@ -1444,7 +1510,10 @@ const CK_FW = {
 };
 // take → video → playing along → session
 FW_KINDS.splice(
-  Math.max(0, FW_KINDS.findIndex((k) => k.id === 'session')),
+  Math.max(
+    0,
+    FW_KINDS.findIndex((k) => k.id === 'session')
+  ),
   0,
   CK_FW
 );
@@ -1471,6 +1540,20 @@ window.addEventListener('resize', () => {
 
 /* ===== Song Clock: after every redraw ===== */
 const CLOCK = {
+  // Q03 marking while listening: the clock is running under the Marks side
+  marking: () => !!(U.sEdit === 'annotate' && ckHere() && CK.ever),
+  timerPill() {
+    if (!CLOCK.marking()) return '';
+    return (
+      '<button class="pill glass mktp" data-a="ckPP" aria-label="' +
+      (CK.pc.run ? 'Pause' : 'Play') +
+      ' play-along">' +
+      (CK.pc.run ? ICON.pause : ICON.play) +
+      '<span id="mkT">' +
+      ckFmt(ckNow(CK.pc)) +
+      '</span></button>'
+    );
+  },
   before() {
     // keep what's typed in the pencil's fields; leave it (and stop timing passes) when the song isn't on screen
     if (CK.head) ckCommitHead();
@@ -1498,6 +1581,7 @@ const CLOCK = {
       document.documentElement.classList.add('ckplay');
       ckPlace(el);
       const sig = ckSig(sg);
+      el.classList.toggle('mpact', ckPrefs().marksPlaying === 'active'); // Q03 Active layer
       if (CK.sig !== sig || el.hidden) {
         CK.sig = sig;
         const inn = el.querySelector('.ckin');
@@ -1529,6 +1613,8 @@ const CLOCK = {
       if (line) line.classList.add('ckcur');
     }
     ckWake();
+    CK.mkLine = null; // the song page was redrawn: the marking highlight goes back on at the next tick
+    if (CLOCK.marking()) ckTick();
     if (CK.pc.run || CK.sc.run) ckLoop();
   },
   // the transport (play-along) or the pad (Sync), in the dock
@@ -1684,7 +1770,8 @@ Object.assign(SG_ACT, {
     const sg = songById(U.songId);
     if (!hasLyrics(sg)) return;
     if (rec) return toast('Stop recording first');
-    if (CK.pc.run) ckPause();
+    // Q03 marking while listening: with play-along running, the pencil goes straight to Marks and the clock carries on
+    if (CK.pc.run && ckHere()) return SG_ACT.sgEdit();
     U.sSec = null;
     CK.head = true;
     rerender();
