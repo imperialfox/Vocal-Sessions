@@ -47,8 +47,8 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 
 ## Q03 · Marks: Layered Annotations
 
-**Status:** Awaiting Render. **Approval:** Not yet given. Wireframes, prototype and plan approved 22 Oct 2026; a build handoff exists in Ivan's project notes.
-**Needs:** Song Clock A1 live (it is). Q01 shipped in 3.22.
+**Status:** Approved — awaiting Build. **Approval:** Render given by Ivan on 29 Oct 2026 (22:41) for the scope below: everything under **Decided**, with the two questions settled under **Settled at Render**. Wireframes, prototype and plan were approved 22 Oct 2026. The build handoff and design spec (recovered from the 22 Oct chat and updated for 3.26) are in Ivan's project notes as `q03_marks_layered_annotations_handoff.md` and `q03_marks_layered_annotations_spec.md`.
+**Needs:** 3.26 live (verified on `main` at `56da976`, 29 Oct 2026).
 
 - **Goal:** marks that match how a song is learned, one layer at a time.
 - **Decided:**
@@ -67,10 +67,14 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
     - Word labels sit above the word, in the 3.17 sing-as style (not the prototype's inline chips).
     - Marks show over Recall's pills.
     - Marks while playing gains an "Active layer" setting.
+- **Settled at Render (Ivan, 29 Oct 2026):**
+  - The track player's lyrics (the card above the waveform, the lines under the Song rows) stay plain: no marks there.
+  - Note text isn't searchable in this item; pinned for later.
+- **Not in this item:** help screens (Q04); suggested breaths and the hold menu's Annotate (Q05); Delivery marks for one repeat only, demo recordings and selections across a line break (pinned).
 - **Notes from earlier builds:**
   - Add `'active'` to the Marks while playing cycle (`ckTileAct('marks')`, `CK_MPNAME`) and draw the active layer in `ckBuild()`.
   - Replace the pencil row's Edit lyrics / Marks pills with the Marks · Lyrics switch.
-- **Next action:** after Ivan gives Render approval for this item and separately says Build, implement it in a fresh chat from the Q03 build handoff (written earlier as the Marks 1 handoff), which Ivan pastes in.
+- **Next action:** after Ivan separately says Build, implement it from the Q03 build handoff.
 - **Done when:**
   - Everything decided above works.
   - Existing marks carry across without loss.
