@@ -47,7 +47,7 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 
 ## Q03 · Marks: Layered Annotations
 
-**Status:** Approved — awaiting Build. **Approval:** Render given by Ivan on 29 Oct 2026 (22:41) for the scope below: everything under **Decided**, with the two questions settled under **Settled at Render**. Wireframes, prototype and plan were approved 22 Oct 2026. The build handoff and design spec (recovered from the 22 Oct chat and updated for 3.26) are in Ivan's project notes as `q03_marks_layered_annotations_handoff.md` and `q03_marks_layered_annotations_spec.md`.
+**Status:** Building (Build given by Ivan on 29 Oct 2026, 22:41, in the same message as Render). **Approval:** Render given by Ivan on 29 Oct 2026 (22:41) for the scope below: everything under **Decided**, with the two questions settled under **Settled at Render**. Wireframes, prototype and plan were approved 22 Oct 2026. The build handoff and design spec (recovered from the 22 Oct chat and updated for 3.26) are in Ivan's project notes as `q03_marks_layered_annotations_handoff.md` and `q03_marks_layered_annotations_spec.md`.
 **Needs:** 3.26 live (verified on `main` at `56da976`, 29 Oct 2026).
 
 - **Goal:** marks that match how a song is learned, one layer at a time.
@@ -74,7 +74,7 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 - **Notes from earlier builds:**
   - Add `'active'` to the Marks while playing cycle (`ckTileAct('marks')`, `CK_MPNAME`) and draw the active layer in `ckBuild()`.
   - Replace the pencil row's Edit lyrics / Marks pills with the Marks · Lyrics switch.
-- **Next action:** after Ivan separately says Build, implement it from the Q03 build handoff.
+- **Next action:** building now from the Q03 build handoff.
 - **Done when:**
   - Everything decided above works.
   - Existing marks carry across without loss.
