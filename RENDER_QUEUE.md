@@ -67,7 +67,7 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 
 ## Q05 · Song Clock: Tap Re-Anchor
 
-**Status:** Approved — awaiting Build. **Approval:** Render given by Ivan on 29 Oct 2026 (22:58) for the re-scoped item below (re-scoped and wireframed the same day; it absorbs Q06's leftovers, and Q06 is retired). The build handoff is in Ivan's project notes as `q05_song_clock_tap_reanchor_handoff.md`.
+**Status:** Building (Build given by Ivan on 30 Oct 2026, 00:33). **Approval:** Render given by Ivan on 29 Oct 2026 (22:58) for the re-scoped item below (re-scoped and wireframed the same day; it absorbs Q06's leftovers, and Q06 is retired). The build handoff is in Ivan's project notes as `q05_song_clock_tap_reanchor_handoff.md`.
 **Needs:** Q03 live (shipped in 3.27; where its parts plug in: MAINTAINING.md › Marks, "For Q05").
 
 - **Goal:** time songs line by line from the song's own track, and fix lines in place. No more side-by-side listening (music on another device while tapping in the app).
@@ -88,7 +88,7 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 - **Settled at Render / Build:** a song with saved timing but no track on this device has no play-along; its timing is kept and shows on Check timing (Ivan, 30 Oct 2026).
 - **Decided:** timing says when, marks say how. One sound at a time.
 - **Not in it:** any timing without a track; Q07; the pinned ideas below.
-- **Next action:** after Ivan separately says Build, implement it from the Q05 build handoff.
+- **Next action:** building now from the Q05 build handoff.
 - **Done when:**
   - Everything above works; no path starts timing without a track.
   - Older timing survives untouched and old backups restore.
