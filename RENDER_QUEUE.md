@@ -67,40 +67,36 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 
 ## Q05 · Song Clock: Tap Re-Anchor
 
-**Status:** Awaiting Render. **Approval:** Not yet given. Planned, not scheduled.
+**Status:** Approved — awaiting Build. **Approval:** Render given by Ivan on 29 Oct 2026 (22:58) for the re-scoped item below (re-scoped and wireframed the same day; it absorbs Q06's leftovers, and Q06 is retired). The build handoff is in Ivan's project notes as `q05_song_clock_tap_reanchor_handoff.md`.
 **Needs:** Q03 live (shipped in 3.27; where its parts plug in: MAINTAINING.md › Marks, "For Q05").
 
-- **Goal:** time songs line by line, and fix lines in place.
-- **Scope:**
-  - The line pass, punch-in, flags and markers.
-  - A hold menu with Retime line, Play from here and Annotate (Annotate replaces Mark to fix).
-  - Suggested breaths from the line pass. They only become marks when Ivan taps them.
-- **Decided:** timing says when, marks say how.
-- **Open questions:**
-  - **The line pass is to be re-scoped with Ivan after Q02**, because he prefers scrubbing the waveform to tapping along live.
-  - *Unresolved:* whether Q05's "markers" are separate from the track player's markers (3.20).
-- **Notes from earlier builds:**
-  - Suggested breaths go with the timing, per line, checked in `cleanTiming()`.
-  - Punch-in goes on the play-along layer, and the Flag goes beside the transport.
-  - "Time each line" on Check timing only shows a toast until this build.
-  - Tests use the test clock (`CLOCK.fake`, `CLOCK.advance`).
-- **Next action:** after Q02, re-scope with Ivan. Don't build until then.
-- **Done when:** *Unresolved* until it's re-scoped.
+- **Goal:** time songs line by line from the song's own track, and fix lines in place. No more side-by-side listening (music on another device while tapping in the app).
+- **Going:**
+  - Song Clock timing needs the song's track on this device (`TRACK.has(sg.id)`). Without one, Timing reads "Add a track to time this song" and opens the track picker.
+  - Sync by sections (the 3.18 tap pad) and play-along without a track are retired. Section starts come from the waveform (3.24's Make this a section start…).
+  - Timing already saved on older songs is kept untouched in data and backups.
+  - The live line pass isn't built. Check timing's "Time each line" toast goes.
+  - No separate orange flags: the Flag uses the track's markers (3.20).
+  - Q06 · Song Clock: Timeline View is retired; its leftovers are in this item.
+- **Coming:**
+  - Line blocks on the waveform in the track player's Phrase and Line views: one per lyric line, estimated ones dashed. Drag an edge (one handle where two lines touch), or select a block and use Start here / End here. Snapping (about 10 px) to the playhead, section starts and neighbouring edges, using the existing Snapping setting. Undo on every change. Writes into Song Clock's timing.
+  - Punch-in in play-along: hold the lyrics 0.5 s as a line starts; release sets its end. Toast with Undo. A quick tap still jumps.
+  - Flag beside the play-along transport adds a track marker; paused, the same slot is Retime (the player in Line view on the current line).
+  - Hold menu on a lyric line in Practise or Perform: Retime line, Play from here, Annotate (Q03's Marks side, whole line selected). Not in Recall.
+  - Check timing: every line row, Time each line and Section starts open the player in Line view on that line.
+  - Suggested breaths: gaps between lines (on lines with no breath mark of Ivan's) stored with the timing per section line, checked in `cleanTiming()` and carried in backups. Shown only in Q03's Phrasing layer; tapping one makes it a real Breath mark.
+- **Settled at Render / Build:** a song with saved timing but no track on this device has no play-along; its timing is kept and shows on Check timing (Ivan, 30 Oct 2026).
+- **Decided:** timing says when, marks say how. One sound at a time.
+- **Not in it:** any timing without a track; Q07; the pinned ideas below.
+- **Next action:** after Ivan separately says Build, implement it from the Q05 build handoff.
+- **Done when:**
+  - Everything above works; no path starts timing without a track.
+  - Older timing survives untouched and old backups restore.
+  - The full suite passes; the changelog headline ends with (Q05); Q05 is removed from this file in the same push.
 
 ## Q06 · Song Clock: Timeline View
 
-**Status:** Awaiting Render. **Approval:** Not yet given. Dates to confirm with Ivan.
-
-- **Scope:**
-  - What's left of B: section starts, wheel pickers and Retime routes.
-  - The Timeline itself is absorbed by Q02.
-- **Open questions:** the rest of B is to be re-scoped with Ivan after Q02.
-- **Notes from earlier builds:** these were left waiting for B:
-  - Snapping is in the grid but does nothing yet.
-  - Check timing's lines aren't tappable yet.
-  - Section starts is still a plain row.
-- **Next action:** re-scope with Ivan after Q02.
-- **Done when:** *Unresolved.*
+**Status:** Retired at Q05's Render (29 Oct 2026). Its leftovers (tappable Check timing lines, Retime routes, snapping) are part of Q05. The ID isn't reused.
 
 ## Q07 · Song Clock: Dynamic Sync
 
