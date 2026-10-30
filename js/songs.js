@@ -208,7 +208,8 @@ function cleanSong(x) {
   }
   // 3.20 markers (chips on the track player), kept with the song like its loop (cleanMarkers in track.js)
   if ('markers' in s) {
-    const m = cleanMarkers(s.markers, s.track && s.track.dur);
+    // Q12: not trimmed to the track's length here, so markers kept past a shorter track's end (Keep) aren't lost
+    const m = cleanMarkers(s.markers);
     if (m) s.markers = m;
     else delete s.markers;
   }
@@ -3381,16 +3382,19 @@ function sgEndDrag() {
   if (!d) return;
   const sg = songById(U.songId),
     moved = d.el && d.to !== d.from && hasLyrics(sg);
+  let est = false;
   if (moved) {
     sgSnap();
     const item = sg.order.splice(d.from, 1)[0];
     sg.order.splice(d.to, 0, item);
+    // Q12: a timed section's line times become estimates (its start kept); no other section's times change
+    est = ckMoved(sg, item.o);
     save();
   }
   SG.drag = null;
   sgSuppress = Date.now();
   rerender();
-  if (moved) toast('Section moved');
+  if (moved) toast(est ? 'Section moved · times estimated' : 'Section moved');
 }
 document.addEventListener('pointerup', sgEndDrag);
 document.addEventListener('pointercancel', sgEndDrag);

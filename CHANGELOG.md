@@ -9,6 +9,29 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.30 · 30 Oct 2026
+*Timing you place stays where you put it (Q12)*
+<!-- area: songs -->
+
+**Moving a section**
+- Moving a timed section no longer squashes the sections around it. Its lines turn into estimates (dashed, and listed on Check timing) and its start stays where it was. No other section's times change.
+- Place its lines on the track again and they're solid once more.
+
+**Your placed lines are left alone**
+- Lines you've placed are never moved by the app to make room. If two of them overlap (for example after moving a section), Check timing marks them **Overlaps** so you can re-time them.
+- Adding a line between two lines that touch squeezes the new one in between, without moving either of them.
+- Punch-in, Start here / End here and dragging on the line lane are only limited by the lines you've placed, never by estimates, and estimates are never saved as if you'd placed them.
+- A section's start stops counting as set once its first line loses its time (for example when you change that line's words).
+
+**Section starts from markers**
+- Making a marker a section start always puts the start on the marker. Every section before it is squeezed in before it, and if there's no room at all, those lines are left as estimates.
+- On a timed song, moving the first set start earlier squeezes the lines before it in from 0:00, never before it.
+
+**Replacing a track with a shorter one**
+- If any markers or lines are past the new end, the app asks first: **Trim to the new track** or **Keep them** (handy if you swap back to the longer mix). Nothing is deleted while it asks.
+- Trim removes markers past the end, ends a marker at the end, and lines past it lose their time with a to-do marker.
+- Both have **Undo**, which puts every marker, loop and line time back.
+
 ## 3.29 · 30 Oct 2026
 *Nothing you save can quietly go missing (Q11)*
 <!-- area: backup -->

@@ -81,6 +81,7 @@ const TRACK = (() => {
   let busy = null; // importing: {id}
   let want = null; // where the file picked next goes: {id} or {fresh: true}
   let big = null; // a large file waiting for its OK: {file, want}
+  let past = null; // Q12: a shorter track replaced a longer one, with markers or lines past its end: {id, dur, mk, ln}
   let woke = false; // played since opening it, and not paused on its own screen (the floating window)
   let prevT = 0; // where the last frame was, so the loop wraps only when playback crosses its end
   let pend = null; // a time to go to once the audio knows its length
@@ -1081,8 +1082,7 @@ const TRACK = (() => {
   function laneMove(v) {
     const W = drag.W,
       a = drag.a,
-      b = drag.b,
-      n = W.length;
+      b = drag.b;
     if (ckPrefs().snapping) {
       const near = LANE_SNAP / pps(drag.w),
         cand = [now()].concat(secStarts().map((x) => x.t));
@@ -1097,9 +1097,12 @@ const TRACK = (() => {
       });
       if (sn != null) v = sn;
     }
-    const lb =
-        a != null ? drag.O[a][0] + CK_MIN : b > 0 ? drag.O[b - 1][0] + CK_MIN : 0,
-      ub = b != null ? drag.O[b][1] - CK_MIN : a + 1 < n ? drag.O[a + 1][0] : len();
+    // Q12: kept between the line's other edge and the placed lines either side (estimates are never limits)
+    const M = model(),
+      pb = a == null && b != null ? ckBounds(M, b)[0] : null,
+      nb = b == null && a != null ? ckBounds(M, a)[1] : null,
+      lb = a != null ? drag.O[a][0] + CK_MIN : pb != null ? pb + CK_MIN : 0,
+      ub = b != null ? drag.O[b][1] - CK_MIN : nb != null ? nb : len();
     v = Math.max(lb, Math.min(ub, v));
     if (a != null) W[a][1] = v;
     if (b != null) {
@@ -1118,7 +1121,7 @@ const TRACK = (() => {
     const ch = {};
     if (d.a != null) ch[d.a] = d.W[d.a].slice();
     if (d.b != null) ch[d.b] = d.W[d.b].slice();
-    ckSetLines(sg, ch);
+    ckSetLines(sg, ch); // the placed line before a start dragged back over it is trimmed there (ckSetLines)
   }
   // Start here / End here: the selected line at the playhead (its length kept for a new start, where there's room)
   function laneAt(which) {
@@ -1126,10 +1129,9 @@ const TRACK = (() => {
       M = model(),
       i = laneSel();
     if (!sg || !M || i < 0) return toast('Tap a line on the lane first');
+    // Q12: the limits are the placed lines either side, never estimates
     const t = r2(now()),
-      n = M.L.length,
-      prevS = i > 0 ? M.T[i - 1][0] : null,
-      nextS = i + 1 < n ? M.T[i + 1][0] : null;
+      [prevS, nextS] = ckBounds(M, i);
     let s = M.T[i][0],
       e = M.end(i);
     if (which === 'start') {
@@ -1722,12 +1724,20 @@ const TRACK = (() => {
     if (ckSynced(sg)) {
       // already timed: this section moves to the marker, the other set starts stay, and the lines between stretch
       const f = (j) => M.T[ckFirst(M.L, j)][0],
+        fk = ckFirst(M.L, k),
         pts = [];
       M.anch.forEach((a, j) => a && j !== k && pts.push([f(j), f(j)]));
       pts.push([f(k), t]);
+      // Q12: with no set start before it, moving earlier squeezes the lines before it in from 0:00 (never below)
+      const lo = Math.min(...M.raw.filter((r) => r[0] != null).map((r) => r[0]));
+      if (!pts.some((p) => p[0] < f(k) - 1e-6) && lo - (f(k) - t) < 0) pts.push([0, 0]);
+      // Q12: the saved times are warped, never the filled-in estimates, and the section's start lands on the marker
       const w = ckWarp(pts),
-        T = M.T.map((r) => [w(r[0]), r[1] == null ? null : w(r[1])]);
-      ckStore(sg, M.L, ckOrder(T), anch, M.marks);
+        T = M.raw.map((r) => [r[0] == null ? null : w(r[0]), r[1] == null ? null : w(r[1])]),
+        pl = M.placed.slice();
+      T[fk] = [t, T[fk][1] != null && T[fk][1] > t + CK_MIN ? T[fk][1] : null];
+      pl[fk] = true;
+      ckStore(sg, M.L, ckOrder(T, pl), anch, M.marks);
     } else {
       // not timed yet: the lines are spread from this start, as Sync by sections does
       const starts = sg.order.map(() => null);
@@ -2230,6 +2240,19 @@ const TRACK = (() => {
         'trkMkClearYes',
         sg.id
       );
+    if (s === 'trkPast' && past) {
+      const n = (c, w) => c + ' ' + w + (c === 1 ? '' : 's');
+      return sheetWrap(
+        'Past the new end',
+        '<p class="note">The new track is ' +
+          fmt(past.dur) +
+          '. ' +
+          [past.mk ? n(past.mk, 'marker') : '', past.ln ? n(past.ln, 'line') : ''].filter(Boolean).join(' and ') +
+          (past.mk + past.ln === 1 ? ' is' : ' are') +
+          ' past its end. Keep them for when you swap back, or trim them to the new track.</p>' +
+          '<button class="cta red" data-a="trkPastTrim">Trim to the new track</button><button class="ghost" data-a="trkPastKeep">Keep them</button>'
+      );
+    }
     if (s === 'trkBig' && big)
       return sheetWrap(
         'A large file',
@@ -2312,23 +2335,52 @@ const TRACK = (() => {
       p.put({ p: r.peaks, rate: TRK_RATE, dur: r.dur }, sg.id);
     });
     const old = sg.track && sg.track.dur;
+    // Q12: a shorter track: one Undo puts the timing, markers and loop back as they were
+    const shorter = !!old && r.dur < old - 0.05;
+    if (shorter) ckSnap(sg, true);
     if (cur && cur.id === sg.id) unload(); // replaced: the new audio and peaks load fresh
     delete pos[sg.id];
     sg.track = { name: rec.name, dur: r2(r.dur) };
     linkLen(sg, r.dur, !!old);
-    // the loop, markers and timings stay; anything past the new end is trimmed (or dropped if nothing's left)
+    // the loop is trimmed to the new end (or dropped if nothing's left)
     if (sg.loop) {
       const l = cleanLoop(sg.loop, r.dur);
       if (l) sg.loop = l;
       else delete sg.loop;
     }
-    if (sg.markers) {
+    // Q12: markers and lines past the new end are checked the same way, and kept until Ivan picks Keep or Trim
+    const mk = (sg.markers || []).filter((m) => m.t > r.dur || (m.end != null && m.end > r.dur)).length,
+      ln = ckPast(sg, r.dur);
+    past = shorter && (mk || ln) ? { id: sg.id, dur: r.dur, mk, ln } : null;
+    if (sg.markers && !past) {
       const m = cleanMarkers(sg.markers, r.dur);
       if (m) sg.markers = m;
       else delete sg.markers;
     }
     have.set(sg.id, metaOf(rec));
-    return old;
+    return { old, shorter };
+  }
+  // Q12: Keep (everything past the end stays, for swapping back to the longer mix) or Trim (markers past it go, lines
+  // past it lose their time with a to-do marker, and nothing ends after it). Both have the replace's Undo
+  function pastDo(trim) {
+    const p = past,
+      sg = p && songById(p.id);
+    past = null;
+    U.sheet = null;
+    U.sd = {};
+    if (!sg) return rerender();
+    if (trim) {
+      if (sg.markers) {
+        const m = cleanMarkers(sg.markers, p.dur);
+        if (m) sg.markers = m;
+        else delete sg.markers;
+      }
+      ckTrim(sg, p.dur);
+    }
+    save();
+    mdl = null;
+    rerender();
+    ckToast(trim ? 'Trimmed to the new track' : 'Kept everything past the end', ckUndo);
   }
   async function add(file, target, ok) {
     if (!file || busy || !target) return;
@@ -2369,9 +2421,9 @@ const TRACK = (() => {
     if (!r) return fail(TRK_BAD);
     const sg = songById(target.id);
     if (!sg) return fail('That song was deleted');
-    let old;
+    let old, shorter;
     try {
-      old = await attach(sg, file, r);
+      ({ old, shorter } = await attach(sg, file, r));
     } catch (e) {
       return fail('Couldn’t save the track. Storage may be full.');
     }
@@ -2382,7 +2434,13 @@ const TRACK = (() => {
       U.sheet = null;
       rerender();
     } else open(sg.id);
-    toast(old && Math.abs(old - r.dur) > 1 ? TRK_LENGTH : 'Track added');
+    if (past && past.id === sg.id) {
+      // Q12: ask what to do with what's past the new end (nothing is deleted while it asks)
+      U.sheet = 'trkPast';
+      U.sd = { k: sg.id };
+      return rerender();
+    }
+    ckToast(old && Math.abs(old - r.dur) > 1 ? TRK_LENGTH : 'Track added', shorter ? ckUndo : null);
   }
   // forget a song's track on this device (deleting the song, or Remove track)
   async function forget(ids) {
@@ -2843,6 +2901,12 @@ const TRACK = (() => {
     },
     trkRemove(el, v, k) {
       remove(k || U.songId);
+    },
+    trkPastKeep() {
+      pastDo(false);
+    },
+    trkPastTrim() {
+      pastDo(true);
     },
     trkBigYes() {
       const b = big;

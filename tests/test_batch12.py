@@ -774,7 +774,9 @@ def markers(b, t):
       cleanSong({id:'a',name:'A',markers:[{id:'m',t:1,end:3}],loop:{start:1,end:3,on:true,mk:'m'}}).loop,
       cleanSong({id:'a',name:'A',markers:'nope'}).markers]""")
     ok(res[0] == [{'id': 'y', 't': 5}], f'cleanSong drops bad markers and duplicate ids, and an end under 0.5 s: {res[0]}')
-    ok([m['id'] for m in res[1]] == ['a', 'b'] and res[1][1]['end'] == 20, f'sorted by time, ends clamped to the track, past the end dropped: {res[1]}')
+    # Q12: loading no longer trims markers to the track's length (Keep after a shorter track keeps them); Trim does that
+    ok([m['id'] for m in res[1]] == ['a', 'b', 'c'] and res[1][1]['end'] == 40,
+       f'sorted by time, and kept past the track’s end on load (only Trim after a shorter track removes them): {res[1]}')
     ok('mk' not in res[2] and res[3]['mk'] == 'm' and res[4] is None, 'a loop’s chip is kept only if that marker exists')
     # Clear all: both doors
     pg.click('#barR [data-a=trkMenu]'); pg.wait_for_timeout(250)

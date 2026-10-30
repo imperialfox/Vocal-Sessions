@@ -203,8 +203,9 @@ function ckRaw(sg, L) {
     return r ? [r[0], r[1]] : [null, null];
   });
 }
-// times to play from: lines without a time are spread between their neighbours, and everything is kept in order
-function ckFill(L, raw) {
+// times to play from: lines without a time are spread between their neighbours, and the estimates are kept in order.
+// placed (Q12): the lines Ivan placed, which are never moved (ckOrder)
+function ckFill(L, raw, placed) {
   const T = raw.map((r) => [r[0], r[1]]),
     n = T.length;
   let i = 0;
@@ -224,6 +225,19 @@ function ckFill(L, raw) {
       sc = 1;
     if (from == null) from = to != null ? Math.max(0, to - tot) : 0;
     if (to != null && to - from > 0.2) sc = Math.min(1, (to - from) / tot);
+    else if (to != null) {
+      // Q12: no room (the lines either side touch): squeeze them in between the two starts, so neither line moves
+      const lo = p >= 0 ? T[p][0] : 0,
+        st = (T[j][0] - lo) / (j - i + 1);
+      if (st > 0) {
+        for (let m = i; m < j; m++) {
+          const a = lo + st * (m - i + 1);
+          T[m] = [+a.toFixed(3), +(a + st).toFixed(3)];
+        }
+        i = j;
+        continue;
+      }
+    }
     let t = from;
     for (let m = i; m < j; m++) {
       const d = durs[m - i] * sc;
@@ -232,7 +246,7 @@ function ckFill(L, raw) {
     }
     i = j;
   }
-  ckOrder(T);
+  ckOrder(T, placed);
   return T;
 }
 // a line's end: its own, else the next line's start or an estimate (0.3 s a syllable, at least 1.2 s)
@@ -241,20 +255,57 @@ function ckEnd(L, T, i) {
   const nx = i + 1 < T.length && T[i + 1][0] != null ? T[i + 1][0] : Infinity;
   return Math.min(nx, T[i][0] + ckEstDur(L[i]));
 }
-// lines in order and never overlapping: each starts at least 0.1 s after the one before, which ends by then
-function ckOrder(T) {
-  let prev = null;
-  T.forEach((l) => {
+// lines in order and never overlapping: each starts at least 0.1 s after the one before, which ends by then.
+// placed (Q12): lines Ivan placed by hand are never rewritten, only estimates; placed lines out of order are left as they
+// are and flagged on Check timing (ckOverlaps). Without it every line counts as an estimate
+function ckOrder(T, placed) {
+  let prev = null,
+    pi = -1;
+  T.forEach((l, i) => {
     if (l[0] == null) return;
-    if (l[0] < 0) l[0] = 0;
-    if (prev) {
-      if (l[0] < prev[0] + CK_MIN) l[0] = +(prev[0] + CK_MIN).toFixed(3);
-      if (prev[1] != null && prev[1] > l[0]) prev[1] = l[0];
+    if (!(placed && placed[i])) {
+      if (l[0] < 0) l[0] = 0;
+      if (prev && l[0] < prev[0] + CK_MIN) l[0] = +(prev[0] + CK_MIN).toFixed(3);
+      if (l[1] != null && l[1] < l[0] + CK_MIN) l[1] = +(l[0] + CK_MIN).toFixed(3);
     }
-    if (l[1] != null && l[1] < l[0] + CK_MIN) l[1] = +(l[0] + CK_MIN).toFixed(3);
+    // the line before (an estimate) ends by the time this one starts
+    if (prev && !(placed && placed[pi]) && prev[1] != null && prev[1] > l[0] && l[0] >= prev[0] + CK_MIN - 1e-6) prev[1] = l[0];
     prev = l;
+    pi = i;
   });
   return T;
+}
+// Q12: placed lines that overlap (start before an earlier placed line, or begin before the one before ends), for Check
+// timing. Nothing is rewritten: Ivan re-times them
+function ckOverlaps(M) {
+  const out = M.L.map(() => false);
+  let top = -1,
+    pp = -1;
+  M.raw.forEach((r, i) => {
+    if (!M.placed[i]) return;
+    if (top >= 0 && r[0] < M.raw[top][0] + CK_MIN - 1e-6) out[i] = out[top] = true;
+    if (pp >= 0 && M.raw[pp][1] != null && M.raw[pp][1] > r[0] + 1e-3) out[i] = out[pp] = true;
+    if (top < 0 || r[0] > M.raw[top][0]) top = i;
+    pp = i;
+  });
+  return out;
+}
+// Q12: the starts of the nearest placed lines before and after line i: the limits for punch-in, Start here and dragging
+// on the lane. Estimates are never limits. Placed lines out of order give no limits
+function ckBounds(M, i) {
+  let lo = null,
+    hi = null;
+  for (let j = i - 1; j >= 0; j--)
+    if (M.placed[j]) {
+      lo = M.raw[j][0];
+      break;
+    }
+  for (let j = i + 1; j < M.L.length; j++)
+    if (M.placed[j]) {
+      hi = M.raw[j][0];
+      break;
+    }
+  return lo != null && hi != null && hi < lo + 2 * CK_MIN ? [null, null] : [lo, hi];
 }
 function ckAt(T, t) {
   let a = -1;
@@ -268,21 +319,29 @@ function ckAt(T, t) {
 // everything play-along and Check timing need for one song
 function ckModel(sg) {
   const L = ckLines(sg),
-    raw = ckRaw(sg, L),
-    T = ckFill(L, raw);
+    raw = ckRaw(sg, L);
   const slots = (sg.timing && sg.timing.slots) || {},
     est = !!(sg.timing && sg.timing.est),
-    has = (l, k) => !!(slots[l.o] && (slots[l.o][k] || []).includes(l.li));
+    has = (l, k) => !!(slots[l.o] && (slots[l.o][k] || []).includes(l.li)),
+    first = sg.order.map((x, k) => ckFirst(L, k)),
+    // Q12: a section start only counts as set while its first line has a time
+    anch = sg.order.map((x, k) => !!(slots[x.o] && slots[x.o].anch) && first[k] >= 0 && raw[first[k]][0] != null),
+    // Q05: a line is estimated until it has its own time: filled in between its neighbours, or spread evenly from
+    // section starts and not yet placed by hand (drawn dashed on the line lane)
+    E = L.map((l, i) => raw[i][0] == null || (est && !has(l, 'fix'))),
+    // Q12: placed: a time Ivan set (a line placed by hand, or a set section start). Never moved by ckOrder, and the
+    // only limits for punch-in and the lane (ckBounds)
+    placed = L.map((l, i) => raw[i][0] != null && (!E[i] || (anch[l.k] && first[l.k] === i))),
+    T = ckFill(L, raw, placed);
   return {
     sg,
     L,
     raw,
     T,
-    anch: sg.order.map((x) => !!(slots[x.o] && slots[x.o].anch)),
+    anch,
     marks: L.map((l) => has(l, 'marks')),
-    // Q05: a line is estimated until it has its own time: filled in between its neighbours, or spread evenly from
-    // section starts and not yet placed by hand (drawn dashed on the line lane)
-    est: L.map((l, i) => raw[i][0] == null || (est && !has(l, 'fix'))),
+    est: E,
+    placed,
     sb: L.map((l) => has(l, 'sb')),
     end: (i) => ckEnd(L, T, i),
   };
@@ -323,6 +382,42 @@ function ckStore(sg, L, T, anch, marks, flags, fix) {
   }
   sg.timing = t;
   save();
+}
+/* ===== Q12 changes that come from outside the timing =====
+   ckMoved: a section moved in the running order (sgEndDrag, after sg.order changes; its Undo is the song's). If that
+   place has times, its lines become estimates (dashed, listed on Check timing) with its start kept, and no other
+   section's times change: the song is marked estimated with every other placed line kept as placed (fix). */
+function ckMoved(sg, o) {
+  const s = sg.timing && sg.timing.slots && sg.timing.slots[o];
+  if (!s || !hasLyrics(sg) || !s.lines.some((r) => r && r[0] != null)) return false;
+  const M = ckModel(sg);
+  ckStore(sg, M.L, M.raw, M.anch, M.marks, { est: true }, M.L.map((l, i) => l.o !== o && !M.est[i]));
+  return true;
+}
+// replacing a track with a shorter one (dur): how many lines start at or after its end
+function ckPast(sg, dur) {
+  if (!sg.timing || !hasLyrics(sg)) return 0;
+  return ckRaw(sg, ckLines(sg)).filter((r) => r[0] != null && r[0] >= dur - 1e-6).length;
+}
+// …and Trim: those lines lose their time and get a to-do marker (a section's first line takes its set start with it),
+// and nothing ends after the end. Everything else is kept as it is
+function ckTrim(sg, dur) {
+  if (!sg.timing || !hasLyrics(sg)) return;
+  const M = ckModel(sg),
+    T = M.raw.map((r) => r.slice()),
+    marks = M.marks.slice(),
+    anch = M.anch.slice(),
+    fix = M.est.map((e) => !e);
+  T.forEach((r, i) => {
+    if (r[0] == null) return;
+    if (r[0] >= dur - 1e-6) {
+      T[i] = [null, null];
+      marks[i] = true;
+      fix[i] = false;
+      if (ckFirst(M.L, M.L[i].k) === i) anch[M.L[i].k] = false;
+    } else if (r[1] != null && r[1] > dur) r[1] = r[0] + CK_MIN <= dur ? dur : null;
+  });
+  ckStore(sg, M.L, T, anch, marks, null, fix);
 }
 // withMarks (Q02): a marker made into a section start; the same Undo puts the marker (and its loop) back too
 function ckSnap(sg, withMarks) {
@@ -372,35 +467,67 @@ function ckToast(text, undo) {
   toastT = setTimeout(() => el.remove(), 4500);
 }
 
-/* ===== Song Clock: spreading lines evenly between section taps =====
-   starts[k] is when place k in the running order starts (null if it wasn't tapped). Each section's lines are spread
-   by syllables, squeezed or stretched to end a second before the next tapped section. */
+/* ===== Song Clock: spreading lines evenly between section starts =====
+   starts[k] is when place k in the running order starts (null if it isn't set). Each section's lines are spread by
+   syllables. Q12: every section before a set start fits in before it (ending a second early), so the start lands
+   where it was set; at their natural pace if they fit (the last one stretched to fill), else squeezed. With no room
+   at all they're left without times: estimates, filled in by play-along. */
 function ckSpread(sg, L, starts) {
-  const T = L.map(() => [null, null]);
-  let cursor = 0;
-  sg.order.forEach((x, k) => {
-    const idx = [];
-    L.forEach((l, i) => l.k === k && idx.push(i));
-    if (!idx.length) return;
-    let s0 = starts[k];
-    if (s0 == null) s0 = k ? cursor + 1.5 : 0;
-    const nxt = k + 1 < starts.length && starts[k + 1] != null ? starts[k + 1] : null;
-    const durs = idx.map((i) => ckEstDur(L[i])),
-      total = durs.reduce((a, b) => a + b, 0) + CK_GAP * (idx.length - 1);
-    let sc = 1;
-    if (nxt != null) {
-      const room = nxt - 1 - s0;
-      if (room > 0.5) sc = room / total;
+  const T = L.map(() => [null, null]),
+    K = sg.order.length,
+    idx = sg.order.map(() => []),
+    set = (k) => starts[k] != null;
+  L.forEach((l, i) => idx[l.k] && idx[l.k].push(i));
+  const durs = idx.map((ix) => ix.map((i) => ckEstDur(L[i]))),
+    len = (k) => durs[k].reduce((a, b) => a + b, 0) + CK_GAP * Math.max(0, durs[k].length - 1);
+  let a = 0,
+    cursor = 0;
+  while (a < K) {
+    let b = a + 1;
+    while (b < K && !set(b)) b++;
+    // places a … b-1: a run from a set start (or the song's beginning) to the next set start (or the end)
+    const run = [];
+    for (let k = a; k < b; k++) if (idx[k].length) run.push(k);
+    const s0 = set(a) ? starts[a] : a ? cursor + 1.5 : 0,
+      lim = b < K ? starts[b] - 1 : null,
+      nat = run.reduce((t, k) => t + len(k), 0) + 1.5 * Math.max(0, run.length - 1),
+      nLines = run.reduce((t, k) => t + idx[k].length, 0);
+    let sc = 1,
+      last = 1;
+    if (lim != null && run.length) {
+      const room = lim - s0;
+      if (room < Math.max(0.5, nLines * 2 * CK_MIN)) {
+        // no room: only a set start keeps its time; the rest are estimates
+        if (set(a) && idx[a].length) {
+          const i = idx[a][0];
+          T[i] = [+starts[a].toFixed(3), +Math.min(starts[a] + durs[a][0], Math.max(starts[a] + CK_MIN, starts[b] - CK_MIN)).toFixed(3)];
+        }
+        cursor = starts[b];
+        a = b;
+        continue;
+      }
+      if (nat > room) sc = room / nat;
+      else {
+        const z = run[run.length - 1];
+        last = len(z) > 0 ? (room - (nat - len(z))) / len(z) : 1;
+      }
     }
     let t = s0;
-    idx.forEach((i, m) => {
-      const d = durs[m] * sc;
-      T[i] = [+t.toFixed(3), +(t + d).toFixed(3)];
-      t += d + CK_GAP * sc;
+    run.forEach((k, r) => {
+      if (r) t += 1.5 * sc;
+      const f = sc * (k === run[run.length - 1] ? last : 1);
+      idx[k].forEach((i, m) => {
+        const d = durs[k][m] * f;
+        T[i] = [+t.toFixed(3), +(t + d).toFixed(3)];
+        t += d + (m < idx[k].length - 1 ? CK_GAP * f : 0);
+      });
     });
-    cursor = t - CK_GAP * sc;
-  });
-  return ckOrder(T);
+    cursor = t;
+    a = b;
+  }
+  // a set start's first line is never pushed by the lines before it
+  const placed = L.map((l, i) => set(l.k) && idx[l.k][0] === i);
+  return ckOrder(T, placed);
 }
 // piecewise-linear stretch through a set of [from, to] points; before the first and after the last, a plain shift
 function ckWarp(pts) {
@@ -461,7 +588,8 @@ function ckLyricsChanged(sg, sid, oldLines, newLines) {
     else delete s.fix;
     if (sb.length) s.sb = sb.sort((a, b) => a - b);
     else delete s.sb;
-    if (changed && !lines.some((l) => l[0] != null)) s.anch = false;
+    // Q12: a section start only counts as set while its first line has a time
+    if (!lines[0] || lines[0][0] == null) s.anch = false;
   });
 }
 
@@ -565,9 +693,12 @@ function ckNudge(d) {
   const sg = ckSong();
   if (!sg || !ckSynced(sg)) return;
   ckSnap(sg);
+  // Q12: every line moves together, so placed lines keep their order and nothing is squashed into them. Only a line
+  // pushed against 0:00 (as before) is kept in order like an estimate
   const M = ckModel(sg),
-    T = M.raw.map((r) => [r[0] == null ? null : Math.max(0, r[0] + d), r[1] == null ? null : Math.max(0, r[1] + d)]);
-  ckStore(sg, M.L, ckOrder(T), M.anch, M.marks);
+    T = M.raw.map((r) => [r[0] == null ? null : Math.max(0, r[0] + d), r[1] == null ? null : Math.max(0, r[1] + d)]),
+    pl = M.placed.map((p, i) => p && M.raw[i][0] + d >= 0);
+  ckStore(sg, M.L, ckOrder(T, pl), M.anch, M.marks);
   CK.lastA = -2;
   CK.sig = '';
   if (!CK.pc.run) rerender();
@@ -590,18 +721,36 @@ function ckSetLines(sg, ch, quiet) {
   const M = ckModel(sg);
   if (ks.some((i) => !M.L[i])) return;
   ckSnap(sg);
+  // Q12: the saved times (never the filled-in estimates), and only estimates are kept in order around the change
   const T = M.raw.map((r) => r.slice()),
     fix = M.est.map((e) => !e),
+    placed = M.placed.slice(),
     marks = M.marks.slice(),
     anch = M.anch.slice();
   ks.forEach((i) => {
     const v = ch[i];
     T[i] = [Math.max(0, +v[0]), v[1] == null ? null : Math.max(0, +v[1])];
-    fix[i] = true;
+    fix[i] = placed[i] = true;
     marks[i] = false;
     if (ckFirst(M.L, M.L[i].k) === i) anch[M.L[i].k] = true;
   });
-  ckStore(sg, M.L, ckOrder(T), anch, marks, null, fix);
+  // what was changed stays clear of its placed neighbours: the placed line before ends by its new start, and its own
+  // end comes by the next placed line's start (as ckOrder used to do for every line)
+  ks.forEach((i) => {
+    const s = T[i][0];
+    for (let j = i - 1; j >= 0; j--)
+      if (placed[j]) {
+        if (!(j in ch) && T[j][1] != null && T[j][1] > s && s >= T[j][0] + CK_MIN - 1e-6) T[j][1] = s;
+        break;
+      }
+    for (let j = i + 1; j < T.length; j++)
+      if (placed[j]) {
+        const e = T[j][0];
+        if (T[i][1] != null && T[i][1] > e && e >= s + CK_MIN - 1e-6) T[i][1] = e;
+        break;
+      }
+  });
+  ckStore(sg, M.L, ckOrder(T, placed), anch, marks, null, fix);
   CK.lastA = -2;
   CK.sig = '';
   if (U.view === 'trk') TRACK.refresh();
@@ -708,10 +857,8 @@ function ckPunchUp(e) {
   if (!sg || (e && e.type === 'pointercancel')) return ckTick();
   const M = ckModel(sg),
     i = p.i,
-    n = M.L.length,
-    prev = i > 0 ? M.T[i - 1][0] : null,
-    next = i + 1 < n ? M.T[i + 1][0] : null;
-  // in order with its neighbours: after the line before starts, before the next one starts
+    [prev, next] = ckBounds(M, i);
+  // Q12: in order with the placed lines either side (never estimates): after the one before starts, before the next
   let s = Math.max(0, p.t - CK_LAG);
   if (prev != null) s = Math.max(s, prev + CK_MIN);
   if (next != null) s = Math.min(s, next - CK_MIN);
@@ -974,7 +1121,8 @@ function ckCheckPage() {
     nAnch = M.anch.filter(Boolean).length,
     nMarks = M.marks.filter(Boolean).length,
     len = sg.timing && sg.timing.len,
-    firstSet = M.anch.findIndex(Boolean);
+    firstSet = M.anch.findIndex(Boolean),
+    ov = ckOverlaps(M);
   let h =
     '<h1>Check timing</h1><p class="sgart">' +
     esc(songTitle(sg)) +
@@ -1016,7 +1164,7 @@ function ckCheckPage() {
   if (firstEst >= 0)
     h +=
       '<div class="cknote2">' +
-      (sg.timing.est
+      (sg.timing.est && M.est.every(Boolean)
         ? 'Lines are spread evenly between the section starts. For exact timing, place each line on the track.'
         : 'Dashed lines are estimated. Place them on the track for exact timing.') +
       '<div><button class="sgpill blue" data-a="ckRetime" data-v="' +
@@ -1034,7 +1182,8 @@ function ckCheckPage() {
         '</div><div class="grp ckgrp">';
     }
     const dur = M.end(i) - M.T[i][0],
-      flag = dur < 0.4 ? 'Very short' : dur > 15 ? 'Very long' : '';
+      // Q12: placed lines out of order are flagged, never rewritten
+      flag = ov[i] ? 'Overlaps' : dur < 0.4 ? 'Very short' : dur > 15 ? 'Very long' : '';
     h +=
       '<button class="ckr" data-a="ckRetime" data-v="' +
       i +
