@@ -55,11 +55,11 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 
 ## Order (30 Oct 2026)
 
-Most critical first: **Q11 → Q12 → Q13 → Q04 → Q14 → Q15 → Q16 → Q17 → Q07**. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
+Most critical first: **Q11 → Q12 → Q13 → Q04 → Q14 → Q15 → Q16 → Q17 → Q07**. Q11–Q17 got Render on 30 Oct 2026 (06:42); each still needs its own Build. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
 
 ## Q11 · Data: Save Safety
 
-**Status:** Awaiting Render. **Approval:** Not yet given. ID assigned 30 Oct 2026.
+**Status:** Approved — awaiting Build. **Approval:** Render given by Ivan on 30 Oct 2026 (06:42) for the scope below, in one instruction covering Q11–Q17. Each item is still its own build, in queue order, and needs its own **Build**. The build handoff is in Ivan's project notes as `q11_data_save_safety_handoff.md`.
 **Needs:** 3.28.1 live (verified on `main`, 30 Oct 2026). Nothing else.
 
 - **Goal:** no path in the app can silently lose saved data, a take, or a session in progress.
@@ -71,12 +71,13 @@ Most critical first: **Q11 → Q12 → Q13 → Q04 → Q14 → Q15 → Q16 → Q
   - **The 30-day pre-upgrade copy** moves from localStorage into IndexedDB, so it no longer halves the space for saved data.
   - **Startup** is guarded, so the launch screen always goes away and an error is shown.
 - **Out of scope:** any change to what's saved or to the backup format.
-- **Unresolved:** where the rescued raw copy lives and how Ivan is told (proposed: kept in IndexedDB, with a one-time message pointing to Settings › Backup).
+- **Detail for the builder to confirm with Ivan at Build (within this scope):** where the rescued raw copy lives and how he's told. Proposed: kept in IndexedDB, with a one-time message pointing to Settings › Backup.
+- **Next action:** after Ivan separately says Build for Q11, check its **Needs** are live, then implement only this scope in a fresh chat from its handoff.
 - **Done when:** a cut-off `vocalTracker` keeps its raw copy and the app says so; a simulated aborted save shows a message and keeps the take; a failed draft save warns; the old-backup fixtures still restore; the full suite passes.
 
 ## Q12 · Song Clock: Timing Integrity
 
-**Status:** Awaiting Render. **Approval:** Not yet given. ID assigned 30 Oct 2026.
+**Status:** Approved — awaiting Build. **Approval:** Render given by Ivan on 30 Oct 2026 (06:42) for the scope below, in one instruction covering Q11–Q17. Each item is still its own build, in queue order, and needs its own **Build**. The build handoff is in Ivan's project notes as `q12_song_clock_timing_integrity_handoff.md`.
 **Needs:** Q11 live.
 
 - **Goal:** timing Ivan placed by hand is never moved or overwritten by something he didn't do to it, and guesses are never saved as if placed.
@@ -89,11 +90,12 @@ Most critical first: **Q11 → Q12 → Q13 → Q04 → Q14 → Q15 → Q16 → Q
   - **A section start** stops counting as set once its first line loses its time.
 - **Out of scope:** new timing features; the screen layout.
 - **Decided by Ivan (30 Oct 2026):** moving a timed section turns that section's line times into estimates (dashed, shown on Check timing), with its section start kept. Other sections' times don't change. (He chose this over stopping with an explanation, or keeping the times with Undo.)
+- **Next action:** after Ivan separately says Build for Q12, check its **Needs** are live, then implement only this scope in a fresh chat from its handoff.
 - **Done when:** moving a timed section and then editing one line changes no other section; adding a line between two touching lines moves no placed line; promoting into a late section lands on the marker; replacing a track offers Undo; the full suite passes.
 
 ## Q13 · Interface: Keyboard Guards
 
-**Status:** Awaiting Render. **Approval:** Not yet given. ID assigned 30 Oct 2026.
+**Status:** Approved — awaiting Build. **Approval:** Render given by Ivan on 30 Oct 2026 (06:42) for the scope below, in one instruction covering Q11–Q17. Each item is still its own build, in queue order, and needs its own **Build**. The build handoff is in Ivan's project notes as `q13_interface_keyboard_guards_handoff.md`.
 **Needs:** nothing (independent).
 
 - **Goal:** keyboard shortcuts on iPad and Mac never fire twice, while typing, or during a recording.
@@ -104,11 +106,12 @@ Most critical first: **Q11 → Q12 → Q13 → Q04 → Q14 → Q15 → Q16 → Q
   - **Shortcuts use Cmd only** on Apple devices, leaving Ctrl's text-editing keys alone.
   - **Enter to confirm** ignores keys pressed while composing text in another script (for example Japanese).
 - **Out of scope:** new shortcuts.
+- **Next action:** after Ivan separately says Build for Q13, check its **Needs** are live, then implement only this scope in a fresh chat from its handoff.
 - **Done when:** each case above has a test; the full suite passes.
 
 ## Q14 · Playback: Smooth Frames
 
-**Status:** Awaiting Render. **Approval:** Not yet given. ID assigned 30 Oct 2026.
+**Status:** Approved — awaiting Build. **Approval:** Render given by Ivan on 30 Oct 2026 (06:42) for the scope below, in one instruction covering Q11–Q17. Each item is still its own build, in queue order, and needs its own **Build**. The build handoff is in Ivan's project notes as `q14_playback_smooth_frames_handoff.md`.
 **Needs:** Q12 live (the timing model settles there).
 
 - **Goal:** play-along and the track page do the least work possible on each frame, so lyrics and the waveform stay smooth on older iPhones.
@@ -117,11 +120,12 @@ Most critical first: **Q11 → Q12 → Q13 → Q04 → Q14 → Q15 → Q16 → Q
   - **Track page:** draw the waveform layer only when zoom, loop or markers change, and draw just the playhead each frame; cache the font; only update labels when they change. In rows view, redraw only the row the playhead is in.
   - **A punch-in** updates the lines it changed instead of rebuilding the whole view.
 - **Out of scope:** any visual change. Everything must look the same.
+- **Next action:** after Ivan separately says Build for Q14, check its **Needs** are live, then implement only this scope in a fresh chat from its handoff.
 - **Done when:** existing visual and timing tests pass unchanged; a test counts per-frame work (no timing model rebuilt, no layout reads after writes); the full suite passes.
 
 ## Q15 · Marks: Register-Ready Data
 
-**Status:** Awaiting Render. **Approval:** Not yet given. ID assigned 30 Oct 2026.
+**Status:** Approved — awaiting Build. **Approval:** Render given by Ivan on 30 Oct 2026 (06:42) for the scope below, in one instruction covering Q11–Q17. Each item is still its own build, in queue order, and needs its own **Build**. The build handoff is in Ivan's project notes as `q15_marks_register_ready_data_handoff.md`.
 **Needs:** Q12 live. Must come before any register feature.
 
 - **Goal:** new fields on marks and timing (for example register details, transition anchors, somatic notes) survive editing, backups, and a restore into the previous version.
@@ -132,11 +136,12 @@ Most critical first: **Q11 → Q12 → Q13 → Q04 → Q14 → Q15 → Q16 → Q
   - **One documented place for optional extras** on each record.
   - **A test** restores a backup made by the *next* version into this one, with nothing lost.
 - **Out of scope:** any new register screens or marks. This item only prepares the data.
+- **Next action:** after Ivan separately says Build for Q15, check its **Needs** are live, then implement only this scope in a fresh chat from its handoff.
 - **Done when:** the next-version backup test passes; the old-backup fixtures still restore; the full suite passes.
 
 ## Q16 · Audio: Voice Analysis Foundations
 
-**Status:** Awaiting Render. **Approval:** Not yet given. ID assigned 30 Oct 2026.
+**Status:** Approved — awaiting Build. **Approval:** Render given by Ivan on 30 Oct 2026 (06:42) for the scope below, in one instruction covering Q11–Q17. Each item is still its own build, in queue order, and needs its own **Build**. The build handoff is in Ivan's project notes as `q16_audio_voice_analysis_foundations_handoff.md`.
 **Needs:** Q14 and Q15 live.
 
 - **Goal:** a clean place for future pitch and vocal-weight analysis to plug in, without risking one sound at a time, the lock screen, or the pitch-kept slow-down.
@@ -148,11 +153,12 @@ Most critical first: **Q11 → Q12 → Q13 → Q04 → Q14 → Q15 → Q16 → Q
 - **Out of scope:** the pitch / vocal-weight analysis and visualiser themselves (a later item).
 - **Decided by Ivan (30 Oct 2026):** the backing track may keep playing while the microphone is listened to or recorded. Today, starting a recording stops every sound; this changes that, and only for the backing track. Everything else still follows one sound at a time.
 - **Risk to settle in the handoff:** voice processing is off for takes, so through the speaker the track will leak into the microphone (and into the take and any analysis). Headphones avoid it; the handoff should say what happens without them.
+- **Next action:** after Ivan separately says Build for Q16, check its **Needs** are live, then implement only this scope in a fresh chat from its handoff.
 - **Done when:** the meter and mono mix share one audio service; the coach loop wraps within a few ms in tests; the full suite passes; Ivan's phone check is recorded.
 
 ## Q17 · Hygiene: Dead Code Sweep
 
-**Status:** Awaiting Render. **Approval:** Not yet given. ID assigned 30 Oct 2026.
+**Status:** Approved — awaiting Build. **Approval:** Render given by Ivan on 30 Oct 2026 (06:42) for the scope below, in one instruction covering Q11–Q17. Each item is still its own build, in queue order, and needs its own **Build**. The build handoff is in Ivan's project notes as `q17_hygiene_dead_code_sweep_handoff.md`.
 **Needs:** Q14 live (it touches the same files).
 
 - **Goal:** remove what nothing uses.
@@ -162,6 +168,7 @@ Most critical first: **Q11 → Q12 → Q13 → Q04 → Q14 → Q15 → Q16 → Q
   - **Fix:** each song gets its own timing Undo; recheck the loading track after a peaks re-read in `open1()`.
   - **Note:** data step 4 does nothing (`cleanSection` migrates first). Keep the step; don't delete it.
 - **Out of scope:** behaviour changes beyond the two small fixes.
+- **Next action:** after Ivan separately says Build for Q17, check its **Needs** are live, then implement only this scope in a fresh chat from its handoff.
 - **Done when:** nothing visible changes; the full suite passes.
 
 ## Q04 · Marks: Practice Guide
