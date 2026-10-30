@@ -88,10 +88,7 @@ Most critical first: **Q11 → Q12 → Q13 → Q04 → Q14 → Q15 → Q16 → Q
   - **Replacing a track** with a shorter one: Undo, and the same check for timing past the new end as for markers, with Keep / Trim instead of deleting.
   - **A section start** stops counting as set once its first line loses its time.
 - **Out of scope:** new timing features; the screen layout.
-- **Unresolved (needed before Render):** what moving a timed section should do.
-  - **A:** stop and explain.
-  - **B:** the moved section's lines become estimates, with its start kept. Recommended.
-  - **C:** keep the times, with Undo.
+- **Decided by Ivan (30 Oct 2026):** moving a timed section turns that section's line times into estimates (dashed, shown on Check timing), with its section start kept. Other sections' times don't change. (He chose this over stopping with an explanation, or keeping the times with Undo.)
 - **Done when:** moving a timed section and then editing one line changes no other section; adding a line between two touching lines moves no placed line; promoting into a late section lands on the marker; replacing a track offers Undo; the full suite passes.
 
 ## Q13 · Interface: Keyboard Guards
@@ -149,7 +146,8 @@ Most critical first: **Q11 → Q12 → Q13 → Q04 → Q14 → Q15 → Q16 → Q
   - **The coach video's level loop** uses the track's precise timer, so the end of a level isn't clipped (today it cuts up to about ¼ s).
   - **Ivan checks the track loop's join on his iPhone** at 1× and 0.5×. If there's an audible gap, try a short fade at the join.
 - **Out of scope:** the pitch / vocal-weight analysis and visualiser themselves (a later item).
-- **Unresolved (needed before Render):** may the backing track keep playing while the microphone is listened to or recorded? Today, starting a recording stops every sound.
+- **Decided by Ivan (30 Oct 2026):** the backing track may keep playing while the microphone is listened to or recorded. Today, starting a recording stops every sound; this changes that, and only for the backing track. Everything else still follows one sound at a time.
+- **Risk to settle in the handoff:** voice processing is off for takes, so through the speaker the track will leak into the microphone (and into the take and any analysis). Headphones avoid it; the handoff should say what happens without them.
 - **Done when:** the meter and mono mix share one audio service; the coach loop wraps within a few ms in tests; the full suite passes; Ivan's phone check is recorded.
 
 ## Q17 · Hygiene: Dead Code Sweep
