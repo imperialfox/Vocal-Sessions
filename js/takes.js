@@ -904,7 +904,7 @@ const TAKE = (() => {
     if (po) po.disabled = !(draft && draft.text.trim());
   }
   document.addEventListener('keydown', (e) => {
-    if (e.key !== 'Enter' || e.isComposing) return;
+    if (!KEYS.enter(e)) return; // not while composing text (Q13)
     if (e.target.id === 'tkCIn') {
       e.preventDefault();
       post();

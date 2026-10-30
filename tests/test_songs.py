@@ -334,26 +334,31 @@ def run(b, t):
     # iPad and Mac: list and song side by side, keyboard shortcuts
     for name, w, h in [('ipad', 820, 1180), ('mac', 1440, 900)]:
         pg = t.page(b, w, h, data=with_song_practice(), **({'ua': None} if name == 'mac' else {}))
+        M = 'Control' if name == 'mac' else 'Meta'  # Q13: Cmd only on Apple devices (the 'mac' window here runs Linux)
         pg.evaluate(ADD, ['River song', 'Example band', LYR]); pg.evaluate(ADD, ['Kitchen radio', '', '[Verse]\nCoffee on the counter\n\n[Chorus]\nTurn it up'])
         pg.evaluate("U.tab='songs';U.view=null;render()"); pg.wait_for_timeout(300)
         ok(pg.locator('.sgcol .rowc').count() == 3 and pg.locator('.sgpane .sgsec').count() > 0, f'{name}: songs on the left, the open song on the right')
         pg.click('.sgcol .rowc[data-k] >> text=River Song'); pg.wait_for_timeout(300)
         ok('River Song' in pg.inner_text('.sgpane h1') and pg.evaluate("U.view") is None, f'{name}: tapping a song shows it beside the list')
-        pg.keyboard.press('Control+e'); pg.wait_for_timeout(250)
+        pg.keyboard.press(M + '+e'); pg.wait_for_timeout(250)
         ok(pg.evaluate("U.sEdit") == 'annotate' and pg.locator('.sgpane .sgedit').count() == 1, f'{name}: Cmd+E edits the song')
         pg.click('.sgpane .sgsec >> nth=0 >> .w >> nth=0'); pg.wait_for_timeout(250)
         ok(pg.locator('#mksheet').count() == 1, f'{name}: the marks sheet opens')
         t.shot(pg, name + '-edit')
         pg.keyboard.press('Escape'); pg.wait_for_timeout(200); ok(pg.locator('#mksheet').count() == 0, f'{name}: Escape closes it')
-        pg.keyboard.press('Control+e'); pg.wait_for_timeout(250); ok(pg.evaluate("U.sEdit") is None, f'{name}: Cmd+E again is Done')
+        pg.keyboard.press(M + '+e'); pg.wait_for_timeout(250); ok(pg.evaluate("U.sEdit") is None, f'{name}: Cmd+E again is Done')
         # 3.22: Cmd+F opens Search; the Songs list keeps its own filter field
-        pg.keyboard.press('Control+f'); pg.wait_for_timeout(250)
+        pg.keyboard.press(M + '+f'); pg.wait_for_timeout(250)
         ok(pg.evaluate("document.activeElement.id") == 'fq' and pg.evaluate("U.tab") == 'find', f'{name}: Cmd+F opens Search (3.22)')
         pg.keyboard.type('turn'); pg.wait_for_timeout(200)
         ok('Kitchen Radio' in pg.inner_text('#flist') and pg.evaluate("document.activeElement.id") == 'fq',
            f'{name}: Search updates as you type, keeping the keyboard')
         pg.keyboard.press('Escape'); pg.wait_for_timeout(150)
-        pg.keyboard.press('Control+3'); pg.wait_for_timeout(300)
+        # Q13: no tab switch while typing, so the second Escape puts the (now empty) field away first
+        pg.keyboard.press(M + '+3'); pg.wait_for_timeout(200)
+        ok(pg.evaluate("U.tab") == 'find', f'{name}: Cmd+3 doesn’t switch tabs while typing in Search (Q13)')
+        pg.keyboard.press('Escape'); pg.wait_for_timeout(150)
+        pg.keyboard.press(M + '+3'); pg.wait_for_timeout(300)
         pg.click('#sgqi'); pg.keyboard.type('turn'); pg.wait_for_timeout(200)
         ok(pg.evaluate("[...document.querySelectorAll('#slist .rowc b')].map(x=>x.textContent)") == ['Kitchen Radio'] and pg.evaluate("document.activeElement.id") == 'sgqi',
            f'{name}: the Songs list still filters in place as you type, keeping the keyboard')
@@ -361,9 +366,9 @@ def run(b, t):
         pg.locator('body').click(position={'x': w - 40, 'y': h - 40}); pg.wait_for_timeout(100)
         cur = pg.evaluate("U.songId"); pg.keyboard.press('ArrowDown'); pg.wait_for_timeout(250)
         ok(pg.evaluate("U.songId") != cur, f'{name}: arrow keys move between songs')
-        pg.keyboard.press('Control+4'); pg.wait_for_timeout(200); ok(pg.evaluate("U.tab") == 'exercises', f'{name}: Cmd+4 opens Exercises (3.17 tab order)')
-        pg.keyboard.press('Control+3'); pg.wait_for_timeout(200); ok(pg.evaluate("U.tab") == 'songs', f'{name}: Cmd+3 opens Songs')
-        pg.keyboard.press('Control+,'); pg.wait_for_timeout(200); ok(pg.evaluate("U.tab") == 'settings', f'{name}: Cmd+, opens Settings')
+        pg.keyboard.press(M + '+4'); pg.wait_for_timeout(200); ok(pg.evaluate("U.tab") == 'exercises', f'{name}: Cmd+4 opens Exercises (3.17 tab order)')
+        pg.keyboard.press(M + '+3'); pg.wait_for_timeout(200); ok(pg.evaluate("U.tab") == 'songs', f'{name}: Cmd+3 opens Songs')
+        pg.keyboard.press(M + '+,'); pg.wait_for_timeout(200); ok(pg.evaluate("U.tab") == 'settings', f'{name}: Cmd+, opens Settings')
         pg.context.close()
 
     # rotating an iPad while a song is open keeps it open

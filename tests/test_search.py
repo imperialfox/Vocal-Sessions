@@ -88,7 +88,7 @@ def circle(b, t):
     ok(pg.input_value('#fq') == 'river' and 'River Song' in pg.inner_text('#flist'), 'and the circle comes back to the same search')
     # Cmd/Ctrl+F
     pg.evaluate(TODAY); pg.wait_for_timeout(200)
-    pg.evaluate("document.activeElement&&document.activeElement.blur()"); pg.keyboard.press('Control+f'); pg.wait_for_timeout(250)
+    pg.evaluate("document.activeElement&&document.activeElement.blur()"); pg.keyboard.press('Meta+f'); pg.wait_for_timeout(250)
     ok(pg.evaluate("U.tab") == 'find' and pg.evaluate("document.activeElement.id") == 'fq', 'Cmd/Ctrl+F opens Search')
     # the Songs list keeps its own filter
     pg.evaluate("go(()=>{U.tab='songs';U.view=null})"); pg.wait_for_timeout(200)

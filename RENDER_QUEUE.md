@@ -1,6 +1,6 @@
 # Render queue
 
-App work Ivan has queued, in the order he wants it built. Each item is one build, in a fresh chat, started from a handoff (see [HANDOFF.md](HANDOFF.md)). Last checked against `main` at **3.30** (30 Oct 2026). **Shipped:** Q01 · Search: Global Find in 3.22; Q08 · Interface: Native iOS Polish in 3.23; Q02 · Track: Waveform Sections in 3.24; Q09 · Track: Waveform Sections Follow-up in 3.25; Q10 · Interface: HIG Foundations Pass in 3.26; Q03 · Marks: Layered Annotations in 3.27; Q05 · Song Clock: Tap Re-Anchor in 3.28; Q11 · Data: Save Safety in 3.29; Q12 · Song Clock: Timing Integrity in 3.30.
+App work Ivan has queued, in the order he wants it built. Each item is one build, in a fresh chat, started from a handoff (see [HANDOFF.md](HANDOFF.md)). Last checked against `main` at **3.31** (30 Oct 2026). **Shipped:** Q01 · Search: Global Find in 3.22; Q08 · Interface: Native iOS Polish in 3.23; Q02 · Track: Waveform Sections in 3.24; Q09 · Track: Waveform Sections Follow-up in 3.25; Q10 · Interface: HIG Foundations Pass in 3.26; Q03 · Marks: Layered Annotations in 3.27; Q05 · Song Clock: Tap Re-Anchor in 3.28; Q11 · Data: Save Safety in 3.29; Q12 · Song Clock: Timing Integrity in 3.30; Q13 · Interface: Keyboard Guards in 3.31.
 
 - **Every item has two separate gates.** `Awaiting Render` means it is not approved. Ivan's **Render** approves only the named item's exact scope and moves it to `Approved — awaiting Build`; it does not start work or authorize a push. A separate **Build** instruction starts implementation for that approved item. Do not treat approval of one item as approval of the whole queue.
 - **The code wins on what's built.** This is a summary, not a spec. Check each note against the code before relying on it.
@@ -34,7 +34,7 @@ Older chats, notes and prototypes use working names. They map like this:
 | Q10 | Interface: HIG Foundations Pass | Vault ideas wireframes (shipped in 3.26) |
 | Q11 | Data: Save Safety | Audit stage 1, data safety (shipped in 3.29) |
 | Q12 | Song Clock: Timing Integrity | Audit stage 2, timing integrity (shipped in 3.30) |
-| Q13 | Interface: Keyboard Guards | Audit stage 3, input hygiene |
+| Q13 | Interface: Keyboard Guards | Audit stage 3, input hygiene (shipped in 3.31) |
 | Q14 | Playback: Smooth Frames | Audit stage 4, per-frame work |
 | Q15 | Marks: Register-Ready Data | Audit stage 5, room for register data |
 | Q16 | Audio: Voice Analysis Foundations | Audit stage 6, Web Audio seam |
@@ -55,23 +55,7 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 
 ## Order (30 Oct 2026)
 
-Most critical first: **Q13 → Q04 → Q14 → Q15 → Q16 → Q17 → Q07**. Q11–Q17 got Render on 30 Oct 2026 (06:42); each still needs its own Build. Q11 shipped in 3.29 and Q12 in 3.30. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
-
-## Q13 · Interface: Keyboard Guards
-
-**Status:** Approved — awaiting Build. **Approval:** Render given by Ivan on 30 Oct 2026 (06:42) for the scope below, in one instruction covering Q11–Q17. Each item is still its own build, in queue order, and needs its own **Build**. The build handoff is in Ivan's project notes as `q13_interface_keyboard_guards_handoff.md`.
-**Needs:** nothing (independent).
-
-- **Goal:** keyboard shortcuts on iPad and Mac never fire twice, while typing, or during a recording.
-- **Scope:**
-  - **One shared typing check** and one place where keys are handled. Holding a key doesn't repeat play/pause. A key another control already handled is left alone. No shortcuts while a picker, sheet or recording is open.
-  - **The Song length picker's** arrow keys no longer also open the next song (and "Set" no longer applies the length to the song you started on).
-  - **Cmd+1–4** follows the same rules as the tab bar: no tab switch during a recording or session, or while typing.
-  - **Shortcuts use Cmd only** on Apple devices, leaving Ctrl's text-editing keys alone.
-  - **Enter to confirm** ignores keys pressed while composing text in another script (for example Japanese).
-- **Out of scope:** new shortcuts.
-- **Next action:** after Ivan separately says Build for Q13, check its **Needs** are live, then implement only this scope in a fresh chat from its handoff.
-- **Done when:** each case above has a test; the full suite passes.
+Most critical first: **Q04 → Q14 → Q15 → Q16 → Q17 → Q07**. Q11–Q17 got Render on 30 Oct 2026 (06:42); each still needs its own Build. Q11 shipped in 3.29, Q12 in 3.30 and Q13 in 3.31. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
 
 ## Q14 · Playback: Smooth Frames
 

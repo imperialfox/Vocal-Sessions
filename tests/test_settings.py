@@ -139,7 +139,7 @@ def coach_link(b, t):
     pg.click('#app [data-a=coachSettings]'); pg.wait_for_timeout(300)
     ok(pg.evaluate("U.view+'/'+U.setPg") == 'set/coach' and pg.locator('#app [data-a=coachAdd]').count() == 1,
        'Add coach video from Exercises opens Settings › Coach video')
-    pg.keyboard.press('Control+,'); pg.wait_for_timeout(200)
+    pg.keyboard.press('Meta+,'); pg.wait_for_timeout(200)
     ok(pg.evaluate("U.tab") == 'settings' and not pg.evaluate("U.view"), 'Cmd/Ctrl + , opens the main list')
     pg.context.close()
 

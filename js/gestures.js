@@ -149,17 +149,24 @@ Object.values(MQ).forEach((m) => {
   if (m.addEventListener) m.addEventListener('change', f);
   else if (m.addListener) m.addListener(f);
 });
-/* keyboard: Cmd/Ctrl + 1–4 switch sections */
-document.addEventListener('keydown', (e) => {
-  if (!(e.metaKey || e.ctrlKey) || U.sheet || !/^[1-4]$/.test(e.key)) return;
-  e.preventDefault();
-  const t = TABS()[+e.key - 1][0];
-  U.clock = false;
-  go(() => {
-    U.tab = t;
-    U.view = null;
-  });
+/* keyboard: Cmd + 1–4 (Ctrl off Apple devices) switch sections, by the tab bar's rules (Q13): not on a session's
+   step or while recording (the tab bar isn't there then), not while typing or with a sheet or picker open, once per
+   press, and with the same side effects as tapping the tab (sgTabTap) */
+KEYS.add({
+  when: (e) => KEYS.mod(e) && !e.altKey && /^[1-4]$/.test(e.key) && !(X && isFlow(U.view)),
+  run(e) {
+    const t = TABS()[+e.key - 1][0];
+    U.clock = false;
+    if (sgTabTap(t)) return;
+    go(() => {
+      U.tab = t;
+      U.view = null;
+    });
+  },
 });
+// every shortcut goes through here (KEYS in helpers.js), after the other keydown listeners, so a key a control
+// already handled (defaultPrevented) or stopped is left alone
+document.addEventListener('keydown', KEYS.route);
 /* a sheet or the clock keeps scrolling to itself: when it can't scroll any further that way (or the swipe is on
    the dimmed page around it), the page behind stays put. iOS ignores overscroll-behavior once nothing inside can
    scroll, so touches and the mouse wheel are checked here */
@@ -275,12 +282,8 @@ let lastY = 0,
   tabQuiet = 0; // until when an app-made smooth scroll is going on
 const TAB_DOWN = 30,
   TAB_UP = 20;
-const tabTyping = () => {
-  const a = document.activeElement;
-  return !!(a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.isContentEditable));
-};
 const tabMayMin = () =>
-  document.body.classList.contains('phone') && !U.sheet && U.tab !== 'find' && !tabTyping() && !!$('dock').querySelector('.dockrow .tabpill') && tabRoom();
+  document.body.classList.contains('phone') && !U.sheet && U.tab !== 'find' && !KEYS.typing() && !!$('dock').querySelector('.dockrow .tabpill') && tabRoom();
 ['scrollTo', 'scrollBy'].forEach((m) => {
   const f = window[m].bind(window);
   window[m] = function () {
@@ -337,7 +340,7 @@ if (window.ResizeObserver)
     if (tabMin && !tabRoom()) setTabMin(false);
   }).observe(document.body);
 // the keyboard coming up brings the bar back
-document.addEventListener('focusin', () => tabMin && tabTyping() && setTabMin(false));
+document.addEventListener('focusin', () => tabMin && KEYS.typing() && setTabMin(false));
 // iOS pauses the mic when you leave the app, so stop and save the take, then say so on return
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) {

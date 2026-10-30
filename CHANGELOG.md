@@ -9,6 +9,28 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.31 · 30 Oct 2026
+*Keyboard shortcuts that only do what you meant (Q13)*
+<!-- area: fixes -->
+
+For an iPad keyboard or a Mac.
+
+**Once per press**
+- Holding Space on the track player plays (or pauses) once, instead of flickering between the two.
+- Holding a shortcut like Cmd + E counts once too. Holding an arrow still keeps moving.
+
+**Never while you're busy**
+- No shortcuts while a sheet, the Song length picker or a recording is open.
+- Cmd + 1 to 4 follow the same rules as tapping the tab bar: no switching tabs during a recording, on a session step, or while you're typing. Switching from a song you're editing finishes the edit, the same as tapping the tab.
+- A key that a button or picker has already used is left to it.
+
+**The Song length picker**
+- ↑ and ↓ in the picker only move its wheels. They no longer also open the next song, so Set always gives the length to the song you opened it on.
+
+**Typing stays typing**
+- Shortcuts use Cmd only on an iPad, iPhone or Mac. Ctrl + E, N and F are left alone for editing text.
+- Pressing Enter to pick a word while typing in Japanese, Chinese or another script with a word picker no longer also confirms the field (search, the song title, a mark's text, comments).
+
 ## 3.30 · 30 Oct 2026
 *Timing you place stays where you put it (Q12)*
 <!-- area: songs -->

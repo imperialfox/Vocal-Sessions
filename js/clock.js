@@ -1548,6 +1548,7 @@ function ckPick(anchor, value, onSet) {
     c.addEventListener('keydown', (e) => {
       if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
       e.preventDefault();
+      e.stopPropagation(); // Q13: the wheel's key, not the song list's (↓ used to open the next song too)
       const i = Math.max(0, Math.min(n - 1, pk.vals[key] + (e.key === 'ArrowDown' ? 1 : -1)));
       c.scrollTop = i * CK_RH;
       paint();
@@ -2008,7 +2009,7 @@ function ckLyricsEdit() {
 
 document.addEventListener('keydown', (e) => {
   if (U.sheet) return;
-  const typing = e.target.closest && e.target.closest('input,textarea,[contenteditable="true"]');
+  const typing = KEYS.typing(e);
   if (e.key === 'Escape') {
     if (CK.lm) {
       ckLmClose();
@@ -2023,7 +2024,7 @@ document.addEventListener('keydown', (e) => {
       rerender();
     }
   }
-  if (e.key === 'Enter' && typing && CK.head && (e.target.id === 'ckTitle' || e.target.id === 'ckArtist')) {
+  if (KEYS.enter(e) && typing && CK.head && (e.target.id === 'ckTitle' || e.target.id === 'ckArtist')) {
     e.preventDefault();
     ckHeadEnd();
     rerender();

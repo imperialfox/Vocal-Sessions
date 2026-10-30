@@ -224,6 +224,47 @@ const TABS = () => [
 ];
 // Settings opens from the gear on Today, so it belongs to Today
 const tabOf = (t) => (t === 'settings' ? 'today' : t);
+
+/* ===== Keyboard (Q13) =====
+   One "is the user typing?" check and one place every shortcut goes through, so a shortcut never fires twice, while
+   typing, or while a picker, sheet or recording is open. A shortcut is added with KEYS.add({when, run, repeat, typing,
+   busy}); gestures.js listens once (KEYS.route, after every other keydown listener) and gives each key to the first
+   shortcut whose when(e) is true. Fields that confirm with Enter check KEYS.enter(e). Escape isn't a shortcut: the
+   handlers that close things keep doing so (songs.js, clock.js, events.js, search.js). */
+const KEYS = (() => {
+  const nav = typeof navigator === 'undefined' ? {} : navigator;
+  // an iPhone, iPad or Mac (an iPad asking for the desktop site says Macintosh)
+  const apple =
+    /Mac|iPhone|iPad|iPod/.test(nav.platform || '') || /Macintosh|Mac OS X|iPhone|iPad|iPod/.test(nav.userAgent || '');
+  const FIELD = 'input, textarea, select, [contenteditable=""], [contenteditable="true"]';
+  const field = (n) => !!(n && n.nodeType === 1 && (n.isContentEditable || (n.matches && n.matches(FIELD))));
+  // the key's own target, or whatever has the focus, takes text
+  const typing = (e) => field(e && e.target) || field(document.activeElement);
+  // Cmd on Apple devices, Ctrl elsewhere, never both: Ctrl+E, N, F and the rest stay text editing on a Mac or iPad
+  const mod = (e) => (apple ? e.metaKey && !e.ctrlKey : e.ctrlKey && !e.metaKey);
+  // still composing text in another script (Japanese, Chinese, Korean…); Safari's last key reports 229
+  const composing = (e) => !!(e.isComposing || e.keyCode === 229);
+  // Enter that confirms a field, not the Enter that ends composing
+  const enter = (e) => e.key === 'Enter' && !composing(e);
+  // a picker, sheet or recording is open
+  const busy = () => !!(U.sheet || rec || (typeof CK !== 'undefined' && CK.pk));
+  const list = [];
+  /* {when(e): is this the shortcut, run(e), repeat: a held key repeats it (moves, not toggles),
+      typing: it works while typing, busy: it works while a picker, sheet or recording is open} */
+  const add = (s) => list.push(s);
+  function route(e) {
+    if (e.defaultPrevented || composing(e)) return; // another control has it, or it's text being composed
+    for (const s of list) {
+      if (!s.when(e)) continue;
+      if ((!s.typing && typing(e)) || (!s.busy && busy())) continue;
+      e.preventDefault();
+      if (e.repeat && !s.repeat) return; // holding the key: once only
+      s.run(e);
+      return;
+    }
+  }
+  return { apple, typing, mod, composing, enter, busy, add, route };
+})();
 const seg = (a, key, v) =>
   '<div class="seg" role="group"><span class="knob" aria-hidden="true"></span>' +
   [1, 2, 3]

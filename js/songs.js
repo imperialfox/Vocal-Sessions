@@ -2880,7 +2880,7 @@ function mkSheetHTML(sg) {
 }
 // the text field in the sheet takes the focus when it appears (and keeps what was typed after a message)
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' && e.target && e.target.id === 'mkIn') {
+  if (KEYS.enter(e) && e.target && e.target.id === 'mkIn') {
     e.preventDefault();
     SG_ACT.mkText();
   }
@@ -3576,7 +3576,7 @@ document.addEventListener('input', (e) => {
   else if (t.id === 'sgLyr') d.text = t.value;
 });
 document.addEventListener('keydown', (e) => {
-  if (e.target.classList && e.target.classList.contains('sgq') && e.key === 'Enter') {
+  if (e.target.classList && e.target.classList.contains('sgq') && KEYS.enter(e)) {
     e.preventDefault();
     addRecent(U.sq);
     e.target.blur();
@@ -3598,13 +3598,15 @@ document.addEventListener('paste', (e) => {
 });
 
 /* ===== Songs: keyboard =====
-   Escape closes menus, the selected word and search. Cmd/Ctrl+F opens Search (3.22), Cmd/Ctrl+N adds one,
-   Cmd/Ctrl+E edits the open song (and again for Done), and ↑ ↓ move between songs on iPad and Mac. */
+   Escape closes menus, the selected word and search. Cmd+F opens Search (3.22), Cmd+N adds a song, Cmd+E edits the
+   open song (and again for Done), Cmd+, opens Settings, and ↑ ↓ move between songs on iPad and Mac. Since Q13 the
+   shortcuts go through KEYS (helpers.js): Cmd only on Apple devices (Ctrl elsewhere), once per press, never with a
+   sheet, picker or recording open, and ↑ ↓ never while typing or after another control (the length picker's wheels)
+   has used the key. */
 document.addEventListener(
   'keydown',
   (e) => {
-    const typing = e.target.closest && e.target.closest('input,textarea,[contenteditable="true"]');
-    const mod = e.metaKey || e.ctrlKey;
+    const typing = KEYS.typing(e);
     if (
       (e.key === 'Enter' || e.key === ' ') &&
       !typing &&
@@ -3631,42 +3633,57 @@ document.addEventListener(
       else if (U.sList) SG_ACT.sgListDone();
       return;
     }
-    if (!mod || U.sheet || rec || (X && isFlow(U.view))) return;
-    const k = e.key.toLowerCase();
-    if (k === 'f') {
-      // 3.22: Cmd/Ctrl+F opens Search (search.js)
-      e.preventDefault();
-      if (U.sEdit) sgEndEdit(true);
-      FIND.open();
-    } else if (k === 'n' && U.tab === 'songs' && !U.sEdit) {
-      e.preventDefault();
-      SG_ACT.sgNew();
-    } else if (k === 'e' && songShown() && hasLyrics(songShown())) {
-      e.preventDefault();
-      if (U.sEdit) SG_ACT.sgDone();
-      else SG_ACT.sgEdit();
-    } else if (k === ',') {
-      e.preventDefault();
-      if (U.sEdit) sgEndEdit(true);
-      go(() => {
-        U.tab = 'settings';
-        U.view = null;
-      });
-    }
   },
   true
 );
-document.addEventListener('keydown', (e) => {
-  if (!(e.key === 'ArrowDown' || e.key === 'ArrowUp') || !songOpenInPane() || U.sheet || U.sEdit || U.sList) return;
-  if (e.target.closest && e.target.closest('input,textarea,[contenteditable="true"]')) return;
-  const ids = [...document.querySelectorAll('#slist .rowc')].map((r) => r.dataset.k);
-  if (!ids.length) return;
-  e.preventDefault();
-  const i = ids.indexOf(U.songId),
-    n = Math.max(0, Math.min(ids.length - 1, i + (e.key === 'ArrowDown' ? 1 : -1)));
-  if (ids[n] !== U.songId) openSong(ids[n]);
-  const r = document.querySelector('#slist .rowc.sel');
-  if (r && r.scrollIntoView) r.scrollIntoView({ block: 'nearest' });
+// Cmd+F, N, E and , work while typing, as before (Cmd+E is Done while editing the lyrics), but not on a session's step
+const sgMod = (e, k) => KEYS.mod(e) && !e.altKey && e.key.toLowerCase() === k && !(X && isFlow(U.view));
+KEYS.add({
+  typing: true,
+  when: (e) => sgMod(e, 'f'),
+  run() {
+    // 3.22: Cmd+F opens Search (search.js)
+    if (U.sEdit) sgEndEdit(true);
+    FIND.open();
+  },
+});
+KEYS.add({ typing: true, when: (e) => sgMod(e, 'n') && U.tab === 'songs' && !U.sEdit, run: () => SG_ACT.sgNew() });
+KEYS.add({
+  typing: true,
+  when: (e) => sgMod(e, 'e') && !!songShown() && hasLyrics(songShown()),
+  run() {
+    if (U.sEdit) SG_ACT.sgDone();
+    else SG_ACT.sgEdit();
+  },
+});
+KEYS.add({
+  typing: true,
+  when: (e) => sgMod(e, ','),
+  run() {
+    if (U.sEdit) sgEndEdit(true);
+    go(() => {
+      U.tab = 'settings';
+      U.view = null;
+    });
+  },
+});
+// ↑ ↓ through the list beside the open song (a held key keeps going)
+KEYS.add({
+  repeat: true,
+  when: (e) =>
+    (e.key === 'ArrowDown' || e.key === 'ArrowUp') &&
+    songOpenInPane() &&
+    !U.sEdit &&
+    !U.sList &&
+    !!document.querySelector('#slist .rowc'),
+  run(e) {
+    const ids = [...document.querySelectorAll('#slist .rowc')].map((r) => r.dataset.k);
+    const i = ids.indexOf(U.songId),
+      n = Math.max(0, Math.min(ids.length - 1, i + (e.key === 'ArrowDown' ? 1 : -1)));
+    if (ids[n] !== U.songId) openSong(ids[n]);
+    const r = document.querySelector('#slist .rowc.sel');
+    if (r && r.scrollIntoView) r.scrollIntoView({ block: 'nearest' });
+  },
 });
 window.addEventListener('resize', () => {
   if (songShown()) {

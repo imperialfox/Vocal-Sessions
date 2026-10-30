@@ -163,8 +163,7 @@ const fwKindNow = () => FW_KINDS.find((k) => k.id === FW.shown);
 function fwPick() {
   if (!D || U.sheet || U.clock || rec || overlayOpen() || U.sFocus) return null;
   if (typeof LAUNCH !== 'undefined' && LAUNCH.busy()) return null; // appears after the launch ripple (3.13)
-  const a = document.activeElement;
-  if (a && a.matches && a.matches('input, textarea, [contenteditable="true"]')) return null; // keep the keyboard clear
+  if (KEYS.typing()) return null; // keep the keyboard clear
   if (FW.shut) return null; // ✕ always visibly closes something: nothing pops up in its place (3.20)
   for (const k of FW_KINDS) if (!FW.dis[k.id] && k.active() && !k.own()) return k;
   return null;

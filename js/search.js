@@ -504,7 +504,7 @@ const FIND = (() => {
   });
   document.addEventListener('keydown', (e) => {
     if (e.target.id !== 'fq') return;
-    if (e.key === 'Enter') {
+    if (KEYS.enter(e)) {
       e.preventDefault();
       remember(U.fq);
       e.target.blur();

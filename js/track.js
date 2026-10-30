@@ -2816,19 +2816,17 @@ const TRACK = (() => {
     },
     { passive: false }
   );
-  // the keyboard on a Mac or iPad: Space plays, arrows move, I and O set the start and end (as in Final Cut Pro)
-  document.addEventListener('keydown', (e) => {
-    if (U.view !== 'trk' || !cur || U.sheet || e.metaKey || e.ctrlKey || e.altKey) return;
-    const a = document.activeElement;
-    if (a && a.matches && a.matches('input, textarea, [contenteditable="true"]')) return;
-    const k = e.key.toLowerCase();
-    if (k === ' ') toggle();
-    else if (k === 'arrowleft' || k === 'arrowright') seek(now() + (k === 'arrowleft' ? -1 : 1) * (e.shiftKey ? 5 : 1));
-    else if (k === 'i') setAt('start');
-    else if (k === 'o') setAt('end');
-    else return;
-    e.preventDefault();
+  // the keyboard on a Mac or iPad: Space plays, arrows move, I and O set the start and end (as in Final Cut Pro).
+  // Through KEYS (Q13): never while typing or with a sheet or picker open; a held Space, I or O counts once (holding
+  // Space used to flutter play/pause), a held arrow keeps moving
+  const trkKey = (e, keys) => U.view === 'trk' && !!cur && !e.metaKey && !e.ctrlKey && !e.altKey && keys.includes(e.key.toLowerCase());
+  KEYS.add({ when: (e) => trkKey(e, [' ']), run: () => toggle() });
+  KEYS.add({
+    repeat: true,
+    when: (e) => trkKey(e, ['arrowleft', 'arrowright']),
+    run: (e) => seek(now() + (e.key === 'ArrowLeft' ? -1 : 1) * (e.shiftKey ? 5 : 1)),
   });
+  KEYS.add({ when: (e) => trkKey(e, ['i', 'o']), run: (e) => setAt(e.key.toLowerCase() === 'i' ? 'start' : 'end') });
   $('trackIn').addEventListener('change', (e) => {
     const f = e.target.files && e.target.files[0],
       w = want;
