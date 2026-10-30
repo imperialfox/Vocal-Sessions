@@ -183,7 +183,9 @@ async function inspectBackup(text, name, size) {
     return r;
   }
   const code = p.checkCode ? await checkCode(p) : null;
+  CLEAN_DROPPED = 0;
   const d = cleanData(p.data);
+  r.songsBad = CLEAN_DROPPED; // Q11: songs that couldn't be checked, left out on their own
   if (!d || (p.takes != null && !Array.isArray(p.takes))) {
     r.status = 'broken';
     r.why = 'The backup is damaged inside, so it can’t be restored. Try an older backup.';
@@ -350,6 +352,9 @@ async function restoreImport() {
       delete c.data;
       return c;
     });
+    // the recordings here now: if they can't be read, stop, rather than replace ones that couldn't be copied (Q11)
+    const here = r.noRec ? [] : await allTakes();
+    if (!here) throw new Error('recordings unreadable');
     // keep a copy of what's here now, so the restore can be undone
     let undoOK = true;
     try {
@@ -358,7 +363,7 @@ async function restoreImport() {
         at: Date.now(),
         data: JSON.parse(JSON.stringify(D)),
         draft: X && X.start ? JSON.parse(JSON.stringify(X)) : null,
-        takes: r.noRec ? [] : await allTakes(),
+        takes: here,
         restored: p.data.sessions.concat(p.data.songSessions).map((x) => x.id),
         from: r.name || '',
         keptTakes: !!r.noRec,
@@ -496,6 +501,15 @@ function bkReportHTML(r, mode) {
       ', which is newer than this app (' +
       APP_VERSION +
       '). Pull down on Today to update first, then restore it.</div></div>';
+  if (r.songsBad && r.status !== 'broken')
+    b +=
+      '<div class="bkstat warn" style="margin-top:8px">' +
+      ICON.warn +
+      '<div><b>' +
+      (r.songsBad > 1 ? 'Some songs are damaged' : 'A song is damaged') +
+      '</b>' +
+      plural(r.songsBad, 'song') +
+      ' can’t be read and will be left out. Everything else is fine.</div></div>';
   if (r.status === 'broken')
     return sheetWrap(
       imp ? 'Can’t restore' : 'Backup check',

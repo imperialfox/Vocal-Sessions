@@ -912,6 +912,26 @@ document.addEventListener('click', (e) => {
       U.sd = { ret: 'exportReady' };
       rerender();
       break;
+    // Q11: the rescued copy of saved data that couldn't be read (Settings › Backup)
+    case 'rescueSave': {
+      const c = SAFE.rescued().find((x) => x.key === k);
+      if (!c) break;
+      const name = ('Vocal Sessions rescued data · ' + fileDate(new Date(c.at))).replace(/[\/\\:*?"<>|]/g, '-') + '.txt';
+      shareFile(new File([c.text], name, { type: 'text/plain' })).then((r) => {
+        if (r !== 'cancelled') toast(r === 'shared' ? 'Rescued copy saved' : 'Rescued copy downloaded');
+      });
+      break;
+    }
+    case 'rescueDel':
+      SAFE.del(k).then(
+        () => {
+          U.sheet = null;
+          rerender();
+          toast('Rescued copy deleted');
+        },
+        () => toast('Couldn’t delete the copy')
+      );
+      break;
     case 'saveReadme':
       shareFile(new File([readmeText()], README_NAME, { type: 'text/plain' })).then((r) => {
         if (r !== 'cancelled') toast(r === 'shared' ? 'Read-me saved' : 'Read-me downloaded');

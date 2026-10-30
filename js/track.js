@@ -125,43 +125,10 @@ const TRACK = (() => {
   const grid = () => !!TRK_LEVELS[lv()].grid;
 
   /* ----- stored on the device: its own database, apart from recordings, the coach video and backups ----- */
-  let dbp = null;
-  function tdb() {
-    if (dbp) return dbp;
-    dbp = new Promise((res, rej) => {
-      if (!window.indexedDB) return rej(new Error('no idb'));
-      const r = indexedDB.open('vocalTracks', 1);
-      r.onupgradeneeded = () => {
-        const d = r.result;
-        // the audio as imported, and its waveform peaks, as separate entries keyed by song id
-        if (!d.objectStoreNames.contains('audio')) d.createObjectStore('audio');
-        if (!d.objectStoreNames.contains('peaks')) d.createObjectStore('peaks');
-      };
-      r.onsuccess = () => {
-        const d = r.result;
-        d.onversionchange = () => {
-          d.close();
-          dbp = null;
-        };
-        res(d);
-      };
-      r.onerror = () => {
-        dbp = null;
-        rej(r.error);
-      };
-    });
-    return dbp;
-  }
-  async function tx(stores, mode, fn) {
-    const d = await tdb();
-    return new Promise((res, rej) => {
-      const t = d.transaction(stores, mode);
-      const out = fn(...stores.map((s) => t.objectStore(s)));
-      t.oncomplete = () => res(out && out.result !== undefined ? out.result : undefined);
-      t.onerror = () => rej(t.error);
-      t.onabort = () => rej(t.error);
-    });
-  }
+  // through the shared helper (Q11, storage.js): the audio as imported, and its waveform peaks, as separate entries
+  // keyed by song id. Name, version and stores as before
+  const TDB = IDB.define('vocalTracks', 1, { audio: null, peaks: null });
+  const tx = (stores, mode, fn) => TDB.tx(stores, mode, fn);
   const okAudio = (r) => r && r.blob instanceof Blob && r.blob.size > 0 && +r.dur > 0;
   const okPeaks = (r) => r && r.p instanceof Uint8Array && r.p.length > 0 && +r.rate > 0;
   const metaOf = (r) => ({
@@ -174,22 +141,9 @@ const TRACK = (() => {
 
   // at launch (boot.js): which songs have a track on this device. Blobs come back as handles, not their bytes
   async function load() {
-    try {
-      const d = await tdb();
-      await new Promise((res) => {
-        const t = d.transaction('audio', 'readonly'),
-          c = t.objectStore('audio').openCursor();
-        c.onsuccess = () => {
-          const k = c.result;
-          if (!k) return;
-          if (typeof k.key === 'string' && okAudio(k.value)) have.set(k.key, metaOf(k.value));
-          k.continue();
-        };
-        t.oncomplete = res;
-        t.onerror = res;
-        t.onabort = res;
-      });
-    } catch (e) {}
+    await TDB.each('audio', (k, v) => {
+      if (typeof k === 'string' && okAudio(v)) have.set(k, metaOf(v));
+    });
   }
 
   /* ----- reading a file: decoded once, at import, into peaks ----- */

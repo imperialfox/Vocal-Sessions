@@ -87,40 +87,9 @@ const COACH = (() => {
   };
 
   /* ----- stored on the device (its own database, apart from recordings and backups) ----- */
-  let dbp = null;
-  function cdb() {
-    if (dbp) return dbp;
-    dbp = new Promise((res, rej) => {
-      if (!window.indexedDB) return rej(new Error('no idb'));
-      const r = indexedDB.open('vocalCoach', 1);
-      r.onupgradeneeded = () => {
-        if (!r.result.objectStoreNames.contains('video')) r.result.createObjectStore('video');
-      };
-      r.onsuccess = () => {
-        const d = r.result;
-        d.onversionchange = () => {
-          d.close();
-          dbp = null;
-        };
-        res(d);
-      };
-      r.onerror = () => {
-        dbp = null;
-        rej(r.error);
-      };
-    });
-    return dbp;
-  }
-  async function ctx(mode, fn) {
-    const d = await cdb();
-    return new Promise((res, rej) => {
-      const t = d.transaction('video', mode);
-      const out = fn(t.objectStore('video'));
-      t.oncomplete = () => res(out && out.result !== undefined ? out.result : undefined);
-      t.onerror = () => rej(t.error);
-      t.onabort = () => rej(t.error);
-    });
-  }
+  // its own database through the shared helper (Q11, storage.js): name, version and store as before
+  const CDB = IDB.define('vocalCoach', 1, { video: null });
+  const ctx = (mode, fn) => CDB.tx('video', mode, fn);
   const okRec = (r) => r && r.blob instanceof Blob && r.blob.size > 0 && +r.dur > 0;
   const chaptersFor = (dur) => Math.abs(dur - COACH_END) <= COACH_SLACK;
 

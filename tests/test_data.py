@@ -6,6 +6,9 @@ PERSIST = {'granted': "navigator.storage.persisted=async()=>false;navigator.stor
            'refused': "navigator.storage.persisted=async()=>false;navigator.storage.persist=async()=>false",
            'missing': "Object.defineProperty(navigator,'storage',{value:undefined})"}
 
+PRE = "SAFE.get('vocalBeforeUpgrade')"
+
+
 def run(b, t):
     ok = t.ok
     # data saved before 3.7 has no version number: it's upgraded, and a copy is kept first
@@ -14,7 +17,9 @@ def run(b, t):
     ok(pg.evaluate("D.schema") == S, f'older data is upgraded to data version {S}')
     saved = json.loads(pg.evaluate("localStorage.getItem('vocalTracker')"))
     ok(saved.get('schema') == S, 'the upgraded data is saved')
-    pre = json.loads(pg.evaluate("localStorage.getItem('vocalBeforeUpgrade')") or 'null')
+    # Q11: the copy is kept in IndexedDB (SAFE), not beside the data in localStorage
+    pre = pg.evaluate(PRE)
+    ok(pg.evaluate("localStorage.getItem('vocalBeforeUpgrade')") is None, 'the copy is no longer kept in localStorage (Q11)')
     ok(pre and pre['from'] == 0 and pre['to'] == S and 'schema' not in pre['data'] and [x['id'] for x in pre['data']['sessions']] == [x['id'] for x in sample()['sessions']],
        'a copy of the data as it was is kept before upgrading')
     ok(pre and saved['sessions'] == pre['data']['sessions'] and saved['months'] == pre['data']['months'] and {k: v for k, v in saved.items() if k not in ('schema', 'songs')} == {k: v for k, v in pre['data'].items() if k != 'songs'},
@@ -32,16 +37,25 @@ def run(b, t):
     ok(abs(added - _dt.datetime.fromisoformat(first.replace('Z', '+00:00')).timestamp() * 1000) < 1000, 'step 2: a song is dated by its first song practice')
     ok(pg.evaluate("D.schema") == S, 'and the data reaches the current version')
     # once upgraded, reopening doesn't upgrade again
-    pg.evaluate("localStorage.removeItem('vocalBeforeUpgrade')"); pg.reload(); ready(pg)
-    ok(pg.evaluate("localStorage.getItem('vocalBeforeUpgrade')") is None, 'reopening up-to-date data makes no new copy')
+    pg.evaluate("SAFE.del('vocalBeforeUpgrade')"); pg.reload(); ready(pg)
+    ok(pg.evaluate(PRE) is None, 'reopening up-to-date data makes no new copy')
     # the copy is removed after 30 days
-    pg.evaluate("localStorage.setItem('vocalBeforeUpgrade',JSON.stringify({from:0,to:1,at:Date.now()-31*864e5,data:{}}))"); pg.reload(); ready(pg)
-    ok(pg.evaluate("localStorage.getItem('vocalBeforeUpgrade')") is None, 'the copy is removed after 30 days')
+    pg.evaluate("SAFE.put('vocalBeforeUpgrade',{from:0,to:1,at:Date.now()-31*864e5,data:{}})"); pg.reload(); ready(pg)
+    ok(pg.evaluate(PRE) is None, 'the copy is removed after 30 days')
+    # Q11: a copy left in localStorage by 3.28 moves into IndexedDB once, and is cleared from localStorage
+    pg.evaluate("localStorage.setItem('vocalBeforeUpgrade',JSON.stringify({from:3,to:4,at:Date.now()-2*864e5,data:{sessions:[{id:'old'}]}}))"); pg.reload(); ready(pg)
+    moved = pg.evaluate(PRE)
+    ok(moved and moved['from'] == 3 and moved['data']['sessions'][0]['id'] == 'old' and pg.evaluate("localStorage.getItem('vocalBeforeUpgrade')") is None,
+       'an older copy in localStorage moves to IndexedDB, then is cleared (Q11)')
+    ok(pg.evaluate("SET.sizes().find(x=>x.k==='app').b") >= len(json.dumps(moved['data'])) - 5, 'Storage counts the kept copy with Sessions and songs (Q11)')
+    pg.evaluate("localStorage.setItem('vocalBeforeUpgrade',JSON.stringify({from:3,to:4,at:Date.now()-40*864e5,data:{sessions:[{id:'older'}]}}))"); pg.reload(); ready(pg)
+    ok(pg.evaluate("localStorage.getItem('vocalBeforeUpgrade')") is None and pg.evaluate(PRE)['data']['sessions'][0]['id'] == 'old',
+       'an expired one in localStorage is just cleared, and never replaces a newer copy (Q11)')
     pg.context.close()
 
     # an empty app needs no copy
     pg = t.page(b, data=None)
-    ok(pg.evaluate("D.schema") == S and pg.evaluate("localStorage.getItem('vocalBeforeUpgrade')") is None, 'a new, empty app starts on the current data version')
+    ok(pg.evaluate("D.schema") == S and pg.evaluate(PRE) is None, 'a new, empty app starts on the current data version')
     # a backup from a newer version says so
     src = json.load(open(fix('backup-3.6.json'), encoding='utf-8'))
     src['data']['schema'] = S + 1; src['appVersion'] = '9.9'; del src['checkCode']

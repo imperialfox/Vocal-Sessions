@@ -560,6 +560,16 @@ function renderSheet() {
       'Remove video',
       'coachDel'
     );
+  else if (s === 'rescueDel')
+    h = confirmSheet(
+      'Delete the rescued copy?',
+      'The copy of your data that couldn’t be read is deleted from this ' +
+        deviceName() +
+        '. Save it to Files first if you might want it. This can’t be undone.',
+      'Delete copy',
+      'rescueDel',
+      U.sd && U.sd.k
+    );
   else if (s === 'resetMonth')
     h = confirmSheet(
       'Reset this month?',
@@ -1244,16 +1254,40 @@ function go(fn) {
   if (!ZOOM.after(z)) DET.stepIn(DET.stepDir(was, U.view));
 }
 var toastT = null;
-function toast(t, ms) {
+// cls 'long' (Q11) lets a longer message wrap onto a second line instead of being cut off
+function toast(t, ms, cls) {
   clearTimeout(toastT);
   const o = document.querySelector('.toast');
   if (o) o.remove();
   const el = document.createElement('div');
-  el.className = 'toast glass';
+  el.className = 'toast glass' + (cls ? ' ' + cls : '');
   el.setAttribute('role', 'status');
   el.textContent = t;
   document.body.appendChild(el);
   toastT = setTimeout(() => el.remove(), ms || 1900);
+  return el;
+}
+// a toast with one button (Q11: Retry), in the same style as Song Clock's Undo toasts; gone() runs if it times out
+function toastBtn(t, label, fn, ms, gone) {
+  const el = toast(t, ms || 4500, 'ckundo long');
+  const b = document.createElement('button');
+  b.className = 'ckub';
+  b.textContent = label;
+  b.addEventListener('click', (e) => {
+    e.stopPropagation();
+    clearTimeout(toastT);
+    el.remove();
+    fn();
+  });
+  el.appendChild(b);
+  if (gone) {
+    clearTimeout(toastT);
+    toastT = setTimeout(() => {
+      el.remove();
+      gone();
+    }, ms || 4500);
+  }
+  return el;
 }
 
 /* ===== Sliding knobs ===== */

@@ -489,25 +489,20 @@ async function saveRec() {
     },
     r.o ? { o: r.o } : {} // the place in the song it was sung from (an entry in the song's order)
   );
+  // which practice it belongs to, so a take saved later (Retry) only joins the practice it was recorded in
+  const xs = X && X.start;
   let saved = false;
   try {
     await putTake(t);
     saved = true;
-    if (X && (!r.o || (r.sp && isSong() && X.song === r.songId))) {
-      X.takes.push(t.id);
-      saveDraft();
-    }
   } catch (e) {
-    unstartIfNoTakes(r);
-    toast('Couldn’t save the take. Storage may be full.');
+    // Q11: the take isn't lost. It stays here, with its audio, and the toast offers Retry
+    keepUnsaved(t, r, xs);
   }
+  if (saved) tookTake(t, r, xs);
+  if (saved && UNSAVED.length) retryUnsaved(); // there's room again: save any take still waiting
   await refreshTakes(); // 3.20: every take is kept; nothing is removed automatically
-  if (saved && typeof TAKE !== 'undefined') TAKE.analyse(t.id); // its waveform and channels, once, on this device
-  const song = saved && D.songs.find((s) => s.id === r.songId);
-  if (song) {
-    song.practised = t.created; // practised means a take was recorded
-    save();
-  }
+  if (saved) analyseTake(t);
   // straight to the review sheet, layered over the song, if it's still on screen
   const sh = saved && r.o && songShown();
   if (sh && sh.id === r.songId && !U.sheet) {
@@ -517,6 +512,71 @@ async function saveRec() {
   rerender();
   if (U.sd && U.sd.fresh === t.id) DET.takeIn();
 }
+// a saved take joins its practice (if that's still the one running) and marks its song as practised
+function tookTake(t, r, xs) {
+  if (X && X.start === xs && (!r.o || (r.sp && isSong() && X.song === r.songId))) {
+    if (!X.takes.includes(t.id)) X.takes.push(t.id);
+    saveDraft();
+  }
+  const song = D.songs.find((s) => s.id === r.songId);
+  if (song) {
+    song.practised = Math.max(+song.practised || 0, t.created); // practised means a take was recorded
+    save();
+  }
+}
+const analyseTake = (t) => typeof TAKE !== 'undefined' && TAKE.analyse(t.id); // its waveform, once, on this device
+
+/* ===== Takes that couldn't be saved (Q11) =====
+   A take whose save fails (storage full, or the database stopped it) stays here in memory, audio and all, and a toast
+   offers Retry. If the toast goes before it's tapped, the take is tried again when the app comes back to the screen
+   and after the next take saves, and the toast comes back if it still can't be saved. */
+const UNSAVED = []; // [{t, r, xs}]
+function keepUnsaved(t, r, xs) {
+  if (!UNSAVED.some((u) => u.t.id === t.id)) UNSAVED.push({ t, r, xs });
+  askRetry();
+}
+function askRetry(again) {
+  if (!UNSAVED.length) return;
+  const n = UNSAVED.length;
+  toastBtn(
+    (again ? 'Still couldn’t save ' : 'Couldn’t save ') +
+      (n > 1 ? n + ' takes' : 'the take') +
+      '. Storage may be full.',
+    'Retry',
+    () => retryUnsaved(true),
+    12000
+  );
+}
+let retrying = false;
+async function retryUnsaved(asked) {
+  if (retrying || !UNSAVED.length) return;
+  retrying = true;
+  let done = 0;
+  const ok = [];
+  for (const u of UNSAVED.slice()) {
+    try {
+      await putTake(u.t);
+    } catch (e) {
+      continue;
+    }
+    UNSAVED.splice(UNSAVED.indexOf(u), 1);
+    tookTake(u.t, u.r, u.xs);
+    ok.push(u.t);
+    done++;
+  }
+  retrying = false;
+  if (done) {
+    await refreshTakes();
+    ok.forEach(analyseTake);
+    rerender();
+  }
+  if (UNSAVED.length) {
+    if (asked || done) askRetry(true);
+  } else if (done) toast(done > 1 ? done + ' takes saved' : 'Take saved');
+}
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && UNSAVED.length) retryUnsaved(true);
+});
 function stopPlayback() {
   if (player) {
     const p = player;

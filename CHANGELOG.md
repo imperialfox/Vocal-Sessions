@@ -9,6 +9,30 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.29 · 30 Oct 2026
+*Nothing you save can quietly go missing (Q11)*
+<!-- area: backup -->
+
+**Damaged saved data is rescued**
+- If the app ever can't read your saved data (for example a save cut short), it copies it exactly as it was before anything is saved over it, and tells you once.
+- The copy is kept on this phone under **Settings › Backup › Rescued data**: **Save the rescued copy** puts it in Files, and **Delete the rescued copy** asks first.
+- Each song is checked on its own. If one song can't be read, only that song is left out, and your data as it was is copied the same way.
+- If there's nowhere to put the copy, your saved data is left untouched and nothing is saved over it that time.
+
+<!-- area: recordings -->
+**Takes are never dropped**
+- If a take can't be saved (usually a full phone), it stays in the app with its audio and a **Retry** button.
+- Missed the message? The app tries again when you come back to it and after your next take saves, and tells you if it still can't.
+- The song practice it belongs to carries on, and the take joins it once it's saved.
+- A backup or restore now stops with a message if your recordings can't be read, rather than leaving them out.
+
+<!-- area: fixes -->
+**Safer saving behind the scenes**
+- Recordings, song tracks, the coach video and takes' waveforms all save through one shared, sturdier piece of code. A save that's stopped by the phone now always ends with a message instead of hanging.
+- Your practice in progress warns you if it can't be saved, as everything else does.
+- The 30-day copy kept before a data upgrade has moved out of the space your saved data uses, so a full phone is less likely. It's counted in Settings › Storage.
+- If something goes wrong while the app starts, the launch screen still goes and says so, instead of staying on the icon.
+
 ## 3.28.1 · 30 Oct 2026
 *Play-along's buttons fit the smallest phones (Q05)*
 

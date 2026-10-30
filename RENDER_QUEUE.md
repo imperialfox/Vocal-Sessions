@@ -1,6 +1,6 @@
 # Render queue
 
-App work Ivan has queued, in the order he wants it built. Each item is one build, in a fresh chat, started from a handoff (see [HANDOFF.md](HANDOFF.md)). Last checked against `main` at **3.28.1** (30 Oct 2026). **Shipped:** Q01 · Search: Global Find in 3.22; Q08 · Interface: Native iOS Polish in 3.23; Q02 · Track: Waveform Sections in 3.24; Q09 · Track: Waveform Sections Follow-up in 3.25; Q10 · Interface: HIG Foundations Pass in 3.26; Q03 · Marks: Layered Annotations in 3.27; Q05 · Song Clock: Tap Re-Anchor in 3.28.
+App work Ivan has queued, in the order he wants it built. Each item is one build, in a fresh chat, started from a handoff (see [HANDOFF.md](HANDOFF.md)). Last checked against `main` at **3.29** (30 Oct 2026). **Shipped:** Q01 · Search: Global Find in 3.22; Q08 · Interface: Native iOS Polish in 3.23; Q02 · Track: Waveform Sections in 3.24; Q09 · Track: Waveform Sections Follow-up in 3.25; Q10 · Interface: HIG Foundations Pass in 3.26; Q03 · Marks: Layered Annotations in 3.27; Q05 · Song Clock: Tap Re-Anchor in 3.28; Q11 · Data: Save Safety in 3.29.
 
 - **Every item has two separate gates.** `Awaiting Render` means it is not approved. Ivan's **Render** approves only the named item's exact scope and moves it to `Approved — awaiting Build`; it does not start work or authorize a push. A separate **Build** instruction starts implementation for that approved item. Do not treat approval of one item as approval of the whole queue.
 - **The code wins on what's built.** This is a summary, not a spec. Check each note against the code before relying on it.
@@ -32,7 +32,7 @@ Older chats, notes and prototypes use working names. They map like this:
 | Q08 | Interface: Native iOS Polish | Native bars, iOS 27 polish (shipped in 3.23) |
 | Q09 | Track: Waveform Sections Follow-up | Giant 3-Pad dock, Q02 follow-up (shipped in 3.25) |
 | Q10 | Interface: HIG Foundations Pass | Vault ideas wireframes (shipped in 3.26) |
-| Q11 | Data: Save Safety | Audit stage 1, data safety |
+| Q11 | Data: Save Safety | Audit stage 1, data safety (shipped in 3.29) |
 | Q12 | Song Clock: Timing Integrity | Audit stage 2, timing integrity |
 | Q13 | Interface: Keyboard Guards | Audit stage 3, input hygiene |
 | Q14 | Playback: Smooth Frames | Audit stage 4, per-frame work |
@@ -55,30 +55,12 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 
 ## Order (30 Oct 2026)
 
-Most critical first: **Q11 → Q12 → Q13 → Q04 → Q14 → Q15 → Q16 → Q17 → Q07**. Q11–Q17 got Render on 30 Oct 2026 (06:42); each still needs its own Build. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
-
-## Q11 · Data: Save Safety
-
-**Status:** Approved — awaiting Build. **Approval:** Render given by Ivan on 30 Oct 2026 (06:42) for the scope below, in one instruction covering Q11–Q17. Each item is still its own build, in queue order, and needs its own **Build**. The build handoff is in Ivan's project notes as `q11_data_save_safety_handoff.md`.
-**Needs:** 3.28.1 live (verified on `main`, 30 Oct 2026). Nothing else.
-
-- **Goal:** no path in the app can silently lose saved data, a take, or a session in progress.
-- **Scope:**
-  - **Damaged saved data:** if `vocalTracker` can't be read, copy the raw text somewhere safe *before* anything saves over it, and tell Ivan. Check each song on its own, so one bad song is dropped rather than everything. Today `load()` returns `{}` and `boot.js` saves it straight away; reproduced in the audit with a cut-off save.
-  - **One shared IndexedDB helper** for recordings, the coach video, tracks and take extras, handling complete, error, abort and blocked, and reconnecting after a dropped connection. The recordings helper has no `onabort` today.
-  - **A take that fails to save** keeps its audio in memory with Retry, and is never dropped without a message.
-  - **`saveDraft()`** warns when it fails, as `save()` does.
-  - **The 30-day pre-upgrade copy** moves from localStorage into IndexedDB, so it no longer halves the space for saved data.
-  - **Startup** is guarded, so the launch screen always goes away and an error is shown.
-- **Out of scope:** any change to what's saved or to the backup format.
-- **Detail for the builder to confirm with Ivan at Build (within this scope):** where the rescued raw copy lives and how he's told. Proposed: kept in IndexedDB, with a one-time message pointing to Settings › Backup.
-- **Next action:** after Ivan separately says Build for Q11, check its **Needs** are live, then implement only this scope in a fresh chat from its handoff.
-- **Done when:** a cut-off `vocalTracker` keeps its raw copy and the app says so; a simulated aborted save shows a message and keeps the take; a failed draft save warns; the old-backup fixtures still restore; the full suite passes.
+Most critical first: **Q12 → Q13 → Q04 → Q14 → Q15 → Q16 → Q17 → Q07**. Q11–Q17 got Render on 30 Oct 2026 (06:42); each still needs its own Build. Q11 shipped in 3.29. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
 
 ## Q12 · Song Clock: Timing Integrity
 
 **Status:** Approved — awaiting Build. **Approval:** Render given by Ivan on 30 Oct 2026 (06:42) for the scope below, in one instruction covering Q11–Q17. Each item is still its own build, in queue order, and needs its own **Build**. The build handoff is in Ivan's project notes as `q12_song_clock_timing_integrity_handoff.md`.
-**Needs:** Q11 live.
+**Needs:** Q11 live (shipped in 3.29).
 
 - **Goal:** timing Ivan placed by hand is never moved or overwritten by something he didn't do to it, and guesses are never saved as if placed.
 - **Scope:**

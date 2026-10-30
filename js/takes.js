@@ -64,71 +64,25 @@ const TAKE = (() => {
   let C = null;
 
   /* ----- stored on the device: waveform peaks and both-ears copies (never in backups) ----- */
-  let dbp = null;
-  function xdb() {
-    if (dbp) return dbp;
-    dbp = new Promise((res, rej) => {
-      if (!window.indexedDB) return rej(new Error('no idb'));
-      const r = indexedDB.open('vocalTakeExtras', 1);
-      r.onupgradeneeded = () => {
-        const d = r.result;
-        if (!d.objectStoreNames.contains('peaks')) d.createObjectStore('peaks');
-        if (!d.objectStoreNames.contains('mono')) d.createObjectStore('mono');
-      };
-      r.onsuccess = () => {
-        const d = r.result;
-        d.onversionchange = () => {
-          d.close();
-          dbp = null;
-        };
-        res(d);
-      };
-      r.onerror = () => {
-        dbp = null;
-        rej(r.error);
-      };
-    });
-    return dbp;
-  }
-  async function xtx(stores, mode, fn) {
-    const d = await xdb();
-    return new Promise((res, rej) => {
-      const t = d.transaction(stores, mode);
-      const out = fn(...stores.map((s) => t.objectStore(s)));
-      t.oncomplete = () => res(out && out.result !== undefined ? out.result : undefined);
-      t.onerror = () => rej(t.error);
-      t.onabort = () => rej(t.error);
-    });
-  }
+  // through the shared helper (Q11, storage.js): name, version and stores as before
+  const XDB = IDB.define('vocalTakeExtras', 1, { peaks: null, mono: null });
+  const xtx = (stores, mode, fn) => XDB.tx(stores, mode, fn);
   const okExt = (r) => r && r.p instanceof Uint8Array && +r.rate > 0;
   // at launch (boot.js): what's already been worked out; then any take not yet read is read, one at a time
   async function load() {
-    try {
-      const d = await xdb();
-      for (const st of ['peaks', 'mono'])
-        await new Promise((res) => {
-          const t = d.transaction(st, 'readonly'),
-            c = t.objectStore(st).openCursor();
-          c.onsuccess = () => {
-            const k = c.result;
-            if (!k) return;
-            if (typeof k.key === 'string') {
-              if (st === 'peaks' && okExt(k.value)) ext.set(k.key, k.value);
-              if (st === 'mono' && k.value instanceof Blob && k.value.size > 0) mono.set(k.key, k.value);
-            }
-            k.continue();
-          };
-          t.oncomplete = res;
-          t.onerror = res;
-          t.onabort = res;
-        });
-    } catch (e) {}
+    await XDB.each('peaks', (k, v) => {
+      if (typeof k === 'string' && okExt(v)) ext.set(k, v);
+    });
+    await XDB.each('mono', (k, v) => {
+      if (typeof k === 'string' && v instanceof Blob && v.size > 0) mono.set(k, v);
+    });
     setTimeout(backlog, 1500);
   }
   // older takes, read in the background (at most one at a time), so every one plays in both ears soon
   async function backlog() {
     const ids = new Set(TAKES.map((t) => t.id));
-    const gone = [...ext.keys(), ...mono.keys()].filter((id) => !ids.has(id));
+    // only once the recordings have really been read (Q11): a failed read isn't the same as none
+    const gone = TAKES_READ ? [...ext.keys(), ...mono.keys()].filter((id) => !ids.has(id)) : [];
     if (gone.length) forgetExtras(gone);
     for (const t of TAKES.slice().reverse()) {
       if (ext.has(t.id) || reading.has(t.id)) continue;

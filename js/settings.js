@@ -114,6 +114,7 @@ const SET = (() => {
     try {
       app = (localStorage.getItem('vocalTracker') || '').length + (localStorage.getItem('vocalDraft') || '').length;
     } catch (e) {}
+    app += SAFE.bytes(); // Q11: the safety copies (before an upgrade, and any rescued data) are your data too
     const cm = COACH.meta();
     return [
       { k: 'rec', l: 'Recordings', b: TAKES.reduce((a, t) => a + (+t.size || 0), 0), c: 'var(--cF)' },
@@ -244,6 +245,7 @@ const SET = (() => {
       '<p class="foot">You can leave recordings out when you export. Song tracks and the coach video stay on this ' +
       deviceName() +
       ' and are never backed up.</p>' +
+      rescuedRows() +
       '<div class="hdr">Backup files</div><div class="grp">' +
       '<button class="row" data-a="sheet" data-v="bkLog"><span class="lbl">Backup history</span><span class="mut">' +
       loadLog().length +
@@ -256,6 +258,39 @@ const SET = (() => {
       '<button class="row" data-a="saveReadme"><span class="lbl acc">Save a read-me file</span>' +
       ICON.share +
       '</button></div>'
+    );
+  }
+
+  // Q11: saved data that couldn't be read, kept exactly as it was, to save as a file or delete
+  function rescuedRows() {
+    const r = SAFE.rescued();
+    if (!r.length) return '';
+    return (
+      '<div class="hdr">Rescued data</div><div class="grp">' +
+      r
+        .map(
+          (c) =>
+            '<button class="row" data-a="rescueSave" data-k="' +
+            esc(c.key) +
+            '"><span class="lbl acc">Save the rescued copy<small>' +
+            (c.why === 'song' ? 'A song couldn’t be read' : 'Couldn’t be read') +
+            ' on ' +
+            shortDate(c.at) +
+            ' at ' +
+            timeOf(c.at) +
+            ' · ' +
+            mb(c.bytes) +
+            '</small></span>' +
+            ICON.share +
+            '</button>' +
+            '<button class="row" data-a="sheet" data-v="rescueDel" data-k="' +
+            esc(c.key) +
+            '"><span class="lbl dng">Delete the rescued copy</span></button>'
+        )
+        .join('') +
+      '</div><p class="foot">Your saved data as it was when the app couldn’t read it, kept on this ' +
+      deviceName() +
+      ' so nothing is lost. Save it to Files, and it can usually be mended.</p>'
     );
   }
 

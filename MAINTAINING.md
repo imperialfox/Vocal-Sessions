@@ -45,7 +45,7 @@ Notes for whoever works on the app next, whether that's Ivan, a new Claude sessi
 | `js/content.js` | **The practice content:** goals, coach video and timings (`VID`, and `COACH_TIMES` for the coach video player), exercises (`FOUND`, `ROT`), write-ups (`DESC`), quick words and Toggl tags. Loaded first |
 | `js/config.js` | App settings and fixed design: limits, focus areas and colours, exercise icons |
 | `js/motion.js` | **The shared springs** (`MOTION`): gentle, nav and ripple springs as CSS `linear()` easings and `--ease-*`/`--dur-*` variables, stagger helpers, Reduce Motion, the speed setting and the distance blur. See Motion below |
-| `js/storage.js` | Loading, checking (`cleanData`) and saving data, data-version upgrades, recordings in IndexedDB |
+| `js/storage.js` | Loading, checking (`cleanData`) and saving data, data-version upgrades, **the shared IndexedDB helper** (`IDB`, Q11) every database opens through, the safety copies (`SAFE`, Q11) and recordings in IndexedDB. See Save safety below |
 | `js/helpers.js` | Small helpers (dates, text, icons, layout) and the on-screen state `U` |
 | `js/screens.js` | Today, Progress, Exercises and the session steps |
 | `js/songs.js` | Songs: the list, pasting and labelling lyrics, the lyrics screen, marks and cues, editing, search, pins, and checking saved songs (`cleanSong`) |
@@ -66,7 +66,7 @@ Notes for whoever works on the app next, whether that's Ivan, a new Claude sessi
 | `js/details.js` | **Motion details** (`DET`): rows leaving, arriving and moving, Progress bar ripples, Today's arch fill and week wave, calendar days, session step slides, the Recall wave, sheets that change in place. See Motion below |
 | `js/zoom.js` | **Card zoom** (`ZOOM`): cards zooming into their pages and Back shrinking them into their cards, (3.23) pages pushed in from the right, swipe back from anywhere, the Finish, calendar day and new-song zooms. See Motion below |
 | `js/launch.js` | **The launch ripple** (`LAUNCH`): the icon's bars pulsing, the launch screen fading and Today rising in. See Motion below |
-| `js/boot.js` | Starts the app: loads saved data, then draws the first screen. Always last |
+| `js/boot.js` | Starts the app: loads saved data, then draws the first screen, each step guarded (Q11) so the launch screen always goes. Always last |
 
 They're plain scripts, not modules: they share one global scope, and a file can use anything from the files before it. Nothing runs while the files load except in `boot.js`, so the order only matters for `boot.js` being last. Inside each file, sections are still marked `/* ===== Name ===== */`.
 
@@ -90,21 +90,36 @@ Everything stays on the device. There is no server.
 | localStorage | `vocalSongPrefs` | This device's song sort order and recent searches, the marks layer shown (`mkLayer`, 3.27), Song Clock's settings: `marksPlaying`, `blurAhead`, `snapping`, `stayAwake`, `pins`, the track player's `trkLevel` (0–3) and `trkSpeed`, and Search's recent searches `findRecent` (3.22) (not backed up) |
 | localStorage | `vocalWindow` | The floating window's corner on this device, `{corner: 'br'}` (not backed up) |
 | localStorage | `vocalLook` | This device's look (3.23, Settings › Appearance): `{grad: false}` when Today's gradient is switched off; absent means everything is on its default (not backed up) |
-| localStorage | `vocalBeforeUpgrade` | The data as it was before the last data upgrade, kept for 30 days |
+| localStorage | `vocalBeforeUpgrade` | Up to 3.28: the copy from before the last data upgrade. Since 3.29 (Q11) it's moved into `vocalSafety` once at launch and cleared from here |
 | IndexedDB `vocalTakes` (version 2) | store `takes` | Recordings, with their audio as Blobs |
 | IndexedDB `vocalTakes` | store `undo` | The copy kept for 30 days after a restore |
 | IndexedDB `vocalCoach` (version 1) | store `video`, key `v` | The coach video: `{name, size, type, dur, added, blob}`. Never in backups; Reset all data leaves it |
 | localStorage | `vocalCoach` | The coach video's place, speed and Loop on this device, `{t, speed, loop}` (not backed up) |
+| IndexedDB `vocalSafety` (version 1, Q11) | store `copies`, keyed by name | The safety copies (`SAFE`): `vocalBeforeUpgrade` is `{from, to, at, data}`, the data as it was before the last data upgrade, kept for 30 days; `rescued:<ms>` is `{at, why, text, bytes, appVersion}`, saved data that couldn't be read (`why: 'unreadable'`) or that had a song that couldn't be checked (`'song'`), exactly as it was stored, kept until deleted in Settings › Backup. Never in backups; restores and Reset all data leave it. Counted in Storage with Sessions and songs |
 | IndexedDB `vocalTracks` (version 1) | stores `audio` and `peaks`, key: the song's id | Song tracks (3.19): `audio` is `{name, size, type, dur, added, blob}` (the file as imported), `peaks` is `{p: Uint8Array, rate: 50, dur}`. Never in backups; restores and Reset all data leave it; deleting a song or Remove track deletes its entries |
 
-`cleanData()` checks anything loaded or restored and drops what's malformed, so damaged data can't stop the app starting. `migrate()` fills in defaults and then runs `upgradeData()`; `normX()` upgrades older drafts.
+`cleanData()` checks anything loaded or restored and drops what's malformed, so damaged data can't stop the app starting. Each song is checked on its own: one that makes `cleanSong()` throw is dropped alone and counted in `CLEAN_DROPPED` (Q11). `migrate()` fills in defaults and then runs `upgradeData()`; `normX()` upgrades older drafts.
+
+### Save safety (3.29, Q11)
+
+Nothing the app does may lose saved data, a take or a session in progress without saying so.
+
+- **Saved data that can't be read** (`load()`): when `vocalTracker` won't parse, isn't an object, or `cleanData()` fails, its text goes to `SAFE.rescue(text, 'unreadable')` and the app starts empty. When a song had to be dropped, the data as it was goes to `SAFE.rescue(text, 'song')` and the rest loads. Either way Ivan gets one toast pointing to **Settings › Backup › Rescued data**, where each copy can be saved as a `.txt` file (`rescueSave`) or deleted (`rescueDel`, with confirmation). A copy is made once per launch (`rescuing`), so pull to refresh doesn't make another.
+- **Saving waits for a copy** (`holdSaves(promise)`): while a safety copy is being written, `save()` only remembers that it was asked, and saves once every hold has settled. The rescue and the pre-upgrade copy both hold saves, so the copy always exists before anything is saved over what it copies.
+- **Saving can be switched off for a launch** (`lockSaves(why)`, `SAVE_LOCK`): when the damaged data can't be copied anywhere (`'uncopied'`), localStorage can't be read (`'unreadable'`), or reading or upgrading the data threw at launch (`'boot'`). The stored data is then left exactly as it was, and a toast says changes won't be saved this time. Drafts still save.
+- **One IndexedDB helper** (`IDB.define(name, version, stores)` → `{open, tx, each, close}`): every database goes through it (`TAKES_DB`, `SAFE_DB`, and `CDB`, `TDB`, `XDB` inside coach.js, track.js and takes.js). `tx(stores, mode, fn)` settles on complete, error or abort (aborting itself if `fn` throws), so a save never hangs without a word when storage is full. After a failure the connection is dropped, and the next call opens a fresh one; a connection the browser closed is reopened once. An open that stays blocked gives up after 4 s. `each(store, fn)` reads every entry and never rejects. `define()` creates a store only when it's missing, and the names, versions and stores are the ones listed above.
+- **Recordings that can't be read** aren't the same as none: `allTakes()` gives `null`, `refreshTakes()` keeps the list as it was, `TAKES_READ` stays false so `TAKE`'s tidy-up doesn't forget waveforms, an export fails with its toast rather than leaving the recordings out, and a restore stops before replacing recordings it couldn't copy.
+- **A take that fails to save** (`saveRec`): it's kept in `UNSAVED` (`{t, r, xs}`, the take with its blob, the recording, and which practice it was recorded in) and a toast offers **Retry** (`toastBtn`). Retry, the app coming back to the screen and the next take that saves all try again (`retryUnsaved`); a take saved later joins its practice only if that practice is still the one running (`X.start === xs`). The song practice it started carries on.
+- **`saveDraft()`** warns when it fails, at most every 10 seconds.
+- **Startup** (`boot.js`): each step runs through `bootStep()`, which records what went wrong in `BOOT_ERRORS`. If the first draw fails, `#app` shows a short message with Try again; the launch screen goes whatever happens (`bootFinish`, and a last-resort timer), and a toast says something went wrong.
+- **Longer toasts** use `toast(text, ms, 'long')`, which wraps onto a second line; `toastBtn(text, label, fn, ms)` adds one button in the style of Song Clock's Undo toasts.
 
 ### Data version
 
 Saved data carries `schema` (currently 4, from 3.27; 3 was 3.18, 2 was 3.8, 1 was 3.7). Step 4 moves the older Annotate marks into the layered `marks` (see Marks). Step 3 changes nothing: it marks data that may hold song timing. To change the shape of saved data:
 
 1. Add a numbered step to `UPGRADES` that changes `D` in place, and raise `SCHEMA` to match.
-2. Steps run in order the first time the new version opens, and whenever an older backup is restored. Before they run, the data is copied to `vocalBeforeUpgrade`.
+2. Steps run in order the first time the new version opens, and whenever an older backup is restored. Before they run, the data is copied to the safety copies (`SAFE`, key `vocalBeforeUpgrade`, in IndexedDB since 3.29), and saving waits until the copy is there.
 3. Add a test in `tests/test_data.py` that loads data from before the step and checks the result.
 
 A backup whose `schema` is higher than the app's shows "Made by a newer version" before restoring.
@@ -294,7 +309,7 @@ Since 3.27 (queue item Q03), marks come in four layers, one per stage of learnin
 
 - **Never rename or remove an exercise id** (`slides`, `humming`, `lip`, `straw`, `falsetto`, `upperlower`, `rung`, `hinge`, `half`, `vertical`, `nasal`, `flex`). Sessions store levels by these ids. The backup tests fail if they change.
 - **Data changes are additive.** Add fields with a default; don't rename or repurpose existing ones. Older backups must still restore, and new backups must still restore in the previous version.
-- **Bump the IndexedDB version only to add stores**, and create each store only if it's missing.
+- **Bump the IndexedDB version only to add stores**, and create each store only if it's missing. Every database opens through `IDB.define()` (storage.js, Q11); don't write another copy of the open and transaction code.
 
 ---
 
@@ -409,7 +424,8 @@ The tests run with motion off (see Motion above), so nothing waits on a spring. 
 | `test_flows.py` | A full session with notes, the clock, Skip, editing, song practice, Toggl text and drafts |
 | `test_progress.py` | The Progress chart, ranges, picking bars, time per step and the "doors" to All sessions |
 | `test_edge.py` | Every bug from the 3.3.2 audit, so none come back |
-| `test_data.py` | Data version upgrades and the copy kept first, backups from a newer version, Storage protection, and opening offline |
+| `test_data.py` | Data version upgrades and the copy kept first (in IndexedDB since 3.29, and 3.28's localStorage copy moving across), backups from a newer version, Storage protection, and opening offline |
+| `test_safety.py` | 3.29 Save safety (Q11): a cut-off `vocalTracker` copied before anything saves over it (and the message, Save and Delete in Settings › Backup), saving waiting for a copy, one bad song dropped on its own, nowhere to copy it (left untouched), the shared IndexedDB helper (a dropped connection, an abort, a blocked open), a take whose save is aborted kept for Retry (and saved on coming back), a draft that can't be saved, and the launch screen going when the first draw or the data throws |
 | `test_changelog.py` | The Changelog page shows every version in CHANGELOG.md, the chart, Show all, Every change, and a failed load |
 | `test_songs.py` | Pasting and labelling lyrics, the song screen, Marks and Lyrics editing (marks following their words), unlink, reorder, pins, the list, search, Today's pinned songs, older and damaged songs, backups, and iPad/Mac shortcuts |
 | `test_backup.py` | Export, Check a backup, damaged files, restore comparison, undo, the old-backup fixtures and the exercise-id guard |

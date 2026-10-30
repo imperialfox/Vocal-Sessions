@@ -142,7 +142,7 @@ def run(b, t):
     pg.click('[data-a=importYes]'); pg.wait_for_function("U.sheet===null", timeout=10000); ok(pg.evaluate("D.sessions.length") == 3, 'restoring into an empty app works')
 
     # recordings survive the database upgrade from 3.5
-    r = pg.evaluate("""async()=>{(await db()).close();dbp=null;await new Promise(r=>{const q=indexedDB.deleteDatabase('vocalTakes');q.onsuccess=q.onerror=q.onblocked=()=>r();});
+    r = pg.evaluate("""async()=>{await TAKES_DB.close();await new Promise(r=>{const q=indexedDB.deleteDatabase('vocalTakes');q.onsuccess=q.onerror=q.onblocked=()=>r();});
       await new Promise((res,rej)=>{const q=indexedDB.open('vocalTakes',1);q.onupgradeneeded=()=>q.result.createObjectStore('takes',{keyPath:'id'});q.onsuccess=()=>{const d=q.result;const t=d.transaction('takes','readwrite');t.objectStore('takes').put({id:'old1',songId:'g_1',created:1,len:3,size:3,type:'audio/mp4',blob:new Blob(['abc'])});t.oncomplete=()=>{d.close();res();};};q.onerror=rej;});
       await refreshTakes();const d=await db();return [TAKES.map(t=>t.id),[...d.objectStoreNames]];}""")
     ok(r[0] == ['old1'] and 'undo' in r[1], 'upgrading from 3.5 keeps recordings and adds the undo store')
