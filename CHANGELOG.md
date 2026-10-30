@@ -9,6 +9,13 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.28.1 · 30 Oct 2026
+*Play-along's buttons fit the smallest phones (Q05)*
+
+<!-- area: fixes -->
+**Play-along**
+- On the narrowest iPhones, the play-along transport leaves a little less room around the time, so −0.2, +0.2, the track's sound and Flag stay full-size buttons.
+
 ## 3.28 · 30 Oct 2026
 *Time songs line by line from the song's own track (Q05)*
 

@@ -7505,6 +7505,17 @@ button.ckr {
   flex: none;
   padding: 8px 6px;
 }
+/* the narrowest phones: a little less room around the time, so every round button keeps its 44 pt */
+@media (max-width: 360px) {
+  .cktr:has(.ckfl) {
+    padding: 0 5px;
+    gap: 0;
+  }
+  .cktr:has(.ckfl) .ckpp {
+    gap: 4px;
+    padding: 8px 2px;
+  }
+}
 .ckfl {
   display: grid;
   place-items: center;
