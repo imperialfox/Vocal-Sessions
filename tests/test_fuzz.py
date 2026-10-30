@@ -65,7 +65,7 @@ INV=r"""(()=>{const p=[];const L=document.getElementById('layer');
  if(COACH.el()&&!COACH.el().paused&&((typeof player!=='undefined'&&player&&!player.paused)||ck.run))p.push('two sounds at once (video)');
  if(typeof player!=='undefined'&&player&&!player.paused&&ck.run)p.push('two sounds at once (take and play-along)');
  if(tk.loaded&&!songById(tk.id))p.push('a deleted song’s track still loaded');
- if(U.view==='trk'&&!U.sheet&&TRACK.has(U.songId)&&tk.loaded&&tk.id===U.songId&&!document.querySelector('#dock .trktr'))p.push('track player without its transport');
+ if(U.view==='trk'&&!U.sheet&&TRACK.has(U.songId)&&tk.loaded&&tk.id===U.songId&&!document.querySelector('#dock .trktr, #dock .trkmd'))p.push('track player without its transport');
  if(document.querySelector('#dock .tabbar')&&!document.querySelector('#dock [data-a=findOpen]'))p.push('tab bar without the search circle');
  if(U.tab==='find'&&!U.view&&!document.getElementById('fq'))p.push('Search without its field');
  if(U.tab==='find'&&!U.view&&!document.querySelector('[data-a=findOpen].on,[data-a=findOpen][aria-current=page]')&&document.querySelector('[data-a=findOpen]'))p.push('Search open but its circle not selected');
@@ -79,7 +79,8 @@ INV=r"""(()=>{const p=[];const L=document.getElementById('layer');
  try{JSON.parse(localStorage.getItem('vocalTracker'))}catch(e){p.push('saved data unreadable')}
  const sumOk=Object.keys(D.months).length>=0;
  return p;})()"""
-VIS=r"""(()=>{const L=document.getElementById('layer');const root=L.querySelector('.scrim,.clock')?L:document;
+# with a sheet open, only the sheet is in reach, and the length picker when it pops over the sheet (it lives on <body>)
+VIS=r"""(()=>{const L=document.getElementById('layer');const pk=document.getElementById('ckpk');const root=pk||(L.querySelector('.scrim,.clock')?L:document);
  const els=[...root.querySelectorAll('[data-a],input:not([type=file]),textarea')].filter(e=>{const r=e.getBoundingClientRect();if(r.width<2||r.height<2)return false;if(r.bottom<0||r.top>innerHeight||r.right<0||r.left>innerWidth)return false;
    const cx=Math.min(innerWidth-1,Math.max(0,r.left+r.width/2)),cy=Math.min(innerHeight-1,Math.max(0,r.top+r.height/2));const t=document.elementFromPoint(cx,cy);return t&&(t===e||e.contains(t)||t.closest('[data-a]')===e);});
  return els.map((e,i)=>{e.setAttribute('data-fz',i);return {i,a:e.dataset.a||e.tagName.toLowerCase(),v:e.dataset.v||'',k:e.dataset.k||'',id:e.id||'',type:e.type||''};});})()"""
