@@ -9,6 +9,37 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.28 · 30 Oct 2026
+*Time songs line by line from the song's own track (Q05)*
+
+<!-- area: songs -->
+**Timing runs off the song's track**
+- Song Clock now always uses the song's track on this phone. No more playing the song on another device and tapping along in the app.
+- Without the track, **Timing** reads **Add a track to time this song** and opens Files, the same as the song's Track row.
+- On a song that isn't timed yet, Timing opens the track player to place its sections and lines.
+- **Sync by sections** (the big tap pad) and **Sync again** are gone, and so is playing along without a track. Section starts come from the waveform, as since 3.24.
+- Timing saved on older songs is kept exactly as it was. Check timing still shows it, and says play-along needs the song's track.
+
+**Lines on the waveform**
+- In the track player's **Phrase** and **Line** views, a lane under the waveform has a block for each lyric line. Blocks are dashed while they're an estimate and solid once you've placed them.
+- Drag a block's edge to move it. Where two lines touch, one handle moves the end of one and the start of the next together.
+- Or tap a block to select it, then **Start here** or **End here** at the playhead.
+- With **Snapping** on (Song controls), edges snap to the playhead, section starts and the other lines' edges. The Snapping tile finally does something.
+- Every change has **Undo**, and it all goes into the song's one timing. A song stops being an estimate once every line has been placed.
+
+**Fixing lines while you sing**
+- **Punch-in:** while playing along, hold the lyrics for half a second as a line starts. That line starts where your finger went down, and letting go sets its end. A toast says **Re-timed**, with Undo. A quick tap still jumps to a line.
+- **Flag** at the end of the play-along transport drops a marker on the track where you are, with Undo. Paused, the same button is **Retime**, which opens the track player on the line you're on.
+
+**Doors into the track player**
+- **Hold a lyric line** for half a second in Practise or Perform: it lifts, the rest dims, and a menu offers **Retime line**, **Play from here** and **Annotate** (the Marks side with the whole line selected, on the layer you used last). In Recall a hold still peeks, and the hold never also focuses the section.
+- On **Check timing**, every line, the **Section starts** row and **Time each line** open the player in Line view on that line, sliding in like Check timing does. Back returns to Check timing.
+- Changing a line of lyrics still clears only that line's time. Placing it again clears its to-do marker.
+
+**Suggested breaths**
+- A gap you leave after a placed line becomes a suggested breath. It's saved with the timing and included in backups.
+- It shows only in **Phrasing** on the Marks side, as a faint dashed **’ +** at the end of the line. Tap it to make it a real breath mark, with Undo. Once the line has a breath mark, the suggestion goes.
+
 ## 3.27 · 29 Oct 2026
 *Marks in four layers, one stage of learning at a time (Q03)*
 

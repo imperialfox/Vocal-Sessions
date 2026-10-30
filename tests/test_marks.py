@@ -5,6 +5,7 @@ listening, and every size in light and dark.
 VS_MARKS=data,draw,sheet,views,listen,sizes runs only those parts."""
 import json, os, tempfile, hashlib
 from harness import sample, with_song_practice, ready, url, APP_PATH
+from test_track import F
 
 PARTS = set((os.environ.get('VS_MARKS') or 'data,draw,sheet,views,listen,sizes').split(','))
 
@@ -22,6 +23,17 @@ def secs(pg):
 
 def word(o, li, wi):
     return f'.sgsec[data-o="{o}"] .sgl[data-li="{li}"] .w[data-wi="{wi}"]'
+
+
+
+def tracked(pg):
+    """Q05: play-along needs the song's track on this device: a synthetic one, added as Add track does (which opens the
+    player, so back to the song). Its audio is stubbed, so the test clock drives the lyrics."""
+    sid = pg.evaluate(f"{SONG}.id")
+    pg.evaluate("TRACK.along=async()=>true")
+    pg.evaluate("id=>TRACK.expect(id)", sid); pg.set_input_files('#trackIn', F('Marks.wav', 40))
+    pg.wait_for_function("id=>TRACK.has(id)&&!TRACK.busy()", arg=sid, timeout=15000); pg.wait_for_timeout(300)
+    pg.evaluate("id=>go(()=>{U.tab='songs';U.view='lyr';U.songId=id})", sid); pg.wait_for_timeout(300)
 
 
 def run(b, t):
@@ -298,6 +310,7 @@ def run(b, t):
         pg.click('[data-a=sgMode][data-v=practise]'); pg.wait_for_timeout(200)
         # play-along: Active layer on the line being sung and the next one only; breaths everywhere
         pg.evaluate("ckPref('marksPlaying','active');CLOCK.fake(10000)")
+        tracked(pg)
         pg.evaluate(f"(()=>{{const s={SONG},L=ckLines(s);ckStore(s,L,ckSpread(s,L,[0,10,20,30]),[true,true,true,true],L.map(()=>false),{{est:true}});rerender()}})()")
         pg.click('.ckrow [data-a=ckTile][data-v=timing]'); pg.wait_for_timeout(300)
         pg.click('#ckpa .ckl[data-i="0"]'); pg.wait_for_timeout(200)
@@ -318,6 +331,7 @@ def run(b, t):
         pg = t.page(b, 390, 844, touch=True, data=with_song_practice())
         pg.evaluate("U.tab='songs';render()"); o = pg.evaluate(ADD, LYR); pg.wait_for_timeout(200)
         pg.evaluate("CLOCK.fake(10000)")
+        tracked(pg)
         pg.evaluate(f"(()=>{{const s={SONG},L=ckLines(s);ckStore(s,L,ckSpread(s,L,[0,10,20,30]),[true,true,true,true],L.map(()=>false),{{est:true}});rerender()}})()")
         pg.click('.ckrow [data-a=ckTile][data-v=timing]'); pg.wait_for_timeout(300)
         pg.click('#ckpa .ckl[data-i="0"]'); pg.wait_for_timeout(200)

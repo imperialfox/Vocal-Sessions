@@ -2,8 +2,8 @@
 three-line lyric card above; Song in 24 s rows ending at the track's end, with lyrics under them; Markers, a grid of
 rehearsal tiles), a marker made into a section start through the section picker (time order kept, one Undo for the
 timing and the marker), the Markers grid's tiles, loops, transport and quick add, the jog wheel on the left, the
-right or as a bottom roller, the red playhead, play-along running off the song's track (with a mute button, and
-lyric-only without the track), the loop kept after the phone sleeps, the level reset, and old data.
+right or as a bottom roller, the red playhead, play-along running off the song's track (with a mute button; Q05: none
+without the track), the loop kept after the phone sleeps, the level reset, and old data.
 Q09 (the follow-up): the Markers dock's three pads under Backing Sound and Loop, Replay and Next (scrolling the tile
 into view), 108 px tiles with a thumb-reach loop button, the edge jog wheels growing in place, the Lyrics pill on the
 Song card, the teleprompter's line change, and the loop wrapping close to its end at 0.5×, 0.75× and 1×.
@@ -407,14 +407,17 @@ def along(b, t):
     pg.evaluate("TRACK.el().currentTime=59.3"); pg.wait_for_function("!CLOCK.state().run", timeout=5000); pg.wait_for_timeout(500)
     ok(not pg.evaluate("TRACK.state().playing"), 'at the track’s end play-along stops, and the player’s loop doesn’t restart it')
     ckoff = pg.evaluate("ckOff()")
-    # without the track on this device: lyric-only, no mute
+    # Q05: without the track on this device there's no play-along (no lyrics on the app's own clock); the timing is kept
+    keep = pg.evaluate(TL, sid)
     pg.evaluate("id=>TRACK.forget([id])", sid); pg.wait_for_timeout(300)
-    pg.evaluate("id=>ckOn(songById(id))", sid); pg.wait_for_timeout(300)
-    ok(pg.locator('#ckMute').count() == 0, 'without the track on this device, no mute button')
+    with pg.expect_file_chooser() as fc:
+        pg.evaluate("id=>ckOn(songById(id))", sid)
+    fc.value.set_files([]); pg.wait_for_timeout(300)
+    ok(not pg.evaluate("CLOCK.state().on") and pg.locator('#ckpa:not([hidden])').count() == 0 and pg.locator('#ckMute').count() == 0,
+       'without the track on this device, Timing asks for it (the file picker) and play-along doesn’t start')
     pg.evaluate("CLOCK.fake(10000);ckPlay()"); pg.evaluate("CLOCK.advance(3)")
-    ok(pg.evaluate("CLOCK.state().run") and not pg.evaluate("TRACK.state().playing") and pg.evaluate("TRACK.state().along") is None,
-       'play-along runs on its own clock, lyrics only, as before')
-    pg.evaluate("ckOff()")
+    ok(not pg.evaluate("CLOCK.state().run") and not pg.evaluate("TRACK.state().playing"), 'nothing plays on the app’s own clock')
+    ok(pg.evaluate(TL, sid) == keep, 'the song’s timing is kept as it was')
     pg.context.close()
 
 

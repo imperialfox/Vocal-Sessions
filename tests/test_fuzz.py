@@ -48,9 +48,13 @@ INV=r"""(()=>{const p=[];const L=document.getElementById('layer');
  if(ZOOM.busy()){window.__zb=window.__zb||performance.now();if(performance.now()-window.__zb>5000)p.push('card zoom stuck')}else{window.__zb=0;
    if(document.querySelector('.zm'))p.push('a zoom layer left behind');if(document.querySelector('.zm-src'))p.push('a card left hidden after a zoom');}
  const ck=CLOCK.state();
- if(ck.wake&&!((ck.run&&songShown()&&songShown().id===ck.songId)||(ck.syncRun&&U.view==='ckSync')))p.push('wake lock held while not timing');
+ if(ck.wake&&!(ck.run&&songShown()&&songShown().id===ck.songId))p.push('wake lock held while not timing');
  if(FW.shown==='clock'&&FW_KINDS.find(k=>k.id==='clock').own())p.push('play-along window on its own screen');
- if(U.view!=='ckSync'&&(ck.syncing||ck.syncRun))p.push('Sync clock running after leaving Sync');
+ if(ck.on&&!TRACK.has(ck.songId))p.push('play-along without the song’s track on this device (Q05)');
+ if(ck.punch&&!ck.run)p.push('a punch-in left on while not playing along');
+ if(CLOCK.lineMenu()&&!document.getElementById('lmenu'))p.push('a line’s hold menu open with no menu');
+ if(document.getElementById('lmenu')&&!document.querySelector('#app .sgl.lifted'))p.push('a hold menu without its lifted line');
+ if(document.body.classList.contains('lmopen')&&!document.getElementById('lmenu'))p.push('the song left dimmed after its hold menu');
  if(!document.getElementById('ckpa').hidden&&!(ck.on&&songShown()&&!U.sEdit))p.push('play-along view shown without play-along');
  if(document.documentElement.classList.contains('ckplay')&&document.getElementById('ckpa').hidden)p.push('page scrolling locked without play-along');
  const tk=TRACK.state();
@@ -80,11 +84,13 @@ VIS=r"""(()=>{const L=document.getElementById('layer');const root=L.querySelecto
    const cx=Math.min(innerWidth-1,Math.max(0,r.left+r.width/2)),cy=Math.min(innerHeight-1,Math.max(0,r.top+r.height/2));const t=document.elementFromPoint(cx,cy);return t&&(t===e||e.contains(t)||t.closest('[data-a]')===e);});
  return els.map((e,i)=>{e.setAttribute('data-fz',i);return {i,a:e.dataset.a||e.tagName.toLowerCase(),v:e.dataset.v||'',k:e.dataset.k||'',id:e.id||'',type:e.type||''};});})()"""
 # no microphone here: Record shows on a selected section, but recording itself is covered by test_recording and test_sections
-SKIP = {'importPick', 'checkPick', 'exportSave', 'saveReadme', 'rec', 'sgRec', 'coachAdd', 'coachFS', 'trkAdd', 'trkReplace', 'sgAddPick'}
+SKIP = {'importPick', 'checkPick', 'exportSave', 'saveReadme', 'rec', 'sgRec', 'coachAdd', 'coachFS', 'trkAdd', 'trkReplace', 'sgAddPick', 'ckAddTrack'}
 HEAVY = ('sgOpen','sgSec','sgTakes','playTake','star','sgMode','sgHint','sgHMenu','sgSetHint','sgRMenu','sgOrder','sgAnywhere','sgEdit','sgWord','sgEditMode','mkLayer','mkPick','mkOpt','mkText','mkRm','mkKeep','mkClear','sgOMove','sgORemove','sgNew','sgSplit','sgSave','sgSearch','sgListEdit','sgToggle','sgCue','sgUnlink','start','songStart','resume','cta','confirmF','tog','rlv','flv','wTog','saveHow','skipHow','editSess','saveEdit','exNote','takeNote','addWord','saveWord',
          'openNote','longOk','pauseToggle','fwOpen','fwToggle','clock','sheet','calDay','calSession','eflv','input','textarea',
          # 3.18 Song Clock
-         'ckGrid','ckTile','ckPad','ckLine','ckPP','ckNudge','ckRedo','ckSyncPause','ckSyncUndo','ckFinish','ckSyncX','ckCheckDone','ckSyncAgain','ckLen','ckPickSet','ckPencil','ckHeadDone',
+         'ckGrid','ckTile','ckLine','ckPP','ckNudge','ckCheckDone','ckLen','ckPickSet','ckPencil','ckHeadDone',
+         # Q05 Song Clock: Tap Re-Anchor (Retime, Flag, the hold menu, suggested breaths, the line lane's row)
+         'ckRetime','ckRetimeNow','ckFlag','ckLmClose','ckLmRetime','ckLmPlay','ckLmMark','sgSugBr','trkLnStart','trkLnEnd','trkLnX',
          # 3.19 the track player
          'trkOpen','trkPP','trkLoop','trkSet','trkLevel','trkRow','trkToStart','trkSpeed','trkMenu','trkBack',
          # 3.20 songs, takes and markers
@@ -111,7 +117,7 @@ def run(b, t):
         pg.evaluate("l=>{U.sDraft={step:1,title:'river song',artist:'',text:l};U.sDraft.blocks=splitBlocks(l);U.sDraft.step=2;sgSaveDraft();U.view=null;U.tab='today';render()}",
                     "[Verse]\nPaper boats along the gutter\n\n[Chorus]\nCarry me over\nLet the river know\n\n[Chorus]\nCarry me over\nLet the river know")
         pg.evaluate("putTake({id:'tA',songId:'g_1',created:Date.now()-864e5,len:30,size:5000,type:'audio/mp4',star:false,blob:new Blob([new Uint8Array(5000)],{type:'audio/mp4'})}).then(refreshTakes).then(rerender)")
-        # 3.18: the river song is synced, so play-along, Check timing and Sync are all in reach of the random taps
+        # 3.18: the river song is timed, so play-along and Check timing are in reach of the random taps (Q05: with its track, below)
         pg.evaluate("(()=>{const s=D.songs.find(x=>x.name==='River Song'),L=ckLines(s);ckStore(s,L,ckSpread(s,L,[0,10,20]),[true,true,true],L.map(()=>false),{est:true})})()")
         # a take from the river song's first chorus, so a section has takes and its sheet can open
         pg.evaluate("(()=>{const s=D.songs.find(x=>x.name==='River Song');return putTake({id:'tB',songId:s.id,o:s.order[1].o,created:Date.now()-2*864e5,len:14,size:5000,type:'audio/mp4',star:true,blob:new Blob([new Uint8Array(5000)],{type:'audio/mp4'})}).then(refreshTakes).then(rerender)})()")
@@ -124,6 +130,10 @@ def run(b, t):
         # 3.19: a short track on the first song, so the player, its doors and its window are in the random taps too
         pg.evaluate("TRACK.expect('g_1')"); pg.set_input_files('#trackIn', TONES)
         pg.wait_for_function("TRACK.has('g_1')&&!TRACK.busy()", timeout=15000)
+        # Q05: play-along needs the song's track, so the river song has one too (its line lane and play-along in reach)
+        rid = pg.evaluate("D.songs.find(x=>x.name==='River Song').id")
+        pg.evaluate("id=>TRACK.expect(id)", rid); pg.set_input_files('#trackIn', TONES)
+        pg.wait_for_function("id=>TRACK.has(id)&&!TRACK.busy()", arg=rid, timeout=15000)
         pg.evaluate("(()=>{const s=songById('g_1');s.loop={start:2,end:4,on:true};s.markers=[{id:'m1',t:1},{id:'m2',t:2,end:4}];save();go(()=>{U.view=null;U.tab='today'})})()"); pg.wait_for_timeout(200)
         trace = collections.deque(maxlen=20); trace.append(f'seed {seed}, {w}x{h}')
         for step in range(STEPS):

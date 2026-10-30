@@ -1,6 +1,9 @@
 /* Vocal Sessions · clock.js
-   Song Clock (3.18, phase A1): timing for a song's lyrics. Sync a song by tapping as each section starts, then play
-   along with the words filling as they're sung, and check the timing line by line.
+   Song Clock (3.18, phase A1): timing for a song's lyrics. Play along with the words filling as they're sung, and check
+   the timing line by line. Q05 (Song Clock: Tap Re-Anchor): timing runs off the song's own track on this device. Section
+   starts and lines are placed on the track's waveform (the track player's line lane), fixed in place while playing along
+   (punch-in), or flagged with a marker; the hold menu on a lyric line retimes it, plays from it or marks it. Sync by
+   sections (tapping along to music on another device) is retired.
    Timing says when; marks say how. Timing is its own layer on the song record (sg.timing) and never changes the
    lyrics, sections, marks or takes.
    Plain script (not a module): files share one global scope and load in the order listed in index.html. */
@@ -10,8 +13,10 @@ const CK_LAG = 0.15; // seconds taken off every tap or press, for the time a fin
 const CK_MIN = 0.1; // a line lasts at least this long, and starts at least this long after the one before
 const CK_DOT = 1.2; // a gap after a line longer than this gets an automatic breath dot
 const CK_GAP = 0.35; // the gap left between lines spread evenly
+const CK_SB = 0.25; // Q05: a gap this long after a placed line (with no breath mark of Ivan's) is a suggested breath
+const CK_HOLD = 500; // Q05: ms held for punch-in and the lyric line's hold menu
 const CK_MAXLEN = 20 * 60 + 59; // the song length picker goes to 20:59
-const CK_TILES = ['timing', 'check', 'key', 'marks', 'blur', 'snap', 'awake', 'sync', 'lyrics', 'track']; // 3.19: track
+const CK_TILES = ['timing', 'check', 'key', 'marks', 'blur', 'snap', 'awake', 'lyrics', 'track']; // 3.19: track; Q05: Sync again retired
 const CK_MP = ['off', 'breaths', 'active']; // Marks while playing (Q03 added Active layer to the cycle)
 
 // what's on screen now; nothing here is saved
@@ -20,11 +25,9 @@ const CK = {
   on: false, // play-along is on
   ever: false, // it has been started since it was turned on
   pc: { base: 0, perf: 0, run: false }, // the play-along clock
-  sc: { base: 0, perf: 0, run: false }, // the Sync clock
-  P: null, // the Sync pass in progress
   head: false, // the pencil: title, artist and length edited in place
   gridEdit: false, // the controls grid is choosing what to pin
-  ret: null, // where Sync and Check timing go back to
+  ret: null, // where Check timing goes back to
   undo: [], // timing as it was before each change, for the Undo toasts
   lastA: -2, // the line play-along last drew as current
   sig: '', // what the play-along view was built from
@@ -37,6 +40,10 @@ const CK = {
   lastTxt: '',
   trk: false, // Q02: play-along follows the song's track on this device (backing audio), not its own clock
   mute: false, // Q02: the backing audio muted (this time only; it starts on)
+  pi: null, // Q05 punch-in: holding the lyrics while playing along {x, y, t (when pressed), timer, on, i}
+  piAt: 0, // when a punch-in ended (its click isn't also a tap on a line)
+  lm: null, // Q05 the hold menu on a lyric line: {o, li}
+  lmAt: 0, // when the hold menu opened (the hold's click isn't also a tap)
 };
 
 /* ===== Song Clock: the clock ===== */
@@ -146,10 +153,18 @@ function cleanTiming(t, sg) {
       lines.push(l);
       if (a != null) prev = l;
     }
-    const marks = (Array.isArray(s.marks) ? s.marks : [])
-      .filter((m, i, arr) => Number.isInteger(m) && m >= 0 && m < n && arr.indexOf(m) === i)
-      .sort((p, q) => p - q);
-    out.slots[x.o] = { lines, anch: s.anch === true, marks };
+    const list = (a) =>
+      (Array.isArray(a) ? a : [])
+        .filter((m, i, arr) => Number.isInteger(m) && m >= 0 && m < n && arr.indexOf(m) === i)
+        .sort((p, q) => p - q);
+    const slot = { lines, anch: s.anch === true, marks: list(s.marks) };
+    // Q05 (optional, older versions drop them): lines placed by hand on an estimated song, and suggested breaths (a gap
+    // after a placed line). A suggested breath goes once the line has a breath mark of Ivan's
+    const fix = list(s.fix),
+      sb = list(s.sb).filter((li) => lines[li][0] != null && !MARKS.breaths(sec, li).some(Boolean));
+    if (fix.length) slot.fix = fix;
+    if (sb.length) slot.sb = sb;
+    out.slots[x.o] = slot;
   });
   if (!Object.keys(out.slots).length && out.len == null) return null;
   return out;
@@ -255,35 +270,58 @@ function ckModel(sg) {
   const L = ckLines(sg),
     raw = ckRaw(sg, L),
     T = ckFill(L, raw);
-  const slots = (sg.timing && sg.timing.slots) || {};
+  const slots = (sg.timing && sg.timing.slots) || {},
+    est = !!(sg.timing && sg.timing.est),
+    has = (l, k) => !!(slots[l.o] && (slots[l.o][k] || []).includes(l.li));
   return {
     sg,
     L,
     raw,
     T,
     anch: sg.order.map((x) => !!(slots[x.o] && slots[x.o].anch)),
-    marks: L.map((l) => !!(slots[l.o] && slots[l.o].marks.includes(l.li))),
+    marks: L.map((l) => has(l, 'marks')),
+    // Q05: a line is estimated until it has its own time: filled in between its neighbours, or spread evenly from
+    // section starts and not yet placed by hand (drawn dashed on the line lane)
+    est: L.map((l, i) => raw[i][0] == null || (est && !has(l, 'fix'))),
+    sb: L.map((l) => has(l, 'sb')),
     end: (i) => ckEnd(L, T, i),
   };
 }
-// write lines' times (and section starts, to-do markers) back into the song, and save
-function ckStore(sg, L, T, anch, marks, flags) {
+// write lines' times (and section starts, to-do markers) back into the song, and save. fix (Q05): which lines were
+// placed by hand, one per line (left out: as they were)
+function ckStore(sg, L, T, anch, marks, flags, fix) {
   const old = sg.timing || {},
+    os = old.slots || {},
     slots = {};
   sg.order.forEach((x, k) => {
     slots[x.o] = { lines: [], anch: !!(anch && anch[k]), marks: [] };
   });
+  const fx = L.map((l, i) => (fix ? !!fix[i] : !!(os[l.o] && (os[l.o].fix || []).includes(l.li))));
   L.forEach((l, i) => {
     const s = slots[l.o];
     s.lines[l.li] = [T[i][0] == null ? null : +T[i][0].toFixed(3), T[i][1] == null ? null : +T[i][1].toFixed(3)];
     if (marks && marks[i]) s.marks.push(l.li);
+    if (fx[i]) (s.fix || (s.fix = [])).push(l.li);
   });
-  sg.timing = Object.assign(
+  const t = Object.assign(
     { len: old.len == null ? null : old.len, real: !!old.real, est: !!old.est },
     old.lenLink && old.len != null ? { lenLink: true } : {},
     flags || {},
     { slots }
   );
+  // Q05: an estimated song stops being estimated once every line has been placed by hand
+  if (t.est && L.length && fx.every(Boolean)) t.est = false;
+  if (!t.est) Object.keys(slots).forEach((o) => delete slots[o].fix);
+  // suggested breaths: a gap of CK_SB or more between a placed line's end and the next placed line's start, on a line
+  // with no breath mark of Ivan's (they only become marks when he taps one, in Phrasing)
+  const real = (i) => T[i][0] != null && (!t.est || fx[i]);
+  for (let i = 0; i + 1 < L.length; i++) {
+    if (!real(i) || !real(i + 1) || T[i][1] == null || L[i].br.some(Boolean)) continue;
+    if (T[i + 1][0] - T[i][1] < CK_SB - 1e-6) continue;
+    const s = slots[L[i].o];
+    (s.sb || (s.sb = [])).push(L[i].li);
+  }
+  sg.timing = t;
   save();
 }
 // withMarks (Q02): a marker made into a section start; the same Undo puts the marker (and its loop) back too
@@ -399,12 +437,16 @@ function ckLyricsChanged(sg, sid, oldLines, newLines) {
     const s = sg.timing.slots[x.o];
     if (!s) return;
     const lines = [],
-      marks = [];
+      marks = [],
+      fix = [],
+      sb = [];
     let changed = false;
     ops.forEach((op) => {
       if (op[0] === '=') {
         lines[op[2]] = (s.lines[op[1]] || [null, null]).slice();
         if (s.marks.includes(op[1])) marks.push(op[2]);
+        if ((s.fix || []).includes(op[1])) fix.push(op[2]); // Q05: placed lines and suggested breaths follow their line
+        if ((s.sb || []).includes(op[1])) sb.push(op[2]);
       } else if (op[0] === '+') {
         // align() gives ['=', old, new], ['-', old] and ['+', new]
         lines[op[1]] = [null, null];
@@ -415,6 +457,10 @@ function ckLyricsChanged(sg, sid, oldLines, newLines) {
     for (let i = 0; i < newLines.length; i++) if (!lines[i]) lines[i] = [null, null];
     s.lines = lines;
     s.marks = marks.sort((a, b) => a - b);
+    if (fix.length) s.fix = fix.sort((a, b) => a - b);
+    else delete s.fix;
+    if (sb.length) s.sb = sb.sort((a, b) => a - b);
+    else delete s.sb;
     if (changed && !lines.some((l) => l[0] != null)) s.anch = false;
   });
 }
@@ -432,15 +478,24 @@ function ckReturnPlace() {
   return split() ? { tab: 'songs', view: null } : { tab: 'songs', view: 'lyr' };
 }
 
-/* ===== Song Clock: play-along ===== */
+/* ===== Song Clock: play-along =====
+   Q05: play-along always plays the song's track on this device. Without one, Timing asks for it (the track picker);
+   timing saved on an older song (or with its track on another device) is kept and shows on Check timing. */
+const ckCan = (sg) => !!(sg && TRACK.has(sg.id));
+// the Timing tile and icon without the song's track: the same door as the song's Track row (Add track)
+function ckAskTrack(sg) {
+  if (U.sheet === 'ckGrid') {
+    U.sheet = null;
+    U.sd = {};
+  }
+  rerender();
+  TRACK.pick(sg.id);
+}
 function ckOn(sg) {
-  if (!ckSynced(sg)) return ckStartSync(sg);
-  CK.songId = sg.id;
-  CK.on = true;
-  CK.ever = false;
-  CK.trk = TRACK.has(sg.id);
-  CK.mute = false;
-  ckHalt(CK.pc);
+  if (!ckCan(sg)) return ckAskTrack(sg);
+  // not timed yet: straight to the track player, to place the section starts and lines on the waveform
+  if (!ckSynced(sg)) return ckRetime(sg, 0);
+  ckArm(sg);
   const M = ckModel(sg);
   ckSet(CK.pc, M.T.length ? M.T[0][0] : 0);
   if (U.sMode === 'recall') U.sMode = 'practise';
@@ -448,6 +503,15 @@ function ckOn(sg) {
   CK.lastA = -2;
   CK.sig = '';
   rerender();
+}
+// play-along on for a song, not playing yet
+function ckArm(sg) {
+  CK.songId = sg.id;
+  CK.on = true;
+  CK.ever = false;
+  CK.trk = true;
+  CK.mute = false;
+  ckHalt(CK.pc);
 }
 function ckOff() {
   CK.on = false;
@@ -462,6 +526,7 @@ function ckOff() {
 function ckPlay(i) {
   const sg = ckSong();
   if (!sg || !CK.on) return;
+  if (!ckCan(sg)) return ckOff(); // Q05: no play-along without the song's track on this device
   if (i != null) {
     const M = ckModel(sg);
     if (M.T[i]) ckSet(CK.pc, M.T[i][0]);
@@ -469,14 +534,12 @@ function ckPlay(i) {
   NOW.start('clock', sg.id, () => ckPause()); // one sound at a time (3.20)
   CK.ever = true;
   ckGo(CK.pc);
-  // Q02: with the song's track on this device, play-along plays it and follows its time (lyric-only without it)
-  // (where it should be is fixed now: a redraw below would otherwise read the track's old place back)
-  CK.trk = TRACK.has(sg.id);
-  if (CK.trk) {
-    const t0 = ckClk(CK.pc),
-      m0 = ckMs();
-    TRACK.along(sg.id, () => t0 + (ckMs() - m0) / 1000, CK.mute);
-  }
+  // Q02: play-along plays the song's track and follows its time (where it should be is fixed now: a redraw below
+  // would otherwise read the track's old place back)
+  CK.trk = true;
+  const t0 = ckClk(CK.pc),
+    m0 = ckMs();
+  TRACK.along(sg.id, () => t0 + (ckMs() - m0) / 1000, CK.mute);
   CK.lastA = -2;
   if (ckHere()) rerender();
   else fwUpdate();
@@ -513,6 +576,72 @@ function ckNudge(d) {
   ckToast('Lyrics 0.2 s ' + (d < 0 ? 'earlier' : 'later'), ckUndo);
 }
 
+/* ===== Q05 fixing lines in place =====
+   ckSetLines: new times for some lines ({i: [start, end]}, i an index into ckLines), from the track player's line
+   lane, its Start here / End here, or punch-in. One timing system: written through ckStore, with Undo. The lines become
+   placed by hand (no longer estimated), lose their to-do marker, and a section's first line sets its start. */
+const ckShort = (l) => {
+  const t = l.words.join(' ');
+  return t.length > 30 ? t.slice(0, 28).trimEnd() + '…' : t;
+};
+function ckSetLines(sg, ch, quiet) {
+  const ks = Object.keys(ch).map(Number);
+  if (!sg || !hasLyrics(sg) || !ks.length) return;
+  const M = ckModel(sg);
+  if (ks.some((i) => !M.L[i])) return;
+  ckSnap(sg);
+  const T = M.raw.map((r) => r.slice()),
+    fix = M.est.map((e) => !e),
+    marks = M.marks.slice(),
+    anch = M.anch.slice();
+  ks.forEach((i) => {
+    const v = ch[i];
+    T[i] = [Math.max(0, +v[0]), v[1] == null ? null : Math.max(0, +v[1])];
+    fix[i] = true;
+    marks[i] = false;
+    if (ckFirst(M.L, M.L[i].k) === i) anch[M.L[i].k] = true;
+  });
+  ckStore(sg, M.L, ckOrder(T), anch, marks, null, fix);
+  CK.lastA = -2;
+  CK.sig = '';
+  if (U.view === 'trk') TRACK.refresh();
+  else if (!CK.pc.run) rerender();
+  else CLOCK.after();
+  ckTick();
+  if (!quiet) ckToast((ks.length > 1 ? 'Moved ' : 'Re-timed ') + '“' + ckShort(M.L[ks[ks.length > 1 ? 1 : 0]]) + '”', ckUndo);
+}
+// Retime: the track player in Line view, on line i (pushed in, like Check timing). Check timing's rows, its Section
+// starts row and Time each line, the hold menu's Retime line and play-along's Retime (paused) all come here
+function ckRetime(sg, i) {
+  if (!sg || !hasLyrics(sg)) return;
+  if (rec) return toast('Stop recording first');
+  if (CK.pc.run) ckPause();
+  const M = ckModel(sg);
+  i = Math.max(0, Math.min(M.L.length - 1, i | 0));
+  ckPickClose();
+  CK.head = false;
+  TRACK.retime(sg.id, i, M.T[i] ? M.T[i][0] : 0);
+}
+// the line play-along is on (or the first)
+function ckCurLine(sg) {
+  const M = ckModel(sg);
+  return Math.max(0, ckAt(M.T, ckNow(CK.pc)));
+}
+// Flag (Q05): a marker on the song's track at the current time (one marker system, 3.20), with Undo
+function ckFlag() {
+  const sg = ckSong();
+  if (!sg || !CK.on) return;
+  const t = Math.round(Math.max(0, ckNow(CK.pc) - CK_LAG) * 100) / 100,
+    mk = Array.isArray(sg.markers) ? sg.markers : [];
+  if (mk.some((m) => Math.abs(m.t - t) < 0.05)) return toast('There’s a marker here already');
+  ckSnap(sg, true);
+  sg.markers = mk
+    .concat([{ id: 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), t }])
+    .sort((a, b) => a.t - b.t);
+  save();
+  ckToast('Marker ' + (sg.markers.findIndex((m) => m.t === t) + 1) + ' at ' + ckFmt(t), ckUndo);
+}
+
 // the big lyric view: its own layer over the song page, so pausing just shows the page underneath
 function ckLayer() {
   let el = $('ckpa');
@@ -525,12 +654,77 @@ function ckLayer() {
   document.body.appendChild(el);
   el.addEventListener('click', (e) => {
     const l = e.target.closest('.ckl');
+    if (CK.piAt && Date.now() - CK.piAt < 450) {
+      CK.piAt = 0; // the lift that ends a punch-in isn't a tap
+      return;
+    }
     if (!l || !CK.on) return;
     ckPlay(+l.dataset.i); // tap a line to jump the clock there (the first tap starts it)
   });
   el.addEventListener('contextmenu', (e) => e.preventDefault());
+  // Q05 punch-in: while playing, hold the lyrics for half a second as a line starts. The line nearest the press (the
+  // one being sung or the next) starts where the finger went down; letting go sets its end. A quick tap still jumps
+  el.addEventListener('pointerdown', (e) => {
+    CK.piAt = 0; // a new press: its click is a real tap
+    if (e.button > 0 || !CK.on || !CK.pc.run || CK.pi) return;
+    const t = ckNow(CK.pc);
+    CK.pi = { x: e.clientX, y: e.clientY, t, id: e.pointerId, on: false };
+    CK.pi.timer = setTimeout(ckPunchIn, CK_HOLD);
+  });
   return el;
 }
+function ckPunchOff() {
+  const p = CK.pi;
+  if (!p) return null;
+  clearTimeout(p.timer);
+  CK.pi = null;
+  document.querySelectorAll('#ckpa .ckl.punch').forEach((l) => l.classList.remove('punch'));
+  CK.lastA = -2; // the caption goes back
+  return p;
+}
+function ckPunchIn() {
+  const p = CK.pi,
+    sg = ckSong();
+  if (!p || !sg || !CK.pc.run) return ckPunchOff();
+  const M = ckModel(sg),
+    a = ckAt(M.T, p.t),
+    c = [a, a + 1].filter((i) => i >= 0 && i < M.L.length);
+  if (!c.length) return ckPunchOff();
+  p.i = c.reduce((b, i) => (Math.abs(M.T[i][0] - p.t) < Math.abs(M.T[b][0] - p.t) ? i : b), c[0]);
+  p.on = true;
+  CK.piAt = Date.now();
+  const ln = document.querySelector('#ckpa .ckl[data-i="' + p.i + '"]');
+  if (ln) ln.classList.add('punch');
+  const cap = document.querySelector('#ckpa .ckcap');
+  if (cap) cap.textContent = 'Let go when “' + ckShort(M.L[p.i]) + '” ends';
+}
+function ckPunchUp(e) {
+  const p = CK.pi;
+  if (!p || (e && e.pointerId !== p.id)) return;
+  ckPunchOff();
+  if (!p.on) return;
+  CK.piAt = Date.now();
+  const sg = ckSong();
+  if (!sg || (e && e.type === 'pointercancel')) return ckTick();
+  const M = ckModel(sg),
+    i = p.i,
+    n = M.L.length,
+    prev = i > 0 ? M.T[i - 1][0] : null,
+    next = i + 1 < n ? M.T[i + 1][0] : null;
+  // in order with its neighbours: after the line before starts, before the next one starts
+  let s = Math.max(0, p.t - CK_LAG);
+  if (prev != null) s = Math.max(s, prev + CK_MIN);
+  if (next != null) s = Math.min(s, next - CK_MIN);
+  let en = Math.max(s + CK_MIN, ckNow(CK.pc) - CK_LAG);
+  if (next != null) en = Math.min(en, next);
+  if (en < s + CK_MIN - 1e-6) en = null;
+  ckSetLines(sg, { [i]: [s, en] });
+}
+document.addEventListener('pointermove', (e) => {
+  const p = CK.pi;
+  if (p && !p.on && e.pointerId === p.id && Math.hypot(e.clientX - p.x, e.clientY - p.y) > 10) ckPunchOff();
+});
+['pointerup', 'pointercancel'].forEach((t) => document.addEventListener(t, ckPunchUp));
 function ckBuild(sg) {
   const M = ckModel(sg),
     mp = ckPrefs().marksPlaying,
@@ -639,8 +833,8 @@ function ckTick() {
         box = el.querySelector('.ckin');
       box.style.transform = 'translateY(' + Math.round(box.parentNode.clientHeight * 0.3 - tg.offsetTop) + 'px)';
       const cap = el.querySelector('.ckcap'),
-        ct = CK.pc.run ? 'Tap a line to jump to it' : 'Tap the first line as it’s sung';
-      if (cap.textContent !== ct) cap.textContent = ct;
+        ct = CK.pc.run ? 'Tap a line to jump to it · hold to fix it' : 'Tap the first line as it’s sung';
+      if (cap.textContent !== ct && !(CK.pi && CK.pi.on)) cap.textContent = ct;
     }
     if (a >= 0 && lines[a]) {
       const s = M.T[a][0],
@@ -662,7 +856,7 @@ function ckTick() {
       if (d) d.classList.add('on');
     }
   }
-  // the transport's time and the Sync timer change only their text (motion rule 8: digits never animate)
+  // the transport's time changes only its text (motion rule 8: digits never animate)
   const tt = $('ckT');
   if (tt) {
     const v = ckFmt(ckNow(CK.pc));
@@ -689,11 +883,6 @@ function ckTick() {
       }
     }
   }
-  const st = $('ckST');
-  if (st && CK.P) {
-    const v = ckFmt(ckNow(CK.sc));
-    if (st.textContent !== v) st.textContent = v;
-  }
   if (FW.shown === 'clock') {
     const v = ckFwText();
     if (v !== CK.lastTxt) {
@@ -706,7 +895,7 @@ function ckLoop() {
   if (CK.raf) return;
   const f = () => {
     CK.raf = 0;
-    if (!CK.pc.run && !CK.sc.run) return;
+    if (!CK.pc.run) return;
     ckTick();
     CK.raf = requestAnimationFrame(f);
   };
@@ -718,7 +907,8 @@ function ckWake() {
   const want =
     ckPrefs().stayAwake &&
     !document.hidden &&
-    ((CK.pc.run && ckHere()) || (CK.sc.run && U.view === 'ckSync' && !!CK.P));
+    CK.pc.run &&
+    ckHere();
   CK.wlWant = !!want;
   try {
     if (want && !CK.wl && !CK.wlBusy && navigator.wakeLock) {
@@ -747,147 +937,6 @@ function ckWake() {
 }
 document.addEventListener('visibilitychange', () => ckWake());
 
-/* ===== Song Clock: Sync, the section pass =====
-   Tap the pad as each section starts; the first tap starts the clock. Pause on one phone means re-anchor: scrub the
-   song back a little, then tap as this section starts, and the clock carries on from the guessed start. */
-function ckStartSync(sg, keepRet) {
-  if (!hasLyrics(sg)) return;
-  if (rec) return toast('Stop recording first');
-  if (CK.on && CK.songId === sg.id) {
-    CK.on = false;
-    CK.ever = false;
-    ckHalt(CK.pc);
-    TRACK.alongPause();
-  }
-  NOW.stop(); // timing with music in another app: nothing here keeps playing
-  const n = sg.order.length;
-  CK.P = {
-    id: sg.id,
-    idx: 0,
-    raw: Array.from({ length: n }, () => null),
-    started: false,
-    note: false,
-    pending: null,
-  };
-  CK.P.pending = ckGuess(sg, 0);
-  ckHalt(CK.sc);
-  ckSet(CK.sc, CK.P.pending);
-  if (!keepRet || !CK.ret) CK.ret = ckReturnPlace();
-  CK.head = false;
-  U.clock = false;
-  ckPushFrom('ck:sync');
-  go(() => {
-    U.songId = sg.id;
-    U.view = 'ckSync';
-    U.sheet = null;
-    U.sd = {};
-  });
-}
-// where section k is expected to start: after the last one tapped, or where the song's timing has it
-function ckGuess(sg, k) {
-  const P = CK.P,
-    synced = ckSynced(sg),
-    M = ckModel(sg),
-    f = (j) => M.T[ckFirst(M.L, j)][0];
-  if (k > 0 && P.raw[k - 1] != null) {
-    if (synced) return P.raw[k - 1] + (f(k) - f(k - 1));
-    let d = 0;
-    M.L.forEach((l) => l.k === k - 1 && (d += ckEstDur(l) + CK_GAP));
-    return P.raw[k - 1] + d + 1.5;
-  }
-  return synced ? f(k) : 0;
-}
-function ckPadDown() {
-  const P = CK.P,
-    sg = P && songById(P.id);
-  if (!sg || U.view !== 'ckSync' || P.idx >= P.raw.length) return;
-  if (P.pending != null) {
-    // the first tap (or the first after a pause) starts the clock from the expected start
-    ckSet(CK.sc, P.pending + CK_LAG);
-    ckGo(CK.sc);
-    P.pending = null;
-    P.note = false;
-    ckLoop();
-  }
-  P.started = true;
-  P.raw[P.idx] = +Math.max(0, ckNow(CK.sc) - CK_LAG).toFixed(3);
-  P.idx++;
-  ckWake();
-  if (P.idx >= P.raw.length) return ckFinish();
-  ckSyncPaint();
-}
-function ckSyncPause() {
-  const P = CK.P,
-    sg = P && songById(P.id);
-  if (!sg || !P.started || P.note) return;
-  ckHalt(CK.sc);
-  P.pending = ckGuess(sg, P.idx);
-  ckSet(CK.sc, P.pending);
-  P.note = true;
-  ckWake();
-  ckSyncPaint();
-}
-function ckRedo(k) {
-  const P = CK.P,
-    sg = P && songById(P.id);
-  if (!sg || k < 0 || k >= P.idx) return;
-  const prev = P.raw[k];
-  for (let j = k; j < P.raw.length; j++) P.raw[j] = null;
-  P.idx = k;
-  ckHalt(CK.sc);
-  P.pending = prev != null ? prev : ckGuess(sg, k);
-  ckSet(CK.sc, P.pending);
-  P.note = true;
-  ckWake();
-  ckSyncPaint();
-}
-function ckSyncUndo() {
-  const P = CK.P;
-  if (!P || P.idx <= 0 || P.note) return;
-  P.idx--;
-  P.raw[P.idx] = null;
-  ckSyncPaint();
-}
-// after the pass: lines are spread evenly inside each section, and the tapped sections become set starts
-function ckFinish() {
-  const P = CK.P,
-    sg = P && songById(P.id);
-  ckHalt(CK.sc);
-  CK.P = null;
-  ckWake();
-  if (!sg) return ckLeave();
-  const tapped = [];
-  P.raw.forEach((s, k) => s != null && tapped.push(k));
-  if (!tapped.length) return ckLeave(sg);
-  ckSnap(sg);
-  const M = ckModel(sg),
-    anch = M.anch.slice();
-  let T;
-  if (ckSynced(sg)) {
-    // already timed: keep the first tapped section where it is and stretch the rest through the taps
-    const f = (k) => M.T[ckFirst(M.L, k)][0],
-      off = f(tapped[0]) - P.raw[tapped[0]],
-      w = ckWarp(tapped.map((k) => [f(k), P.raw[k] + off]));
-    T = M.T.map((r) => [w(r[0]), r[1] == null ? null : w(r[1])]);
-    ckOrder(T);
-    tapped.forEach((k) => (anch[k] = true));
-    ckStore(sg, M.L, T, anch, M.marks);
-  } else {
-    T = ckSpread(sg, M.L, P.raw);
-    tapped.forEach((k) => (anch[k] = true));
-    ckStore(sg, M.L, T, anch, M.marks, { est: true });
-  }
-  ckOpenCheck(sg, true);
-  ckToast('Timing saved', ckUndo);
-}
-function ckLeave(sg) {
-  ckHalt(CK.sc);
-  CK.P = null;
-  ckWake();
-  sg = sg || songById(U.songId);
-  if (sg && ckSynced(sg)) return ckOpenCheck(sg, true);
-  ckBack();
-}
 function ckBack() {
   const r = CK.ret || ckReturnPlace();
   CK.ret = null;
@@ -898,11 +947,9 @@ function ckBack() {
     U.sd = {};
   });
 }
-// 3.23 (Q08): from a song page, Sync by sections and Check timing push in from the right; between the two they
-// replace each other, so Back (or ✕, or Done) still slides away to the song page
+// 3.23 (Q08): from a song page, Check timing pushes in from the right, so Back (or Done) slides away to the song page
 function ckPushFrom(key) {
   if (U.view === 'lyr') ZOOM.armPush(key);
-  else if (U.view === 'ckSync' || U.view === 'ckCheck') ZOOM.retarget();
 }
 function ckOpenCheck(sg, keepRet) {
   if (!keepRet || !CK.ret) CK.ret = ckReturnPlace();
@@ -915,90 +962,19 @@ function ckOpenCheck(sg, keepRet) {
     U.sd = {};
   });
 }
-function ckSyncPage() {
-  const P = CK.P,
-    sg = P && songById(P.id);
-  if (!sg) return '<div class="sgempty"><b>Nothing to sync.</b></div>';
-  if (!P.started && !P.note) {
-    let list = '';
-    sg.order.slice(0, 6).forEach((x, k) => {
-      list += k
-        ? '<p class="ckrl">' + esc(occLabel(sg, k)) + '</p>'
-        : '<p class="ckrl first">' + esc(occLabel(sg, k)) + ' <span class="cktag">First</span></p>';
-    });
-    if (sg.order.length > 6) list += '<p class="ckrl more">and ' + (sg.order.length - 6) + ' more</p>';
-    return (
-      '<div class="cksync ready"><h1>Start the song</h1><p class="cksub">Tap the pad as each section starts. A few taps get the whole song moving. Your first tap starts the clock.</p>' +
-      '<div class="ckcard">' +
-      list +
-      '</div><p class="foot ckfoot">Play it on another device or in your music app. On a computer, the space bar works too.</p></div>'
-    );
-  }
-  return '<div class="cksync live" id="cklive">' + ckLiveHTML(sg) + '</div>';
-}
-function ckLiveHTML(sg) {
-  const P = CK.P,
-    n = P.raw.length,
-    name = (k) => esc(occLabel(sg, k));
-  let h =
-    '<div class="ckprog"><span class="foot">Section ' +
-    Math.min(P.idx + 1, n) +
-    ' of ' +
-    n +
-    '</span><div class="ckbar"><i style="width:' +
-    ((P.idx / n) * 100).toFixed(1) +
-    '%"></i></div></div><div class="cklist">';
-  for (let k = Math.max(0, P.idx - (P.note ? 3 : 4)); k < (P.note ? P.idx : P.idx - 1); k++)
-    h +=
-      '<button class="ckdone" data-a="ckRedo" data-v="' +
-      k +
-      '" aria-label="Redo from here: ' +
-      name(k) +
-      '"><span>' +
-      name(k) +
-      '</span><span aria-hidden="true">✓</span></button>';
-  if (P.note)
-    h +=
-      '<div class="cknote">Scrub the song back a little, then tap the pad as this section starts.</div><div class="cknow"><span class="cktag">From here</span>' +
-      name(P.idx) +
-      '</div>';
-  else {
-    if (P.idx > 0) h += '<div class="cknow"><span class="cktag">Just marked</span>' + name(P.idx - 1) + '</div>';
-    if (P.idx < n) h += '<div class="cknext"><span class="cktag">Next</span>' + name(P.idx) + '</div>';
-  }
-  h +=
-    '</div><div class="ckrow2"><button class="sgpill" data-a="ckSyncPause"' +
-    (P.started && !P.note ? '' : ' disabled') +
-    '>' +
-    ICON.pause +
-    'Pause</button><button class="sgpill" data-a="ckFinish">Finish</button></div>';
-  return h;
-}
-// a tap only changes what's needed: the live list, the pad's words and the top bar
-function ckSyncPaint() {
-  const sg = CK.P && songById(CK.P.id),
-    live = $('cklive');
-  if (!sg || !live) return rerender();
-  live.innerHTML = ckLiveHTML(sg);
-  const pad = $('ckpad');
-  if (pad) pad.innerHTML = ckPadInner(sg);
-  renderBar();
-  ckTick();
-}
-function ckPadInner(sg) {
-  const P = CK.P;
-  return '<b>Tap</b><span>' + (P.idx < P.raw.length ? 'as “' + esc(occLabel(sg, P.idx)) + '” starts' : '') + '</span>';
-}
-
-/* ===== Song Clock: Check timing ===== */
+/* ===== Song Clock: Check timing =====
+   Q05: every line row opens the track player in Line view on that line, as do Section starts and Time each line (the
+   first estimated line). A song with timing but no track on this device shows it all, and says play-along needs it. */
 function ckCheckPage() {
   const sg = songById(U.songId);
   if (!sg || !hasLyrics(sg)) return '<div class="sgempty"><b>This song was deleted.</b></div>';
   const M = ckModel(sg),
     synced = ckSynced(sg),
+    can = ckCan(sg),
     nAnch = M.anch.filter(Boolean).length,
     nMarks = M.marks.filter(Boolean).length,
-    len = sg.timing && sg.timing.len;
+    len = sg.timing && sg.timing.len,
+    firstSet = M.anch.findIndex(Boolean);
   let h =
     '<h1>Check timing</h1><p class="sgart">' +
     esc(songTitle(sg)) +
@@ -1006,11 +982,15 @@ function ckCheckPage() {
     (len ? ckFmt(len) : 'Add') +
     '</span>' +
     chev +
-    '</button><div class="row"><span class="lbl">Section starts</span><span class="mut">' +
+    '</button><button class="row" data-a="ckRetime" data-v="' +
+    Math.max(0, firstSet >= 0 ? ckFirst(M.L, firstSet) : 0) +
+    '"><span class="lbl">Section starts</span><span class="mut">' +
     nAnch +
     ' of ' +
     sg.order.length +
-    ' set</span></div>' +
+    ' set</span>' +
+    chev +
+    '</button>' +
     (nMarks
       ? '<div class="row"><span class="lbl">To-do markers</span><span class="mut">' + nMarks + '</span></div>'
       : '') +
@@ -1018,11 +998,30 @@ function ckCheckPage() {
   if (!synced)
     return (
       h +
-      '<p class="foot ckfootc">This song isn’t synced yet.</p><button class="cta ink ckcta" data-a="ckSyncAgain">Sync</button>'
+      '<p class="foot ckfootc">' +
+      (can
+        ? 'This song isn’t timed yet. Place its sections and lines on the track’s waveform.'
+        : 'Timing runs off the song’s track. Add it from Files to time this song.') +
+      '</p>' +
+      (can
+        ? '<button class="cta ink ckcta" data-a="ckRetime" data-v="0">Time it on the track</button>'
+        : '<button class="cta ink ckcta" data-a="ckAddTrack">Add a track to time this song</button>')
     );
-  if (sg.timing.est)
+  if (!can)
     h +=
-      '<div class="cknote2">Lines are spread evenly between your section taps. For exact timing, time each line once.<div><button class="sgpill blue" data-a="ckLinePass">Time each line</button></div></div>';
+      '<div class="cknote2">' +
+      (sg.track ? 'The song’s track isn’t on this ' + deviceName() + '. ' : '') +
+      'Play-along needs the song’s track. Its timing is kept with the song.<div><button class="sgpill blue" data-a="ckAddTrack">Add track</button></div></div>';
+  const firstEst = M.est.indexOf(true);
+  if (firstEst >= 0)
+    h +=
+      '<div class="cknote2">' +
+      (sg.timing.est
+        ? 'Lines are spread evenly between the section starts. For exact timing, place each line on the track.'
+        : 'Dashed lines are estimated. Place them on the track for exact timing.') +
+      '<div><button class="sgpill blue" data-a="ckRetime" data-v="' +
+      firstEst +
+      '">Time each line</button></div></div>';
   let lastK = -1;
   M.L.forEach((l, i) => {
     if (l.k !== lastK) {
@@ -1037,20 +1036,28 @@ function ckCheckPage() {
     const dur = M.end(i) - M.T[i][0],
       flag = dur < 0.4 ? 'Very short' : dur > 15 ? 'Very long' : '';
     h +=
-      '<div class="ckr" data-i="' +
+      '<button class="ckr" data-a="ckRetime" data-v="' +
       i +
-      '"><span class="ckt">' +
+      '" data-i="' +
+      i +
+      '" aria-label="' +
+      esc(l.words.join(' ')) +
+      (M.est[i] ? ', estimated' : '') +
+      '. Retime on the track"><span class="ckt">' +
       esc(l.words.join(' ')) +
       '</span><span class="cktl">' +
       (M.marks[i] ? '<span class="ckmk" role="img" aria-label="To-do marker"></span>' : '') +
       (flag
         ? '<span class="ckflag">' + flag + '</span>'
-        : '<i class="ckd" style="width:' + Math.max(8, Math.round(Math.min(dur / 8, 1) * 80)) + 'px"></i>') +
-      '</span></div>';
+        : '<i class="ckd' +
+          (M.est[i] ? ' est' : '') +
+          '" style="width:' +
+          Math.max(8, Math.round(Math.min(dur / 8, 1) * 80)) +
+          'px"></i>') +
+      '</span></button>';
   });
   if (lastK >= 0) h += '</div>';
-  h +=
-    '<button class="cta ink ckcta" data-a="ckCheckDone" data-pop>Done</button><div class="ckcen"><button class="lnkbtn" data-a="ckSyncAgain">Sync again from the start</button></div>';
+  h += '<button class="cta ink ckcta" data-a="ckCheckDone" data-pop>Done</button>';
   return h;
 }
 
@@ -1178,11 +1185,14 @@ const CKI = {
   snap: '<svg class="i" viewBox="0 0 24 24"><path d="M6 4v8a6 6 0 0012 0V4"/><path d="M6 8h3.5M14.5 8H18"/></svg>',
   awake:
     '<svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6L7 7M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4"/></svg>',
-  sync: '<svg class="i" viewBox="0 0 24 24"><path d="M19.5 12a7.5 7.5 0 11-2.3-5.4"/><path d="M19.5 4v4.5H15"/></svg>',
   lyrics:
     '<svg class="i" viewBox="0 0 24 24"><path d="M4 6h16M4 11h16M4 16h9"/><path d="M16.5 16.5l3 3-3 .6.6-3z"/></svg>',
   track:
     '<svg class="i" viewBox="0 0 24 24"><path d="M3.5 12h1M7 8.5v7M10.5 5v14M14 9v6M17.5 6.5v11M21 10.5v3"/></svg>',
+  // Q05 Flag (a marker at the current time) and, paused, Retime (this line on the track's waveform)
+  flag: '<svg class="i" viewBox="0 0 24 24"><path d="M6 3.5v17"/><path d="M6 4h11l-2.8 3.8L17 11.6H6" fill="currentColor" fill-opacity=".18"/></svg>',
+  retime:
+    '<svg class="i" viewBox="0 0 24 24"><path d="M3.5 6v12M20.5 6v12"/><rect x="7" y="9" width="10" height="6" rx="2"/><path d="M7 6.5h3M14 17.5h3"/></svg>',
   // Q02 the backing track's sound, and muted
   sound:
     '<svg class="i" viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4.5 4.5 0 010 6M18 6.5a8 8 0 010 11"/></svg>',
@@ -1196,7 +1206,10 @@ function ckTile(id, sg) {
     playing = !!(sg && CK.on && CK.songId === sg.id);
   return (
     {
-      timing: { l: 'Timing', ic: CKI.clock, toggle: true, on: playing },
+      // Q05: timing needs the song's track on this device
+      timing: ckCan(sg)
+        ? { l: 'Timing', ic: CKI.clock, toggle: true, on: playing }
+        : { l: 'Add a track to time this song', ic: CKI.clock },
       check: { l: 'Check timing', ic: CKI.list },
       key: { l: 'Key', ic: CKI.key },
       marks: {
@@ -1209,7 +1222,6 @@ function ckTile(id, sg) {
       blur: { l: 'Blur ahead', ic: CKI.blur, toggle: true, on: p.blurAhead },
       snap: { l: 'Snapping', ic: CKI.snap, toggle: true, on: p.snapping, auto: true },
       awake: { l: 'Stay awake', ic: CKI.awake, toggle: true, on: p.stayAwake },
-      sync: { l: 'Sync again', ic: CKI.sync },
       lyrics: { l: 'Lyrics', ic: CKI.lyrics },
       // 3.19 the track player: opens it, or adds the song's track
       track: { l: sg && TRACK.has(sg.id) ? 'Track' : 'Add track', ic: CKI.track },
@@ -1277,13 +1289,17 @@ function ckTileAct(id, fromGrid) {
   switch (id) {
     case 'timing':
       if (!sg || !hasLyrics(sg)) return;
+      if (CK.on && CK.songId === sg.id) {
+        close();
+        return ckOff();
+      }
+      if (!ckCan(sg)) return ckAskTrack(sg);
       close();
-      if (CK.on && CK.songId === sg.id) return ckOff();
       return ckOn(sg);
     case 'check':
       if (!sg || !hasLyrics(sg)) return;
       close();
-      return ckSynced(sg) ? ckOpenCheck(sg) : ckStartSync(sg);
+      return ckOpenCheck(sg);
     case 'key':
       U.sheet = 'sgKey';
       U.sd = {};
@@ -1312,10 +1328,6 @@ function ckTileAct(id, fromGrid) {
       ckWake();
       rerender();
       return toast(p.stayAwake ? 'The screen stays awake while timing' : 'The screen can sleep');
-    case 'sync':
-      if (!sg || !hasLyrics(sg)) return;
-      close();
-      return ckStartSync(sg);
     case 'lyrics':
       if (!sg || !hasLyrics(sg)) return;
       close();
@@ -1560,13 +1572,9 @@ const CLOCK = {
     if (CK.head && !songShown()) CK.head = false;
   },
   after() {
-    // a Sync pass only lives on its own screen
-    if (CK.P && U.view !== 'ckSync') {
-      ckHalt(CK.sc);
-      CK.P = null;
-    }
-    if (U.view !== 'ckSync' && U.view !== 'ckCheck' && CK.pk && !songShown()) ckPickClose();
-    if (CK.on && !hasLyrics(ckSong())) {
+    if (U.view !== 'ckCheck' && CK.pk && !songShown()) ckPickClose();
+    // Q05: play-along needs the song's lyrics and its track on this device (Remove track turns it off)
+    if (CK.on && (!hasLyrics(ckSong()) || !ckCan(ckSong()))) {
       CK.on = false;
       ckHalt(CK.pc);
       TRACK.alongPause();
@@ -1602,7 +1610,6 @@ const CLOCK = {
     // 3.20: paused, the song page has room below its end, so the current line can stay where the eye was (a taller
     // header or wider fonts could leave too little page to scroll)
     document.body.classList.toggle('ckpaused', !!(CK.on && ckHere() && !CK.pc.run && !U.sEdit));
-    document.body.classList.toggle('cksyncon', U.view === 'ckSync');
     // paused: the song page shows the current line
     document.querySelectorAll('.sgl.ckcur').forEach((l) => l.classList.remove('ckcur'));
     if (ckHere() && CK.ever && !CK.pc.run && !U.sEdit) {
@@ -1615,19 +1622,11 @@ const CLOCK = {
     ckWake();
     CK.mkLine = null; // the song page was redrawn: the marking highlight goes back on at the next tick
     if (CLOCK.marking()) ckTick();
-    if (CK.pc.run || CK.sc.run) ckLoop();
+    if (CK.pc.run) ckLoop();
+    ckLmAfter();
   },
-  // the transport (play-along) or the pad (Sync), in the dock
+  // the transport, in the dock
   dock() {
-    if (U.view === 'ckSync' && CK.P) {
-      const sg = songById(CK.P.id);
-      if (!sg) return '';
-      return (
-        '<button class="ckpad" id="ckpad" data-a="ckPad" data-own-gesture aria-label="Tap as the section starts">' +
-        ckPadInner(sg) +
-        '</button>'
-      );
-    }
     if (!ckHere() || U.sEdit || CK.head || recallOn()) return '';
     return (
       '<div class="cktr glass" role="group" aria-label="Play along"><button class="cknb" data-a="ckNudge" data-v="-0.2" aria-label="Move all lyrics 0.2 seconds earlier">−0.2</button><button class="ckpp" data-a="ckPP" aria-label="' +
@@ -1649,36 +1648,21 @@ const CLOCK = {
           (CK.mute ? CKI.muted : CKI.sound) +
           '</button>'
         : '') +
+      // Q05: Flag while playing (a marker on the track); paused, the same slot is Retime (this line on the waveform)
+      (CK.pc.run
+        ? '<button class="cknb ckfl" data-a="ckFlag" aria-label="Flag: add a marker here">' + CKI.flag + '</button>'
+        : '<button class="cknb ckfl" data-a="ckRetimeNow" aria-label="Retime this line">' + CKI.retime + '</button>') +
       '</div>'
     );
   },
   bar() {
-    if (U.view === 'ckSync') {
-      const P = CK.P,
-        live = P && (P.started || P.note);
-      return {
-        l: '<button class="circ glass" data-a="ckSyncX" data-pop aria-label="Close">' + ICON.x + '</button>',
-        t: live
-          ? '<span class="pill glass ckpill"><span class="recdot" aria-hidden="true"></span><span id="ckST">' +
-            ckFmt(ckNow(CK.sc)) +
-            '</span></span>'
-          : 'Sync timing',
-        r: live
-          ? '<button class="circ glass" data-a="ckSyncUndo" aria-label="Undo last tap"' +
-            (P.idx > 0 && !P.note ? '' : ' disabled') +
-            '>' +
-            SGI.undo +
-            '</button>'
-          : '',
-      };
-    }
     return {
       l: '<button class="circ glass" data-a="ckCheckBack" aria-label="Back">' + ICON.back + '</button>',
       t: 'Check timing',
       r: '',
     };
   },
-  page: () => (U.view === 'ckSync' ? ckSyncPage() : ckCheckPage()),
+  page: () => ckCheckPage(),
   headHTML: ckHeadHTML,
   lenHTML: ckLenHTML,
   lenFoot: ckLenFoot,
@@ -1699,11 +1683,30 @@ const CLOCK = {
   tick: ckTick,
   model: (id) => ckModel(songById(id || U.songId)),
   now: () => ckNow(CK.pc),
-  syncNow: () => ckNow(CK.sc),
   pick: (anchor, v, f) => ckPick(anchor, v, f),
   pickClose: ckPickClose,
-  padDown: ckPadDown,
   play: ckPlay,
+  // Q05
+  setLines: ckSetLines,
+  retime: ckRetime,
+  flag: ckFlag,
+  sbAt(sg, o) {
+    const s = sg && sg.timing && sg.timing.slots && sg.timing.slots[o];
+    return s && s.sb ? s.sb.slice() : [];
+  },
+  // a suggested breath became a real Breath mark: it goes from every place that section is sung
+  clearSb(sg, sid, li) {
+    const sl = sg && sg.timing && sg.timing.slots;
+    if (!sl) return;
+    sg.order.forEach((x) => {
+      const s = sl[x.o];
+      if (x.sid !== sid || !s || !s.sb) return;
+      s.sb = s.sb.filter((v) => v !== li);
+      if (!s.sb.length) delete s.sb;
+    });
+  },
+  lineMenu: () => (CK.lm ? Object.assign({}, CK.lm) : null),
+  lineMenuHTML: ckLmHTML,
   pause: ckPause,
   off: ckOff,
   state: () => ({
@@ -1711,9 +1714,7 @@ const CLOCK = {
     ever: CK.ever,
     run: CK.pc.run,
     songId: CK.songId,
-    syncing: !!CK.P,
-    syncRun: CK.sc.run,
-    pass: CK.P ? JSON.parse(JSON.stringify(CK.P)) : null,
+    punch: !!(CK.pi && CK.pi.on),
     head: CK.head,
     wake: CK.wlWant,
     picker: !!CK.pk,
@@ -1725,9 +1726,9 @@ const CLOCK = {
   reset() {
     CK.on = CK.ever = false;
     ckHalt(CK.pc);
-    ckHalt(CK.sc);
     TRACK.alongPause();
-    CK.P = null;
+    ckPunchOff();
+    CK.lm = null;
     CK.head = false;
     CK.undo = [];
     ckPickClose();
@@ -1812,33 +1813,28 @@ Object.assign(SG_ACT, {
     }
     toast(CK.mute ? 'Track muted' : 'Track on');
   },
-  ckSyncX() {
-    ckLeave();
-  },
-  ckSyncUndo() {
-    ckSyncUndo();
-  },
-  ckSyncPause() {
-    ckSyncPause();
-  },
-  ckFinish() {
-    ckFinish();
-  },
-  ckRedo(el, v) {
-    ckRedo(+v);
-  },
   ckCheckBack() {
     ckBack();
   },
   ckCheckDone() {
     ckBack();
   },
-  ckSyncAgain() {
-    const sg = songById(U.songId);
-    if (sg) ckStartSync(sg, true);
+  // Q05: Check timing's rows, Section starts and Time each line; play-along's Retime (paused); its Flag (playing)
+  ckRetime(el, v) {
+    ckRetime(songById(U.songId), +v || 0);
   },
-  // the pad works on pointerdown and the lines through the layer's own click handler; these are just their names
-  ckPad() {},
+  ckRetimeNow() {
+    const sg = ckSong();
+    if (sg) ckRetime(sg, ckCurLine(sg));
+  },
+  ckFlag() {
+    ckFlag();
+  },
+  ckAddTrack() {
+    const sg = songById(U.songId);
+    if (sg) TRACK.pick(sg.id);
+  },
+  // the lines work through the layer's own click handler; this is just their name
   ckLine() {},
   ckPickSet() {
     const pk = CK.pk;
@@ -1849,9 +1845,6 @@ Object.assign(SG_ACT, {
   },
   ckPickCancel() {
     ckPickClose();
-  },
-  ckLinePass() {
-    toast('Timing each line arrives in the next update');
   },
 });
 // straight into editing the lyrics
@@ -1864,34 +1857,14 @@ function ckLyricsEdit() {
   }
 }
 
-/* ===== Song Clock: the pad, from a finger or the space bar ===== */
-document.addEventListener(
-  'pointerdown',
-  (e) => {
-    if (e.button > 0) return;
-    const p = e.target.closest && e.target.closest('#ckpad');
-    if (!p) return;
-    e.preventDefault();
-    p.classList.add('down');
-    ckPadDown();
-  },
-  { passive: false }
-);
-['pointerup', 'pointercancel'].forEach((t) =>
-  document.addEventListener(t, () => {
-    const p = $('ckpad');
-    if (p) p.classList.remove('down');
-  })
-);
 document.addEventListener('keydown', (e) => {
   if (U.sheet) return;
   const typing = e.target.closest && e.target.closest('input,textarea,[contenteditable="true"]');
-  if (U.view === 'ckSync' && CK.P && e.key === ' ' && !typing) {
-    e.preventDefault();
-    if (!e.repeat) ckPadDown();
-    return;
-  }
   if (e.key === 'Escape') {
+    if (CK.lm) {
+      ckLmClose();
+      return;
+    }
     if (CK.pk) {
       ckPickClose();
       return;
@@ -1906,4 +1879,181 @@ document.addEventListener('keydown', (e) => {
     ckHeadEnd();
     rerender();
   }
+});
+
+/* ===== Q05 the hold menu on a lyric line =====
+   Hold a line on the song page for half a second in Practise or Perform (not Recall, where a hold peeks; not while
+   editing or recording): it lifts, the rest dims, and a menu offers Retime line (the track player on that line), Play
+   from here (play-along from that line) and Annotate (the Marks side, the whole line selected, on the last-used layer).
+   The hold never also taps (section focus), and moving the finger (a scroll) lets it go. */
+let ckLH = null; // a finger holding a line: {ln, x, y, t}
+const ckLmOk = () => {
+  const sg = songShown();
+  return !!(
+    sg &&
+    hasLyrics(sg) &&
+    !U.sEdit &&
+    !recallOn() &&
+    !rec &&
+    !U.sheet &&
+    !CK.head &&
+    !SG.drag &&
+    !ckBig() &&
+    (U.view === 'lyr' || (split() && U.tab === 'songs' && !U.view))
+  );
+};
+function ckLmLine() {
+  const sg = songShown(),
+    m = CK.lm;
+  if (!sg || !m) return -1;
+  return ckLines(sg).findIndex((l) => l.o === m.o && l.li === m.li);
+}
+function ckLmHTML() {
+  if (!CK.lm || !ckLmOk() || ckLmLine() < 0) return '';
+  return (
+    '<div class="ctxback clear" data-a="ckLmClose"></div><div class="ctxmenu glass" id="lmenu" role="menu" aria-label="Line">' +
+    '<button role="menuitem" data-a="ckLmRetime">Retime line' +
+    CKI.retime +
+    '</button><button role="menuitem" data-a="ckLmPlay">Play from here' +
+    ICON.play +
+    '</button><button role="menuitem" data-a="ckLmMark">Annotate' +
+    SGI.pen +
+    '</button></div>'
+  );
+}
+// the line lifts and everything else dims; the menu sits under it (above it near the bottom)
+function ckLmPaint() {
+  document.querySelectorAll('.sgl.lifted').forEach((l) => l.classList.remove('lifted'));
+  const m = CK.lm,
+    ln = m && $('lmenu') && document.querySelector('#app .sgl[data-o="' + m.o + '"][data-li="' + m.li + '"]');
+  if (ln) ln.classList.add('lifted');
+  document.body.classList.toggle('lmopen', !!ln);
+  if (ln) sgPlace('lmenu', '#app .sgl.lifted', 'row');
+}
+function ckLmAfter() {
+  if (CK.lm && (!ckLmOk() || ckLmLine() < 0)) CK.lm = null;
+  if (!CK.lm) document.body.classList.remove('lmopen');
+}
+function ckLmShow() {
+  const sl = $('slayer');
+  if (sl) sl.innerHTML = slayerHTML();
+  ckLmPaint();
+}
+function ckLmClose() {
+  CK.lm = null;
+  ckLmShow();
+}
+document.addEventListener(
+  'pointerdown',
+  (e) => {
+    if (ckLH) clearTimeout(ckLH.t);
+    ckLH = null;
+    CK.lmAt = 0; // a new press: its click is a real tap
+    if (e.button > 0 || CK.lm) return;
+    const ln = e.target.closest && e.target.closest('#app .sgl[data-o][data-li]');
+    if (!ln || !ckLmOk()) return;
+    ckLH = {
+      ln,
+      x: e.clientX,
+      y: e.clientY,
+      t: setTimeout(() => {
+        if (!ckLH || ckLH.ln !== ln || !ln.isConnected || !ckLmOk()) return;
+        ckLH = { held: true };
+        CK.lm = { o: ln.dataset.o, li: +ln.dataset.li };
+        CK.lmAt = Date.now();
+        ckLmShow();
+      }, CK_HOLD),
+    };
+  },
+  true
+);
+document.addEventListener(
+  'pointermove',
+  (e) => {
+    if (ckLH && !ckLH.held && Math.hypot(e.clientX - ckLH.x, e.clientY - ckLH.y) > 10) {
+      clearTimeout(ckLH.t);
+      ckLH = null;
+    }
+  },
+  true
+);
+['pointerup', 'pointercancel'].forEach((t) =>
+  document.addEventListener(
+    t,
+    () => {
+      if (ckLH && ckLH.held) CK.lmAt = Date.now(); // the click this lift makes isn't a tap
+      else if (ckLH) clearTimeout(ckLH.t);
+      ckLH = null;
+    },
+    true
+  )
+);
+window.addEventListener(
+  'scroll',
+  () => {
+    if (ckLH && !ckLH.held) clearTimeout(ckLH.t);
+    if (ckLH && !ckLH.held) ckLH = null;
+  },
+  { passive: true }
+);
+// the hold that opened the menu isn't also a tap (focusing the section, or closing the menu that rose under the finger)
+document.addEventListener(
+  'click',
+  (e) => {
+    if (CK.lmAt && Date.now() - CK.lmAt < 400) {
+      CK.lmAt = 0;
+      e.stopPropagation();
+      e.preventDefault();
+    }
+  },
+  true
+);
+document.addEventListener('contextmenu', (e) => {
+  if (e.target.closest && e.target.closest('#app .sgl[data-o]') && ckLmOk()) e.preventDefault();
+});
+Object.assign(SG_ACT, {
+  ckLmClose() {
+    ckLmClose();
+  },
+  ckLmRetime() {
+    const sg = songShown(),
+      i = ckLmLine();
+    CK.lm = null;
+    if (sg && i >= 0) ckRetime(sg, i);
+    else ckLmShow();
+  },
+  ckLmPlay() {
+    const sg = songShown(),
+      i = ckLmLine();
+    CK.lm = null;
+    if (!sg || i < 0) return ckLmShow();
+    if (!ckCan(sg)) {
+      ckLmShow();
+      toast('Add a track to play along');
+      return TRACK.pick(sg.id);
+    }
+    if (!ckSynced(sg)) return ckRetime(sg, i); // not timed yet: place it on the track first
+    if (!(CK.on && CK.songId === sg.id)) {
+      if (CK.pc.run) ckPause();
+      ckArm(sg);
+      if (U.sMode === 'recall') U.sMode = 'practise';
+      U.sSec = null;
+      CK.sig = '';
+    }
+    ckPlay(i);
+  },
+  ckLmMark() {
+    const sg = songShown(),
+      m = CK.lm;
+    CK.lm = null;
+    const sec = sg && m && sg.sections[(sg.order.find((x) => x.o === m.o) || {}).sid];
+    if (!sec || !sec.lines[m.li]) return ckLmShow();
+    const sid = sg.order.find((x) => x.o === m.o).sid;
+    SG_ACT.sgEdit();
+    if (U.sEdit !== 'annotate') return;
+    SG.sel = { o: m.o, sid, li: m.li, w0: 0, w1: sec.lines[m.li].length - 1, a: 0 };
+    rerender();
+    const ln = document.querySelector('#app .sgl[data-o="' + m.o + '"][data-li="' + m.li + '"]');
+    if (ln) ln.scrollIntoView({ block: 'center' });
+  },
 });

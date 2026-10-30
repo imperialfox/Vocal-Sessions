@@ -7,7 +7,7 @@ Every fixture is synthetic: tones written by the tests as WAV files. No real mus
 import os, json, wave, struct, math
 from harness import OUT, ready
 from test_track import track, F, loaded, NIDB, LYRICS, tones
-from test_clock import LYR, ADD, sync
+from test_clock import LYR, ADD, SPREAD
 from test_layout import FITS
 from test_coach import add as add_video, LONG
 
@@ -208,7 +208,7 @@ def setup_sounds(b, t):
     pg = t.page(b, ctx_args={'permissions': ['microphone']})
     pg.evaluate("CLOCK.fake(50000)")
     sid = lyric_song(pg)
-    sync(pg)
+    pg.evaluate(SPREAD, [sid, [0, 12, 24, 36]])  # timed (Q05: section starts come from the waveform, not Sync)
     pg.evaluate("id=>{window.__ck=id}", sid)
     pg.evaluate(wav_take(30), ['w1', sid, None, 1])
     add_track(pg, sid)

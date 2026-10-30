@@ -43,7 +43,7 @@ def data():
 
 
 def river(pg):
-    """A song with lyrics (River Song), synced, so its page has Sync and Check timing."""
+    """A song with lyrics (River Song), timed, so its page has Check timing."""
     sid = pg.evaluate(ADD, ['River Song', 'Sam Example', LYR]); pg.wait_for_timeout(150)
     pg.evaluate("id=>{const s=songById(id),L=ckLines(s);ckStore(s,L,ckSpread(s,L,s.order.map((_,i)=>i*10)),s.order.map(()=>true),L.map(()=>false),{est:true});save()}", sid)
     return sid
@@ -248,7 +248,7 @@ def push(b, t):
         ok(pg.evaluate(PUSH) is not None, f'Search › {name}: Back slides it away')
         quiet(pg)
         ok(pg.evaluate(WHERE) == 'find|' and pg.evaluate(CLEAN), f'Search › {name}: back on the results')
-    # a song page › Check timing (synced) and Sync by sections; Sync becoming Check timing; Done and ✕ slide back too
+    # a song page › Check timing (timed); Back and Done slide back (Q05: Sync by sections is retired)
     pg.evaluate("id=>openSong(id)", sid); quiet(pg)
     pg.evaluate("ckTileAct('check')"); pg.wait_for_timeout(320)
     p = pg.evaluate(PUSH)
@@ -258,12 +258,7 @@ def push(b, t):
     ok(pg.evaluate(PUSH) is not None, 'Check timing\'s Back slides it away')
     quiet(pg)
     ok(pg.evaluate("U.view") == 'lyr' and pg.evaluate(CLEAN), 'back on the song')
-    pg.evaluate("id=>ckStartSync(songById(id))", sid); pg.wait_for_timeout(320)
-    p = pg.evaluate(PUSH)
-    ok(p and 1 < p['page'] < 389 and pg.evaluate("U.view") == 'ckSync', f'a song page › Sync by sections pushes ({p})')
-    quiet(pg)
-    pg.click('#barL [data-a=ckSyncX]'); quiet(pg)  # synced: ✕ goes on to Check timing, which takes Sync's place
-    ok(pg.evaluate("U.view") == 'ckCheck' and pg.evaluate("ZOOM.stack().slice(-1)[0].kind") == 'push', 'leaving Sync for Check timing keeps the way back')
+    pg.evaluate("ckTileAct('check')"); pg.wait_for_timeout(320); quiet(pg)
     pg.click('[data-a=ckCheckDone]'); pg.wait_for_timeout(260)
     ok(pg.evaluate(PUSH) is not None, 'Check timing\'s Done slides back to the song')
     quiet(pg)

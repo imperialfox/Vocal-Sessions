@@ -1,6 +1,6 @@
 # Render queue
 
-App work Ivan has queued, in the order he wants it built. Each item is one build, in a fresh chat, started from a handoff (see [HANDOFF.md](HANDOFF.md)). Last checked against `main` at **3.27** (29 Oct 2026). **Shipped:** Q01 · Search: Global Find in 3.22; Q08 · Interface: Native iOS Polish in 3.23; Q02 · Track: Waveform Sections in 3.24; Q09 · Track: Waveform Sections Follow-up in 3.25; Q10 · Interface: HIG Foundations Pass in 3.26; Q03 · Marks: Layered Annotations in 3.27.
+App work Ivan has queued, in the order he wants it built. Each item is one build, in a fresh chat, started from a handoff (see [HANDOFF.md](HANDOFF.md)). Last checked against `main` at **3.28** (30 Oct 2026). **Shipped:** Q01 · Search: Global Find in 3.22; Q08 · Interface: Native iOS Polish in 3.23; Q02 · Track: Waveform Sections in 3.24; Q09 · Track: Waveform Sections Follow-up in 3.25; Q10 · Interface: HIG Foundations Pass in 3.26; Q03 · Marks: Layered Annotations in 3.27; Q05 · Song Clock: Tap Re-Anchor in 3.28.
 
 - **Every item has two separate gates.** `Awaiting Render` means it is not approved. Ivan's **Render** approves only the named item's exact scope and moves it to `Approved — awaiting Build`; it does not start work or authorize a push. A separate **Build** instruction starts implementation for that approved item. Do not treat approval of one item as approval of the whole queue.
 - **The code wins on what's built.** This is a summary, not a spec. Check each note against the code before relying on it.
@@ -25,8 +25,8 @@ Older chats, notes and prototypes use working names. They map like this:
 | Q02 | Track: Waveform Sections | Track 2, Sections on the waveform |
 | Q03 | Marks: Layered Annotations | Marks 1, Layered marks (shipped in 3.27) |
 | Q04 | Marks: Practice Guide | Marks 2, Marks help, Marks guide |
-| Q05 | Song Clock: Tap Re-Anchor | Song Clock A2, Render 6, Line pass and retime |
-| Q06 | Song Clock: Timeline View | Song Clock B, Render 7, Section starts and wheels |
+| Q05 | Song Clock: Tap Re-Anchor | Song Clock A2, Render 6, Line pass and retime (shipped in 3.28) |
+| Q06 | Song Clock: Timeline View | Song Clock B, Render 7, Section starts and wheels (retired: folded into Q05) |
 | Q07 | Song Clock: Dynamic Sync | Song Clock C, Render 8, Paced Recall |
 | Q08 | Interface: Native iOS Polish | Native bars, iOS 27 polish (shipped in 3.23) |
 | Q09 | Track: Waveform Sections Follow-up | Giant 3-Pad dock, Q02 follow-up (shipped in 3.25) |
@@ -64,39 +64,6 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
   - Every mark has its page.
   - The full suite passes.
   - *Unresolved:* finer criteria.
-
-## Q05 · Song Clock: Tap Re-Anchor
-
-**Status:** Building (Build given by Ivan on 30 Oct 2026, 00:33). **Approval:** Render given by Ivan on 29 Oct 2026 (22:58) for the re-scoped item below (re-scoped and wireframed the same day; it absorbs Q06's leftovers, and Q06 is retired). The build handoff is in Ivan's project notes as `q05_song_clock_tap_reanchor_handoff.md`.
-**Needs:** Q03 live (shipped in 3.27; where its parts plug in: MAINTAINING.md › Marks, "For Q05").
-
-- **Goal:** time songs line by line from the song's own track, and fix lines in place. No more side-by-side listening (music on another device while tapping in the app).
-- **Going:**
-  - Song Clock timing needs the song's track on this device (`TRACK.has(sg.id)`). Without one, Timing reads "Add a track to time this song" and opens the track picker.
-  - Sync by sections (the 3.18 tap pad) and play-along without a track are retired. Section starts come from the waveform (3.24's Make this a section start…).
-  - Timing already saved on older songs is kept untouched in data and backups.
-  - The live line pass isn't built. Check timing's "Time each line" toast goes.
-  - No separate orange flags: the Flag uses the track's markers (3.20).
-  - Q06 · Song Clock: Timeline View is retired; its leftovers are in this item.
-- **Coming:**
-  - Line blocks on the waveform in the track player's Phrase and Line views: one per lyric line, estimated ones dashed. Drag an edge (one handle where two lines touch), or select a block and use Start here / End here. Snapping (about 10 px) to the playhead, section starts and neighbouring edges, using the existing Snapping setting. Undo on every change. Writes into Song Clock's timing.
-  - Punch-in in play-along: hold the lyrics 0.5 s as a line starts; release sets its end. Toast with Undo. A quick tap still jumps.
-  - Flag beside the play-along transport adds a track marker; paused, the same slot is Retime (the player in Line view on the current line).
-  - Hold menu on a lyric line in Practise or Perform: Retime line, Play from here, Annotate (Q03's Marks side, whole line selected). Not in Recall.
-  - Check timing: every line row, Time each line and Section starts open the player in Line view on that line.
-  - Suggested breaths: gaps between lines (on lines with no breath mark of Ivan's) stored with the timing per section line, checked in `cleanTiming()` and carried in backups. Shown only in Q03's Phrasing layer; tapping one makes it a real Breath mark.
-- **Settled at Render / Build:** a song with saved timing but no track on this device has no play-along; its timing is kept and shows on Check timing (Ivan, 30 Oct 2026).
-- **Decided:** timing says when, marks say how. One sound at a time.
-- **Not in it:** any timing without a track; Q07; the pinned ideas below.
-- **Next action:** building now from the Q05 build handoff.
-- **Done when:**
-  - Everything above works; no path starts timing without a track.
-  - Older timing survives untouched and old backups restore.
-  - The full suite passes; the changelog headline ends with (Q05); Q05 is removed from this file in the same push.
-
-## Q06 · Song Clock: Timeline View
-
-**Status:** Retired at Q05's Render (29 Oct 2026). Its leftovers (tappable Check timing lines, Retime routes, snapping) are part of Q05. The ID isn't reused.
 
 ## Q07 · Song Clock: Dynamic Sync
 

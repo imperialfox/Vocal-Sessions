@@ -100,6 +100,8 @@ const TRACK = (() => {
   let mute = false; // Q09 Backing Sound off: the track plays silently in Markers (on again whenever you leave the player)
   let wrapT = 0; // Q09 the timer that wraps the loop right at its end (a frame can be up to 16 ms late; a locked screen more)
   const wraps = []; // Q09 the last few wraps, for the tests: {t, start, end, rate, by}
+  let lane = null; // Q05 the line block selected on the line lane: {id: song id, i: index into ckLines}
+  let ret = null; // Q05 where Back goes when Retime came from Check timing ('ckCheck'); otherwise the song's page
 
   /* ----- this device's settings: zoom level, speed, jog wheel and Song lyrics (vocalSongPrefs, never backed up) ----- */
   function prefs() {
@@ -780,6 +782,11 @@ const TRACK = (() => {
       mkinkfg: g('--trk-mk-inkfg', '#fff'),
       sec: g('--trk-sec', '#007aff'),
       secfg: g('--trk-secfg', '#fff'),
+      // Q05 the line lane: placed lines solid, estimated ones dashed, the selected one stronger
+      ln: g('--accent', '#007aff'),
+      lnfg: g('--fg', '#000'),
+      lnfg2: g('--fg2', '#6c6c72'),
+      lnfg3: g('--fg3', '#a3a3a8'),
       font: getComputedStyle(document.body).fontFamily || 'sans-serif',
     };
   }
@@ -917,6 +924,7 @@ const TRACK = (() => {
       g.fill();
       const s = $('trkStrip');
       if (s) s.setAttribute('aria-valuetext', fmt(t) + ' of ' + fmt(len()));
+      laneDraw(c, x0, pps, hx);
       return;
     }
     const rs = TRK_LEVELS[lv()].row;
@@ -988,6 +996,231 @@ const TRACK = (() => {
     }
     paintCtx();
     paintTiles();
+  }
+
+  /* ----- Q05 the line lane: a block for each lyric line under the Phrase and Line strips, in running order -----
+     Estimated lines (filled in, or spread from section starts and not placed yet) are dashed; placed ones solid. Drag a
+     block's edge to move it (where two lines touch, one handle moves both); tap a block to select it, then Start here /
+     End here at the playhead. Edges snap to the playhead, section starts and other lines' edges (about 10 px, so gentler
+     zoomed in) while Snapping is on. Every change has Undo, and is written into Song Clock's timing (ckSetLines). */
+  const LANE_EDGE = 14; // px either side of a block's edge that grabs it
+  const LANE_SNAP = 10; // px
+  const laneOn = () => {
+    const sg = song();
+    return !!(sg && hasLyrics(sg) && strip());
+  };
+  const laneSel = () => {
+    const M = model();
+    return lane && cur && lane.id === cur.id && M && lane.i < M.L.length ? lane.i : -1;
+  };
+  // the times the lane shows: the line being dragged (its working copy), else the song's timing
+  function laneT() {
+    if (drag && drag.kind === 'edge' && drag.W) return drag.W;
+    const M = model();
+    return M ? M.T.map((r, i) => [r[0], M.end(i)]) : [];
+  }
+  function laneDraw(sc, x0, pps, hx) {
+    const c = $('trkLC'),
+      box = $('trkLane');
+    if (!c || !box) return;
+    // the lane lines up with the strip's waveform (which starts 48 px in with the jog wheel on the left)
+    const sr = sc.getBoundingClientRect(),
+      br = box.getBoundingClientRect();
+    c.style.left = Math.round(sr.left - br.left) + 'px';
+    c.style.width = Math.round(sr.width) + 'px';
+    const { g, w, h } = fit(c),
+      M = model();
+    if (!M) return;
+    const T = laneT(),
+      sel = laneSel(),
+      y = 5,
+      bh = h - 10;
+    g.save();
+    g.font = '500 12px ' + C.font;
+    g.textBaseline = 'middle';
+    T.forEach((r, i) => {
+      if (r[0] == null) return;
+      const xs = x0 + r[0] * pps,
+        xe = x0 + r[1] * pps;
+      if (xe < -4 || xs > w + 4) return;
+      const est = M.est[i] && !(drag && drag.kind === 'edge' && (drag.a === i || drag.b === i)),
+        on = i === sel,
+        bx = xs + 1,
+        bw = Math.max(3, xe - xs - 2);
+      g.beginPath();
+      if (g.roundRect) g.roundRect(bx, y, bw, bh, 7);
+      else g.rect(bx, y, bw, bh);
+      g.fillStyle = C.ln;
+      g.globalAlpha = on ? 0.3 : est ? 0.06 : 0.16;
+      g.fill();
+      g.globalAlpha = on ? 1 : est ? 0.7 : 0.75;
+      g.strokeStyle = est && !on ? C.lnfg3 : C.ln;
+      g.lineWidth = on ? 2 : 1.25;
+      g.setLineDash(est && !on ? [4, 3] : []);
+      g.stroke();
+      g.setLineDash([]);
+      g.globalAlpha = 1;
+      // the line's words, as far as they fit
+      if (bw > 26) {
+        g.save();
+        g.beginPath();
+        g.rect(bx + 6, y, bw - 12, bh);
+        g.clip();
+        g.fillStyle = on ? C.lnfg : est ? C.lnfg3 : C.lnfg2;
+        g.fillText(M.L[i].words.join(' '), bx + 7, y + bh / 2 + 0.5);
+        g.restore();
+      }
+      // the selected block's handles
+      if (on)
+        [bx, bx + bw].forEach((x) => {
+          g.fillStyle = C.ln;
+          rr(g, x - 2.5, y + bh / 2 - 9, 5, 18, 2.5);
+        });
+    });
+    // the playhead runs through the lane too
+    g.fillStyle = C.head;
+    g.fillRect(hx - 1, 0, 2, h);
+    g.restore();
+  }
+  // the time at an x on the lane (it shares the strip's scale)
+  function laneX(e) {
+    const c = $('trkLC');
+    if (!c) return null;
+    const r = c.getBoundingClientRect();
+    return { x: e.clientX - r.left, w: r.width };
+  }
+  // what a finger lands on: an edge (with the line whose end and the line whose start it moves), a block, or nothing
+  function laneHit(px, pw) {
+    const M = model();
+    if (!M) return null;
+    const T = laneT(),
+      k = pps(pw),
+      hx = pw * TRK_HEAD,
+      t0 = now(),
+      X = (v) => hx + (v - t0) * k;
+    let best = null;
+    T.forEach((r, i) => {
+      if (r[0] == null) return;
+      const xs = X(r[0]),
+        xe = X(r[1]),
+        reach = Math.min(LANE_EDGE, Math.max(6, (xe - xs) / 3));
+      [
+        [xs, 'start'],
+        [xe, 'end'],
+      ].forEach(([x, which]) => {
+        const d = Math.abs(px - x);
+        if (d <= reach && (!best || d < best.d)) best = { d, i, which };
+      });
+    });
+    if (best) {
+      // where two lines touch, one handle moves the end of one and the start of the next together
+      const i = best.i,
+        touch = (a, b) => a >= 0 && b < T.length && Math.abs(X(T[b][0]) - X(T[a][1])) <= 3;
+      if (best.which === 'end') return { kind: 'edge', a: i, b: touch(i, i + 1) ? i + 1 : null };
+      return { kind: 'edge', a: touch(i - 1, i) ? i - 1 : null, b: i };
+    }
+    const v = t0 + (px - hx) / k,
+      i = T.findIndex((r) => r[0] != null && v >= r[0] && v <= r[1]);
+    return { kind: 'lane', i };
+  }
+  // dragging an edge: the working copy follows the finger, snapping and kept in order with its neighbours
+  function laneMove(v) {
+    const W = drag.W,
+      a = drag.a,
+      b = drag.b,
+      n = W.length;
+    if (ckPrefs().snapping) {
+      const near = LANE_SNAP / pps(drag.w),
+        cand = [now()].concat(secStarts().map((x) => x.t));
+      W.forEach((r, i) => {
+        if (i !== a && i !== b) cand.push(r[0], r[1]);
+        else if (i === a && a != null) cand.push(r[0]);
+        else if (i === b && b != null) cand.push(r[1]);
+      });
+      let sn = null;
+      cand.forEach((c) => {
+        if (c != null && Math.abs(c - v) <= near && (sn == null || Math.abs(c - v) < Math.abs(sn - v))) sn = c;
+      });
+      if (sn != null) v = sn;
+    }
+    const lb =
+        a != null ? drag.O[a][0] + CK_MIN : b > 0 ? drag.O[b - 1][0] + CK_MIN : 0,
+      ub = b != null ? drag.O[b][1] - CK_MIN : a + 1 < n ? drag.O[a + 1][0] : len();
+    v = Math.max(lb, Math.min(ub, v));
+    if (a != null) W[a][1] = v;
+    if (b != null) {
+      W[b][0] = v;
+      // a start moved back over the line before trims that line's end
+      if (a == null && b > 0 && W[b - 1][1] > v) W[b - 1][1] = Math.max(W[b - 1][0] + CK_MIN, v);
+      else if (a == null && b > 0) W[b - 1][1] = drag.O[b - 1][1];
+    }
+    drag.moved2 = true;
+    draw();
+  }
+  function laneCommit() {
+    const d = drag,
+      sg = song();
+    if (!sg || !d.moved2) return draw();
+    const ch = {};
+    if (d.a != null) ch[d.a] = d.W[d.a].slice();
+    if (d.b != null) ch[d.b] = d.W[d.b].slice();
+    ckSetLines(sg, ch);
+  }
+  // Start here / End here: the selected line at the playhead (its length kept for a new start, where there's room)
+  function laneAt(which) {
+    const sg = song(),
+      M = model(),
+      i = laneSel();
+    if (!sg || !M || i < 0) return toast('Tap a line on the lane first');
+    const t = r2(now()),
+      n = M.L.length,
+      prevS = i > 0 ? M.T[i - 1][0] : null,
+      nextS = i + 1 < n ? M.T[i + 1][0] : null;
+    let s = M.T[i][0],
+      e = M.end(i);
+    if (which === 'start') {
+      if (prevS != null && t < prevS + CK_MIN) return toast('That’s before the line above starts');
+      if (nextS != null && t > nextS - CK_MIN) return toast('That’s after the next line starts');
+      const d = e - s;
+      s = t;
+      if (e < s + CK_MIN) e = Math.min(nextS != null ? nextS : len(), s + Math.max(d, CK_MIN));
+    } else {
+      if (t < s + CK_MIN) return toast('Move the playhead past the line’s start');
+      e = nextS != null ? Math.min(t, nextS) : t;
+    }
+    ckSetLines(sg, { [i]: [s, e] });
+  }
+  // the time row under the waveform (no extra height on small phones): with a line selected on the lane, the line with
+  // Start here / End here and ✕ beside the time; otherwise the time and a hint
+  function infoInner() {
+    const g = grid(),
+      M = laneOn() ? model() : null,
+      i = M ? laneSel() : -1,
+      t = '<span class="trkt" id="trkT">' + fmt1(now()) + '</span>';
+    if (i >= 0)
+      return (
+        t +
+        '<span class="trklbt' +
+        (M.est[i] ? ' est' : '') +
+        '">' +
+        esc(M.L[i].words.join(' ')) +
+        '</span><button class="cvpill" data-a="trkLnStart">Start here</button><button class="cvpill" data-a="trkLnEnd">End here</button><button class="trklbx" data-a="trkLnX" aria-label="Deselect the line">' +
+        ICON.x +
+        '</button>'
+      );
+    // Markers: the speed sits here, since the grid has its own add tile and no Set start / Set end
+    return t + '<span class="trkhint" id="trkHint">' + hint() + '</span>' + (g ? spdHTML() : '');
+  }
+  function laneBar() {
+    const b = $('trkInfo');
+    if (!b) return;
+    b.innerHTML = infoInner();
+    b.classList.toggle('lsel', laneSel() >= 0);
+  }
+  function laneSelect(i) {
+    lane = i >= 0 && cur ? { id: cur.id, i } : null;
+    laneBar();
+    draw();
   }
 
   /* ----- Q02 the lyric card above the strip: the line before, the line at the playhead, the line after ----- */
@@ -1571,7 +1804,8 @@ const TRACK = (() => {
     grid()
       ? 'Tap a marker to loop it · hold for more'
       : strip()
-        ? (jogPos() === 'bottom' ? 'Drag the roller' : 'Drag the jog wheel') + ' · double-tap outside the loop to clear'
+        ? (jogPos() === 'bottom' ? 'Drag the roller' : 'Drag the jog wheel') +
+          (laneOn() ? ' · tap a line below to select it' : ' · double-tap outside the loop to clear')
         : 'Tap to move the playhead there';
   const mb = (b) => (b / 1048576).toFixed(b >= 10 * 1048576 ? 0 : 1) + ' MB';
   const ROLL = '<svg class="trkjogi" viewBox="0 0 20 12" aria-hidden="true"><path d="M7 2L3 6l4 4M13 2l4 4-4 4"/></svg>';
@@ -1590,6 +1824,10 @@ const TRACK = (() => {
           ? ''
           : '<div class="trkjog" id="trkJog" data-own-gesture aria-hidden="true"><span class="trkjogr"></span>' + JOG + '</div>') +
         '</div>' +
+        // Q05 the line lane, lined up under the waveform
+        (laneOn()
+          ? '<div class="trklane" id="trkLane" data-own-gesture aria-hidden="true"><canvas id="trkLC"></canvas></div>'
+          : '') +
         (jp === 'bottom'
           ? '<div class="trkroll" id="trkJog" data-own-gesture aria-hidden="true"><span class="trkrollr"></span>' + ROLL + '</div>'
           : '')
@@ -1765,13 +2003,10 @@ const TRACK = (() => {
       (strip() ? ctxHTML() : '') +
       '<div class="trkwave" id="trkWave">' +
       waveHTML() +
-      '</div><div class="trkinfo"><span class="trkt" id="trkT">' +
-      fmt1(now()) +
-      '</span><span class="trkhint" id="trkHint">' +
-      hint() +
-      '</span>' +
-      // Markers: the speed sits here, since the grid has its own add tile and no Set start / Set end
-      (g ? spdHTML() : '') +
+      '</div><div class="trkinfo' +
+      (laneOn() && laneSel() >= 0 ? ' lsel' : '') +
+      '" id="trkInfo" aria-live="polite">' +
+      infoInner() +
       '</div>' +
       (g ? '' : '<div class="trkmk" id="trkMk" data-own-gesture data-edge-fade>' + chipsHTML() + '</div>') +
       (g
@@ -2241,16 +2476,48 @@ const TRACK = (() => {
       U.sd = {};
     });
   }
-  // Back goes to the song's page
-  function back() {
-    const id = U.songId,
-      ok = !!songById(id);
+  // Q05 Retime: the player in Line view, the playhead on line i and its block selected. Pushed in from the song page or
+  // Check timing (iPhone), and Back returns there
+  function retime(id, i, t) {
+    if (!songById(id)) return;
+    if (rec) return toast('Stop recording first');
+    const from = U.view;
+    prefs().trkLevel = 1;
+    saveSGP();
+    lane = { id, i };
+    pos[id] = Math.max(0, +t || 0);
+    if (cur && cur.id === id) seek(pos[id]);
+    if (from === 'lyr' || from === 'ckCheck') ZOOM.armPush('trk:retime');
     go(() => {
       U.tab = 'songs';
-      U.view = ok && !split() ? 'lyr' : null;
+      U.view = 'trk';
+      U.songId = id;
       U.sheet = null;
       U.sd = {};
     });
+    ret = from === 'ckCheck' ? 'ckCheck' : null;
+  }
+  // Back goes to the song's page (Q05: or to Check timing, when Retime came from there)
+  function back() {
+    const id = U.songId,
+      ok = !!songById(id),
+      r = ret;
+    ret = null;
+    go(() => {
+      U.tab = 'songs';
+      U.view = ok && r === 'ckCheck' ? 'ckCheck' : ok && !split() ? 'lyr' : null;
+      U.sheet = null;
+      U.sd = {};
+    });
+  }
+  // Q05: the song's timing changed under the player (a line placed): redraw what shows it, in place
+  function refresh() {
+    mdl = null;
+    ctxAt = null;
+    if (!here()) return;
+    draw();
+    paint();
+    laneBar();
   }
 
   /* ----- after every redraw ----- */
@@ -2260,6 +2527,8 @@ const TRACK = (() => {
     mdl = null; // Q02: the song's timing is read again after any change
     ctxAt = null;
     if (!here()) mute = false; // Q09: Backing Sound is on again whenever you come back
+    if (U.view !== 'trk') ret = null;
+    if (lane && (U.view !== 'trk' || lane.id !== U.songId)) lane = null;
     syncMute();
     if (U.view === 'trk') {
       const sg = songById(U.songId);
@@ -2336,6 +2605,24 @@ const TRACK = (() => {
   const pps = (w) => w / (TRK_LEVELS[lv()].win || 16);
   document.addEventListener('pointerdown', (e) => {
     if (U.view !== 'trk' || !cur || e.button > 0 || pinch) return;
+    // Q05 the line lane: an edge drags (and moves its neighbour's matching edge); anywhere else scrubs, or a tap selects
+    const ln = e.target.closest && e.target.closest('#trkLane');
+    if (ln) {
+      const p = laneX(e);
+      if (!p) return;
+      e.preventDefault();
+      const hit = laneHit(p.x, p.w) || { kind: 'lane', i: -1 };
+      drag = { kind: hit.kind, id: e.pointerId, x: e.clientX, y: e.clientY, t: now(), at: Date.now(), moved: 0, w: p.w };
+      if (hit.kind === 'edge') {
+        const T = laneT();
+        Object.assign(drag, { a: hit.a, b: hit.b, W: T.map((r) => r.slice()), O: T.map((r) => r.slice()) });
+      } else drag.i = hit.i;
+      try {
+        ln.setPointerCapture(e.pointerId);
+      } catch (x) {}
+      ln.classList.add('drag');
+      return;
+    }
     const jog = e.target.closest && e.target.closest('#trkJog');
     const st = !jog && e.target.closest && e.target.closest('#trkStrip');
     if (!jog && !st) return;
@@ -2379,8 +2666,11 @@ const TRACK = (() => {
         const r = j.querySelector(bot ? '.trkrollr' : '.trkjogr');
         if (r) r.style[bot ? 'backgroundPositionX' : 'transform'] = bot ? drag.rot + d + 'px' : 'rotate(' + (drag.rot + d) + 'deg)';
       }
-    } else if (drag.kind === 'scrub') {
+    } else if (drag.kind === 'scrub' || drag.kind === 'lane') {
       if (drag.moved > 2) seek(drag.t - dx / pps(drag.w));
+    } else if (drag.kind === 'edge') {
+      const p = laneX(e);
+      if (p && drag.moved > 2) laneMove(now() + (p.x - p.w * TRK_HEAD) / pps(p.w));
     } else if (drag.kind === 'handle') {
       const p = stripX(e);
       if (p) dragHandle(now() + (p.x - p.w * TRK_HEAD) / pps(p.w));
@@ -2390,7 +2680,22 @@ const TRACK = (() => {
     if (!drag || e.pointerId !== drag.id) return;
     const d = drag;
     drag = null;
-    document.querySelectorAll('#trkStrip.drag, #trkJog.drag').forEach((x) => x.classList.remove('drag'));
+    document.querySelectorAll('#trkStrip.drag, #trkJog.drag, #trkLane.drag').forEach((x) => x.classList.remove('drag'));
+    // Q05 the lane: a drag of an edge is saved (with Undo) on release; a tap selects a block, or clears the selection
+    if (d.kind === 'edge') {
+      if (e.type === 'pointerup' && d.moved2) {
+        drag = d; // laneCommit reads the working copy
+        laneCommit();
+        drag = null;
+        draw(); // the lane from the saved timing, not the working copy
+      } else if (d.moved < 8) laneSelect(d.b != null ? d.b : d.a);
+      else draw();
+      return;
+    }
+    if (d.kind === 'lane') {
+      if (e.type === 'pointerup' && d.moved < 8 && Date.now() - d.at < 500) laneSelect(d.i);
+      return;
+    }
     if (d.kind === 'handle') {
       // 3.20: a chip's loop being fine-tuned: the chip follows the handles
       const L = loopNow(),
@@ -2736,6 +3041,16 @@ const TRACK = (() => {
       seek(+v);
       prevT = now();
     },
+    // Q05 the line lane's row
+    trkLnStart() {
+      laneAt('start');
+    },
+    trkLnEnd() {
+      laneAt('end');
+    },
+    trkLnX() {
+      laneSelect(-1);
+    },
   });
 
   return {
@@ -2754,6 +3069,8 @@ const TRACK = (() => {
     },
     open,
     back,
+    retime,
+    refresh,
     pick,
     forget,
     play,
@@ -2814,6 +3131,11 @@ const TRACK = (() => {
     wraps: () => wraps.map((w) => Object.assign({}, w)),
     jogPos,
     ctx: () => ctxLines(),
+    // Q05 the line lane
+    laneSel: () => laneSel(),
+    laneSelect,
+    laneAt,
+    laneTimes: () => laneT().map((r) => r.slice()),
     state: () => ({
       id: cur ? cur.id : null,
       loaded: !!cur,

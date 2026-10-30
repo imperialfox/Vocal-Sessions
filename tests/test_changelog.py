@@ -28,8 +28,14 @@ def run(b, t):
     pg.click('#lgchart rect[data-k="5"]', force=True); pg.wait_for_timeout(300)
     v5 = list(reversed(versions))[5]
     ok(pg.inner_text('#lgtop .kick').upper().startswith(f'VERSION {v5}'), f'tapping the chart shows version {v5}')
-    pg.click('[data-a=lgjump]'); pg.wait_for_timeout(900)
-    top = pg.evaluate(f"document.getElementById('log-{v5.replace('.', '-')}').getBoundingClientRect().top")
+    pg.click('[data-a=lgjump]')
+    # the smooth scroll takes longer the further it goes (the timeline grows with every version), so wait for it to land
+    sel = f"log-{v5.replace('.', '-')}"
+    try:
+        pg.wait_for_function("id=>{const t=document.getElementById(id).getBoundingClientRect().top;return t>0&&t<300}", arg=sel, timeout=5000)
+    except Exception:
+        pass
+    top = pg.evaluate(f"document.getElementById('{sel}').getBoundingClientRect().top")
     ok(0 < top < 300, 'Show in timeline scrolls to that version')
 
     # expand one, then every change

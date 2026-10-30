@@ -1071,9 +1071,22 @@ function sgSection(sg, idx) {
     peek = lv ? ' role="button" tabindex="0" aria-label="Peek at this line"' : '';
   if (sec.cue) h += '<p class="sgcue">' + (lv >= 4 ? maskText(sec.cue, 'all') : esc(sec.cue)) + '</p>';
   h += '<div class="sglines">';
+  // Q05 suggested breaths (from the timing: a gap after a placed line), only in Phrasing on the Marks side, at the line's
+  // end; a tap makes one a real Breath mark
+  const sb = ed && MARKS.layer() === 'phrasing' ? CLOCK.sbAt(sg, o) : [];
   sec.lines.forEach((ln, li) => {
     const chk = ed ? sgChecks(sec, li) : null,
-      r = MARKS.line(sec, li, show, (wi, w, d) => sgWord(o, sid, li, wi, w, mk(wi), d, chk && chk.has(wi)));
+      r = MARKS.line(sec, li, show, (wi, w, d) => sgWord(o, sid, li, wi, w, mk(wi), d, chk && chk.has(wi))),
+      sug =
+        sb.includes(li) && !MARKS.breaths(sec, li).some(Boolean)
+          ? '<button class="sgsb" data-a="sgSugBr" data-o="' +
+            o +
+            '" data-k="' +
+            sid +
+            '" data-li="' +
+            li +
+            '" aria-label="Suggested breath. Tap to add a breath mark">’<b>+</b></button>'
+          : '';
     h +=
       '<p class="sgl' +
       (r.labelled ? ' hasv' : '') +
@@ -1086,6 +1099,7 @@ function sgSection(sg, idx) {
       peek +
       '>' +
       r.html +
+      sug +
       '</p>';
     r.notes
       .slice()
@@ -2385,6 +2399,32 @@ const SG_ACT = {
   sgSave() {
     sgSaveDraft();
   },
+  // Q05 a suggested breath becomes a real Breath mark on the line's last word, with Undo
+  sgSugBr(el) {
+    const sg = songShown(),
+      sid = el.dataset.k,
+      li = +el.dataset.li,
+      sec = sg && sg.sections[sid];
+    if (!sec || !sec.lines[li] || U.sEdit !== 'annotate') return;
+    const n = sec.lines[li].length,
+      was = JSON.stringify(sg.timing || null);
+    sgSnap();
+    const r = MARKS.add(sec, { sid, li, w0: n - 1, w1: n - 1 }, 'breath', '', '');
+    CLOCK.clearSb(sg, sid, li);
+    save();
+    MARKS.fresh = r.m.id;
+    rerender();
+    setTimeout(() => (MARKS.fresh = null), 50);
+    mkUndoToast('Added Breath', () => {
+      const s2 = songById(sg.id),
+        c = s2 && s2.sections[sid];
+      if (!c) return;
+      c.marks = c.marks.filter((x) => x.id !== r.m.id).concat(r.gone);
+      MARKS.mirror(c);
+      const t = JSON.parse(was);
+      if (t) s2.timing = t;
+    });
+  },
   sgSec(el, v, k) {
     if (rec || U.sEdit) return;
     U.sSec = U.sSec === k ? null : k;
@@ -2853,6 +2893,8 @@ function slayerHTML() {
   const sg = songShown();
   // Q03 the marks sheet: rises when words are selected, in place of the dock; with nothing selected, a capsule
   if (sg && U.sEdit === 'annotate' && !U.sheet && !SG.drag) h += SG.sel ? mkSheetHTML(sg) : mkCapHTML();
+  // Q05 the hold menu on a lyric line (clock.js)
+  h += CLOCK.lineMenuHTML();
   if (sg && recallOn() && !U.sheet && !rec) {
     if (SG.rMenu)
       h +=
@@ -2965,6 +3007,7 @@ function songsAfter() {
     sgPlaceMenu();
     sgFocusPaint(false);
   }
+  ckLmPaint();
   sgPlace('ctxmenu', '.rowc.lifted', 'row');
   sgPlace('sortmenu', '#hdrsort', 'under');
   sgPlace('rmenu', '#sgrbtn', 'under');

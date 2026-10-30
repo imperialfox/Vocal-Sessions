@@ -322,17 +322,24 @@ def windows(b, t):
     ok(pg.evaluate("COACH.el().paused") and not pg.evaluate("TRACK.el().paused"), 'playing the track pauses the coach video')
     # Song Clock's play-along
     pg.evaluate("l=>{U.sDraft={step:2,title:'river song',artist:'',text:l,blocks:splitBlocks(l)};sgSaveDraft()}", LYRICS); pg.wait_for_timeout(400)
-    pg.evaluate("(()=>{const s=D.songs.find(x=>x.name==='River Song'),L=ckLines(s);ckStore(s,L,ckSpread(s,L,[0,10]),[true,true],L.map(()=>false),{est:true});ckOn(s)})()")
+    # Q05: play-along needs the song's own track on this device, so the river song gets one (from Files, as Add track)
+    rid = pg.evaluate("D.songs.find(x=>x.name==='River Song').id")
+    pg.evaluate("id=>TRACK.expect(id)", rid); pg.set_input_files('#trackIn', F('River.wav', 20))
+    pg.wait_for_function("id=>TRACK.has(id)&&!TRACK.busy()", arg=rid, timeout=15000); pg.wait_for_timeout(300)
+    pg.evaluate("(()=>{const s=D.songs.find(x=>x.name==='River Song'),L=ckLines(s);ckStore(s,L,ckSpread(s,L,[0,10]),[true,true],L.map(()=>false),{est:true});go(()=>{U.tab='songs';U.view='lyr';U.songId=s.id});ckOn(s)})()")
     pg.wait_for_timeout(200)
-    pg.evaluate("TRACK.play()"); pg.wait_for_timeout(200)
-    pg.evaluate("CLOCK.play(0)"); pg.wait_for_timeout(300)
-    ok(pg.evaluate("TRACK.el().paused") and pg.evaluate("CLOCK.state().run"), 'starting play-along pauses the track')
+    pg.evaluate("TRACK.play()"); pg.wait_for_timeout(300)
+    ok(pg.evaluate("NOW.kind()") == 'track' and not pg.evaluate("TRACK.state().along"), 'the track player is playing on its own')
+    pg.evaluate("CLOCK.play(0)"); pg.wait_for_timeout(400)
+    ok(pg.evaluate("CLOCK.state().run") and pg.evaluate("NOW.kind()") == 'clock' and (pg.evaluate("TRACK.el().paused") or pg.evaluate("TRACK.state().along") == rid),
+       'starting play-along stops the track player (play-along takes the sound over, playing its own song’s track)')
     pg.evaluate("TRACK.play()"); pg.wait_for_timeout(300)
     ok(not pg.evaluate("CLOCK.state().run") and not pg.evaluate("TRACK.el().paused"), 'playing the track pauses play-along')
     pg.evaluate("TRACK.pause()")
     # the Song controls grid has a Track tile
     pg.wait_for_timeout(200)
     pg.evaluate("CLOCK.off()")
+    pg.evaluate("id=>TRACK.forget([id])", rid); pg.wait_for_timeout(300)  # back to a song without its track
     sid = pg.evaluate("D.songs.find(x=>x.name==='River Song').id")
     pg.evaluate("id=>go(()=>{U.tab='songs';U.view='lyr';U.songId=id})", sid); pg.wait_for_timeout(250)
     pg.click('[data-a=ckGrid]'); pg.wait_for_timeout(250)

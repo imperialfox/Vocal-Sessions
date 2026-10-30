@@ -64,8 +64,8 @@ function renderBar() {
     $('barT').textContent = e ? e.name : '';
     $('barL').innerHTML = '<button class="circ glass" data-a="exBack" aria-label="Back">' + ICON.back + '</button>';
     $('barR').innerHTML = '';
-  } else if (U.view === 'ckSync' || U.view === 'ckCheck') {
-    // 3.18 Song Clock: Sync (closes with ✕) and Check timing (Back, so swipe back works)
+  } else if (U.view === 'ckCheck') {
+    // 3.18 Song Clock: Check timing (Back, so swipe back works)
     const b = CLOCK.bar();
     $('barL').innerHTML = b.l;
     $('barT').innerHTML = b.t;
@@ -1179,7 +1179,7 @@ function render(keepScroll) {
           ? scrAll()
           : v === 'lyr'
             ? scrSongView()
-            : v === 'ckSync' || v === 'ckCheck'
+            : v === 'ckCheck'
               ? CLOCK.page()
             : v === 'trk'
               ? TRACK.page()
@@ -1201,7 +1201,6 @@ function render(keepScroll) {
     v === 'set' ||
     v === 'log' ||
     v === 'coach' ||
-    v === 'ckSync' ||
     v === 'ckCheck' ||
     v === 'trk' ||
     (v === 'ex' && !split())
