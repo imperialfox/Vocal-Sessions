@@ -15,7 +15,7 @@ Every queued item has a queue ID and a standard name, used in the queue, in hand
 - **Items:** `Q[##] · [Subsystem]: [Feature Name]`, e.g. `Q02 · Track: Waveform Sections`.
 - **Files** (handoffs, specs, wireframes, prototypes): `q##_[subsystem]_[feature]_[type].[ext]`, lower case with underscores, e.g. `q02_track_waveform_sections_handoff.md`.
 - **Releases:** the shipped version's `CHANGELOG.md` headline ends with the queue ID in brackets, e.g. `*Waveform sections on the track player (Q02)*` under `## 3.23 · 27 Oct 2026` (the `##` line keeps its exact format for the app's Changelog page). That's the bridge from queue ID to version. Q01 shipped as 3.22, headline `*Search, from every tab (Q01)*`; Q08 as 3.23.
-- **New items:** an idea gets its ID when Ivan says **Render** for it, taking the next unused number (the next is **Q19**). IDs are never reused or renumbered, even when the queue is reordered or an item ships.
+- **New items:** an idea gets its ID when Ivan says **Render** for it, taking the next unused number (the next is **Q22**). IDs are never reused or renumbered, even when the queue is reordered or an item ships.
 - **Exception, 30 Oct 2026:** Ivan asked for the six stages of the 30 Oct read-only audit, plus its clean-up list, to get IDs straight away, before Render, most critical first. They are **Q11–Q17**, and each is still `Awaiting Render`.
 
 Older chats, notes and prototypes use working names. They map like this:
@@ -40,6 +40,9 @@ Older chats, notes and prototypes use working names. They map like this:
 | Q16 | Audio: Voice Analysis Foundations | Audit stage 6, Web Audio seam |
 | Q17 | Hygiene: Dead Code Sweep | Audit clean-up list |
 | Q18 | Tests: GitHub Match | Workflow review, 31 Oct 2026 |
+| Q19 | Session: One-Page Flow | One-page session prototype, 31 Oct 2026 |
+| Q20 | Session: Application Redesign | One-page session prototype, 31 Oct 2026 |
+| Q21 | Session: Saved Screen | "Session saved" splash, 2+5, 31 Oct 2026 |
 
 Work shipped before this standard (for example Track 1 and Song Clock A1) keeps its version numbers and has no queue ID.
 
@@ -56,7 +59,7 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 
 ## Order (31 Oct 2026)
 
-Most critical first: **Q04 → Q14 → Q18 → Q15 → Q16 → Q17 → Q07**. Q11–Q17 got Render on 30 Oct 2026 (06:42); each still needs its own Build. Q18 got Render on 31 Oct 2026 (17:41) and goes straight after Q14, because it touches the same test files. Q11 shipped in 3.29, Q12 in 3.30 and Q13 in 3.31. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
+Most critical first: **Q04 → Q14 → Q18 → Q15 → Q16 → Q17 → Q19 → Q20 → Q21 → Q07**. Q19–Q21 got Render on 31 Oct 2026 (19:58), in one instruction; each still needs its own Build. They go after Q17 (Q20 needs Q16's track-while-recording). Q11–Q17 got Render on 30 Oct 2026 (06:42); each still needs its own Build. Q18 got Render on 31 Oct 2026 (17:41) and goes straight after Q14, because it touches the same test files. Q11 shipped in 3.29, Q12 in 3.30 and Q13 in 3.31. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
 
 ## Q14 · Playback: Smooth Frames
 
@@ -135,6 +138,48 @@ Most critical first: **Q04 → Q14 → Q18 → Q15 → Q16 → Q17 → Q07**. Q1
 - **Out of scope:** behaviour changes beyond the two small fixes.
 - **Next action:** after Ivan separately says Build for Q17, check its **Needs** are live, then implement only this scope in a fresh chat from its handoff.
 - **Done when:** nothing visible changes; the full suite passes.
+
+## Q19 · Session: One-Page Flow
+
+**Status:** Approved — awaiting Build. **Approval:** Render given by Ivan on 31 Oct 2026 (19:58) for the scope below, in one instruction covering Q19–Q21. Each is its own build and needs its own **Build**. The build handoff is in Ivan's project notes as `q19_session_one_page_flow_handoff.md`, with a link to the prototype.
+**Needs:** Q17 live (queue order).
+
+- **Goal:** a focused session runs on one page; Foundation, Rotation and Application follow each other in place.
+- **Scope:**
+  - **One page:** the screen stays put; a finished section folds to a summary line and the next slides in; a faded preview of what's next. One pinned button keeps today's labels and still records each step's end. Progress's time split is untouched.
+  - **Pulling past an unfinished section springs back**; finished sections can be reopened; no jumping ahead.
+  - **Floating window:** the coach video in Foundation and Rotation, a "Coach ▸" pill in Application; draggable, snaps to corners.
+  - **Foundation levels:** tap a row's ring to cycle 1 → 2 → 3 → Skip. Level 3 sweeps the card blue then green and opens a comment box; levels 1–2 open "What kept it at level N?" reasons plus "+ Your own"; after a reason the card folds and the next exercise is nudged.
+  - **Rotation:** the suggested card on top, then "More exercises" sortable by Longest ago, Most recent or A–Z; Skip rotation; "Just Foundation today? Finish here".
+  - **Wording:** "Foundation", never "SOVT".
+- **Defaults if unanswered:** reasons saved like exercise notes are now; the old multi-page session is replaced with no switch back (old sessions and drafts still open); Application keeps today's content until Q20.
+- **Out of scope:** Q20 and Q21's parts; merging Song practice into Songs; Progress's time split.
+- **Next action:** after Ivan separately says Build for Q19, check its **Needs** are live, then implement only this scope in a fresh chat from its handoff.
+- **Done when:** a whole session runs on one page with each step's end logged as now; a 3.31 draft resumes; the full suite passes.
+
+## Q20 · Session: Application Redesign
+
+**Status:** Approved — awaiting Build. **Approval:** Render given by Ivan on 31 Oct 2026 (19:58), with Q19 and Q21. The build handoff is in Ivan's project notes as `q20_session_application_redesign_handoff.md`.
+**Needs:** Q19 and Q16 live.
+
+- **Goal:** the Application step is quick and satisfying: pick up where you left off, sing, compare, keep the best take.
+- **Scope:** a Carry on card (last song and section; the track starts there); songs with no sections fall back to Whole song; a remembered Sing over the track switch (headphones by default, as agreed in Q16) with a headphones hint; the red track window while recording; takes with waveforms, Star, one-tap Compare from the second take, ↻ Again and Done; "Practised, not recorded"; Other songs with a sort heading; the "How did it go?" sheet removed from finishing.
+- **Defaults if unanswered:** ↻ Again included; past "How did it go?" answers stay, and the chips stay on the session edit sheet; shared take-row changes reach Song practice too.
+- **Out of scope:** the Session saved screen; merging Song practice into Songs; voice analysis.
+- **Next action:** after Ivan separately says Build for Q20, check its **Needs** are live, then implement only this scope in a fresh chat from its handoff.
+- **Done when:** recording with and without the track, Star, Compare, Again, Done and "Practised, not recorded" work; finishing doesn't ask how it went; the full suite passes.
+
+## Q21 · Session: Saved Screen
+
+**Status:** Approved — awaiting Build. **Approval:** Render given by Ivan on 31 Oct 2026 (19:58), with Q19 and Q20. The build handoff is in Ivan's project notes as `q21_session_saved_screen_handoff.md`.
+**Needs:** Q19 live.
+
+- **Goal:** finishing lands on a calm "Session saved" screen that belongs to Today, then becomes Today with one tap.
+- **Scope:** "Session saved"; the week arc with only today's minutes animating in; "N min · Day · weekly goal reached"; the week row with today's dot turning green; "N-week streak continues"; Done centred just below. Done turns the screen into Today: the arc, week row and streak move into place and Done becomes Start session. No count-ups or confetti.
+- **Defaults if unanswered:** real minutes, goal and streak; replaces today's shrink-into-Start-session finish; lines without a goal or streak are left out.
+- **Out of scope:** Today's own layout; Progress.
+- **Next action:** after Ivan separately says Build for Q21, check its **Needs** are live, then implement only this scope in a fresh chat from its handoff.
+- **Done when:** the screen shows the right numbers, Done morphs into Today (and fades with Reduce Motion), and the full suite passes.
 
 ## Q04 · Marks: Practice Guide
 
