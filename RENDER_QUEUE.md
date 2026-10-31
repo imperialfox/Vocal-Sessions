@@ -6,7 +6,7 @@ App work Ivan has queued, in the order he wants it built. Each item is one build
 - **The code wins on what's built.** This is a summary, not a spec. Check each note against the code before relying on it.
 - **Detailed design notes live in Ivan's private project notes, not in this repo.** Where an item names one, ask Ivan to paste or attach it. Anything not settled here is marked *Unresolved*.
 - **Ivan can reorder the queue.** Versions follow build order: each build takes the next minor version when it's built.
-- **When an item ships,** remove it from this file in the same push and say which version it shipped in. Its `CHANGELOG.md` headline (the `*…*` line under the version) ends with its queue ID, e.g. `*Waveform sections on the track player (Q02)*`. The `##` line itself stays `## 3.23 · 27 Oct 2026`, which the app's Changelog page reads.
+- **When an item ships,** remove its section from this file in the same push and set its row in the table below to `Shipped <version>`. Its `CHANGELOG.md` headline (the `*…*` line under the version) ends with its queue ID, e.g. `*Waveform sections on the track player (Q02)*`. The `##` line itself stays `## 3.23 · 27 Oct 2026`, which the app's Changelog page reads.
 
 ## Naming
 
@@ -18,32 +18,32 @@ Every queued item has a queue ID and a standard name, used in the queue, in hand
 - **New items:** an idea gets its ID when Ivan says **Render** for it, taking the next unused number (the next is **Q23**). IDs are never reused or renumbered, even when the queue is reordered or an item ships.
 - **Exception, 30 Oct 2026:** Ivan asked for the six stages of the 30 Oct read-only audit, plus its clean-up list, to get IDs straight away, before Render, most critical first. They are **Q11–Q17**, and each is still `Awaiting Render`.
 
-Older chats, notes and prototypes use working names. They map like this:
+Every ID with its **Status** (`Awaiting Render`, `Approved — awaiting Build`, `Building`, `Shipped <version>`, `Blocked` or `Retired`) and the working names older chats, notes and prototypes use. Render adds the row (or sets it to `Approved — awaiting Build`); the Build that ships it sets `Shipped <version>` in the same push.
 
-| Queue ID | Standard name | Earlier working names |
-|---|---|---|
-| Q01 | Search: Global Find | Render 10, Search, Global Search |
-| Q02 | Track: Waveform Sections | Track 2, Sections on the waveform |
-| Q03 | Marks: Layered Annotations | Marks 1, Layered marks (shipped in 3.27) |
-| Q04 | Marks: Practice Guide | Marks 2, Marks help, Marks guide (shipped in 3.32) |
-| Q05 | Song Clock: Tap Re-Anchor | Song Clock A2, Render 6, Line pass and retime (shipped in 3.28) |
-| Q06 | Song Clock: Timeline View | Song Clock B, Render 7, Section starts and wheels (retired: folded into Q05) |
-| Q07 | Song Clock: Dynamic Sync | Song Clock C, Render 8, Paced Recall |
-| Q08 | Interface: Native iOS Polish | Native bars, iOS 27 polish (shipped in 3.23) |
-| Q09 | Track: Waveform Sections Follow-up | Giant 3-Pad dock, Q02 follow-up (shipped in 3.25) |
-| Q10 | Interface: HIG Foundations Pass | Vault ideas wireframes (shipped in 3.26) |
-| Q11 | Data: Save Safety | Audit stage 1, data safety (shipped in 3.29) |
-| Q12 | Song Clock: Timing Integrity | Audit stage 2, timing integrity (shipped in 3.30) |
-| Q13 | Interface: Keyboard Guards | Audit stage 3, input hygiene (shipped in 3.31) |
-| Q14 | Playback: Smooth Frames | Audit stage 4, per-frame work |
-| Q15 | Marks: Register-Ready Data | Audit stage 5, room for register data |
-| Q16 | Audio: Voice Analysis Foundations | Audit stage 6, Web Audio seam |
-| Q17 | Hygiene: Dead Code Sweep | Audit clean-up list |
-| Q18 | Tests: GitHub Match | Workflow review, 31 Oct 2026 |
-| Q19 | Session: One-Page Flow | One-page session prototype, 31 Oct 2026 |
-| Q20 | Session: Application Redesign | One-page session prototype, 31 Oct 2026 |
-| Q21 | Session: Saved Screen | "Session saved" splash, 2+5, 31 Oct 2026 |
-| Q22 | Session: Clock Redesign | Session clock ring prototype, 31 Oct 2026 |
+| Queue ID | Standard name | Status | Earlier working names |
+|---|---|---|---|
+| Q01 | Search: Global Find | Shipped 3.22 | Render 10, Search, Global Search |
+| Q02 | Track: Waveform Sections | Shipped 3.24 | Track 2, Sections on the waveform |
+| Q03 | Marks: Layered Annotations | Shipped 3.27 | Marks 1, Layered marks |
+| Q04 | Marks: Practice Guide | Shipped 3.32 | Marks 2, Marks help, Marks guide |
+| Q05 | Song Clock: Tap Re-Anchor | Shipped 3.28 | Song Clock A2, Render 6, Line pass and retime |
+| Q06 | Song Clock: Timeline View | Retired → Q05 | Song Clock B, Render 7, Section starts and wheels |
+| Q07 | Song Clock: Dynamic Sync | Awaiting Render | Song Clock C, Render 8, Paced Recall |
+| Q08 | Interface: Native iOS Polish | Shipped 3.23 | Native bars, iOS 27 polish |
+| Q09 | Track: Waveform Sections Follow-up | Shipped 3.25 | Giant 3-Pad dock, Q02 follow-up |
+| Q10 | Interface: HIG Foundations Pass | Shipped 3.26 | Vault ideas wireframes |
+| Q11 | Data: Save Safety | Shipped 3.29 | Audit stage 1, data safety |
+| Q12 | Song Clock: Timing Integrity | Shipped 3.30 | Audit stage 2, timing integrity |
+| Q13 | Interface: Keyboard Guards | Shipped 3.31 | Audit stage 3, input hygiene |
+| Q14 | Playback: Smooth Frames | Approved — awaiting Build | Audit stage 4, per-frame work |
+| Q15 | Marks: Register-Ready Data | Approved — awaiting Build | Audit stage 5, room for register data |
+| Q16 | Audio: Voice Analysis Foundations | Approved — awaiting Build | Audit stage 6, Web Audio seam |
+| Q17 | Hygiene: Dead Code Sweep | Approved — awaiting Build | Audit clean-up list |
+| Q18 | Tests: GitHub Match | Approved — awaiting Build (Build given; after Q14) | Workflow review, 31 Oct 2026 |
+| Q19 | Session: One-Page Flow | Approved — awaiting Build | One-page session prototype, 31 Oct 2026 |
+| Q20 | Session: Application Redesign | Approved — awaiting Build | One-page session prototype, 31 Oct 2026 |
+| Q21 | Session: Saved Screen | Approved — awaiting Build | "Session saved" splash, 2+5, 31 Oct 2026 |
+| Q22 | Session: Clock Redesign | Approved — awaiting Build | Session clock ring prototype, 31 Oct 2026 |
 
 Work shipped before this standard (for example Track 1 and Song Clock A1) keeps its version numbers and has no queue ID.
 
@@ -60,7 +60,7 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 
 ## Order (31 Oct 2026)
 
-Most critical first: **Q14 → Q18 → Q15 → Q16 → Q17 → Q19 → Q20 → Q21 → Q22 → Q07**. Q22 got Render on 31 Oct 2026 (20:59) and goes after Q21, because it builds on the one-page session and the saved screen. Q19–Q21 got Render on 31 Oct 2026 (19:58), in one instruction; each still needs its own Build. They go after Q17 (Q20 needs Q16's track-while-recording). Q11–Q17 got Render on 30 Oct 2026 (06:42); each still needs its own Build. Q18 got Render on 31 Oct 2026 (17:41) and goes straight after Q14, because it touches the same test files. Q11 shipped in 3.29, Q12 in 3.30, Q13 in 3.31 and Q04 in 3.32. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
+Most critical first: **Q14 → Q18 → Q15 → Q16 → Q17 → Q19 → Q20 → Q21 → Q22 → Q07**. Q22 got Render on 31 Oct 2026 (20:59) and goes after Q21, because it builds on the one-page session and the saved screen. Q19–Q21 got Render on 31 Oct 2026 (19:58), in one instruction; each still needs its own Build. They go after Q17 (Q20 needs Q16's track-while-recording). Q11–Q17 got Render on 30 Oct 2026 (06:42); each still needs its own Build. Q18 got Render on 31 Oct 2026 (17:41) and goes straight after Q14, because it touches the same test files. What has shipped is in the table's Status column. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
 
 ## Q14 · Playback: Smooth Frames
 

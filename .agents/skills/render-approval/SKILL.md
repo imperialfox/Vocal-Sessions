@@ -15,7 +15,7 @@ Use this workflow whenever Ivan explicitly says **Render** for a queued Vocal Se
 
 ## Record the approval
 
-1. Update the queue item to `Approved — awaiting Build` and record the Render approval date and exact approved scope.
+1. Update the queue item to `Approved — awaiting Build` and record the Render approval date and exact approved scope. Set the same status in the item's row of the queue ID table (add the row if it's new).
 2. Update every accessible handoff or spec that records the approval. Keep wording and scope consistent with the queue, and link the records to each other where possible.
 3. Use the GitHub connector or shared repository workspace available in the current assistant to persist the documentation update to the shared location Claude reads, following the repository's existing branch and review workflow. Do not ask Ivan to pass the approval to another assistant.
 4. Preserve the separate Build gate. Do not mark an item Build authorized, start implementation, or push application code.
