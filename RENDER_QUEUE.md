@@ -15,7 +15,7 @@ Every queued item has a queue ID and a standard name, used in the queue, in hand
 - **Items:** `Q[##] · [Subsystem]: [Feature Name]`, e.g. `Q02 · Track: Waveform Sections`.
 - **Files** (handoffs, specs, wireframes, prototypes): `q##_[subsystem]_[feature]_[type].[ext]`, lower case with underscores, e.g. `q02_track_waveform_sections_handoff.md`.
 - **Releases:** the shipped version's `CHANGELOG.md` headline ends with the queue ID in brackets, e.g. `*Waveform sections on the track player (Q02)*` under `## 3.23 · 27 Oct 2026` (the `##` line keeps its exact format for the app's Changelog page). That's the bridge from queue ID to version. Q01 shipped as 3.22, headline `*Search, from every tab (Q01)*`; Q08 as 3.23.
-- **New items:** an idea gets its ID when Ivan says **Render** for it, taking the next unused number (the next is **Q18**). IDs are never reused or renumbered, even when the queue is reordered or an item ships.
+- **New items:** an idea gets its ID when Ivan says **Render** for it, taking the next unused number (the next is **Q19**). IDs are never reused or renumbered, even when the queue is reordered or an item ships.
 - **Exception, 30 Oct 2026:** Ivan asked for the six stages of the 30 Oct read-only audit, plus its clean-up list, to get IDs straight away, before Render, most critical first. They are **Q11–Q17**, and each is still `Awaiting Render`.
 
 Older chats, notes and prototypes use working names. They map like this:
@@ -39,6 +39,7 @@ Older chats, notes and prototypes use working names. They map like this:
 | Q15 | Marks: Register-Ready Data | Audit stage 5, room for register data |
 | Q16 | Audio: Voice Analysis Foundations | Audit stage 6, Web Audio seam |
 | Q17 | Hygiene: Dead Code Sweep | Audit clean-up list |
+| Q18 | Tests: GitHub Match | Workflow review, 31 Oct 2026 |
 
 Work shipped before this standard (for example Track 1 and Song Clock A1) keeps its version numbers and has no queue ID.
 
@@ -53,9 +54,9 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 
 ---
 
-## Order (30 Oct 2026)
+## Order (31 Oct 2026)
 
-Most critical first: **Q04 → Q14 → Q15 → Q16 → Q17 → Q07**. Q11–Q17 got Render on 30 Oct 2026 (06:42); each still needs its own Build. Q11 shipped in 3.29, Q12 in 3.30 and Q13 in 3.31. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
+Most critical first: **Q04 → Q14 → Q18 → Q15 → Q16 → Q17 → Q07**. Q11–Q17 got Render on 30 Oct 2026 (06:42); each still needs its own Build. Q18 got Render on 31 Oct 2026 (17:41) and goes straight after Q14, because it touches the same test files. Q11 shipped in 3.29, Q12 in 3.30 and Q13 in 3.31. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
 
 ## Q14 · Playback: Smooth Frames
 
@@ -70,6 +71,22 @@ Most critical first: **Q04 → Q14 → Q15 → Q16 → Q17 → Q07**. Q11–Q17 
 - **Out of scope:** any visual change. Everything must look the same.
 - **Next action:** after Ivan separately says Build for Q14, check its **Needs** are live, then implement only this scope in a fresh chat from its handoff.
 - **Done when:** existing visual and timing tests pass unchanged; a test counts per-frame work (no timing model rebuilt, no layout reads after writes); the full suite passes.
+
+## Q18 · Tests: GitHub Match
+
+**Status:** Approved — awaiting Build. **Approval:** Render given by Ivan on 31 Oct 2026 (17:41) for the scope below. **Build:** Ivan also said Build on 31 Oct 2026 (17:41); it is held until Q14 is live, then starts in a fresh chat from its handoff. The build handoff is in Ivan's project notes as `q18_tests_github_match_handoff.md`.
+**Needs:** Q14 live (it touches the same test files).
+
+- **Goal:** the tests give the same answer locally as on GitHub, so builds stop going red for test-only reasons.
+- **Scope:**
+  - **MAINTAINING.md › Tests:** one line saying to run the tests in a clean virtual environment with only the Playwright version in `.github/workflows/tests.yml`, and a new **Known test issues** list (what fails where, and why), starting with the ones already seen: the Changelog "Show in timeline" check under a newer Playwright, flick tests under a heavy `VS_JOBS`, and checks that depend on font width.
+  - **Fix the tests that have failed on GitHub or under parallel load before** (the batch12 checks seen in 3.30, the take test re-run in 3.24, and any others the build finds by running the full suite under load): replace fixed waits in those tests with waiting for a condition.
+  - **RENDER_QUEUE.md:** correct the line under Naming that still says Q11–Q17 are `Awaiting Render`.
+- **Default if unanswered:** a test that can't be made reliable goes on the Known test issues list instead of being fixed.
+- **Out of scope:** any change to how the app works; a sweep of every fixed wait in the suite.
+- **Version:** the next minor version, as for every build.
+- **Next action:** once Q14 is live, start a fresh chat from the handoff, check Q14 is on `main`, then implement only this scope.
+- **Done when:** the touched tests pass three full-suite runs in a row locally under the default `VS_JOBS`; GitHub's Tests run passes; the Known test issues list exists.
 
 ## Q15 · Marks: Register-Ready Data
 
