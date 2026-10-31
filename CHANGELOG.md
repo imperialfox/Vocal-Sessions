@@ -9,6 +9,14 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.33 · 31 Oct 2026
+*Today's glow reaches the top of the screen (Q23)*
+<!-- area: look -->
+
+**Behind the status bar**
+- The app now runs right up behind the clock and battery, so Today's colours reach the top of the screen instead of stopping at a grey strip.
+- The top buttons, toasts, sheets, pages and pop-ups all stay clear of the clock.
+
 ## 3.32 · 31 Oct 2026
 *Every mark explained right where you use it (Q04)*
 <!-- area: songs -->

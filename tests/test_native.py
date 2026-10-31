@@ -2,7 +2,8 @@
 21 pt margins, the search circle as tall as the bar, the top circles centred at 84 pt), the soft edge under the top bar
 when scrolling, Today's gradient and its switch in Settings › Appearance, the native push (slide in from the right)
 for the doors Ivan chose (and the zoom kept everywhere else), and the tab bar's collapse into a pill at the left.
-VS_NATIVE=layout,edge,gradient,push,collapse runs only those parts."""
+3.33 Status bar glow (Q23): the page runs behind the status bar, and nothing sits under the clock.
+VS_NATIVE=layout,edge,gradient,push,collapse,status runs only those parts."""
 import os
 from harness import with_song_practice, now, iso, fix
 from test_fuzz import TONES
@@ -497,9 +498,58 @@ def collapse(b, t):
     pg.context.close()
 
 
+# ---------------------------------------------------------------------------------------------------------------------
+# anything with its own text or a button that sits under the status bar (the glow and the soft edge are meant to)
+UNDER = """(sat)=>{const bad=[];for(const e of document.querySelectorAll('body *')){
+  if(e.closest('.tgrad,.edge,#splash'))continue;
+  const own=[...e.childNodes].some(n=>n.nodeType==3&&n.textContent.trim())||['BUTTON','INPUT','IMG','svg','CANVAS','VIDEO'].includes(e.tagName);
+  if(!own)continue;const r=e.getBoundingClientRect();if(!r.width||!r.height||r.bottom<=0||r.top>=sat-0.5)continue;
+  let a=e,seen=true;while(a&&a!==document.body){const c=getComputedStyle(a);if(+c.opacity==0||c.visibility=='hidden'){seen=false;break}a=a.parentElement}
+  if(seen)bad.push((e.id||e.tagName)+' '+Math.round(r.top)+' '+(e.textContent||'').trim().slice(0,16))}return bad.slice(0,5)}"""
+
+
+def status(b, t):
+    """6 · Q23: the Home Screen app draws behind the status bar, so Today's glow reaches the top of the screen."""
+    ok = t.ok
+    pg = t.page(b, data=data())
+    ok(pg.evaluate("document.querySelector('meta[name=apple-mobile-web-app-status-bar-style]').content") == 'black-translucent',
+       'the status bar setting lets the page run behind the clock (black-translucent)')
+    pg.context.close()
+    for sc in ('light', 'dark'):
+        pg = t.page(b, 402, 874, sc, data=data())
+        # a real top safe area where this Chromium can stand one in (env() itself), otherwise the stylesheet's variables
+        try:
+            pg.context.new_cdp_session(pg).send('Emulation.setSafeAreaInsetsOverride', {'insets': {'top': 62, 'bottom': 34, 'left': 0, 'right': 0}})
+            pg.evaluate('rerender()'); real = True
+        except Exception:
+            pg.evaluate(IPHONE); real = False
+        pg.wait_for_timeout(150)
+        tag = f'{sc}{"" if real else " (stood in)"}'
+        ok(pg.evaluate("getComputedStyle(document.documentElement).getPropertyValue('--sat').trim()") == '62px', f'{tag}: the page sees the 62 pt status bar')
+        ok(pg.evaluate("document.querySelector('.tgrad').getBoundingClientRect().top") <= 0, f'{tag}: Today\'s glow starts at the top of the screen')
+        def clear(where):
+            pg.wait_for_timeout(200)
+            bad = pg.evaluate(UNDER, 62)
+            ok(not bad, f'{tag}: nothing on {where} sits under the status bar {bad or ""}')
+        clear('Today')
+        pg.evaluate("toast('Session deleted')"); clear('a toast')
+        pg.click('.titlerow [data-a=openCal]'); pg.wait_for_timeout(300); clear('the calendar sheet')
+        pg.evaluate("go(()=>{U.tab='settings';U.view='set';U.setPg='backup'})"); clear('a Settings page')
+        sid = river(pg)
+        pg.evaluate("id=>go(()=>{U.tab='songs';U.view='lyr';U.songId=id})", sid); clear('a song')
+        pg.click('[data-a=sgMode][data-v=perform]'); clear('Perform')
+        pg.evaluate("go(()=>{U.tab='today';U.view=null})"); pg.wait_for_timeout(150)
+        pg.click('[data-zk=start]'); clear('a session step')
+        if sc == 'light': t.shot(pg, 'status-session')
+        pg.evaluate("go(()=>{U.tab='today';U.view=null})"); pg.wait_for_timeout(150)
+        t.shot(pg, f'status-{sc}', clip={'x': 0, 'y': 0, 'width': 402, 'height': 320})
+        pg.context.close()
+
+
 def run(b, t):
     if wanted('layout'): layout(b, t)
     if wanted('edge'): edge(b, t)
     if wanted('gradient'): gradient(b, t)
     if wanted('push'): push(b, t)
     if wanted('collapse'): collapse(b, t)
+    if wanted('status'): status(b, t)

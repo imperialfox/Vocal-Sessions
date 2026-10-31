@@ -1577,7 +1577,9 @@ function ckPick(anchor, value, onSet) {
   left = Math.max(12, Math.min(vw - w - 12, left));
   let top = r ? r.bottom + 8 : (vh - h) / 2;
   if (r && top + h > vh - 12) top = r.top - h - 8;
-  if (top < 12) top = Math.max(12, (vh - h) / 2);
+  // Q23: the page runs behind the status bar, so stay below it
+  const sat = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sat')) || 0;
+  if (top < 12 + sat) top = Math.max(12 + sat, (vh - h) / 2);
   pop.style.left = left + 'px';
   pop.style.top = top + 'px';
   inits.forEach((f) => f());

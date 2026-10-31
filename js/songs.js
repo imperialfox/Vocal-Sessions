@@ -3128,7 +3128,8 @@ function sgPlaceHintMenu() {
   const r = b.getBoundingClientRect(),
     vw = document.documentElement.clientWidth;
   m.style.position = 'fixed';
-  m.style.top = Math.max(12, r.top - m.offsetHeight - 12) + 'px';
+  const sat = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sat')) || 0; // Q23: below the status bar
+  m.style.top = Math.max(12 + sat, r.top - m.offsetHeight - 12) + 'px';
   m.style.left = Math.max(12, Math.min(vw - m.offsetWidth - 12, r.left + r.width / 2 - m.offsetWidth / 2)) + 'px';
 }
 // the hint capsule at the bottom in Recall: show more, the level (tap for the menu), hide more
