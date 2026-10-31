@@ -117,7 +117,7 @@ Most critical first: **Q04 → Q14 → Q18 → Q15 → Q16 → Q17 → Q07**. Q1
   - **Ivan checks the track loop's join on his iPhone** at 1× and 0.5×. If there's an audible gap, try a short fade at the join.
 - **Out of scope:** the pitch / vocal-weight analysis and visualiser themselves (a later item).
 - **Decided by Ivan (30 Oct 2026):** the backing track may keep playing while the microphone is listened to or recorded. Today, starting a recording stops every sound; this changes that, and only for the backing track. Everything else still follows one sound at a time.
-- **Risk to settle in the handoff:** voice processing is off for takes, so through the speaker the track will leak into the microphone (and into the take and any analysis). Headphones avoid it; the handoff should say what happens without them.
+- **Decided by Ivan (31 Oct 2026), the speaker leak:** voice processing is off for takes, so through the speaker the track would leak into the microphone (and into the take and any analysis). By default, recording while the track plays is for headphones. Ivan can always override it, with a confirmation first, to record with the track through the speaker.
 - **Next action:** after Ivan separately says Build for Q16, check its **Needs** are live, then implement only this scope in a fresh chat from its handoff.
 - **Done when:** the meter and mono mix share one audio service; the coach loop wraps within a few ms in tests; the full suite passes; Ivan's phone check is recorded.
 
