@@ -15,7 +15,7 @@ Every queued item has a queue ID and a standard name, used in the queue, in hand
 - **Items:** `Q[##] · [Subsystem]: [Feature Name]`, e.g. `Q02 · Track: Waveform Sections`.
 - **Files** (handoffs, specs, wireframes, prototypes): `q##_[subsystem]_[feature]_[type].[ext]`, lower case with underscores, e.g. `q02_track_waveform_sections_handoff.md`.
 - **Releases:** the shipped version's `CHANGELOG.md` headline ends with the queue ID in brackets, e.g. `*Waveform sections on the track player (Q02)*` under `## 3.23 · 27 Oct 2026` (the `##` line keeps its exact format for the app's Changelog page). That's the bridge from queue ID to version. Q01 shipped as 3.22, headline `*Search, from every tab (Q01)*`; Q08 as 3.23.
-- **New items:** an idea gets its ID when Ivan says **Render** for it, taking the next unused number (the next is **Q22**). IDs are never reused or renumbered, even when the queue is reordered or an item ships.
+- **New items:** an idea gets its ID when Ivan says **Render** for it, taking the next unused number (the next is **Q23**). IDs are never reused or renumbered, even when the queue is reordered or an item ships.
 - **Exception, 30 Oct 2026:** Ivan asked for the six stages of the 30 Oct read-only audit, plus its clean-up list, to get IDs straight away, before Render, most critical first. They are **Q11–Q17**, and each is still `Awaiting Render`.
 
 Older chats, notes and prototypes use working names. They map like this:
@@ -43,6 +43,7 @@ Older chats, notes and prototypes use working names. They map like this:
 | Q19 | Session: One-Page Flow | One-page session prototype, 31 Oct 2026 |
 | Q20 | Session: Application Redesign | One-page session prototype, 31 Oct 2026 |
 | Q21 | Session: Saved Screen | "Session saved" splash, 2+5, 31 Oct 2026 |
+| Q22 | Session: Clock Redesign | Session clock ring prototype, 31 Oct 2026 |
 
 Work shipped before this standard (for example Track 1 and Song Clock A1) keeps its version numbers and has no queue ID.
 
@@ -59,7 +60,7 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 
 ## Order (31 Oct 2026)
 
-Most critical first: **Q04 → Q14 → Q18 → Q15 → Q16 → Q17 → Q19 → Q20 → Q21 → Q07**. Q04 got Render on 31 Oct 2026 (20:25) and still needs its own Build. Q19–Q21 got Render on 31 Oct 2026 (19:58), in one instruction; each still needs its own Build. They go after Q17 (Q20 needs Q16's track-while-recording). Q11–Q17 got Render on 30 Oct 2026 (06:42); each still needs its own Build. Q18 got Render on 31 Oct 2026 (17:41) and goes straight after Q14, because it touches the same test files. Q11 shipped in 3.29, Q12 in 3.30 and Q13 in 3.31. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
+Most critical first: **Q04 → Q14 → Q18 → Q15 → Q16 → Q17 → Q19 → Q20 → Q21 → Q22 → Q07**. Q22 got Render on 31 Oct 2026 (20:59) and goes after Q21, because it builds on the one-page session and the saved screen. Q04 got Render on 31 Oct 2026 (20:25) and still needs its own Build. Q19–Q21 got Render on 31 Oct 2026 (19:58), in one instruction; each still needs its own Build. They go after Q17 (Q20 needs Q16's track-while-recording). Q11–Q17 got Render on 30 Oct 2026 (06:42); each still needs its own Build. Q18 got Render on 31 Oct 2026 (17:41) and goes straight after Q14, because it touches the same test files. Q11 shipped in 3.29, Q12 in 3.30 and Q13 in 3.31. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
 
 ## Q04 · Marks: Practice Guide
 
@@ -197,6 +198,18 @@ Most critical first: **Q04 → Q14 → Q18 → Q15 → Q16 → Q17 → Q19 → Q
 - **Out of scope:** Today's own layout; Progress.
 - **Next action:** after Ivan separately says Build for Q21, check its **Needs** are live, then implement only this scope in a fresh chat from its handoff.
 - **Done when:** the screen shows the right numbers, Done morphs into Today (and fades with Reduce Motion), and the full suite passes.
+
+## Q22 · Session: Clock Redesign
+
+**Status:** Approved — awaiting Build. **Approval:** Render given by Ivan on 31 Oct 2026 (20:59) for the scope below. The build handoff is in Ivan's project notes as `q22_session_clock_redesign_handoff.md`, with a link to the prototype.
+**Needs:** Q19 and Q21 live.
+
+- **Goal:** the session clock becomes a ring you can read at a glance, in the same family as the one-page session, with small fixes that take the stress out of timing.
+- **Scope:** one ring in three slices sized by usual step lengths, with a tick at the end of the current slice; finished steps fill their slice, going over changes nothing; paused ring breathes, numbers grey, Resume; finish closes the ring into the saved line; opens by zooming out of the timer pill and closes by swiping sideways anywhere (✕ kept); the floating window uses the same small ring. Plus: screen stays on, "Were you away?" check, Undo on Log, fix a step time (hold and slide), survives closing the app, tap the big number to swap total and step, steady digits, pause from the floating window.
+- **Defaults if unanswered:** steps not reached show the usual time ("~14 min"); usual lengths come from recent sessions, with set fallbacks until there are enough; Song practice keeps one full-ring slice; the "away" check appears after 10 min away.
+- **Out of scope:** tapping a slice to jump to a step (dropped by Ivan); any auto-pause, buzz or Lock Screen timer; Progress's time split.
+- **Next action:** after Ivan separately says Build for Q22, check its **Needs** are live, then implement only this scope in a fresh chat from its handoff.
+- **Done when:** the ring, pause, finish, swipe to close and each of the eight features work, light and dark, with and without Reduce Motion, and the full suite passes.
 
 ## Q07 · Song Clock: Dynamic Sync
 
