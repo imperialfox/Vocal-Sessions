@@ -19,7 +19,12 @@ def main_list(b, t):
     ok(pg.evaluate("[...document.querySelectorAll('#app .grp')].slice(0,3).every(g=>g.classList.contains('tiled'))"),
        'in three groups of icon rows (separators start after the icons)')
     tiles = pg.evaluate("[...document.querySelectorAll('#app .grp.tiled .row')].map(r=>{const s=r.querySelector('.tile');return s?getComputedStyle(s).backgroundColor+'|'+s.innerHTML:''})")
-    ok(len(tiles) == 8 and all(tiles) and len(set(tiles)) == 8, 'every row has its own icon tile: no colour and glyph used twice')
+    ok(len(tiles) == 9 and all(tiles) and len(set(tiles)) == 9, 'every row has its own icon tile: no colour and glyph used twice')
+    # Q04: the Marks guide row, after Coach video, with no value
+    g = pg.locator('#app .grp.tiled .row[data-a=gdOpen][data-v=home][data-zk="mk:guide"][data-push]')
+    ok(g.count() == 1 and g.locator('.tile').count() == 1 and g.locator('.lbl').inner_text() == 'Marks guide'
+       and pg.evaluate("document.querySelector('#app [data-zk=\"set:coach\"]').nextElementSibling.dataset.zk") == 'mk:guide',
+       'a Marks guide row follows Coach video, with its own tile and no value (Q04)')
     ok(pg.evaluate("[...document.querySelectorAll('#app .grp.tiled .tile svg')].every(s=>s.getBoundingClientRect().width>15)"), 'and the glyphs draw')
     ok(pg.evaluate(VALUE, 'backup') == 'Yesterday' and pg.locator('#app [data-zk="set:backup"] .setwarn').count() == 0,
        'Backup shows when you last backed up: “Yesterday”')

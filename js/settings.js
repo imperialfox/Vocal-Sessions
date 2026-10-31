@@ -1,6 +1,6 @@
 /* Vocal Sessions · settings.js (3.21)
    Settings as a main list of icon rows, each opening its own page, like the iPhone's Settings app.
-   - Main list: Backup and Storage; Recall, Coach video and Accessibility; Changelog and View on GitHub; the two resets;
+   - Main list: Backup and Storage; Recall, Coach video, Marks guide (Q04, guide.js), Appearance and Accessibility; Changelog and View on GitHub; the two resets;
      then the app's icon, name and version at the bottom.
    - Pages are U.view = 'set' with U.setPg = 'backup' | 'storage' | 'recall' | 'coach' | 'appear' | 'access'. Backup
      and Storage open with a hero card (big icon, title and a short explanation); the others are plain pages.
@@ -28,6 +28,9 @@ const SET = (() => {
     access:
       '<svg viewBox="0 0 24 24"><circle cx="14" cy="4.9" r="1.9"/><path d="M9.3 9.4h9.4M14 9.4v4.4l-2.6 5.6M14 13.8l2.6 5.6"/><path d="M3.4 11.2h3.2M2.6 14.8h3"/></svg>',
     log: '<svg viewBox="0 0 24 24"><path d="M10 7h10M10 12h10M10 17h7"/><path d="M5 4.6l.7 1.5 1.5.7-1.5.7L5 9l-.7-1.5-1.5-.7 1.5-.7z"/><path d="M5 15.6v2.8M3.6 17h2.8"/></svg>',
+    // Q04 the Marks guide: an open book
+    guide:
+      '<svg viewBox="0 0 24 24"><path d="M12 6.6c-2.1-1.6-4.9-2.2-8.2-1.8v12.9c3.3-.4 6.1.2 8.2 1.8 2.1-1.6 4.9-2.2 8.2-1.8V4.8c-3.3-.4-6.1.2-8.2 1.8z"/><path d="M12 6.6v12.9"/></svg>',
     code: '<svg viewBox="0 0 24 24"><circle cx="7" cy="5.6" r="2"/><circle cx="7" cy="18.4" r="2"/><circle cx="17" cy="8.6" r="2"/><path d="M7 7.6v8.8M17 10.6c0 3.8-10 1.6-10 5.8"/></svg>',
   };
   const COL = {
@@ -38,6 +41,7 @@ const SET = (() => {
     appear: '#ff6b57',
     access: 'var(--sys-blue)',
     log: 'var(--sys-purple)',
+    guide: 'var(--sys-pink)',
     code: 'var(--tile-ink)',
   };
   const TITLE = {
@@ -171,6 +175,12 @@ const SET = (() => {
       '<div class="grp tiled setgap">' +
       row('recall', v.recall) +
       row('coach', v.coach) +
+      // Q04: the Marks guide's door (no value; its pages are the guide's own, so Back returns here)
+      '<button class="row" data-a="gdOpen" data-v="home" data-zk="mk:guide" data-push>' +
+      ico('guide') +
+      '<span class="lbl">Marks guide</span>' +
+      chev +
+      '</button>' +
       row('appear', v.appear) +
       row('access', v.access) +
       '</div>' +

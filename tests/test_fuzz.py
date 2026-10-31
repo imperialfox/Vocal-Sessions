@@ -75,6 +75,10 @@ INV=r"""(()=>{const p=[];const L=document.getElementById('layer');
  // Q03 marks: no marks sheet without a selection, no selection outside the Marks side, and every song's marks valid
  if(document.getElementById('mksheet')&&!(SG.sel&&U.sEdit==='annotate'))p.push('marks sheet without a selection');
  if(document.querySelector('#app .w.on')&&U.sEdit!=='annotate')p.push('selected words outside the Marks side');
+ // Q04 the peek card: never without its marks sheet (and its button), never two
+ if(document.getElementById('mkpeek')&&!document.querySelector('#mksheet .mkb[data-v="'+MKG.state().peek+'"]'))p.push('a peek card left on screen without its marks sheet');
+ if(document.querySelectorAll('.mkpeek').length>1)p.push('two peek cards');
+ if(U.view==='guide'&&!document.querySelector('#barL [data-a=gdBack]'))p.push('a guide page without Back');
  for(const s of D.songs)for(const k in s.sections||{}){const c=s.sections[k];if(!Array.isArray(c.marks))p.push('a section without marks');else if(JSON.stringify(mkCleanList(c.marks,c.lines).map(m=>m.id))!==JSON.stringify(c.marks.map(m=>m.id)))p.push('a mark that isn’t valid: '+JSON.stringify(c.marks).slice(0,80));}
  try{JSON.parse(localStorage.getItem('vocalTracker'))}catch(e){p.push('saved data unreadable')}
  const sumOk=Object.keys(D.months).length>=0;
@@ -98,7 +102,9 @@ HEAVY = ('sgOpen','sgSec','sgTakes','playTake','star','sgMode','sgHint','sgHMenu
          'sgRowPlay','fwX','tkOpenAll','tkTab','tkTap','tkPlay','tkSkip','tkStar','tkCollapse','tkRename','tkNameDone','tkPost','tkStamp','tkNudge','tkCJump','tkDel','tkReview',
          'sgAddMode','sgAddLen','sgLenUnlinkYes','sgLenRelinkYes','ckRelink','trkMkAdd','trkChip','trkChipLoop','trkEndHere','trkMkMove','trkMkDel',
          # 3.22 Search
-         'findOpen','findMore','findLyr','findTake','findRecent','findRmRecent','findClear','findCancel')
+         'findOpen','findMore','findLyr','findTake','findRecent','findRmRecent','findClear','findCancel',
+         # Q04 the Marks guide
+         'gdOpen','gdBack','gdKey','gdKeyRow','gdPeekClose','gdPeekMore')
 
 def run(b, t):
     found = collections.OrderedDict()
@@ -150,6 +156,12 @@ def run(b, t):
                     pg.mouse.wheel(0, R.choice([-800, 400, 1500])); trace.append('scroll'); pg.wait_for_timeout(120)
                 elif r < 0.10:
                     pg.evaluate("X&&(X.start=Date.now()-" + str(R.choice([60, 3600, 7200, 100000])) + "*1000, saveDraft())"); trace.append('age session')
+                elif r < 0.12 and pg.locator('#mksheet .mkb').count():
+                    # Q04: hold a mark button (its peek card), then carry on tapping
+                    m = pg.locator('#mksheet .mkb').nth(R.randrange(pg.locator('#mksheet .mkb').count())); bx = m.bounding_box()
+                    if bx:
+                        pg.mouse.move(bx['x'] + bx['width'] / 2, bx['y'] + bx['height'] / 2); pg.mouse.down(); pg.wait_for_timeout(560); pg.mouse.up()
+                        trace.append('hold ' + (m.get_attribute('data-v') or ''))
                 else:
                     els = [e for e in pg.evaluate(VIS) if e['a'] not in SKIP]
                     if not els:

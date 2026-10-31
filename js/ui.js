@@ -44,6 +44,15 @@ function renderBar() {
     } else $('barT').textContent = SET.title();
     $('barL').innerHTML = '<button class="circ glass" data-a="setPgBack" aria-label="Back to Settings">' + ICON.back + '</button>';
     $('barR').innerHTML = '';
+  } else if (U.view === 'guide') {
+    // Q04 the Marks guide's pages: Back to where the guide was opened (or the guide page before)
+    if (tabsMode) {
+      bar.classList.add('tabsmode');
+      $('barT').classList.add('tabs');
+      $('barT').innerHTML = topTabs();
+    } else $('barT').textContent = MKG.title();
+    $('barL').innerHTML = '<button class="circ glass" data-a="gdBack" aria-label="Back">' + ICON.back + '</button>';
+    $('barR').innerHTML = '';
   } else if (U.view === 'coach') {
     if (tabsMode) {
       bar.classList.add('tabsmode');
@@ -1181,6 +1190,8 @@ function render(keepScroll) {
       ? scrLog()
       : v === 'set'
         ? SET.page()
+      : v === 'guide'
+        ? MKG.page()
       : v === 'coach'
         ? COACH.page()
       : v === 'ex'
@@ -1209,6 +1220,7 @@ function render(keepScroll) {
     (!v && U.tab === 'settings') ||
     (!v && U.tab === 'find') ||
     v === 'set' ||
+    v === 'guide' ||
     v === 'log' ||
     v === 'coach' ||
     v === 'ckCheck' ||
@@ -1231,6 +1243,7 @@ function render(keepScroll) {
   TRACK.after(); // 3.19 the track player: its waveform, and letting go of a deleted song's track
   TAKE.after(); // 3.20 the takes sheet: the expanded take's waveform and the field being typed in
   FIND.after(); // 3.22 Search: the field focused when the page is opened from its circle
+  MKG.after(); // Q04 the peek card goes with its marks sheet
   fwUpdate();
   DET.dockSwap(dk);
   DET.play();

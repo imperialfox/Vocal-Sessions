@@ -1458,43 +1458,8 @@ function songSheet(s) {
         '</div>'
     );
   }
-  if (s === 'sgKey') {
-    // Q03: the four layers and what each mark looks like (the full guide is Q04)
-    const ex = {
-      phrase: '<span class="mph">so</span>',
-      stress: '<span class="mst">so</span>',
-      hold: '<span class="w mhold">so</span>',
-    };
-    return sheetWrap(
-      'Marks key',
-      MK_LAYERS.concat([['note', 'Every layer']])
-        .map(
-          (x, i) =>
-            '<div class="hdr">' +
-            (x[0] === 'note' ? '' : i + 1 + ' · ') +
-            x[1] +
-            '</div><div class="grp">' +
-            (x[0] === 'note' ? ['note'] : MK_BY[x[0]])
-              .map(
-                (t) =>
-                  '<div class="row sgkey"><span class="g">' +
-                  (ex[t] || mkGlyph(t)) +
-                  '</span><span class="lbl">' +
-                  MK_DEF[t].n +
-                  '<small>' +
-                  esc(MK_DEF[t].opts.join(' · ') || (mkTakesText(t, '') ? 'Your own words' : 'One tap')) +
-                  '</small></span></div>'
-              )
-              .join('') +
-            '</div>'
-        )
-        .join('') +
-        '<div class="grp" style="margin-top:14px"><div class="row sgkey"><span class="g"><span class="mut">' +
-        SGI.link +
-        '</span></span><span class="lbl">Linked<small>A section shared with its repeats, and their marks</small></span></div></div>' +
-        '<p class="foot">Only one layer shows at a time. Add or change marks with the pencil.</p>'
-    );
-  }
+  // Q04 Key for this song: only the marks this song uses (the general key became the Marks guide's home)
+  if (s === 'sgKey') return MKG.keySheet();
   if (s === 'sgTakes') return TAKE.sheet(sd);
   if (s === 'sgTakeMenu' || s === 'sgTakeDel' || s === 'sgReview' || s === 'sgCmtMenu') return TAKE.sheet(sd, s);
   // 3.20 the length linked to the song's track
@@ -2774,7 +2739,10 @@ function sgEnsure() {
 function mkCapHTML() {
   return (
     '<div class="mkcap glass" id="mkcap" role="status">' +
-    (SG.pend ? 'Tap the word to move the mark to' : 'Select words to mark') +
+    (SG.pend
+      ? 'Tap the word to move the mark to'
+      : // Q04: the capsule's door to the Marks guide
+        'Select words to mark<button class="mkcapl" data-a="gdOpen" data-v="home">Marks guide</button>') +
     '</div>'
   );
 }
@@ -2795,7 +2763,8 @@ function mkSheetHTML(sg) {
     mkLayerNum(L) +
     ' · ' +
     mkLayerName(L) +
-    '</small></span><button class="circ glass sm" data-a="mkClear" aria-label="Clear the selection">' +
+    '</small></span><button class="circ glass sm mkq" data-a="gdKey" aria-label="Key for this song">?</button>' + // Q04
+    '<button class="circ glass sm" data-a="mkClear" aria-label="Clear the selection">' +
     ICON.x +
     '</button></div>';
   if (on.length)

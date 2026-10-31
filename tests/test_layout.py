@@ -70,6 +70,9 @@ def run(b, t):
                 pg.evaluate(f"U.tab='{tab}';U.view=null;render()"); pg.wait_for_timeout(250); check(tab)
             for k in ['backup', 'storage', 'recall', 'coach', 'access']:  # 3.21 the Settings pages
                 pg.evaluate(f"U.tab='settings';U.view='set';U.setPg='{k}';render()"); pg.wait_for_timeout(200); check('settings-' + k)
+            for k in ['home', 'how', 'chain', 'register']:  # Q04 the Marks guide's pages
+                pg.evaluate(f"U.tab='settings';U.view='guide';U.gPg='{k}';render()"); pg.wait_for_timeout(200); check('guide-' + k)
+            pg.evaluate("U.view=null;U.gPg=null;render()")
             pg.evaluate(SONG); pg.wait_for_timeout(300); check('song')
             # a selected section, recording it (without a microphone: the screen as it looks), and its takes
             pg.evaluate(TAKES); pg.wait_for_timeout(300); check('song-selected')
@@ -95,6 +98,11 @@ def run(b, t):
             pg.click('.sgsec >> nth=1 >> .w >> nth=3'); pg.wait_for_timeout(250)
             if not pg.evaluate(INSIDE, '#mksheet'): bad.append('marks sheet off screen')
             check('song-edit')
+            pg.evaluate("MKG.showPeek('breath')"); pg.wait_for_timeout(150)  # Q04 the peek card
+            if not pg.evaluate(INSIDE, '#mkpeek'): bad.append('peek card off screen')
+            check('song-peek')
+            pg.evaluate("MKG.hidePeek();U.sheet='sgKey';U.sd={};render()"); pg.wait_for_timeout(300); check('song-key')
+            pg.evaluate("U.sheet=null;render()"); pg.wait_for_timeout(200)
             pg.evaluate("SG_ACT.sgEditMode(document.querySelector('[data-a=sgEditMode][data-v=lyrics]'),'lyrics')"); pg.wait_for_timeout(400); check('song-lyrics')
             pg.evaluate("sgEndEdit(true);U.view=null;U.tab='songs';render();SG_ACT.sgNew()"); pg.wait_for_timeout(500); check('new-song')
             pg.evaluate("U.sheet=null;U.tab='songs';render();startSearch()"); pg.wait_for_timeout(300); check('songs-search')

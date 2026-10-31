@@ -25,7 +25,7 @@ Older chats, notes and prototypes use working names. They map like this:
 | Q01 | Search: Global Find | Render 10, Search, Global Search |
 | Q02 | Track: Waveform Sections | Track 2, Sections on the waveform |
 | Q03 | Marks: Layered Annotations | Marks 1, Layered marks (shipped in 3.27) |
-| Q04 | Marks: Practice Guide | Marks 2, Marks help, Marks guide |
+| Q04 | Marks: Practice Guide | Marks 2, Marks help, Marks guide (shipped in 3.32) |
 | Q05 | Song Clock: Tap Re-Anchor | Song Clock A2, Render 6, Line pass and retime (shipped in 3.28) |
 | Q06 | Song Clock: Timeline View | Song Clock B, Render 7, Section starts and wheels (retired: folded into Q05) |
 | Q07 | Song Clock: Dynamic Sync | Song Clock C, Render 8, Paced Recall |
@@ -60,24 +60,7 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 
 ## Order (31 Oct 2026)
 
-Most critical first: **Q04 → Q14 → Q18 → Q15 → Q16 → Q17 → Q19 → Q20 → Q21 → Q22 → Q07**. Q22 got Render on 31 Oct 2026 (20:59) and goes after Q21, because it builds on the one-page session and the saved screen. Q04 got Render on 31 Oct 2026 (20:25) and still needs its own Build. Q19–Q21 got Render on 31 Oct 2026 (19:58), in one instruction; each still needs its own Build. They go after Q17 (Q20 needs Q16's track-while-recording). Q11–Q17 got Render on 30 Oct 2026 (06:42); each still needs its own Build. Q18 got Render on 31 Oct 2026 (17:41) and goes straight after Q14, because it touches the same test files. Q11 shipped in 3.29, Q12 in 3.30 and Q13 in 3.31. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
-
-## Q04 · Marks: Practice Guide
-
-**Status:** Approved — awaiting Build. **Approval:** Render given by Ivan on 31 Oct 2026 (20:25) for the scope below; he asked Claude to settle the open points, and those are marked *decided at Render*. Guide text and prototype were approved 22 Oct 2026. The build handoff is in Ivan's project notes as `q04_marks_practice_guide_handoff.md` (checked against 3.31); the wording is `marks-guide-content.md` there, which he pastes in.
-**Needs:** Q03 live (shipped in 3.27; `main` is at 3.31). Notes for it are in MAINTAINING.md › Marks ("For Q04").
-
-- **Goal:** explain each mark where it's used, so Ivan never has to leave the song to remember what a mark means or how to sing it.
-- **Scope:**
-  - **Peek card:** hold a mark button in the marks sheet for 0.48 s: a small card with the mark's glyph, name, one-line description, its example drawn by the real renderer, Close and Learn more. Letting go after a hold never also adds the mark.
-  - **Key for this song** (*decided at Render:* this title; "Song key" isn't used): a sheet listing only the marks this song uses, by layer, with the options used and how many, then its Notes; every row opens that mark's guide page; an empty state with a Marks guide link.
-  - **Marks guide:** pages in the app's detail-page style: a guide home (How to mark a song, then every mark by layer with its glyph and one-line description, then Note); a page per mark, all 21 plus Note (big tile, title, layer badge and technical name where there is one, option chips, then What it is · How to sing it · When to mark it · Example · Don't confuse with, the last linking to the other mark's page); and the **How to mark a song** walkthrough (four passes and the habits, including "Let timing help" now that Q05's suggested breaths exist).
-  - **Doors:** the marks sheet's "?" and the ⋯ grid's existing Key tile open Key for this song; its rows, a peek card's Learn more and each page's Don't confuse with open a mark's page; the "Select words to mark" capsule, a row under the ⋯ grid's tiles and a Settings row after Coach video open the guide.
-  - Examples on pages and cards are drawn with the real mark renderer.
-- **Decided at Render:** the Key tile's old general "Marks key" sheet is replaced: the tile opens Key for this song, and the general list becomes the guide home (nothing it showed is lost; each mark's options move to its page). No second song-key row under the grid's tiles. Guide pages push on iPhone like Settings' pages; opening one from a sheet closes the sheet first, and Back lands where you were with the Marks side's selection kept. The guide text lives in one file, and a test fails if any mark has no text.
-- **Out of scope:** new marks or changes to how marks are drawn or stored; a demo recording on each page (pinned); searching guide text; Song Clock; Settings beyond the one row; the track player's lyrics.
-- **Next action:** after Ivan separately says Build for Q04, check its **Needs** are live, then implement only this scope in a fresh chat from its handoff.
-- **Done when:** a hold opens the card without adding the mark and a tap still adds; every door opens the right help; all 21 marks plus Note have a page with the five sections and a drawn example; Key for this song shows only this song's marks with the right counts; every size, light and dark, Reduce Motion fades; the full suite passes.
+Most critical first: **Q14 → Q18 → Q15 → Q16 → Q17 → Q19 → Q20 → Q21 → Q22 → Q07**. Q22 got Render on 31 Oct 2026 (20:59) and goes after Q21, because it builds on the one-page session and the saved screen. Q19–Q21 got Render on 31 Oct 2026 (19:58), in one instruction; each still needs its own Build. They go after Q17 (Q20 needs Q16's track-while-recording). Q11–Q17 got Render on 30 Oct 2026 (06:42); each still needs its own Build. Q18 got Render on 31 Oct 2026 (17:41) and goes straight after Q14, because it touches the same test files. Q11 shipped in 3.29, Q12 in 3.30, Q13 in 3.31 and Q04 in 3.32. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
 
 ## Q14 · Playback: Smooth Frames
 

@@ -9,6 +9,25 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.32 · 31 Oct 2026
+*Every mark explained right where you use it (Q04)*
+<!-- area: songs -->
+
+**Hold a mark for a quick reminder**
+- On the Marks side, hold any mark button for about half a second: a small card pops up with the mark's name, what it's for, its options and an example drawn just as it looks on a song.
+- Letting go never adds the mark. A plain tap still adds it as before.
+- Close, a tap anywhere else or a scroll puts the card away. **Learn more** opens the mark's page.
+
+**Key for this song**
+- The Key button (pinned beside the artist) and a new **?** in the marks sheet now show only the marks this song uses, layer by layer, with the options you picked and how many there are, then your Notes.
+- Tap any of them to learn it. A song with no marks yet says so, with a link to the Marks guide.
+
+**The Marks guide**
+- A page for every mark (all 21, plus Note): what it is, how to sing it, when to mark it, an example, and the mark it's easy to mix up with (tap it to go there).
+- **How to mark a song** walks through the four passes, one layer at a time, and the habits that make marks work, including the faint suggested breaths your timing leaves.
+- Open it from Settings (a new row after Coach video), the **Marks guide** row in the song's ⋯ controls, or the link in "Select words to mark". The full list of marks that Key used to show is now the guide's first page.
+- Back always takes you to where you were. On the Marks side your selected words and the marks sheet are still there.
+
 ## 3.31 · 30 Oct 2026
 *Keyboard shortcuts that only do what you meant (Q13)*
 <!-- area: fixes -->

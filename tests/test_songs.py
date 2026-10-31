@@ -87,7 +87,7 @@ def run(b, t):
     ok(pg.locator('.m.br').first.is_visible() and pg.locator('.m.nt').count() == 0 and pg.locator('.sgnote').count() == 0 and pg.locator('.perform .sgcue').first.is_visible(),
        'Perform shows breaths (Marks while playing: Breaths only), hides Notes and keeps cues')
     pg.click('[data-a=sgMode][data-v=practise]'); pg.wait_for_timeout(300)
-    pg.click('.ckrow [data-a=ckTile][data-v=key]'); pg.wait_for_timeout(300); ok('Marks key' in pg.inner_text('.sheet') and 'phrasing' in pg.inner_text('.sheet').lower(), 'Key (pinned beside the artist since 3.18) explains the marks, by layer'); pg.keyboard.press('Escape'); pg.wait_for_timeout(300)
+    pg.click('.ckrow [data-a=ckTile][data-v=key]'); pg.wait_for_timeout(300); ok('Key for this song' in pg.inner_text('.sheet') and 'phrasing' in pg.inner_text('.sheet').lower(), 'Key (pinned beside the artist since 3.18) lists the song’s marks, by layer (Q04)'); pg.keyboard.press('Escape'); pg.wait_for_timeout(300)
 
     # Marks: marks on linked sections, echo and undo
     pg.click('#barR [data-a=ckPencil]'); pg.wait_for_timeout(250)

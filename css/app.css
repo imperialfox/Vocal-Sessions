@@ -7590,3 +7590,199 @@ body.lmopen #app .sgsec .sgrecp {
 .sgsb b {
   font-size: var(--t-footnote);
 }
+
+/* ===== Q04 Marks guide: its pages, Key for this song, the peek card ===== */
+.gdlead {
+  margin: 0 4px 16px;
+  font-size: var(--t-subhead);
+  line-height: 1.42;
+  color: var(--fg2);
+}
+/* a mark's glyph in a row: a small tile like the marks sheet's buttons */
+.gdg {
+  width: 34px;
+  height: 34px;
+  flex: none;
+  border-radius: 10px;
+  background: var(--accent-wash);
+  color: var(--accent);
+  font-size: var(--t-body);
+  font-weight: 700;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+}
+.gdg svg.i {
+  width: 18px;
+  height: 18px;
+}
+.gdg .m.br svg {
+  width: 9px;
+  height: 16px;
+  vertical-align: 0;
+}
+.gdg u {
+  text-decoration-thickness: 3px;
+  text-underline-offset: 3px;
+}
+.gdg.gdhow svg,
+.gdg.gdbook svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.gdg.gdmut {
+  background: var(--fill);
+  color: var(--fg2);
+}
+.gdrow .lbl small {
+  line-height: 1.35;
+}
+/* a mark's page: the big tile (Settings' .tile.big) in the accent, with the mark's glyph */
+.tile.big.gdbig {
+  background: var(--accent);
+  font-size: var(--t-title1);
+  font-weight: 700;
+  line-height: 1;
+}
+.tile.big.gdbig svg.i {
+  width: 32px;
+  height: 32px;
+}
+.tile.big.gdbig .m.br {
+  color: #fff;
+  margin: 0;
+}
+.tile.big.gdbig .m.br svg {
+  width: 16px;
+  height: 28px;
+  vertical-align: 0;
+  stroke: none;
+  fill: currentColor;
+}
+.tile.big.gdbig u {
+  text-decoration-thickness: 4px;
+  text-underline-offset: 5px;
+}
+.gdopts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 4px;
+}
+.gdchip {
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: var(--accent-wash);
+  color: var(--accent);
+  font-size: var(--t-subhead);
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+}
+/* an example, drawn by the lyrics renderer: lines wrap here rather than scroll */
+.gdex {
+  padding: 14px 16px;
+}
+.gdex .sgl {
+  white-space: normal;
+  font-size: var(--t-title3);
+}
+.gdex .mint {
+  margin: 0 0 6px;
+}
+.gdex .sgnote {
+  margin: 6px 0 0;
+}
+.gdpass {
+  margin: 0;
+  padding-left: 20px;
+}
+.gdpass li + li {
+  margin-top: 10px;
+}
+.gdhabits p {
+  margin: 0;
+}
+.gdhabits p + p {
+  margin-top: 10px;
+}
+.ckgguide {
+  margin-top: 14px;
+}
+/* the marks sheet's "?" (Key for this song) and the capsule's Marks guide link */
+.mkq {
+  font-size: var(--t-body);
+  font-weight: 700;
+  color: var(--accent);
+}
+.mkcapl {
+  pointer-events: auto;
+  margin: -12px -8px -12px 10px;
+  padding: 12px 8px;
+  color: var(--accent);
+  font-size: var(--t-subhead);
+  font-weight: 600;
+}
+.mkb {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+/* the peek card: pops above the marks sheet when a mark button is held */
+.mkpeek {
+  position: fixed;
+  z-index: 36;
+  border-radius: 24px;
+  padding: 14px 14px 12px;
+  background: var(--glass-strong);
+  max-height: calc(100vh - 16px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  transform-origin: 50% 100%;
+}
+.pkhd {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.pkhd .mkt {
+  flex: none;
+}
+.pkt {
+  min-width: 0;
+}
+.pkt b {
+  display: block;
+  font-size: var(--t-body);
+  font-weight: 600;
+}
+.pkt small {
+  display: block;
+  font-size: var(--t-footnote);
+  color: var(--fg2);
+}
+.pkln {
+  margin: 10px 2px 10px;
+  font-size: var(--t-subhead);
+  line-height: 1.4;
+}
+.mkpeek .gdex {
+  background: var(--bg3);
+  border-radius: 14px;
+  padding: 10px 12px;
+}
+.mkpeek .gdex .sgl {
+  font-size: var(--t-body);
+}
+.pkbtns {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 12px;
+}

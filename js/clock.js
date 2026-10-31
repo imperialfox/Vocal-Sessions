@@ -1411,7 +1411,13 @@ function ckGridSheet() {
       (ed
         ? 'Choose up to 3 to pin beside the artist. ' + p.pins.length + ' of 3 pinned.'
         : 'Blue is on. A means it adjusts by itself.') +
-      '</p>',
+      '</p>' +
+      // Q04 the Marks guide: a row under the tiles (not pinnable, so it stays as it is in Edit)
+      '<div class="grp tiled ckgguide"><button class="row gdrow" data-a="gdOpen" data-v="home"><span class="gdg gdbook" aria-hidden="true">' +
+      MKG.BOOK +
+      '</span><span class="lbl">Marks guide</span>' +
+      chev +
+      '</button></div>',
     'Song controls',
     '<button class="txtbtn glass ckgedit" data-a="ckGridEdit">' + (ed ? 'Done' : 'Edit') + '</button>'
   );
