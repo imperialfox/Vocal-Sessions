@@ -63,7 +63,7 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 
 ## Order (1 Nov 2026)
 
-Most critical first: **Q20 → Q21 → Q22 → Q07** (Q19 shipped in 3.39). **Q24** got Render on 1 Nov 2026 (13:15); it changes no app code, so it can be built alongside the app items whenever Ivan says Build. Q22 got Render on 31 Oct 2026 (20:59) and goes after Q21, because it builds on the one-page session and the saved screen. Q19–Q21 got Render on 31 Oct 2026 (19:58), in one instruction; each still needs its own Build. They follow Q17 (shipped in 3.38; Q20 needs Q16's track-while-recording, shipped in 3.37). Q11–Q17 got Render on 30 Oct 2026 (06:42) and have all shipped. What has shipped is in the table's Status column. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
+Most critical first: **Q20 → Q21 → Q22 → Q07** (Q19 shipped in 3.39). Q22 got Render on 31 Oct 2026 (20:59) and goes after Q21, because it builds on the one-page session and the saved screen. Q19–Q21 got Render on 31 Oct 2026 (19:58), in one instruction; each still needs its own Build. They follow Q17 (shipped in 3.38; Q20 needs Q16's track-while-recording, shipped in 3.37). Q11–Q17 got Render on 30 Oct 2026 (06:42) and have all shipped. What has shipped is in the table's Status column. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
 
 ## Q20 · Session: Application Redesign
 
@@ -104,6 +104,7 @@ Most critical first: **Q20 → Q21 → Q22 → Q07** (Q19 shipped in 3.39). **Q2
 ## Q24 · Coach: Video Redesign
 
 **Status:** Approved — awaiting Build. **Approval:** Render given by Ivan on 1 Nov 2026 (13:15) for the scope below. The build handoff is in Ivan's project notes as `q24_coach_video_redesign_handoff.md`, with the plan, the approved wording and the audio timeline beside it.
+**Outside the order:** Q24 changes no app code, so it can be built alongside the app items, before or after any of them, whenever Ivan says Build.
 **Needs:** nothing from the app. Ivan's Mac linked and awake for copying sections and the DaVinci Resolve stage.
 
 - **Goal:** the coach video looks like part of the redesigned session and reads at a glance: exercise, level, progress, place in the whole video, and Your turn / With coach / Listen.
