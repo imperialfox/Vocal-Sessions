@@ -40,6 +40,13 @@ const SAVED = (() => {
     };
   }
   const ok = () => !!info();
+  // "41 min · Sunday · weekly goal reached" (the last part only once the goal is reached). Q22: the session clock's
+  // finish settles into this same line
+  const lineOf = (n) => Math.round(n.ss.mins) + ' min · ' + n.weekday + (n.reached ? ' · weekly goal reached' : '');
+  const line = () => {
+    const n = info();
+    return n ? lineOf(n) : '';
+  };
 
   // the arch, drawn as Today draws it: the week so far a little lighter, today's minutes on top (the part that draws in)
   function arch(n) {
@@ -88,10 +95,7 @@ const SAVED = (() => {
       '<h1 class="svd-t" data-sv="title">Session saved</h1>' +
       (n.goal ? arch(n) : '') +
       '<p class="svd-line" data-sv="line">' +
-      Math.round(n.ss.mins) +
-      ' min · ' +
-      n.weekday +
-      (n.reached ? ' · weekly goal reached' : '') +
+      lineOf(n) +
       '</p>' +
       '<div class="week" data-sv="week" role="list" aria-label="This week">' +
       weekSpans(n.w, n.day) +
@@ -309,5 +313,5 @@ const SAVED = (() => {
 
   Object.assign(SG_ACT, { savedDone: () => done() });
 
-  return { page, enter, ok, info, done };
+  return { page, enter, ok, info, done, line };
 })();

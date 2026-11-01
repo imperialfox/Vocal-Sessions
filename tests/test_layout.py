@@ -112,7 +112,7 @@ def run(b, t):
             pg.evaluate("U.view=null;U.tab='today';render()"); pg.click('[data-a=openCal]'); pg.wait_for_timeout(600); check('calendar')
             pg.keyboard.press('Escape'); pg.wait_for_timeout(300)
             pg.click('[data-a=start]'); pg.wait_for_timeout(300); check('foundation')
-            pg.click('#timer'); pg.wait_for_timeout(700); check('clock'); pg.click('.cbtn.hide'); pg.wait_for_timeout(400)
+            pg.click('#timer'); pg.wait_for_timeout(700); check('clock'); pg.click('.sck .circ[data-a=clockClose]'); pg.wait_for_timeout(400)
             pg.evaluate("U.view='rot';render()"); pg.wait_for_timeout(250); check('rotation')
             pg.evaluate("U.view='app';render()"); pg.wait_for_timeout(250); check('application')
             pg.evaluate("U.view='found';render()"); pg.click('[data-a=exit]'); pg.wait_for_timeout(200)

@@ -378,18 +378,22 @@ const OP = (() => {
         return;
       }
       // the end of Foundation, stamped exactly as the old confirm sheet's Log foundation did
+      const was = SCLOCK.stamps();
       X.fEnd = Date.now();
       X.fE = elapsedSec();
       saveDraft();
       step('rot');
+      SCLOCK.logged(was, 'Foundation logged'); // Q22: an Undo toast for about 5 s
     } else if (U.view === 'rot') {
       const ks = Object.keys(X.rot);
       if (ks.some((i) => !X.rot[i])) return toast('Set a level for each exercise you picked');
       // picked or not (Skip rotation), the end of Rotation is stamped as before
+      const was = SCLOCK.stamps();
       X.rEnd = Date.now();
       X.rE = elapsedSec();
       saveDraft();
       step('app');
+      SCLOCK.logged(was, ks.length ? 'Rotation logged' : 'Rotation skipped');
     } else if (U.view === 'app') {
       if (rec) return toast('Stop recording first');
       stopPlayback();
@@ -697,6 +701,13 @@ const OP = (() => {
     closeMenu,
     after,
     needText,
+    label: () => state().lab, // Q22: the session clock's main button says the same, and looks the same
+    look: () => {
+      const st = state();
+      return st.wait ? 'opwait' : st.skip ? 'opskip' : 'tinted';
+    },
+    onPage,
+    stepTo: (to) => step(to), // Q22: Undo on Log goes back a step
     state: () => ({ pull: PULL.on, off: PULL.off, menu: !!menu }), // for the tests
   };
 })();

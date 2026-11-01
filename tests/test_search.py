@@ -3,7 +3,7 @@ row at the top of the sidebar), and the search page: recent searches and pinned 
 Lyrics, Exercises, Sessions and Takes, grouped, with "Show all", updated in place as you type, and every result
 opening the right place (and Back returning to the results)."""
 import os, datetime as dt
-from harness import with_song_practice, iso, now
+from harness import with_song_practice, iso, now, until
 from test_songs import LYR, ADD
 from test_batch12 import wav_take
 
@@ -147,7 +147,8 @@ def groups(b, t):
     n = rows['lyrics']
     ok(n > 4, f'“the” finds several lyric lines ({n})')
     ok(pg.locator('#flist [data-fg=lyrics] .frow').count() == 3 and f'Show all {n}' in pg.inner_text('#flist [data-fg=lyrics] .fmore'), 'a group shows its top three, then “Show all n”')
-    pg.click('#flist [data-fg=lyrics] .fmore'); pg.wait_for_timeout(150)
+    pg.click('#flist [data-fg=lyrics] .fmore')
+    until(pg, "!document.querySelector('#flist [data-fg=lyrics] .fmore')")  # Q22: waits for it, not a fixed 150 ms
     ok(pg.locator('#flist [data-fg=lyrics] .frow').count() == n and pg.locator('#flist [data-fg=lyrics] .fmore').count() == 0 and pg.evaluate("U.tab") == 'find',
        'Show all expands it in place')
     t.shot(pg, 'results')

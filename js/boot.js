@@ -60,6 +60,7 @@ bootStep('draft', () => {
 bootStep('layout', layout);
 bootStep('launch', LAUNCH.start); // before the first draw, so the floating window waits for the launch ripple
 const BOOT_DREW = bootStep('first draw', render);
+bootStep('session clock', SCLOCK.boot); // Q22: a session still running carries on, with "Session picked up"
 if (!BOOT_DREW) bootFailed();
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost'))
   navigator.serviceWorker.register('sw.js').catch(() => {});

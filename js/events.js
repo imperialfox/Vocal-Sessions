@@ -80,7 +80,7 @@ $('importIn').addEventListener('change', (e) => {
   if (f) readBackupFile(f);
 });
 document.addEventListener('click', (e) => {
-  if (ZOOM.swallow(e)) {
+  if (ZOOM.swallow(e) || SCLOCK.swallow(e)) {
     e.preventDefault();
     return;
   }
@@ -425,25 +425,13 @@ document.addEventListener('click', (e) => {
       X.howNote = '';
       finishSession();
       break;
+    // Q22 the session clock (sclock.js): out of the timer pill, and back into it
     case 'clock':
-      if (!X || !X.start) break;
-      U.clock = true;
-      rerender();
+      SCLOCK.open();
       break;
-    case 'clockClose': {
-      const c = document.querySelector('.clock');
-      if (c) {
-        c.classList.remove('still');
-        c.classList.add('out');
-        const sc = document.querySelector('.clockscrim');
-        if (sc) sc.style.opacity = 0;
-      }
-      setTimeout(() => {
-        U.clock = false;
-        rerender();
-      }, 260);
+    case 'clockClose':
+      SCLOCK.close();
       break;
-    }
     case 'pauseToggle':
       if (!X || !X.start) break;
       togglePause();
@@ -1001,8 +989,5 @@ document.addEventListener('input', (e) => {
 document.addEventListener('keydown', (e) => {
   if (e.key !== 'Escape') return;
   if (U.sheet) closeSheet();
-  else if (U.clock) {
-    U.clock = false;
-    rerender();
-  }
+  else if (U.clock) SCLOCK.close();
 });

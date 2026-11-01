@@ -361,6 +361,68 @@ const sw = (inner, sheet, k) =>
   inner +
   '</div></div>';
 
+/* ===== Keeping the screen on (Q22) =====
+   One screen wake lock shared by everything that wants the screen to stay on: Song Clock's Stay awake while timing
+   ('ck', clock.js) and a running session ('sess', sclock.js). The lock is held while anyone wants it and released when
+   nobody does. iOS releases it when the app is hidden; the next set() asks again. It fails quietly: no Wake Lock (an
+   older iPhone, or a Home Screen app that refuses it) just means the screen may sleep. cb(granted) runs once, when the
+   request settles. */
+const AWAKE = (() => {
+  const want = {},
+    cbs = [];
+  let lock = null,
+    busy = false;
+  const any = () => Object.keys(want).some((k) => want[k]);
+  function settle(ok) {
+    cbs.splice(0).forEach((f) => {
+      try {
+        f(ok);
+      } catch (e) {}
+    });
+  }
+  function sync() {
+    try {
+      if (any() && !lock && !busy) {
+        if (!navigator.wakeLock || !navigator.wakeLock.request) return settle(false);
+        busy = true;
+        navigator.wakeLock
+          .request('screen')
+          .then((l) => {
+            busy = false;
+            if (!any()) {
+              settle(false);
+              return l.release().catch(() => {});
+            }
+            lock = l;
+            l.addEventListener('release', () => {
+              if (lock === l) lock = null;
+            });
+            settle(true);
+          })
+          .catch(() => {
+            busy = false;
+            settle(false);
+          });
+      } else if (!any() && lock) {
+        const l = lock;
+        lock = null;
+        settle(false);
+        l.release().catch(() => {});
+      } else if (any() && lock) settle(true);
+      else if (!any()) settle(false);
+    } catch (e) {
+      busy = false;
+      settle(false);
+    }
+  }
+  function set(who, on, cb) {
+    want[who] = !!on;
+    if (cb && on) cbs.push(cb);
+    sync();
+  }
+  return { set, held: () => !!lock, wants: (w) => !!want[w] };
+})();
+
 /* ===== UI state ===== */
 const freshU = () => ({
   logOpen: [],

@@ -1786,6 +1786,37 @@ textarea.field {
   background: var(--accent);
   border-radius: inherit;
 }
+/* Q22: the session's window: the clock's ring, small, beside the step and its time */
+.fw .fwsess {
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  padding-left: 7px;
+}
+.fw .fwring {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+}
+.fw .fwring svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.fw .fwtx {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.fw .fwst {
+  color: var(--sc);
+  font-weight: 600;
+}
+.fw.paused .fwring {
+  opacity: 0.5;
+}
 @media (hover: hover) and (pointer: fine) {
   .fw .fwopen:hover {
     background: var(--fill);
@@ -2015,120 +2046,116 @@ button.pill {
 .cta.wait {
   opacity: 0.5;
 }
+/* Q22 the session clock (sclock.js): one ring in three slices, in the step colours, out of the timer pill */
+:root {
+  --sck-track: var(--fill);
+}
 .clockscrim {
   position: fixed;
   inset: 0;
   z-index: 44;
   overscroll-behavior: contain;
   background: rgba(0, 0, 0, 0.12);
-  animation: fade 0.2s;
-  transition: opacity 0.25s;
 }
 .clock {
   position: fixed;
   z-index: 45;
   overscroll-behavior: contain;
-  top: calc(6px + env(safe-area-inset-top, 0px));
+  top: calc(6px + var(--sat, 0px));
   right: max(12px, env(safe-area-inset-right, 0px));
-  width: min(360px, calc(100vw - 24px));
+  width: min(380px, calc(100vw - 24px));
+  max-height: calc(100dvh - 18px - var(--sat, 0px) - var(--sab, 0px));
+  overflow-y: auto;
   border-radius: 34px;
-  padding: 16px 18px 18px;
   background: var(--glass-strong);
-  transform-origin: calc(100% - 50px) 28px;
-  animation: clockIn 0.55s cubic-bezier(0.28, 1.3, 0.45, 1);
-}
-.clock.out {
-  animation: clockOut 0.28s cubic-bezier(0.4, 0, 0.6, 1) forwards;
-}
-@keyframes clockIn {
-  from {
-    transform: scale(0.32, 0.14);
-    opacity: 0.2;
-    border-radius: 999px;
-  }
-}
-@keyframes clockOut {
-  to {
-    transform: scale(0.32, 0.14);
-    opacity: 0;
-    border-radius: 999px;
-  }
-}
-.clock .ctop {
-  display: flex;
-  justify-content: space-between;
-  font-size: var(--t-footnote);
-  color: var(--fg2);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-.clock .big {
-  font-size: var(--t-num-l);
-  font-weight: 300;
-  letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
-  line-height: 1.05;
-  margin: 6px 0 2px;
-  text-align: center;
+  will-change: transform;
 }
-.clock .big.paused {
-  color: var(--pause);
+.sckin {
+  padding: 10px 14px 16px;
 }
-.clock .csub {
-  text-align: center;
-  font-size: var(--t-subhead);
-  color: var(--fg2);
-  min-height: 18px;
-}
-.cbtns {
+.sckhd {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  margin: 16px 4px 14px;
 }
-.cbtn {
-  width: 76px;
-  height: 76px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
+.sckph {
+  width: 44px;
+}
+.scktl {
   font-size: var(--t-subhead);
-  font-weight: 500;
-  box-shadow:
-    0 0 0 3px var(--bg),
-    0 0 0 4.5px currentColor;
-  transition: transform 0.5s cubic-bezier(0.3, 1.7, 0.45, 1);
+  font-weight: 600;
 }
-.cbtn:active {
-  transform: scale(0.92);
-  transition-duration: 0.12s;
+.sckring {
+  position: relative;
+  width: 196px;
+  height: 196px;
+  margin: 2px auto 0;
 }
-.cbtn.hide {
-  background: rgba(118, 118, 128, 0.24);
+#sckRing svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.sck .sf {
+  stroke-linecap: butt;
+  transition: stroke-dasharray var(--dur-gentle) var(--ease-gentle);
+}
+.scktk {
+  stroke: var(--fg2);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+/* the big number: tap to swap the total and the step's time. Digits never animate */
+.sckc {
+  position: absolute;
+  inset: 38px;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  text-align: center;
   color: var(--fg);
 }
-.cbtn.pause {
-  background: color-mix(in srgb, var(--pause) 20%, transparent);
-  color: var(--pause);
+.sckbig {
+  font-size: var(--t-title1);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
 }
-.cbtn.resume {
-  background: color-mix(in srgb, var(--good) 20%, transparent);
-  color: var(--good);
+.sckbig.long {
+  font-size: var(--t-title2);
 }
-.splits {
+.sckc small {
+  font-size: var(--t-footnote);
+  color: var(--fg2);
+  font-weight: 500;
+}
+.scksub {
+  text-align: center;
+  font-size: var(--t-footnote);
+  color: var(--fg2);
+  margin: 4px 0 10px;
+  min-height: 18px;
+}
+.sckrows {
   border-radius: 18px;
   background: var(--surface);
   overflow: hidden;
 }
-.splits div {
+.sckrow {
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  padding: 11px 14px;
+  min-height: 46px;
+  padding: 0 14px;
   font-size: var(--t-subhead);
-  font-variant-numeric: tabular-nums;
+  color: var(--sc);
   position: relative;
 }
-.splits div + div::before {
+.sckrows > * + *::before {
   content: '';
   position: absolute;
   top: 0;
@@ -2136,12 +2163,116 @@ button.pill {
   right: 0;
   border-top: 0.5px solid var(--sep);
 }
-.splits .cur {
-  color: var(--accent);
+.sckrow.cur {
   font-weight: 600;
 }
-.splits .todo {
+.sckrow.todo {
   color: var(--fg3);
+}
+.sckt {
+  color: inherit;
+  font-variant-numeric: tabular-nums;
+}
+.sckt.fixable {
+  min-height: 44px;
+  padding: 0 2px;
+  text-decoration: underline dotted;
+  text-underline-offset: 4px;
+}
+.sckt.fixable.on {
+  text-decoration-style: solid;
+}
+/* fixing a finished step's time: hold and slide */
+.sckfix {
+  position: relative;
+  padding: 10px 14px 12px;
+  background: var(--bg3);
+}
+.sckfh,
+.sckff {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: var(--t-footnote);
+  color: var(--fg2);
+}
+.sckfh b {
+  color: var(--sc);
+  font-size: var(--t-subhead);
+}
+.sckslider {
+  --p: 0;
+  position: relative;
+  height: 44px;
+  touch-action: none;
+  cursor: pointer;
+  outline: none;
+}
+.sckslider i {
+  position: absolute;
+  top: 50%;
+  border-radius: 999px;
+  pointer-events: none;
+}
+.sckrail {
+  left: 14px;
+  right: 14px;
+  height: 6px;
+  margin-top: -3px;
+  background: var(--fill);
+}
+.sckfill {
+  left: 14px;
+  height: 6px;
+  margin-top: -3px;
+  width: calc((100% - 28px) * var(--p));
+  background: var(--sc);
+}
+.sckknob {
+  left: calc(14px + (100% - 28px) * var(--p));
+  width: 28px;
+  height: 28px;
+  margin: -14px 0 0 -14px;
+  background: #fff;
+  box-shadow:
+    0 0.5px 4px rgba(0, 0, 0, 0.12),
+    0 6px 13px rgba(0, 0, 0, 0.12);
+}
+.sckslider:focus-visible .sckknob {
+  box-shadow: 0 0 0 3px var(--sc);
+}
+.sckfs {
+  color: var(--accent);
+  font-weight: 600;
+  font-size: var(--t-subhead);
+  min-height: 44px;
+  padding: 0 2px;
+}
+.cta.sckmain {
+  margin-top: 14px;
+}
+/* paused: the ring breathes, the numbers go grey */
+.sck.paused .sckbig,
+.sck.paused .sckc small,
+.sck.paused .sckt {
+  color: var(--fg2);
+}
+.sck.paused .scksl {
+  animation: sckBreathe 2.4s ease-in-out infinite;
+}
+@keyframes sckBreathe {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 0.75;
+  }
+}
+html.motion-reduced .sck.paused .scksl,
+html.motion-off .sck.paused .scksl {
+  animation: none;
+  opacity: 0.5;
 }
 /* 3.3 pull to refresh */
 #ptr {
@@ -6673,20 +6804,11 @@ body.ckpaused #app {
     opacity: 0;
   }
 }
-@keyframes rmOut {
-  to {
-    opacity: 0;
-  }
-}
 html.motion-reduced .lgdraw,
 html.motion-reduced .sheet,
 html.motion-reduced .notebox,
-html.motion-reduced .clock,
 html.motion-reduced .ctxmenu {
   animation-name: rmIn;
-}
-html.motion-reduced .clock.out {
-  animation-name: rmOut;
 }
 html.motion-reduced .knob.squish {
   animation: none;

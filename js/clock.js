@@ -34,9 +34,7 @@ const CK = {
   sig: '', // what the play-along view was built from
   raf: 0,
   fake: null, // tests: a clock that only moves when told (ms)
-  wl: null, // the screen wake lock
-  wlWant: false, // the wake lock is wanted now
-  wlBusy: false,
+  wlWant: false, // the wake lock is wanted now (held through AWAKE, Q22)
   pk: null, // the length picker on screen
   lastTxt: '',
   mute: false, // Q02: the backing audio muted (this time only; it starts on)
@@ -1183,7 +1181,8 @@ function ckLoop() {
   CK.raf = requestAnimationFrame(f);
 }
 
-/* ===== Song Clock: keeping the screen awake while timing (Stay awake) ===== */
+/* ===== Song Clock: keeping the screen awake while timing (Stay awake) =====
+   Q22: through the shared wake lock (AWAKE, helpers.js), which a running session uses too */
 function ckWake() {
   const want =
     ckPrefs().stayAwake &&
@@ -1191,30 +1190,7 @@ function ckWake() {
     CK.pc.run &&
     ckHere();
   CK.wlWant = !!want;
-  try {
-    if (want && !CK.wl && !CK.wlBusy && navigator.wakeLock) {
-      CK.wlBusy = true;
-      navigator.wakeLock
-        .request('screen')
-        .then((l) => {
-          CK.wlBusy = false;
-          if (!CK.wlWant) return l.release().catch(() => {});
-          CK.wl = l;
-          l.addEventListener('release', () => {
-            if (CK.wl === l) CK.wl = null;
-          });
-        })
-        .catch(() => {
-          CK.wlBusy = false;
-        });
-    } else if (!want && CK.wl) {
-      const l = CK.wl;
-      CK.wl = null;
-      l.release().catch(() => {});
-    }
-  } catch (e) {
-    CK.wlBusy = false;
-  }
+  AWAKE.set('ck', CK.wlWant);
 }
 document.addEventListener('visibilitychange', () => ckWake());
 

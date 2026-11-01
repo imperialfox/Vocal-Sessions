@@ -128,16 +128,50 @@ const FW_KINDS = [
     active: () => !!(X && X.start),
     // 3.20: song practice's own screen includes the song's page, where its takes are recorded
     own: () => isFlow(U.view) || !!(isSong() && songShown() && songShown().id === X.song),
+    // Q22: the session clock's ring, small, beside the step and its time ("Rotation · 4:16"), in the step's colour
     info() {
-      const v = fwSessView();
+      const v = fwSessView(),
+        m = SCLOCK.model(),
+        s = m.steps[m.cur],
+        t = clk(m.song ? m.e : s.secs);
       return {
-        k: isSong() ? 'Song practice' : 'Focused session · ' + VIEWS[v][0],
-        t: (X.paused ? 'Paused · ' : '') + clk(elapsedSec()),
+        k: isSong() ? 'Song practice' : 'Focused session',
+        t: X.paused ? 'Paused · ' + t : m.song ? t : s.name + ' · ' + t,
+        step: X.paused || m.song ? '' : s.name,
+        col: s.col,
+        ring: SCLOCK.mini(),
         p: null,
         on: !X.paused,
         open: 'Back to ' + (isSong() ? 'song practice' : VIEWS[v][0]),
         label: (isSong() ? 'Song practice' : 'Session') + (X.paused ? ' paused' : ' running'),
       };
+    },
+    draw(el, i) {
+      if (FW.build !== 'session') {
+        FW.build = 'session';
+        el.innerHTML =
+          '<button class="fwopen fwsess" data-a="fwOpen"><span class="fwring" aria-hidden="true"></span><span class="fwtx">' +
+          '<span class="fwk"></span><span class="fwt"></span></span></button><button class="fwbtn" data-a="fwToggle"></button>';
+        FW.ring = '';
+      }
+      el.classList.toggle('paused', !i.on);
+      el.classList.remove('hasx');
+      el.querySelector('.fwopen').setAttribute('aria-label', i.open + '. ' + i.k + ', ' + i.t);
+      el.querySelector('.fwk').textContent = i.k;
+      const t = el.querySelector('.fwt');
+      t.style.setProperty('--sc', 'var(' + i.col + ')');
+      if (i.step) {
+        if (!t.firstElementChild || t.firstElementChild.textContent !== i.step) t.innerHTML = '<b class="fwst"></b><span></span>';
+        t.firstElementChild.textContent = i.step;
+        t.lastElementChild.textContent = i.t.slice(i.step.length);
+      } else t.textContent = i.t;
+      if (FW.ring !== i.ring) el.querySelector('.fwring').innerHTML = FW.ring = i.ring;
+      const b = el.querySelector('.fwbtn'),
+        lab = i.on ? 'Pause' : 'Play';
+      if (b.getAttribute('aria-label') !== lab) {
+        b.setAttribute('aria-label', lab);
+        b.innerHTML = i.on ? ICON.pause : ICON.play;
+      }
     },
     toggle: () => togglePause(),
     open() {

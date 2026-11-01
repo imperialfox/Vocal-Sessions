@@ -2,9 +2,9 @@
 
 A mobile-first companion for structured vocal practice, styled like a native iOS app. It's a single HTML file with no install, no backend and no account. It's designed to live on your iPhone Home Screen.
 
-![Version 3.41](https://img.shields.io/badge/version-3.41-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
+![Version 3.42](https://img.shields.io/badge/version-3.42-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
 
-**Current version: 3.41 · 1 Nov 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
+**Current version: 3.42 · 1 Nov 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
 
 ---
 
@@ -142,7 +142,10 @@ And **Songs**, for learning a song: paste the lyrics, and they're split into lab
 - **Rotation:** the suggested exercise on top, then **More exercises**, sorted by Longest ago, Most recent or A–Z, each saying when you last did it. Pick as many as you like. **Just Foundation today? Finish here** ends the session from an empty Rotation.
 - **Coach video in a session:** it sits in the floating window during Foundation and Rotation, cued to the step's exercise; Application shows a **Coach ▸** pill instead. Drag either to any corner. ✕ tucks the video into the pill.
 - **Session clock:** a live timer in the top bar
-  - Tap it for a larger clock with Pause and a time for each step. Paused time isn't counted.
+  - Tap it for the clock (3.42): one ring in three slices (Foundation, Rotation, Application) sized by your usual time for each step, with a tick where you usually move on. Logged steps fill their slice; going over changes nothing. Tap the big number to show the step's time first. Swipe it sideways, or ✕, to close it.
+  - Pause from the clock or the floating window (which shows the same ring, small). Paused time isn't counted. The clock's main button logs the step or finishes, like the pinned button.
+  - Undo for a few seconds after each Log; tap a finished step's time to fix it (hold and slide).
+  - The screen stays on while a session runs. Leave for more than 10 minutes and it asks whether to take the time out. Close the app and the session carries on when you come back.
   - Song practice's clock starts when you record your first take; until then the timer says **Not started**.
   - Sessions over 90 minutes ask how long you actually practised.
 - **Floating window:** leave a session, or switch away while something plays, and a small window stays on every other screen.

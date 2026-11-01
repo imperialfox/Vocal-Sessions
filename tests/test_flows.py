@@ -49,7 +49,7 @@ def run(b, t):
     t.shot(pg, 'clock-paused')
     pg.click('[data-a=pauseToggle]'); pg.wait_for_timeout(1100); ok(pg.evaluate("elapsedSec()") > t2, 'resume counts again')
     ok('❚❚' not in pg.inner_text('#timer'), 'the timer pill shows running time')
-    pg.click('.cbtn.hide'); pg.wait_for_timeout(400); ok(pg.locator('.clock').count() == 0, 'Hide closes the clock')
+    pg.click('.sck .circ[data-a=clockClose]'); ok(until(pg, "!document.querySelector('.clock')"), '✕ closes the clock (Q22)')
 
     pg.click('[data-a=cta]'); pg.wait_for_timeout(300)
     ok(pg.evaluate("U.view") == 'rot' and '3 done · 1 skipped' in pg.inner_text('#app .osec.folded'), 'Foundation folds to a line saying 3 done · 1 skipped')

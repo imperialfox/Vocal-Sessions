@@ -396,6 +396,7 @@ function renderSheet() {
   if (s && /^sg[A-Z]/.test(s)) h = songSheet(s);
   else if (s === 'ckGrid') h = CLOCK.gridSheet();
   else if (s === 'recOver') h = recOverSheet(); // Q16: recording while the track plays
+  else if (s === 'away') h = SCLOCK.awaySheet(); // Q22: "You were away N min"
   else if (s && /^trk/.test(s)) h = TRACK.sheet(s);
   else if (s === 'how' && X) {
     h =
@@ -698,9 +699,10 @@ function renderSheet() {
     U.sheet = null;
     U.sd = {};
   }
-  if (!h && U.clock && X && X.start && isFlow(U.view)) h = clockHTML();
+  // Q22 the session clock (sclock.js): over a running session's step, or the Session saved screen it finished onto
+  if (!h && U.clock && SCLOCK.can()) h = SCLOCK.html();
   const key = h ? (U.sheet ? U.sheet + '|' + (k || '') : 'clock') : '';
-  const prev = $('layer').querySelector('.sheet'),
+  const prev = $('layer').querySelector('.sheet, .clock'),
     st = prev ? prev.scrollTop : 0,
     swap = DET.inPlace(lastLayerKey, key), // Preparing backup becomes Backup ready in the same sheet
     oldH = swap && prev ? prev.getBoundingClientRect().height : 0,
@@ -711,7 +713,7 @@ function renderSheet() {
     $('layer')
       .querySelectorAll('.scrim,.sheet,.clock,.clockscrim')
       .forEach((x) => x.classList.add('still'));
-    const ns = $('layer').querySelector('.sheet');
+    const ns = $('layer').querySelector('.sheet, .clock');
     if (ns) ns.scrollTop = st;
     if (swap) DET.sheetSwap(oldH);
   }
@@ -730,60 +732,6 @@ function renderSheet() {
       const i = $('songIn');
       if (i) i.focus();
     }, 250);
-}
-function clockHTML() {
-  const e = elapsedSec(),
-    song = isSong(),
-    v = U.view,
-    fE = X.fE || 0,
-    rE = X.rE || 0;
-  const steps = song
-    ? [['Song practice', e, 'cur', 0]]
-    : [
-        ['Foundation', v === 'found' ? e : fE, v === 'found' ? 'cur' : '', 0],
-        [
-          'Rotation',
-          v === 'rot' ? e - fE : v === 'app' ? rE - fE : null,
-          v === 'rot' ? 'cur' : v === 'app' ? '' : 'todo',
-          fE,
-        ],
-        ['Application', v === 'app' ? e - rE : null, v === 'app' ? 'cur' : 'todo', rE],
-      ];
-  return (
-    '<div class="clockscrim" data-a="clockClose"></div><div class="clock glass" role="dialog" aria-label="Session clock"><div class="ctop"><span>' +
-    (song ? 'Song practice' : 'Session') +
-    '</span><span>' +
-    (VIEWS[v][1] ? 'Step ' + VIEWS[v][1] : '') +
-    '</span></div>' +
-    '<div class="big' +
-    (X.paused ? ' paused' : '') +
-    '" id="bigClock">' +
-    clk(e) +
-    '</div><div class="csub">' +
-    (X.paused ? 'Paused. Paused time isn’t counted.' : 'Started at ' + timeOf(X.start)) +
-    '</div>' +
-    '<div class="cbtns"><button class="cbtn hide" data-a="clockClose">Hide</button><button class="cbtn ' +
-    (X.paused ? 'resume' : 'pause') +
-    '" data-a="pauseToggle">' +
-    (X.paused ? 'Resume' : 'Pause') +
-    '</button></div>' +
-    '<div class="splits">' +
-    steps
-      .map(
-        (x) =>
-          '<div class="' +
-          x[2] +
-          '"><span>' +
-          x[0] +
-          '</span><span' +
-          (x[2] === 'cur' ? ' id="curSplit" data-base="' + x[3] + '"' : '') +
-          '>' +
-          (x[1] === null ? '–' : clk(x[1])) +
-          '</span></div>'
-      )
-      .join('') +
-    '</div></div>'
-  );
 }
 function calendarSheet() {
   const m = U.calMonth || new Date(new Date().getFullYear(), new Date().getMonth(), 1);
@@ -1252,6 +1200,7 @@ function render(keepScroll) {
   MKG.after(); // Q04 the peek card goes with its marks sheet
   OP.after(); // Q19 the one-page session: the coach video cued, the pull put back
   APPL.after(); // Q20 Application: the page dims around its card while it records
+  SCLOCK.after(); // Q22: asks about time away once nothing's in the way; the screen kept on while a session runs
   fwUpdate();
   DET.dockSwap(dk);
   DET.play();

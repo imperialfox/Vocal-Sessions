@@ -261,10 +261,7 @@ setInterval(() => {
   if (!X || !isFlow(U.view)) return;
   const t = $('timer');
   if (t) t.textContent = pillText();
-  const bc = $('bigClock');
-  if (bc) bc.textContent = clk(elapsedSec());
-  const cs = $('curSplit');
-  if (cs) cs.textContent = clk(elapsedSec() - (+cs.dataset.base || 0));
+  SCLOCK.tick(); // Q22: the session clock's ring and numbers, in place
 }, 1000);
 /* 3.23 (Q08) the tab bar's collapse, as in Music. Scrolling down shrinks it to a pill at the left edge, scrolling up
    (or tapping the pill) brings it back. Only scrolling you do counts:

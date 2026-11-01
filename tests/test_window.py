@@ -67,8 +67,9 @@ def session(b, t):
     pg.evaluate("scrollTo(0,320)"); pg.wait_for_timeout(250)
     pg.evaluate(LEAVE); pg.wait_for_timeout(300)
     ok(pg.evaluate("U.tab") == 'today' and pg.evaluate(SHOWN), 'leaving the session shows the window on Today')
-    ok(pg.evaluate("FW.shown") == 'session' and pg.evaluate(TEXT).startswith('Focused session · Rotation |'),
-       'it says what’s running: Focused session · Rotation')
+    ok(pg.evaluate("FW.shown") == 'session' and pg.evaluate(TEXT).startswith('Focused session | Rotation · '),
+       'it says what’s running: Focused session, Rotation · m:ss (Q22: the step’s own time, beside its ring)')
+    ok(pg.locator('#fw .fwring svg .sl').count() == 3, 'Q22: the clock’s ring, small, in three slices')
     t1 = pg.evaluate(TEXT); pg.wait_for_timeout(2100)
     ok(pg.evaluate(TEXT) != t1, 'its time ticks')
     ok(pg.evaluate(CLEAR) == [], 'it sits clear of the tab bar and the top bar')

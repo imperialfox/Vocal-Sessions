@@ -9,6 +9,37 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.42 · 1 Nov 2026
+*Session clock: a ring you can read at a glance (Q22)*
+<!-- area: practice -->
+
+The timer pill opens a ring in the one-page session's colours, with small fixes that take the stress out of timing.
+
+**The ring**
+- One ring, three slices: Foundation, Rotation and Application, each as long as your usual time for that step (from your last 10 sessions; set times until there are 3).
+- The step you're on fills its slice as time passes, with a small tick and "Usual move-on ~N min" where you usually move on.
+- No pressure: a logged step fills its whole slice even if it was short, and going past your usual time changes nothing. Steps you haven't reached show your usual time ("~14 min").
+- Tap the big number to show the step's time first, with the total below. It's remembered on this phone.
+- Song practice has one slice all the way round.
+
+**Pause and finish**
+- Paused, the ring slowly breathes, the numbers go grey and the main button says Resume. With Reduce Motion it just dims.
+- The clock's main button does what the pinned button does. Finish from the clock and the ring closes into the Session saved line ("41 min · Sunday · weekly goal reached"), with Done below.
+
+<!-- area: look -->
+**Open and close**
+- The clock grows out of the timer pill and shrinks back into it.
+- Swipe it sideways anywhere, either way, to close it: it follows your finger and closes past about a fifth of its width or on a flick, otherwise it springs back. ✕ still closes it, and the time slider keeps its own gesture.
+- The floating window shows the same ring, small, beside "Rotation · 4:16", with its pause button.
+- Steady digits: every clock number keeps its width as it ticks.
+
+**Less to worry about**
+- The screen stays on while a session runs ("Screen stays on" at the start and on Resume), and can sleep when paused or finished. If the phone won't allow it, nothing else changes.
+- After more than 10 minutes away, it asks "You were away N min": Take it out, or Keep it, I was singing. It never decides for you.
+- Undo for about 5 seconds after each Log.
+- Tap a finished step's time to fix it: hold and slide, see what was logged, then Save time. Progress's split uses the fixed time.
+- Close the app mid-session and it carries on when you come back ("Session picked up").
+
 ## 3.41 · 1 Nov 2026
 *Session saved: a calm finish that becomes Today (Q21)*
 <!-- area: practice -->

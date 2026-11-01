@@ -9,7 +9,7 @@ into view), 108 px tiles with a thumb-reach loop button, the edge jog wheels gro
 Song card, the teleprompter's line change, and the loop wrapping close to its end at 0.5×, 0.75× and 1×.
 The audio is synthetic: tones with gaps, written by the test as WAV files. Nothing copyrighted is ever used."""
 import json
-from harness import ready
+from harness import ready, until
 from test_track import F, loaded, add_row, x_of, strip_y, drag, loop, INK
 
 LAUNCH_ARGS = ['--autoplay-policy=no-user-gesture-required']
@@ -210,7 +210,8 @@ def promotion(b, t):
     ok(ch[0]['why'].startswith('Must come before') and ch[1]['why'] and ch[3]['why'] == '' and ch[3]['set'] == 46,
        f'40 s can’t start Verse 1 or Chorus 1; Chorus 2 is open, set at 0:46 now ({[(c["why"], c["set"]) for c in ch]})')
     pg.evaluate("TRACK.jump('m2')")
-    hold(pg, '#trkMk .trkchip[data-mk=m2] .trkchb'); pg.click('.sheet [data-a=trkMkSec]'); pg.wait_for_timeout(250)
+    hold(pg, '#trkMk .trkchip[data-mk=m2] .trkchb'); pg.click('.sheet [data-a=trkMkSec]')
+    until(pg, "document.querySelectorAll('.sheet [data-a=trkMkSecPick]').length>1")  # Q22: waits for the picker, not a fixed 250 ms
     off = pg.evaluate("[...document.querySelectorAll('.sheet [data-a=trkMkSecPick][aria-disabled=true]')].map(r=>r.dataset.v)")
     ok(off == ['0', '1'], f'the picker greys the places that would break the order ({off})')
     pg.click('.sheet [data-a=trkMkSecPick][data-v="0"]', force=True); pg.wait_for_timeout(200)

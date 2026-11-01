@@ -24,6 +24,7 @@ function newSession() {
   U.fEdit = null;
   U.cvWin = null;
   saveDraft();
+  SCLOCK.started(); // Q22: the screen stays on, and the clock notes the app is on screen
 }
 function newSong() {
   const last = D.songSessions.length ? D.songSessions[D.songSessions.length - 1].songId : null;
@@ -335,6 +336,7 @@ function togglePause() {
     X.pausedAt = Date.now();
   }
   saveDraft();
+  SCLOCK.paused(); // Q22: the screen may sleep while paused, and stays on again (with its chip) on Resume
 }
 
 /* ===== Recording ===== */
@@ -422,6 +424,7 @@ async function startRec(target, over) {
     X.paused = false;
     X.pausedTotal = 0;
     saveDraft();
+    SCLOCK.started(true); // Q22: the screen stays on (no chip over the take that's starting)
   }
   mr.ondataavailable = (e) => {
     if (e.data && e.data.size) rec && rec.chunks.push(e.data);
