@@ -9,6 +9,24 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.34 · 31 Oct 2026
+*Smoother play-along and waveform on older iPhones (Q14)*
+<!-- area: songs -->
+
+Nothing looks different: the app just does much less work on every frame.
+
+**Play-along**
+- The song's timing is worked out once, not 60 times a second, and the lyric lines are found once when the view is built.
+- When the song moves to the next line, only the lines that change are touched, and the screen is measured before anything is written, so there's no stutter on the line change.
+- Blur ahead now goes only on the lines you can see (and a screen's worth either side), so a long song no longer blurs dozens of hidden lines.
+- Tapping a line, or fixing one with a hold (punch-in), no longer rebuilds the whole lyric view or redraws the page behind it: the line changes in place.
+
+**The track player**
+- The waveform, loop, markers and section starts are drawn once and slid along as the track plays; only the red playhead is drawn each frame. They're drawn again when you zoom, change the loop or markers, switch light and dark, or rotate.
+- The line lane under the waveform works the same way.
+- In Song view, only the row the playhead is in is redrawn while playing.
+- Buttons and labels are only updated when they actually change.
+
 ## 3.33 · 31 Oct 2026
 *Today's glow reaches the top of the screen (Q23)*
 <!-- area: look -->

@@ -103,6 +103,10 @@ const TRACK = (() => {
   const wraps = []; // Q09 the last few wraps, for the tests: {t, start, end, rate, by}
   let lane = null; // Q05 the line block selected on the line lane: {id: song id, i: index into ckLines}
   let ret = null; // Q05 where Back goes when Retime came from Check timing ('ckCheck'); otherwise the song's page
+  let lay = null; // Q14 the strip's waveform layer, drawn once and moved each frame (layerFor)
+  let llay = null; // Q14 the line lane's blocks, the same way
+  let rowsC = null; // Q14 the Song card's row canvases, found once per redraw ({box, list})
+  let vpGen = 0; // Q14 counts window resizes
 
   /* ----- this device's settings: zoom level, speed, jog wheel and Song lyrics (vocalSongPrefs, never backed up) ----- */
   function prefs() {
@@ -745,8 +749,10 @@ const TRACK = (() => {
       font: getComputedStyle(document.body).fontFamily || 'sans-serif',
     };
   }
-  function fit(c) {
-    const r = c.getBoundingClientRect(),
+  // r (Q14): the canvas's box, when it was read already (all reads come before the writes)
+  function fit(c, r) {
+    r = r || c.getBoundingClientRect();
+    const
       dpr = window.devicePixelRatio || 1,
       w = Math.max(1, Math.round(r.width * dpr)),
       h = Math.max(1, Math.round(r.height * dpr));
@@ -795,7 +801,7 @@ const TRACK = (() => {
     const M = mks();
     if (!M.length) return;
     g.save();
-    g.font = '600 ' + (tab <= 11 ? 8 : 10) + 'px ' + (getComputedStyle(document.body).fontFamily || 'sans-serif');
+    g.font = '600 ' + (tab <= 11 ? 8 : 10) + 'px ' + C.font; // Q14: the font read with the colours, not every frame
     g.textAlign = 'center';
     g.textBaseline = 'middle';
     M.forEach((m, i) => {
@@ -848,6 +854,97 @@ const TRACK = (() => {
     });
     g.restore();
   }
+  /* ----- Q14 the waveform's layer -----
+     Everything on the strip except the playhead (bars, section starts, the loop, markers) only changes with the zoom,
+     the loop, markers or section starts, so it's drawn once into a canvas kept off screen, wider than the strip and
+     pinned to the track's time, and each frame copies it into place (whole device pixels, so the copy is exact) and
+     draws just the playhead on top. It's drawn again when any of those change, the colours are read again (theme), the
+     size or pixel ratio changes, or the strip moves past its edge. The line lane does the same with its blocks. */
+  const LAY_L = 170; // px kept left of the strip: a section's name tab (up to 140 px) starts left of where it shows
+  const LAY_R = 24; // px kept right of it: a marker or loop handle just past the edge
+  const LAY_MAX = 4096; // device px: the widest layer (iPhone's canvas limits)
+  // what the strip's drawing (apart from the playhead) depends on
+  function stripKey(w, h, dpr) {
+    return [
+      cur.id,
+      lv(),
+      w,
+      h,
+      dpr,
+      len(),
+      JSON.stringify(loopNow()),
+      JSON.stringify(mks()),
+      JSON.stringify(secStarts()),
+    ].join('|');
+  }
+  // a time-pinned layer for a strip w × h at pps px a second, covering the strip from tv0 to tv1 with room either
+  // side; fill(gl, X, lw, h, tA, tB) draws into it. Returns the layer, or null when one can't be made (draw directly).
+  // I: an object it was drawn from that's replaced when it changes (the lane's timing model)
+  function layerFor(old, key, I, w, h, dpr, cH, pps, tv0, tv1, win, fill) {
+    const need0 = tv0 - LAY_L / pps,
+      need1 = tv1 + LAY_R / pps;
+    if (
+      old &&
+      old.key === key &&
+      old.I === I &&
+      old.C === C &&
+      old.P === cur.peaks &&
+      old.h === cH &&
+      need0 >= old.tA &&
+      need1 <= old.tB
+    )
+      return old;
+    const span = (x) => Math.ceil(x * pps * dpr);
+    let ahead = win, // a window ahead of the strip (playback goes forward), a quarter behind
+      back = win / 4;
+    if (span(need1 - need0 + ahead + back) > LAY_MAX) {
+      const room = LAY_MAX / (pps * dpr) - (need1 - need0);
+      if (room < win / 8) return null; // too wide to be worth it: drawn as before
+      ahead = room * 0.8;
+      back = room * 0.2;
+    }
+    const tA = need0 - back,
+      tB = need1 + ahead,
+      c = (old && old.c) || document.createElement('canvas'),
+      W = span(tB - tA);
+    if (c.width !== W) c.width = W;
+    if (c.height !== cH) c.height = cH;
+    const g = c.getContext('2d');
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.clearRect(0, 0, c.width, c.height);
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    fill(g, (v) => (v - tA) * pps, W / dpr, h, tA, tB);
+    return { c, key, I, C, P: cur.peaks, h: cH, tA, tB };
+  }
+  // copy a layer into place: its time tA lands at x0 + tA·pps
+  function blit(g, L, x0, pps, dpr) {
+    g.save();
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.drawImage(L.c, Math.round((x0 + L.tA * pps) * dpr), 0);
+    g.restore();
+  }
+  // the strip's bars, section starts, loop and markers, x(t) = X(t), in a canvas lw wide
+  function stripBody(g, X, lw, h, t0, t1, L, pps) {
+    bars(g, t0, t1, 4, 3, pps, X(0), h / 2 + 6, h / 2 - 24, L);
+    secs(g, X, lw, h, 18);
+    if (L)
+      [L.start, L.end].forEach((v) => {
+        const x = X(v);
+        if (x < -20 || x > lw + 20) return;
+        g.fillStyle = C.loop;
+        g.fillRect(x - 1.5, 0, 3, h);
+        rr(g, x - 6.5, h - 17, 13, 17, 4);
+      });
+    marks(g, X, lw, h, 14);
+  }
+  // the Song card's row canvases, looked up again only when the rows were redrawn
+  function rowCanvases() {
+    const box = $('trkRows');
+    if (!box) return [];
+    if (!rowsC || rowsC.box !== box || (rowsC.list[0] && !rowsC.list[0].isConnected))
+      rowsC = { box, list: [...box.querySelectorAll('.trkrow canvas')] };
+    return rowsC.list;
+  }
   function draw() {
     if (U.view !== 'trk' || !cur || U.songId !== cur.id) return;
     if (!C) colours();
@@ -855,40 +952,52 @@ const TRACK = (() => {
       t = now();
     const c = $('trkC');
     if (c) {
-      const { g, w, h } = fit(c),
+      // Q14: every read first (the strip's and the lane's boxes), then the drawing and writes
+      const cr = c.getBoundingClientRect(),
+        lc = $('trkLC'),
+        lb = lc && $('trkLane'),
+        rects = lb ? { br: lb.getBoundingClientRect(), lr: lc.getBoundingClientRect() } : null;
+      const { g, w, h } = fit(c, cr),
+        dpr = window.devicePixelRatio || 1,
         win = TRK_LEVELS[lv()].win || 16,
         pps = w / win,
         hx = w * TRK_HEAD,
         x0 = hx - t * pps; // where 0:00 is
-      bars(g, t - hx / pps, t + (w - hx) / pps + 0.1, 4, 3, pps, x0, h / 2 + 6, h / 2 - 24, L);
-      secs(g, (v) => x0 + v * pps, w, h, 18);
-      if (L)
-        [L.start, L.end].forEach((v) => {
-          const x = x0 + v * pps;
-          if (x < -20 || x > w + 20) return;
-          g.fillStyle = C.loop;
-          g.fillRect(x - 1.5, 0, 3, h);
-          rr(g, x - 6.5, h - 17, 13, 17, 4);
-        });
-      marks(g, (v) => x0 + v * pps, w, h, 14);
+      lay = layerFor(lay, stripKey(w, h, dpr), null, w, h, dpr, c.height, pps, t - hx / pps, t + (w - hx) / pps, win, (gl, X, lw, lh, tA, tB) =>
+        stripBody(gl, X, lw, lh, tA, tB, L, pps)
+      );
+      if (lay) blit(g, lay, x0, pps, dpr);
+      else stripBody(g, (v) => x0 + v * pps, w, h, t - hx / pps, t + (w - hx) / pps + 0.1, L, pps);
       // the playhead: red (Q02), with a small dot above
       g.fillStyle = C.head;
       g.fillRect(hx - 1, 8, 2, h - 8);
       g.beginPath();
       g.arc(hx, 5, 4, 0, Math.PI * 2);
       g.fill();
-      const s = $('trkStrip');
-      if (s) s.setAttribute('aria-valuetext', fmt(t) + ' of ' + fmt(len()));
-      laneDraw(c, x0, pps, hx);
+      if (rects) laneDraw(cr, rects, x0, pps, hx, win);
+      const s = $('trkStrip'),
+        vt = fmt(t) + ' of ' + fmt(len());
+      if (s && s.getAttribute('aria-valuetext') !== vt) s.setAttribute('aria-valuetext', vt);
       return;
     }
     const rs = TRK_LEVELS[lv()].row;
     if (!rs) return;
-    document.querySelectorAll('#app .trkrow canvas').forEach((cv) => {
+    // Q14: a row is drawn again only when what's on it changed (the loop, markers, section starts, colours, size) or
+    // the playhead is on it or has just left it; the rest stay as they were
+    const key = [cur.id, rs, len(), vpGen, window.devicePixelRatio || 1,
+        JSON.stringify(L), JSON.stringify(mks()), JSON.stringify(secStarts())].join('|'),
+      d = len();
+    rowCanvases().forEach((cv) => {
       const r = +cv.parentNode.dataset.r,
         a = r * rs,
         b = a + rs,
-        { g, w, h } = fit(cv),
+        head = t >= a && (t < b || (b >= d && t <= b));
+      if (cv.q14k === key && cv.q14C === C && cv.q14P === cur.peaks && !head && !cv.q14h) return;
+      cv.q14k = key;
+      cv.q14C = C;
+      cv.q14P = cur.peaks;
+      cv.q14h = head;
+      const { g, w, h } = fit(cv),
         pps = w / rs,
         x0 = -a * pps;
       bars(g, a, b, 3, 2, pps, x0, h / 2, h / 2 - 3, L);
@@ -902,7 +1011,7 @@ const TRACK = (() => {
         });
       secs(g, (v) => (v < a || v > b ? -999 : x0 + v * pps), w, h, 0);
       marks(g, (v) => (v < a || v > b ? -999 : x0 + v * pps), w, h, 11);
-      if (t >= a && (t < b || (b >= len() && t <= b))) {
+      if (head) {
         g.fillStyle = C.head;
         g.fillRect(x0 + t * pps - 1, 0, 2, h);
       }
@@ -943,11 +1052,13 @@ const TRACK = (() => {
     });
     const lb = $('trkLoopB');
     if (lb) {
+      // Q14: only what changed is written
       const L = loopNow(),
-        on = !!(L && L.on);
-      lb.classList.toggle('on', on);
-      lb.setAttribute('aria-pressed', on);
-      lb.setAttribute('aria-label', L ? 'Loop ' + fmt1(L.start) + ' to ' + fmt1(L.end) : 'Loop (set a start and end first)');
+        on = !!(L && L.on),
+        lab = L ? 'Loop ' + fmt1(L.start) + ' to ' + fmt1(L.end) : 'Loop (set a start and end first)';
+      if (lb.classList.contains('on') !== on) lb.classList.toggle('on', on);
+      if (lb.getAttribute('aria-pressed') !== String(on)) lb.setAttribute('aria-pressed', on);
+      if (lb.getAttribute('aria-label') !== lab) lb.setAttribute('aria-label', lab);
     }
     paintCtx();
     paintTiles();
@@ -974,20 +1085,42 @@ const TRACK = (() => {
     const M = model();
     return M ? M.T.map((r, i) => [r[0], M.end(i)]) : [];
   }
-  function laneDraw(sc, x0, pps, hx) {
+  // sr: the strip's box; R: the lane's and its canvas's boxes, read before anything was written (Q14)
+  function laneDraw(sr, R, x0, pps, hx, win) {
     const c = $('trkLC'),
       box = $('trkLane');
     if (!c || !box) return;
     // the lane lines up with the strip's waveform (which starts 48 px in with the jog wheel on the left)
-    const sr = sc.getBoundingClientRect(),
-      br = box.getBoundingClientRect();
-    c.style.left = Math.round(sr.left - br.left) + 'px';
-    c.style.width = Math.round(sr.width) + 'px';
-    const { g, w, h } = fit(c),
+    const left = Math.round(sr.left - R.br.left) + 'px',
+      width = Math.round(sr.width) + 'px';
+    let lr = R.lr;
+    // Q14: written only when it moved, so the box read above still holds (a change reads it again, once)
+    if (c.style.left !== left || c.style.width !== width) {
+      c.style.left = left;
+      c.style.width = width;
+      lr = null;
+    }
+    const { g, w, h } = fit(c, lr),
       M = model();
     if (!M) return;
+    const sel = laneSel(),
+      dpr = window.devicePixelRatio || 1;
+    // Q14: the blocks only change with the timing (a new model), the selection or a drag, so they're kept on a layer
+    // like the strip's; while an edge is dragged they're drawn directly, as before
+    llay =
+      drag && drag.kind === 'edge'
+        ? null
+        : layerFor(llay, [cur.id, lv(), w, h, dpr, sel].join('|'), M, w, h, dpr, c.height, pps, -x0 / pps, (w - x0) / pps, win,
+            (gl, X, lw) => laneBlocks(gl, X, lw, h, M, sel));
+    if (llay) blit(g, llay, x0, pps, dpr);
+    else laneBlocks(g, (v) => x0 + v * pps, w, h, M, sel);
+    // the playhead runs through the lane too
+    g.fillStyle = C.head;
+    g.fillRect(hx - 1, 0, 2, h);
+  }
+  // the lane's blocks, x(t) = X(t), in a canvas lw wide
+  function laneBlocks(g, X, w, h, M, sel) {
     const T = laneT(),
-      sel = laneSel(),
       y = 5,
       bh = h - 10;
     g.save();
@@ -995,8 +1128,8 @@ const TRACK = (() => {
     g.textBaseline = 'middle';
     T.forEach((r, i) => {
       if (r[0] == null) return;
-      const xs = x0 + r[0] * pps,
-        xe = x0 + r[1] * pps;
+      const xs = X(r[0]),
+        xe = X(r[1]);
       if (xe < -4 || xs > w + 4) return;
       const est = M.est[i] && !(drag && drag.kind === 'edge' && (drag.a === i || drag.b === i)),
         on = i === sel,
@@ -1032,9 +1165,6 @@ const TRACK = (() => {
           rr(g, x - 2.5, y + bh / 2 - 9, 5, 18, 2.5);
         });
     });
-    // the playhead runs through the lane too
-    g.fillStyle = C.head;
-    g.fillRect(hx - 1, 0, 2, h);
     g.restore();
   }
   // the time at an x on the lane (it shares the strip's scale)
@@ -1291,8 +1421,10 @@ const TRACK = (() => {
       const k = tl.dataset.mk,
         m = mkById(k),
         on = !!(m && chipLoopOn(m));
-      tl.classList.toggle('play', k === id);
-      tl.classList.toggle('sel', !!(c && c.id === k));
+      const pl = k === id,
+        se = !!(c && c.id === k);
+      if (tl.classList.contains('play') !== pl) tl.classList.toggle('play', pl); // Q14: only when it changed
+      if (tl.classList.contains('sel') !== se) tl.classList.toggle('sel', se);
       const lb = tl.querySelector('.trktlo');
       if (lb && lb.classList.contains('on') !== on) {
         lb.classList.toggle('on', on);
@@ -2553,7 +2685,10 @@ const TRACK = (() => {
     }
     showBusy(!!busy);
   }
-  window.addEventListener('resize', () => draw());
+  window.addEventListener('resize', () => {
+    vpGen++; // Q14: the Song card's rows are drawn again at their new size
+    draw();
+  });
 
   /* ----- 3.20 holding a chip opens its menu ----- */
   document.addEventListener('pointerdown', (e) => {

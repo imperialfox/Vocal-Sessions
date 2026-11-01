@@ -1,6 +1,6 @@
 # Render queue
 
-App work Ivan has queued, in the order he wants it built. Each item is one build, in a fresh chat, started from a handoff (see [HANDOFF.md](HANDOFF.md)). Last checked against `main` at **3.33** (31 Oct 2026). **Shipped:** Q01 · Search: Global Find in 3.22; Q08 · Interface: Native iOS Polish in 3.23; Q02 · Track: Waveform Sections in 3.24; Q09 · Track: Waveform Sections Follow-up in 3.25; Q10 · Interface: HIG Foundations Pass in 3.26; Q03 · Marks: Layered Annotations in 3.27; Q05 · Song Clock: Tap Re-Anchor in 3.28; Q11 · Data: Save Safety in 3.29; Q12 · Song Clock: Timing Integrity in 3.30; Q13 · Interface: Keyboard Guards in 3.31; Q04 · Marks: Practice Guide in 3.32; Q23 · Interface: Status Bar Glow in 3.33.
+App work Ivan has queued, in the order he wants it built. Each item is one build, in a fresh chat, started from a handoff (see [HANDOFF.md](HANDOFF.md)). Last checked against `main` at **3.34** (31 Oct 2026). **Shipped:** Q01 · Search: Global Find in 3.22; Q08 · Interface: Native iOS Polish in 3.23; Q02 · Track: Waveform Sections in 3.24; Q09 · Track: Waveform Sections Follow-up in 3.25; Q10 · Interface: HIG Foundations Pass in 3.26; Q03 · Marks: Layered Annotations in 3.27; Q05 · Song Clock: Tap Re-Anchor in 3.28; Q11 · Data: Save Safety in 3.29; Q12 · Song Clock: Timing Integrity in 3.30; Q13 · Interface: Keyboard Guards in 3.31; Q04 · Marks: Practice Guide in 3.32; Q23 · Interface: Status Bar Glow in 3.33; Q14 · Playback: Smooth Frames in 3.34.
 
 - **Every item has two separate gates.** `Awaiting Render` means it is not approved. Ivan's **Render** approves only the named item's exact scope and moves it to `Approved — awaiting Build`; it does not start work or authorize a push. A separate **Build** instruction starts implementation for that approved item. Do not treat approval of one item as approval of the whole queue.
 - **The code wins on what's built.** This is a summary, not a spec. Check each note against the code before relying on it.
@@ -36,7 +36,7 @@ Every ID with its **Status** (`Awaiting Render`, `Approved — awaiting Build`, 
 | Q11 | Data: Save Safety | Shipped 3.29 | Audit stage 1, data safety |
 | Q12 | Song Clock: Timing Integrity | Shipped 3.30 | Audit stage 2, timing integrity |
 | Q13 | Interface: Keyboard Guards | Shipped 3.31 | Audit stage 3, input hygiene |
-| Q14 | Playback: Smooth Frames | Approved — awaiting Build | Audit stage 4, per-frame work |
+| Q14 | Playback: Smooth Frames | Shipped 3.34 | Audit stage 4, per-frame work |
 | Q15 | Marks: Register-Ready Data | Approved — awaiting Build | Audit stage 5, room for register data |
 | Q16 | Audio: Voice Analysis Foundations | Approved — awaiting Build | Audit stage 6, Web Audio seam |
 | Q17 | Hygiene: Dead Code Sweep | Approved — awaiting Build | Audit clean-up list |
@@ -62,26 +62,12 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 
 ## Order (31 Oct 2026)
 
-Most critical first: **Q14 → Q18 → Q15 → Q16 → Q17 → Q19 → Q20 → Q21 → Q22 → Q07**. Q22 got Render on 31 Oct 2026 (20:59) and goes after Q21, because it builds on the one-page session and the saved screen. Q19–Q21 got Render on 31 Oct 2026 (19:58), in one instruction; each still needs its own Build. They go after Q17 (Q20 needs Q16's track-while-recording). Q11–Q17 got Render on 30 Oct 2026 (06:42); each still needs its own Build. Q18 got Render on 31 Oct 2026 (17:41) and goes straight after Q14, because it touches the same test files. What has shipped is in the table's Status column. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
-
-## Q14 · Playback: Smooth Frames
-
-**Status:** Approved — awaiting Build. **Approval:** Render given by Ivan on 30 Oct 2026 (06:42) for the scope below, in one instruction covering Q11–Q17. Each item is still its own build, in queue order, and needs its own **Build**. The build handoff is in Ivan's project notes as `q14_playback_smooth_frames_handoff.md`.
-**Needs:** Q12 live (shipped in 3.30; the timing model settles there).
-
-- **Goal:** play-along and the track page do the least work possible on each frame, so lyrics and the waveform stay smooth on older iPhones.
-- **Scope:**
-  - **Song Clock:** keep the timing model between frames; look up lines once per redraw; read the screen before writing to it; blur only lines on screen.
-  - **Track page:** draw the waveform layer only when zoom, loop or markers change, and draw just the playhead each frame; cache the font; only update labels when they change. In rows view, redraw only the row the playhead is in.
-  - **A punch-in** updates the lines it changed instead of rebuilding the whole view.
-- **Out of scope:** any visual change. Everything must look the same.
-- **Next action:** after Ivan separately says Build for Q14, check its **Needs** are live, then implement only this scope in a fresh chat from its handoff.
-- **Done when:** existing visual and timing tests pass unchanged; a test counts per-frame work (no timing model rebuilt, no layout reads after writes); the full suite passes.
+Most critical first: **Q18 → Q15 → Q16 → Q17 → Q19 → Q20 → Q21 → Q22 → Q07**. Q22 got Render on 31 Oct 2026 (20:59) and goes after Q21, because it builds on the one-page session and the saved screen. Q19–Q21 got Render on 31 Oct 2026 (19:58), in one instruction; each still needs its own Build. They go after Q17 (Q20 needs Q16's track-while-recording). Q11–Q17 got Render on 30 Oct 2026 (06:42); each still needs its own Build. Q18 got Render on 31 Oct 2026 (17:41) and goes next, after Q14 (shipped in 3.34), because it touches the same test files. What has shipped is in the table's Status column. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
 
 ## Q18 · Tests: GitHub Match
 
-**Status:** Approved — awaiting Build. **Approval:** Render given by Ivan on 31 Oct 2026 (17:41) for the scope below. **Build:** Ivan also said Build on 31 Oct 2026 (17:41); it is held until Q14 is live, then starts in a fresh chat from its handoff. The build handoff is in Ivan's project notes as `q18_tests_github_match_handoff.md`.
-**Needs:** Q14 live (it touches the same test files).
+**Status:** Approved — awaiting Build. **Approval:** Render given by Ivan on 31 Oct 2026 (17:41) for the scope below. **Build:** Ivan also said Build on 31 Oct 2026 (17:41); it was held until Q14 was live (shipped in 3.34) and starts in a fresh chat from its handoff. The build handoff is in Ivan's project notes as `q18_tests_github_match_handoff.md`.
+**Needs:** Q14 live (it touches the same test files; shipped in 3.34).
 
 - **Goal:** the tests give the same answer locally as on GitHub, so builds stop going red for test-only reasons.
 - **Scope:**

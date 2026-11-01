@@ -44,6 +44,9 @@ const CK = {
   piAt: 0, // when a punch-in ended (its click isn't also a tap on a line)
   lm: null, // Q05 the hold menu on a lyric line: {o, li}
   lmAt: 0, // when the hold menu opened (the hold's click isn't also a tap)
+  mdl: null, // Q14: the timing model kept between frames ({sg, t, o, s, M}), dropped by every redraw and ckStore
+  dom: null, // Q14: the big view's lines, words and dots, looked up once per build (ckDom)
+  drawn: null, // Q14: what the big view's lines were built from ({base, tim}), so a timing change patches its dots
 };
 
 /* ===== Song Clock: the clock ===== */
@@ -346,6 +349,16 @@ function ckModel(sg) {
     end: (i) => ckEnd(L, T, i),
   };
 }
+// Q14: the same model, kept between frames for the readers that run every frame (ckTick, the window's text), as
+// track.js keeps its own. It's built again after every redraw (CLOCK.after), any change written through ckStore, or a
+// new timing, order or sections object. Writers never use it: they build their own with ckModel
+function ckModelK(sg) {
+  const c = CK.mdl;
+  if (c && c.sg === sg && c.t === sg.timing && c.o === sg.order && c.s === sg.sections) return c.M;
+  const M = ckModel(sg);
+  CK.mdl = { sg, t: sg.timing, o: sg.order, s: sg.sections, M };
+  return M;
+}
 // write lines' times (and section starts, to-do markers) back into the song, and save. fix (Q05): which lines were
 // placed by hand, one per line (left out: as they were)
 function ckStore(sg, L, T, anch, marks, flags, fix) {
@@ -381,6 +394,7 @@ function ckStore(sg, L, T, anch, marks, flags, fix) {
     (s.sb || (s.sb = [])).push(L[i].li);
   }
   sg.timing = t;
+  CK.mdl = null; // Q14
   save();
 }
 /* ===== Q12 changes that come from outside the timing =====
@@ -669,7 +683,13 @@ function ckPlay(i) {
     m0 = ckMs();
   TRACK.along(sg.id, () => t0 + (ckMs() - m0) / 1000, CK.mute);
   CK.lastA = -2;
-  if (ckHere()) rerender();
+  // Q14: a tap on a line in the big view (it stays up): only the transport and the view change, so no full redraw
+  const big = $('ckpa');
+  if (ckHere() && big && !big.hidden && ckBig()) {
+    renderDock();
+    CLOCK.after();
+    fwUpdate();
+  } else if (ckHere()) rerender();
   else fwUpdate();
   ckWake();
   ckLoop();
@@ -872,6 +892,13 @@ document.addEventListener('pointermove', (e) => {
   if (p && !p.on && e.pointerId === p.id && Math.hypot(e.clientX - p.x, e.clientY - p.y) > 10) ckPunchOff();
 });
 ['pointerup', 'pointercancel'].forEach((t) => document.addEventListener(t, ckPunchUp));
+// Marks while playing: an automatic dot only on a line with a long gap after it and no breath mark of Ivan's
+function ckDotAt(M, i, mp) {
+  const l = M.L[i],
+    gap = i + 1 < M.T.length ? M.T[i + 1][0] - M.end(i) : 0;
+  return mp !== 'off' && !l.br.some(Boolean) && gap > CK_DOT;
+}
+const CK_DOTHTML = '<span class="ckdot" aria-label="breathe"></span>';
 function ckBuild(sg) {
   const M = ckModel(sg),
     mp = ckPrefs().marksPlaying,
@@ -891,8 +918,7 @@ function ckBuild(sg) {
     // Marks while playing, Breaths only: Ivan's breath marks on every line; an automatic dot only on a line with a
     // long gap after it and no breath mark of his. Bookmarks never show while playing.
     const mine = mp !== 'off' && l.br.some(Boolean),
-      gap = i + 1 < M.T.length ? M.T[i + 1][0] - M.end(i) : 0,
-      dot = mp !== 'off' && !l.br.some(Boolean) && gap > CK_DOT;
+      dot = ckDotAt(M, i, mp);
     const r = MARKS.line(sg.sections[l.sid], l.li, show, (wi, w, d) => {
       const lab = MARKS.labRow(d),
         word = '<span class="ckw">' + esc(w) + '</span>',
@@ -916,17 +942,16 @@ function ckBuild(sg) {
       i +
       '">' +
       r.html +
-      (dot ? '<span class="ckdot" aria-label="breathe"></span>' : '') +
+      (dot ? CK_DOTHTML : '') +
       '</p>';
   });
   return h;
 }
+// what the big view is built from, apart from the timing (Q14: a timing change alone only patches the dots, ckDots)
 function ckSig(sg) {
   const p = ckPrefs();
   return (
     sg.id +
-    '|' +
-    JSON.stringify(sg.timing) +
     '|' +
     JSON.stringify(sg.order) +
     '|' +
@@ -938,6 +963,49 @@ function ckSig(sg) {
     '|' +
     sg.order.map((x) => JSON.stringify(sg.sections[x.sid].marks)).join()
   );
+}
+// Q14: the big view's lines, their words and dots, found once per build (not every frame), with what was last written
+// to each, so a frame writes only what changed. Dropped (CK.dom = null) whenever the view is built again
+function ckDom(el) {
+  if (CK.dom && CK.dom.el === el && CK.dom.inn.isConnected) return CK.dom;
+  const inn = el.querySelector('.ckin'),
+    lines = [...inn.querySelectorAll('.ckl')],
+    words = lines.map((ln) => [...ln.querySelectorAll('.ckw')]);
+  CK.dom = {
+    el,
+    inn,
+    view: inn.parentNode,
+    cap: el.querySelector('.ckcap'),
+    lines,
+    words,
+    wp: words.map((w) => w.map(() => null)),
+    dots: lines.map((ln) => ln.querySelector('.ckdot')),
+    labs: [...inn.querySelectorAll('.cklab')].map((lb) => ({ el: lb, k: +lb.dataset.k, op: null })),
+    st: lines.map(() => ({ c: null, nx: null, op: null, f: null, p: null })),
+    dotOn: null,
+    y: null,
+  };
+  return CK.dom;
+}
+// Q14: only the timing changed (a punch-in, a nudge, Undo): the lines stay as they are and only their automatic dots
+// (the one part of a line that comes from the timing) are added or taken away, instead of building the view again
+function ckDots(sg) {
+  const D = ckDom($('ckpa')),
+    M = ckModelK(sg),
+    mp = ckPrefs().marksPlaying;
+  D.lines.forEach((ln, i) => {
+    if (!M.L[i]) return;
+    const want = ckDotAt(M, i, mp),
+      d = D.dots[i];
+    if (want && !d) {
+      ln.insertAdjacentHTML('beforeend', CK_DOTHTML);
+      D.dots[i] = ln.lastElementChild;
+    } else if (!want && d) {
+      if (D.dotOn === d) D.dotOn = null;
+      d.remove();
+      D.dots[i] = null;
+    }
+  });
 }
 // draw the current line, word fill, distance blur and dots; called every frame while the clock runs
 function ckTick() {
@@ -952,55 +1020,101 @@ function ckTick() {
   const el = $('ckpa');
   const sg = ckSong();
   if (el && !el.hidden && sg) {
-    const M = ckModel(sg),
+    // Q14: the model and the lines are kept between frames (ckModelK, ckDom), and only what changed is written
+    const M = ckModelK(sg),
       t = ckNow(CK.pc),
       a = ckAt(M.T, t),
-      lines = el.querySelectorAll('.ckl');
+      D = ckDom(el),
+      lines = D.lines;
     if (a !== CK.lastA && lines.length) {
       CK.lastA = a;
-      const blurOn = ckPrefs().blurAhead;
+      const blurOn = ckPrefs().blurAhead,
+        // Q14: every read comes first (the view's height and where each line sits), then the writes, so a line change
+        // costs one layout at most. Classes, fades and blur never change a line's size, so these hold for the writes
+        H = D.view.clientHeight,
+        tops = lines.map((ln) => ln.offsetTop),
+        hts = lines.map((ln) => ln.offsetHeight),
+        y = Math.round(H * 0.3 - tops[Math.max(a, 0)]),
+        // Q14: blur only the lines on screen as the view moves from where it was to here, with a screen to spare either
+        // side, so a line is already blurred before it comes into view; the rest keep no filter
+        y0 = Math.min(y, D.y == null ? y : D.y),
+        y1 = Math.max(y, D.y == null ? y : D.y),
+        seen = (i) => tops[i] + hts[i] + y1 >= -H && tops[i] + y0 <= 2 * H;
+      D.y = y;
       lines.forEach((ln, i) => {
-        const d = i - a;
-        ln.classList.toggle('past', i < a);
-        ln.classList.toggle('now', i === a);
-        ln.classList.toggle('fut', i > a);
-        ln.classList.toggle('nx', i === a + 1); // Q03 Active layer shows on this line and the next
-        ln.style.opacity = i < a ? '0.4' : d > 0 && blurOn ? MOTION.dim(d) : '';
-        const b = d > 0 && blurOn ? MOTION.blur(d) : 0;
-        ln.style.filter = b ? 'blur(' + b + 'px)' : '';
-        if (i !== a) ln.querySelectorAll('.ckw').forEach((w) => w.style.setProperty('--p', i < a ? 1 : 0));
+        const S = D.st[i],
+          d = i - a,
+          c = i < a ? 'past' : i === a ? 'now' : 'fut',
+          nx = i === a + 1; // Q03 Active layer shows on this line and the next
+        if (S.c !== c) {
+          ln.classList.toggle('past', c === 'past');
+          ln.classList.toggle('now', c === 'now');
+          ln.classList.toggle('fut', c === 'fut');
+          S.c = c;
+        }
+        if (S.nx !== nx) {
+          ln.classList.toggle('nx', nx);
+          S.nx = nx;
+        }
+        const op = String(i < a ? '0.4' : d > 0 && blurOn ? MOTION.dim(d) : '');
+        if (S.op !== op) {
+          ln.style.opacity = op;
+          S.op = op;
+        }
+        const b = d > 0 && blurOn && seen(i) ? MOTION.blur(d) : 0,
+          f = b ? 'blur(' + b + 'px)' : '';
+        if (S.f !== f) {
+          ln.style.filter = f;
+          S.f = f;
+        }
+        if (i === a) S.p = null; // the line being sung fills word by word, below
+        else {
+          const p = i < a ? 1 : 0;
+          if (S.p !== p) {
+            D.words[i].forEach((w, k) => {
+              w.style.setProperty('--p', p);
+              D.wp[i][k] = String(p);
+            });
+            S.p = p;
+          }
+        }
       });
-      el.querySelectorAll('.cklab').forEach((lb) => {
-        const k = +lb.dataset.k,
-          first = ckFirst(M.L, k),
-          d = first - a;
-        lb.style.opacity = d > 0 && blurOn ? MOTION.dimLabel(d) : '';
+      D.labs.forEach((L) => {
+        const d = ckFirst(M.L, L.k) - a,
+          op = String(d > 0 && blurOn ? MOTION.dimLabel(d) : '');
+        if (L.op !== op) {
+          L.el.style.opacity = op;
+          L.op = op;
+        }
       });
-      const tg = lines[Math.max(a, 0)],
-        box = el.querySelector('.ckin');
-      box.style.transform = 'translateY(' + Math.round(box.parentNode.clientHeight * 0.3 - tg.offsetTop) + 'px)';
-      const cap = el.querySelector('.ckcap'),
-        ct = CK.pc.run ? 'Tap a line to jump to it · hold to fix it' : 'Tap the first line as it’s sung';
-      if (cap.textContent !== ct && !(CK.pi && CK.pi.on)) cap.textContent = ct;
+      D.inn.style.transform = 'translateY(' + y + 'px)';
+      const ct = CK.pc.run ? 'Tap a line to jump to it · hold to fix it' : 'Tap the first line as it’s sung';
+      if (D.cap.textContent !== ct && !(CK.pi && CK.pi.on)) D.cap.textContent = ct;
     }
     if (a >= 0 && lines[a]) {
       const s = M.T[a][0],
         e = M.end(a),
         sy = M.L[a].syl,
-        tot = sy.reduce((x, y) => x + y, 0);
+        tot = sy.reduce((x, y) => x + y, 0),
+        wp = D.wp[a];
       let c = 0;
-      lines[a].querySelectorAll('.ckw').forEach((w, k) => {
+      D.words[a].forEach((w, k) => {
         const w0 = s + ((e - s) * c) / tot;
         c += sy[k];
-        const w1 = s + ((e - s) * c) / tot;
-        w.style.setProperty('--p', Math.max(0, Math.min(1, (t - w0) / Math.max(0.05, w1 - w0))).toFixed(3));
+        const w1 = s + ((e - s) * c) / tot,
+          v = Math.max(0, Math.min(1, (t - w0) / Math.max(0.05, w1 - w0))).toFixed(3);
+        if (wp[k] !== v) {
+          w.style.setProperty('--p', v);
+          wp[k] = v;
+        }
       });
     }
     // an automatic dot brightens through the gap after its line
-    el.querySelectorAll('.ckdot.on').forEach((d) => d.classList.remove('on'));
-    if (a >= 0 && lines[a] && t > M.end(a)) {
-      const d = lines[a].querySelector('.ckdot');
-      if (d) d.classList.add('on');
+    const on = a >= 0 && lines[a] && t > M.end(a) ? D.dots[a] : null;
+    if (on !== D.dotOn) {
+      if (D.dotOn) D.dotOn.classList.remove('on');
+      if (on) on.classList.add('on');
+      D.dotOn = on;
     }
   }
   // the transport's time changes only its text (motion rule 8: digits never animate)
@@ -1017,7 +1131,7 @@ function ckTick() {
     if (mt.textContent !== v) mt.textContent = v;
   }
   if (U.sEdit === 'annotate' && sg && ckHere()) {
-    const M = ckModel(sg),
+    const M = ckModelK(sg),
       a = CK.ever ? ckAt(M.T, ckNow(CK.pc)) : -1,
       l = a >= 0 ? M.L[a] : null,
       key = l ? l.o + '|' + l.li : '';
@@ -1626,7 +1740,7 @@ function ckSetLen(sg, v) {
 function ckFwText() {
   const sg = ckSong();
   if (!sg) return '';
-  const M = ckModel(sg),
+  const M = ckModelK(sg), // Q14: called every frame while the window shows
     t = ckNow(CK.pc),
     a = ckAt(M.T, t);
   return (CK.pc.run ? '' : 'Paused · ') + ckFmt(t) + (a >= 0 ? ' · ' + occLabel(sg, M.L[a].k) : '');
@@ -1730,6 +1844,7 @@ const CLOCK = {
     if (CK.head && !songShown()) CK.head = false;
   },
   after() {
+    CK.mdl = null; // Q14: the kept model is read again after every redraw
     if (U.view !== 'ckCheck' && CK.pk && !songShown()) ckPickClose();
     // Q05: play-along needs the song's lyrics and its track on this device (Remove track turns it off)
     if (CK.on && (!hasLyrics(ckSong()) || !ckCan(ckSong()))) {
@@ -1746,12 +1861,28 @@ const CLOCK = {
       if (el.hidden) window.scrollTo(0, 0);
       document.documentElement.classList.add('ckplay');
       ckPlace(el);
-      const sig = ckSig(sg);
+      const base = ckSig(sg),
+        tim = JSON.stringify(sg.timing),
+        sig = base + '|' + tim;
       el.classList.toggle('mpact', ckPrefs().marksPlaying === 'active'); // Q03 Active layer
-      if (CK.sig !== sig || el.hidden) {
+      const inn = el.querySelector('.ckin'),
+        dr = CK.drawn;
+      if (CK.sig !== sig && !el.hidden && dr && dr.base === base && dr.tim !== tim && CK.dom) {
+        // Q14: only the timing changed (a punch-in, a nudge, Undo): the lines stay and only their dots are brought up
+        // to date, then drawn in place without easing, just as a new build would be
         CK.sig = sig;
-        const inn = el.querySelector('.ckin');
+        dr.tim = tim;
+        ckDots(sg);
+        inn.classList.add('nofx');
+        CK.lastA = -2;
+        ckTick();
+        void inn.offsetWidth;
+        inn.classList.remove('nofx');
+      } else if (CK.sig !== sig || el.hidden) {
+        CK.sig = sig;
+        CK.drawn = { base, tim };
         inn.innerHTML = ckBuild(sg);
+        CK.dom = null; // Q14: its lines are looked up again, once
         inn.classList.add('nofx');
         el.hidden = false;
         CK.lastA = -2;
@@ -1762,6 +1893,7 @@ const CLOCK = {
     } else if (!el.hidden) {
       el.hidden = true;
       CK.sig = '';
+      CK.drawn = null;
     }
     document.body.classList.toggle('ckplay', big);
     if (!big) document.documentElement.classList.remove('ckplay');
