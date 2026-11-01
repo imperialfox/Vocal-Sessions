@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<!-- Q24 coach video kit · slide.html
+     The full-video slide (still v4 + clip v2 motion), drawn for any moment from the time alone: frame(t) in seconds.
+     Content and timing come from data.js (built by build_data.js). Font: SF Pro, from Ivan's own files, installed
+     on the render machine (never committed). -->
+<style>
+:root{
+  --cv-frame:#F2F2F7; --cv-card:#FFFFFF; --cv-text-title:#000; --cv-text-body:#6C6C72;
+  --cv-line:rgba(60,60,67,.16); --cv-fill:rgba(118,118,128,.12);
+  /* corners from the floating window: 14 pt at 176 pt wide = 153 px at the edge; each layer concentric */
+  --cv-rim:40px; --cv-frame-radius:113px; --cv-gap:48px; --cv-card-radius:65px; --cv-pad:88px;
+}
+*{box-sizing:border-box;margin:0}
+html,body{width:1920px;height:1080px;overflow:hidden;background:#F2F2F7;font-family:"SF Pro",sans-serif;font-optical-sizing:auto;-webkit-font-smoothing:antialiased}
+.page{position:absolute;inset:0}
+.frame{position:absolute;inset:var(--cv-rim);background:var(--cv-frame);border-radius:var(--cv-frame-radius);overflow:hidden}
+.card{position:absolute;inset:var(--cv-gap);background:var(--cv-card);border-radius:var(--cv-card-radius);overflow:hidden;
+  box-shadow:0 1px 0 rgba(0,0,0,.04),0 10px 40px rgba(20,20,40,.06)}
+.layer{position:absolute;inset:0}
+.content{position:absolute;inset:0;display:grid;grid-template-columns:928px 560px;grid-template-rows:1fr auto;padding:var(--cv-pad) var(--cv-pad) 64px;column-gap:80px;row-gap:56px}
+.left{display:flex;flex-direction:column;min-width:0}
+.titlerow{display:flex;align-items:center;gap:32px;width:max-content}
+.tile{width:120px;height:120px;border-radius:30px;display:flex;align-items:center;justify-content:center;flex:none}
+.tile svg{width:74px;height:74px}
+h1{font-weight:700;letter-spacing:-.015em;line-height:1.05;color:var(--cv-text-title);white-space:nowrap}
+.rule{height:2px;background:var(--cv-line);margin:40px 0}
+.cue{font-size:46px;font-weight:600;line-height:1.2;color:var(--cv-text-title)}
+.syll{margin-top:18px;font-size:72px;font-weight:600;letter-spacing:.01em}
+.round{margin-top:16px;font-size:34px;font-weight:500;color:var(--cv-text-body);font-variant-numeric:tabular-nums;height:42px;white-space:nowrap}
+.round b{color:var(--cv-text-title);font-weight:600}
+.facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:32px;margin-top:auto}
+.fact svg{width:56px;height:56px;display:block}
+.fact .k{font-size:24px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;color:var(--cv-text-body);margin-top:12px}
+.fact .v{font-size:34px;line-height:1.25;color:var(--cv-text-title);margin-top:6px}
+.right{display:flex;align-items:center;justify-content:center}
+.ring{width:560px;height:560px;position:relative}
+.ring > svg{position:absolute;inset:0}
+.num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding-top:64px}
+.digits{position:relative;height:200px;width:220px;overflow:hidden}
+.digits span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:200px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;color:var(--cv-text-title)}
+.states{position:relative;height:64px;width:340px;margin-top:6px;display:flex;justify-content:center}
+.state{height:64px;border-radius:999px;display:flex;align-items:center;justify-content:center;transform-origin:center}
+.state .lbl{display:flex;align-items:center;gap:12px;font-size:36px;font-weight:600;white-space:nowrap}
+.state .lbl svg{width:34px;height:34px}
+.strip{grid-column:1 / -1;height:20px;display:flex;gap:10px}
+.seg{position:relative;height:100%;border-radius:999px;overflow:hidden}
+.seg i{position:absolute;left:0;top:0;bottom:0;border-radius:999px}
+.sweep{position:absolute;left:0;top:0;bottom:0;pointer-events:none}
+.scrim{position:absolute;inset:0;background:#000;pointer-events:none}
+.edge{position:absolute;top:0;bottom:0;width:56px;left:-56px;background:linear-gradient(to left,rgba(0,0,0,.16),rgba(0,0,0,0))}
+.nextpill{position:absolute;top:24px;right:var(--cv-pad);height:60px;padding:0 26px 0 20px;border-radius:999px;background:var(--cv-fill);display:flex;align-items:center;gap:12px;font-size:32px;font-weight:600;color:var(--cv-text-title);white-space:nowrap}
+.nextpill .dot{width:22px;height:22px;border-radius:50%}
+.tm{position:absolute;left:var(--cv-pad);top:var(--cv-pad);transform-origin:0 0}
+</style>
+<script src="data.js"></script>
+</head>
+<body>
+<div id="stage"></div>
+<script>
+/* ===================== curves ===================== */
+function spring(t, z=.82, hz=1.9){ if(t<=0) return 0; const w=2*Math.PI*hz, wd=w*Math.sqrt(1-z*z);
+  return 1-Math.exp(-z*w*t)*(Math.cos(wd*t)+(z*w/wd)*Math.sin(wd*t)); }
+const clamp=(x,a=0,b=1)=>Math.min(b,Math.max(a,x));
+const ramp=(t,a,b)=>clamp((t-a)/(b-a));
+const ease=x=>x<.5?2*x*x:1-Math.pow(-2*x+2,2)/2;
+const lerp=(a,b,p)=>a+(b-a)*p;
+const hex=c=>c.replace('#','').match(/\w\w/g).map(h=>parseInt(h,16));
+const mix=(c1,c2,p)=>{const a=hex(c1),b=hex(c2);return '#'+a.map((v,i)=>Math.round(v+(b[i]-v)*p).toString(16).padStart(2,'0')).join('');};
+const breathe=t=>0.5+0.5*Math.sin(2*Math.PI*t/1.6-Math.PI/2);
+const f2=x=>Math.round(x*100)/100, f3=x=>Math.round(x*1000)/1000;   /* round outputs so still moments give identical frames */
+/* relative luminance contrast, used to pick a fact-icon shade of the tile colour that reads on white */
+const lum=c=>{const v=hex(c).map(x=>{x/=255;return x<=.03928?x/12.92:Math.pow((x+.055)/1.055,2.4);});return .2126*v[0]+.7152*v[1]+.0722*v[2];};
+const contrastW=c=>1.05/(lum(c)+.05);
+function inkOf(c){ let p=.3, k=mix(c,'#000000',p); while(contrastW(k)<4.5&&p<.8){ p+=.02; k=mix(c,'#000000',p); } return k; }
+
+/* ===================== icons ===================== */
+const ICON={
+  target:'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/>',
+  arrow:'<path d="M5 12h12M13 7l5 5-5 5"/>',
+  wave:'<path d="M3 12c2.5-3 4.5-3 6 0s3.5 3 6 0 4.5-3 6 0"/>',
+  up:'<path d="M12 19V6M6 11l6-6 6 6"/>',
+  stop:'<circle cx="12" cy="12" r="8"/><path d="M8 8l8 8"/>',
+  hand:'<path d="M6 12V7a1.5 1.5 0 0 1 3 0v4M9 11V5.5a1.5 1.5 0 0 1 3 0V11M12 11V6.5a1.5 1.5 0 0 1 3 0V12M15 12V9a1.5 1.5 0 0 1 3 0v4a7 7 0 0 1-7 7h-1a5 5 0 0 1-4-2l-3-4a1.5 1.5 0 0 1 2.3-1.9L6 15"/>',
+  jaw:'<path d="M6.5 9.5c1.6-2.6 9.4-2.6 11 0"/><path d="M6 13c0 4.5 2.8 7.5 6 7.5s6-3 6-7.5"/><path d="M6 13h12"/>',
+  mouth:'<path d="M3.5 12c3.2-4 13.8-4 17 0-3.2 4-13.8 4-17 0z"/><path d="M3.5 12h17"/>',
+  head:'<circle cx="12" cy="8.5" r="4.5"/><path d="M4.5 20.5c1-4 4-6 7.5-6s6.5 2 7.5 6"/>',
+  volume:'<path d="M4 9.5h3.5L12 6v12l-4.5-3.5H4z"/><path d="M15.5 9.5a3.5 3.5 0 0 1 0 5M18 7a7 7 0 0 1 0 10"/>',
+  speed:'<path d="M4 17a8 8 0 1 1 16 0"/><path d="M12 17l4-5"/>',
+  breath:'<path d="M3 9h11a3 3 0 1 0-3-3"/><path d="M3 14h15a3 3 0 1 1-3 3"/>',
+  straw:'<path d="M7 9.5h10L15.5 21h-7z"/><path d="M12 9.5 15 3h4"/>',
+  spark:'<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/>',
+  link:'<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7L12 6.3"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
+  next:'<circle cx="12" cy="12" r="8.5"/><path d="M10.5 8.5 14 12l-3.5 3.5"/>',
+  ear:'<path d="M7 9a5 5 0 0 1 10 0c0 3-3 4-3 7a3 3 0 0 1-6 0"/><path d="M10 9a2 2 0 0 1 4 0"/>',
+  repeat:'<path d="M4 11a8 8 0 0 1 14-4l2 2"/><path d="M20 4v5h-5"/><path d="M20 13a8 8 0 0 1-14 4l-2-2"/><path d="M4 20v-5h5"/>',
+  note:'<path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/>'
+};
+const MIC='<path d="M12 4a3 3 0 0 0-3 3v5a3 3 0 0 0 6 0V7a3 3 0 0 0-3-3z"/><path d="M6 11a6 6 0 0 0 12 0M12 17v3"/>';
+const DUET='<circle cx="9" cy="8" r="3"/><path d="M3.5 19c.8-3.2 3-5 5.5-5s4.7 1.8 5.5 5"/><circle cx="16.5" cy="9" r="2.5"/><path d="M15.5 14.1c2.6-.3 4.6 1.5 5.1 4.4"/>';
+const EAR=ICON.ear;
+const svg=(p,c,w=2)=>`<svg viewBox="0 0 24 24" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
+const INDIGO='#5856D6', GREY_TXT='#A3A3A8', PILL_GREY='#E4E4E7', BLUE='#007AFF', GREEN='#34C759', SEG_GREY='#E3E3E6', WHITE='#FFFFFF', BLACK='#000000';
+/* the three state pills (Ivan, 1 Nov 2026): Your turn = solid indigo; With coach = indigo outline; Listen = grey */
+const STATES={
+  'Your turn': {bg:INDIGO, ring:INDIGO, fg:WHITE, icon:MIC, sing:1},
+  'With coach':{bg:WHITE, ring:INDIGO, fg:INDIGO, icon:DUET, sing:1},
+  'Listen':    {bg:PILL_GREY, ring:PILL_GREY, fg:BLACK, icon:EAR, sing:0}
+};
+
+/* ===================== timing data ===================== */
+const D=window.DATA, FPS=D.fps, TOTAL=D.totalFrames/FPS;
+const EX=D.exercises, LV=D.levels;
+LV.forEach(l=>{ l.t0=l.startFrame/FPS; l.t1=l.endFrame/FPS; });
+const EXT=EX.map((e,i)=>({t0:LV[i*3].t0, t1:LV[i*3+2].t1}));        /* exercise start and end (end = next start) */
+const CW=1920-2*40-2*48, CH=1080-2*40-2*48;                          /* card 1744 x 904 */
+const X_RING=1096, X_PILL=1376, X_HEADSUP=1500;
+const WIPE=0.55, GWIPE=0.45, PUSH=0.45, SETTLE_AT=3.2, HEADSUP=5, UPNEXT=10, GREEN_BEFORE=1.0;
+const edgeX=(t,t0,dur)=>ease(ramp(t,t0,t0+dur))*(CW+60);
+function solveEdge(t0,dur,x){ for(let t=t0;t<=t0+dur;t+=1/480){ if(edgeX(t,t0,dur)>=x) return t; } return t0+dur; }
+/* strip: each exercise as wide as it runs */
+const STRIP_W=CW-2*88, STRIP_GAPS=10*11, durs=EXT.map(e=>e.t1-e.t0), dsum=durs.reduce((a,b)=>a+b,0);
+const SEG_END=[]; { let x=88; durs.forEach((d,i)=>{ x+=d/dsum*(STRIP_W-STRIP_GAPS); SEG_END.push(x); x+=10; }); }
+/* per-level times: wipe, the moment its edge reaches ring / pill / heads-up pill; green completion for level 3 */
+LV.forEach((l,i)=>{
+  l.roll=solveEdge(l.t0,WIPE,X_RING); l.swap=solveEdge(l.t0,WIPE,X_PILL); l.hOff=solveEdge(l.t0,WIPE,X_HEADSUP);
+  if(l.level===3){ const E=EXT[l.ex].t1; l.green=E-GREEN_BEFORE; l.greenRing=solveEdge(l.green,GWIPE,X_RING); l.greenStrip=solveEdge(l.green,GWIPE,SEG_END[l.ex]); }
+});
+function levelAt(t){ let k=0; for(let i=0;i<36;i++){ if(t>=LV[i].t0) k=i; } return k; }
+function exAt(t){ return LV[levelAt(t)].ex; }
+
+/* ----- what's heard: the state at t within one level ----- */
+function rawState(l,t){ let s=l.states[0][2]; for(const [a,,x] of l.states){ if(t>=a) s=x; } return s; }
+/* the pill's state: at a level change it swaps when the wipe edge reaches it */
+function pillState(i,t){ const l=LV[i]; if(l.level>1&&t<l.swap) return rawState(LV[i-1],t); return rawState(l,t); }
+/* change points of the pill for level i: the level swap plus each internal change */
+LV.forEach((l,i)=>{ const cp=[];
+  if(l.level>1){ const a=rawState(LV[i-1],l.t0-1e-4), b=rawState(l,l.swap+1e-4); if(a!==b) cp.push([l.swap,a,b]); }
+  for(const [a] of l.states){ if(a<=l.t0+1e-6||a>=l.t1) continue; const tt=Math.max(a,l.level>1?l.swap:l.t0);
+    const x=pillState(i,tt-1e-4), y=pillState(i,tt+1e-4); if(x!==y) cp.push([tt,x,y]); }
+  l.pillCP=cp; });
+
+/* ----- the round line ----- */
+const DIR={up:' · going up ↑', down:' · going down ↓', same:' · same note again'};
+function roundStr(l,t){
+  if(rawState(l,t)==='Listen') return 'Coach is talking';
+  const R=l.rounds, N=R.length; let k=0; for(let i=0;i<N;i++){ if(t>=R[i][0]) k=i; }
+  const [, , note, dir]=R[k];
+  if(l.glide||!note) return `<b>Round ${k+1}</b> of ${N}`;
+  return `<b>Round ${k+1}</b> of ${N} · from ${note}${dir?DIR[dir]:''}`;
+}
+LV.forEach(l=>{ const c=new Set(); l.rounds.forEach(r=>c.add(r[0])); l.states.forEach(s=>c.add(s[0])); l.roundCP=[];
+  [...c].sort((a,b)=>a-b).forEach(x=>{ if(x<=l.t0+WIPE+.2||x>=l.t1) return; if(roundStr(l,x-1e-4)!==roundStr(l,x+1e-4)) l.roundCP.push(x); }); });
+function roundLine(l,t){ /* [string, opacity]: switches at the change through a 0.15 s dip, never two at once */
+  let o=1; for(const c of l.roundCP){ if(Math.abs(t-c)<.15) o=Math.min(o, t<c?(c-t)/.15:(t-c)/.15); }
+  return [roundStr(l,t),o]; }
+
+/* ===================== measuring (after fonts load) ===================== */
+const PILL_W={}, ROW={};
+function measure(){
+  const d=document.createElement('div'); d.style.cssText='position:absolute;left:-9999px;top:0';
+  d.innerHTML=Object.keys(STATES).map(k=>`<span class="state" style="display:inline-flex;width:max-content;padding:0 30px 0 24px"><span class="lbl">${svg(STATES[k].icon,'#000',2.4)}${k}</span></span>`).join('')+
+    EX.map(e=>`<div class="titlerow"><div class="tile"></div><h1 style="font-size:80px">${e.name}</h1></div>`).join('');
+  document.body.appendChild(d);
+  const s=d.querySelectorAll('.state'); Object.keys(STATES).forEach((k,i)=>PILL_W[k]=s[i].getBoundingClientRect().width);
+  const rows=d.querySelectorAll('.titlerow');
+  EX.forEach((e,i)=>{ const h=rows[i].querySelector('h1'); const w=h.getBoundingClientRect().width, avail=928-120-32;
+    const fs=w>avail?Math.max(60,Math.floor(80*avail/w)):80; h.style.fontSize=fs+'px';
+    ROW[i]={fs, w:rows[i].getBoundingClientRect().width}; });
+  d.remove();
+}
+
+/* ===================== drawing ===================== */
+function ringSVG(done, arcCol, cur, nextDotO){
+  const R=252,SW=52,C=280,GAP=10,cap=(SW/2)/R*180/Math.PI;
+  const pt=a=>[f2(C+R*Math.cos((a-90)*Math.PI/180)),f2(C+R*Math.sin((a-90)*Math.PI/180))];
+  const arc=(a0,a1,col)=>{ if(a1-a0<0.3) return ''; const [x0,y0]=pt(a0),[x1,y1]=pt(a1);
+    return `<path d="M${x0} ${y0} A${R} ${R} 0 ${a1-a0>180?1:0} 1 ${x1} ${y1}" fill="none" stroke="${col}" stroke-width="${SW}" stroke-linecap="round"/>`;};
+  const dot=(i,o)=>{const [x,y]=pt(i*120+GAP/2+cap); return `<circle cx="${x}" cy="${y}" r="${SW/2}" fill="${arcCol}" opacity="${f3(o)}"/>`;};
+  let s='';
+  for(let i=0;i<3;i++){ const a0=i*120+GAP/2+cap,a1=(i+1)*120-GAP/2-cap; s+=arc(a0,a1,'rgba(118,118,128,.12)'); }
+  if(cur!=null) s+=dot(cur,1);
+  for(let i=0;i<3;i++){ const a0=i*120+GAP/2+cap,a1=(i+1)*120-GAP/2-cap;
+    if(done[i]>0){ const q=done[i]>=1?1:Math.floor(done[i]*720)/720; s+=arc(a0,a0+(a1-a0)*q,arcCol); } }
+  if(nextDotO!=null&&cur!=null&&cur<2) s+=dot(cur+1,nextDotO);
+  return `<svg viewBox="0 0 560 560">${s}</svg>`;
+}
+function stripHTML(cur, curDone, breatheIdx, breatheP){
+  return EX.map((e,i)=>{ let f=i<cur?1:i===cur?curDone:0; if(f>0&&f<1) f=Math.floor(f*400)/400;
+    const bg=(i===breatheIdx)?mix(SEG_GREY,e.rim,0.35*breatheP):SEG_GREY;
+    return `<div class="seg" style="flex:${f3(durs[i])};background:${bg}">${f>0?`<i style="width:${f3(f*100)}%;background:${e.rim}"></i>`:''}</div>`;}).join('');
+}
+/* the state pill: label out, colours and width tween, label in with a small squish; labels never overlap */
+function pillHTML(i,t){
+  const l=LV[i]; let from=null,to=pillState(i,t),c=null;
+  for(const [cp,a,b] of l.pillCP){ if(t>=cp-.125&&t<cp+.45){ c=cp; from=a; to=b; } }
+  if(c==null){ const S=STATES[to];
+    return {html:`<span class="state" style="width:${f2(PILL_W[to])}px;background:${S.bg};box-shadow:inset 0 0 0 4px ${S.ring};color:${S.fg}"><span class="lbl">${svg(S.icon,'currentColor',2.4)}${to}</span></span>`, singP:S.sing}; }
+  const A=STATES[from], B=STATES[to], q=ramp(t,c-.1,c+.1), cur=t<c?from:to, S=STATES[cur];
+  const bg=mix(A.bg,B.bg,q), rg=mix(A.ring,B.ring,q), fg=S.fg, w=lerp(PILL_W[from],PILL_W[to],q);
+  const lblO = t<c ? clamp((c-t)/.125) : clamp((t-c)/.167);
+  let sx=1,sy=1; const k=(t-c)/.45; if(k>=0&&k<1){
+    const kf=[[0,1,1],[.3,1.12,.92],[.65,.98,1.02],[1,1,1]]; for(let j=1;j<kf.length;j++){ if(k<=kf[j][0]){ const u=(k-kf[j-1][0])/(kf[j][0]-kf[j-1][0]); sx=lerp(kf[j-1][1],kf[j][1],u); sy=lerp(kf[j-1][2],kf[j][2],u); break; } } }
+  return {html:`<span class="state" style="width:${f2(w)}px;background:${bg};box-shadow:inset 0 0 0 4px ${rg};color:${fg};transform:scale(${f3(sx)},${f3(sy)})"><span class="lbl" style="opacity:${f3(lblO)}">${svg(S.icon,'currentColor',2.4)}${cur}</span></span>`,
+          singP:lerp(A.sing,B.sing,q)};
+}
+function titleRow(i){ const e=EX[i]; return `<div class="titlerow"><div class="tile" style="background:${e.tile}">${svg(e.glyph,'#fff')}</div><h1 style="font-size:${ROW[i].fs}px">${e.name}</h1></div>`; }
+function factCX(j){ const cw=(928-64)/3; return 88+j*(cw+32)+Math.min(cw/2,150); }
+const CX={cue:420,syll:200,round:420};
+
+function layerHTML(L){
+  const ex=EX[L.ex], ic=inkOf(ex.tile);
+  const digits=L.digits.map(d=>`<span style="transform:translateY(${f2(d.y)}px)">${d.n}</span>`).join('');
+  const syllCol=mix(GREY_TXT,INDIGO,L.singP);
+  const F=L.flip||(()=>({n:true,o:1}));
+  const cue=F(CX.cue), syl=F(CX.syll), rnd=F(CX.round);
+  const lvOf=f=>ex.lv[(f.n?L.level:L.oldLevel)-1];
+  const facts=[0,1,2].map(j=>{const f=F(factCX(j)); const fx=lvOf(f).facts[j]; if(!fx) return '<div class="fact"></div>';
+    const [k2,k,v]=fx; return `<div class="fact" style="opacity:${f3(f.o)}">${svg(ICON[k2],ic)}<div class="k">${k}</div><div class="v">${v}</div></div>`;}).join('');
+  const round=rnd.n?L.round:L.oldRound, roundO=Math.min(rnd.o, rnd.n?L.roundO:L.oldRoundO);
+  return `<div class="layer"><div class="content">
+    <div class="left">
+      <div style="opacity:${f3(L.rowO)}">${titleRow(L.ex)}</div>
+      <div style="opacity:${f3(L.aO)};display:flex;flex-direction:column;flex:1">
+        <div class="rule"></div>
+        <p class="cue" style="opacity:${f3(cue.o)}">${lvOf(cue).cue}</p><div class="syll" style="color:${syllCol};opacity:${f3(syl.o)}">${ex.syll}</div>
+        <p class="round" style="opacity:${f3(roundO)}">${round}</p>
+        <div class="facts">${facts}</div>
+      </div>
+    </div>
+    <div class="right" style="opacity:${f3(L.bO)}"><div class="ring">${ringSVG(L.ring,L.arcCol,L.cur,L.nextDotO)}<div class="num"><div class="digits">${digits}</div><div class="states">${L.pill}</div></div></div></div>
+    <div class="strip" style="opacity:${f3(L.bO)}">${stripHTML(L.ex,L.stripDone,L.breatheIdx,L.breatheP)}</div>
+  </div></div>`;
+}
+function pageHTML(P){
+  const sweep=P.sweep?`<div class="sweep" style="width:${f2(P.sweep.w)}px;opacity:${f3(P.sweep.o)};background:linear-gradient(to right,${P.sweep.col} 0,${P.sweep.col} calc(100% - 48px),transparent)"></div>`:'';
+  const pill=P.pill?`<div class="nextpill" style="opacity:${f3(P.pill.o)};transform:translateY(${f2((1-P.pill.o)*-16)}px)">${P.pill.html}</div>`:'';
+  const tm=P.tm?`<div class="tm" style="transform:translate(${f2(P.tm.x)}px,${f2(P.tm.y)}px) scale(${f3(P.tm.s)})">${titleRow(P.ex)}</div>`:'';
+  const scrim=P.scrimO?`<div class="scrim" style="opacity:${f3(P.scrimO)}"></div>`:'';
+  const edge=P.edgeO?`<div class="edge"></div>`:'';
+  return `<div class="page" style="background:${EX[P.ex].rim};transform:translateX(${f2(P.x)}px)"><div class="frame"><div class="card">${sweep}${layerHTML(P.layer)}${pill}${tm}</div></div>${scrim}${edge}</div>`;
+}
+
+/* ===================== one exercise page at time t ===================== */
+function exercisePage(e,t){
+  const T0=EXT[e].t0, E=EXT[e].t1, i0=e*3;
+  /* which level of this exercise is showing (clamped to this exercise) */
+  let li=i0; for(let k=i0;k<i0+3;k++){ if(t>=LV[k].t0) li=k; }
+  const l=LV[li], lvN=l.level, prev=lvN>1?LV[li-1]:null, L3=LV[i0+2];
+  const inWipe=prev&&t<l.t0+WIPE;
+  /* ring */
+  const fills=[0,0,0];
+  for(let k=0;k<3;k++){ const m=LV[i0+k]; const end=k<2?LV[i0+k+1].t0:L3.green; fills[k]=t>=end?1:ramp(t,m.t0,end); }
+  const ringNew=!prev||t>=l.roll, cur=ringNew?lvN-1:lvN-2;
+  const ring=fills.map((f,k)=>k<=cur?f:0);
+  if(!ringNew) ring[cur]=fills[cur];
+  const greenP=ramp(t,L3.greenRing,L3.greenRing+.3), arcCol=mix(BLUE,GREEN,greenP);
+  /* digits */
+  let digits=[{n:lvN,y:0}];
+  if(prev&&t<l.roll+1.4){ const rp=spring(t-l.roll,.9,2.4); digits=[{n:lvN-1,y:-200*rp},{n:lvN,y:200*(1-rp)}]; }
+  /* pill and round line */
+  const pill=pillHTML(li,t);
+  const [rd,ro]=roundLine(l,t);
+  let oldRd='',oldRo=1; if(inWipe){ [oldRd,oldRo]=roundLine(prev,t); oldRd=roundStr(prev,l.t0-1e-3); oldRo=1; }
+  /* sweeps */
+  let sweep=null;
+  if(prev&&t>=l.t0&&t<l.t0+WIPE+.6){ const w=edgeX(t,l.t0,WIPE); const o=t<l.t0+WIPE+.2?1:clamp(1-(t-(l.t0+WIPE+.2))/.4); sweep={w,o,col:'rgba(0,122,255,.17)'}; }
+  if(t>=L3.green&&t<L3.green+GWIPE+.6){ const w=edgeX(t,L3.green,GWIPE); const o=t<L3.green+GWIPE+.2?1:clamp(1-(t-(L3.green+GWIPE+.2))/.4); sweep={w,o,col:'rgba(52,199,89,.30)'}; }
+  /* heads-up ("Level N next") and up-next pills */
+  let npill=null, nextDotO=null;
+  if(lvN<3){ const nx=LV[li+1], h0=nx.t0-HEADSUP;
+    if(t>=h0){ npill={o:spring(t-h0),html:`${svg(ICON.arrow,'#6C6C72',2.6).replace('<svg','<svg width="30" height="30"')}Level ${lvN+1} next`}; nextDotO=0.25+0.75*breathe(t-h0); } }
+  if(prev&&t<l.hOff+.15&&t>=l.t0){ const h0=l.t0-HEADSUP;   /* the heads-up leaves as the wipe edge reaches it */
+    npill={o:Math.min(spring(t-h0),1-ramp(t,l.hOff-.1,l.hOff+.1)),html:`${svg(ICON.arrow,'#6C6C72',2.6).replace('<svg','<svg width="30" height="30"')}Level ${lvN} next`}; }
+  if(prev&&!ringNew){ nextDotO=Math.max(0.25+0.75*breathe(t-(l.t0-HEADSUP)), ramp(t,l.t0-.2,l.t0)); }
+  let breatheIdx=-1, breatheP=0;
+  if(e<11&&t>=E-UPNEXT){ const nx=EX[e+1]; npill={o:Math.min(spring(t-(E-UPNEXT)),clamp((E-t)/.2)),html:`<span class="dot" style="background:${nx.rim}"></span>Up next · ${nx.name}`};
+    breatheIdx=e+1; breatheP=breathe(t-(E-UPNEXT)); }
+  if(t>=E) npill=null;
+  /* strip */
+  const stripDone=t>=L3.greenStrip?1:0.985*ramp(t,T0,L3.green);
+  /* element flips as the wipe edge passes each centre, with a one-frame blink */
+  let flip=null;
+  if(inWipe){ const ex_=edgeX(t,l.t0,WIPE); flip=cx=>(t<l.t0?{n:false,o:1}:{n:ex_>=cx,o:clamp(Math.abs(ex_-cx)/45)}); }
+  /* title moment: the big name holds, then settles while the content fades in (text first, ring and strip 80 ms later) */
+  const ST=T0+SETTLE_AT, settle=spring(t-ST), aO=ramp(t,ST+.05,ST+.45), bO=ramp(t,ST+.13,ST+.53);
+  let tm=null,rowO=1;
+  if(t<ST+.45){ const s0=1.6, x0=(CW-ROW[e].w*s0)/2-88, y0=(CH-120*s0)/2-88;
+    tm={x:x0*(1-settle),y:y0*(1-settle),s:s0+(1-s0)*settle}; rowO=0; }
+  const layer={ex:e,level:lvN,oldLevel:prev?lvN-1:lvN,flip,rowO,aO,bO,digits,pill:pill.html,singP:pill.singP,arcCol,
+    cur,nextDotO:ringNew?(lvN<3?nextDotO:null):nextDotO,breatheIdx,breatheP,
+    round:rd,roundO:ro,oldRound:oldRd,oldRoundO:oldRo,ring,stripDone};
+  return {ex:e,layer,sweep,pill:npill,tm};
+}
+function build(t){
+  t=clamp(t,0,TOTAL-1e-6);
+  const e=exAt(t), B=EXT[e].t0, pages=[];
+  if(e>0&&t<B+PUSH+.05){ /* the whole page pushes in from the right; the old page slides at a third of the speed and dims 10% */
+    const pushP=ease(ramp(t,B,B+PUSH)); const old=exercisePage(e-1,t);
+    old.x=-pushP*1920/3; old.scrimO=0.10*pushP; pages.push(old);
+    const nw=exercisePage(e,t); nw.x=(1-pushP)*1920; nw.edgeO=pushP<1?1:0; pages.push(nw);
+  } else { const p=exercisePage(e,t); p.x=0; pages.push(p); }
+  return pages.map(pageHTML).join('');
+}
+/* sub-frames for the film-style shutter: blur only in the transition windows */
+function blurSamples(t){
+  const e=exAt(t), B=EXT[e].t0, l=LV[levelAt(t)], i0=e*3, L3=LV[i0+2];
+  if(e>0&&t>=B-.05&&t<B+.6) return 16;                                           /* page push */
+  if(t>=B+SETTLE_AT-.05&&t<B+SETTLE_AT+.75) return 8;                            /* title settle */
+  if(l.level>1&&t>=l.t0-.05&&t<l.t0+WIPE+.15) return 8;                           /* level wipe */
+  if(t>=L3.green-.05&&t<L3.green+GWIPE+.15) return 8;                             /* green wipe */
+  return 1;
+}
+let LAST='';
+window.frame=function(t){ const h=build(t); if(h===LAST) return false; LAST=h; document.getElementById('stage').innerHTML=h; return true; };
+window.force=function(t){ LAST=''; return window.frame(t); };
+window.info=function(t){ return {blur:blurSamples(t)}; };
+window.ready=document.fonts.ready.then(()=>{ measure(); window.frame(0); return {pill:PILL_W, rows:ROW, inks:EX.map(e=>inkOf(e.tile))}; });
+</script>
+</body></html>

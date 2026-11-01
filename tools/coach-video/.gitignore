@@ -1,0 +1,6 @@
+data.js
+*.mov
+*.mp4
+*.ttf
+*.otf
+__pycache__/

@@ -1,0 +1,77 @@
+{
+  "about": "Coach video redesign (Q24) content: the approved wording for all 36 levels (coach_video_level1_wording.md, coach_video_level23_wording.md, approved by Ivan 1 Nov 2026). Each fact is [icon, label, value]. rim = the original video's exercise colour (locked). focus = the app's focus area; the tile colour is read from FOCUS_COL in js/config.js at build time.",
+  "exercises": [
+    {"id": "slides", "name": "Vocal slides", "rim": "#FF3B30", "focus": "agility", "syll": "hee hoo hoe hah hay",
+     "lv": [
+      {"cue": "One long note on hee, then short slides.", "facts": [["arrow", "Placement", "Forward"], ["wave", "Vibrato", "None"], ["volume", "Keep it", "Light and quiet"]]},
+      {"cue": "Medium slides on hee, hoo, hah, hay.", "facts": [["head", "Head", "Tilt slightly, roll side to side"], ["jaw", "Jaw", "Wiggle it"], ["up", "Going higher", "Light and thin"]]},
+      {"cue": "Full range slides.", "facts": [["up", "High notes", "Bend forward at the waist and bounce"], ["repeat", "Bounce", "Whole body, 3 times"], ["next", "Each time", "Release a little higher"]]}
+     ]},
+    {"id": "humming", "name": "Humming", "rim": "#34C759", "focus": "cord-closure", "syll": "hmmm",
+     "lv": [
+      {"cue": "Hum on hmmm.", "facts": [["mouth", "Lips", "Loosely touching, not pressed"], ["wave", "Keep it", "Quiet and relaxed"], ["target", "Feel it", "Roof of mouth, mask"]]},
+      {"cue": "Hum through a melodic pattern.", "facts": [["target", "Feel the buzz", "Nose and cheekbones"], ["arrow", "Placement", "Forward"], ["wave", "Keep it", "Relaxed"]]},
+      {"cue": "Hum a longer, more complex pattern.", "facts": [["arrow", "Placement", "Forward"], ["target", "Feel it", "Roof of mouth, mask"], ["wave", "Keep it", "Loose. Don’t chase volume"]]}
+     ]},
+    {"id": "lip", "name": "Lip bubbling", "rim": "#007AFF", "focus": "cord-closure", "syll": "brrr",
+     "lv": [
+      {"cue": "Motorboat your lips across your range.", "facts": [["up", "High notes", "Sigh into them"], ["stop", "Don’t", "Push"], ["hand", "Lips stop?", "Press cheeks in and forward"]]},
+      {"cue": "Lip bubble through a scale pattern.", "facts": [["link", "Keep smooth", "Chest, mix and head"], ["up", "High notes", "Don’t tense up for them"], ["wave", "Stay", "Energised but relaxed"]]},
+      {"cue": "Full range lip bubbles.", "facts": [["link", "Pass through", "Chest, mixed and head voice, smoothly"], ["stop", "Larynx", "Never grab at it"], ["wave", "Whole range", "Effortless"]]}
+     ]},
+    {"id": "falsetto", "name": "Falsetto voice", "rim": "#FF9500", "focus": "register", "syll": "hoo hee hoh",
+     "lv": [
+      {"cue": "Sing on hoo, rolling like waves.", "facts": [["mouth", "Teeth", "Half an inch apart"], ["volume", "Volume", "Comfortable. Don’t control it yet"], ["wave", "Keep it", "Loose"]]},
+      {"cue": "Sing hee in falsetto through a scale.", "facts": [["jaw", "Jaw", "Open"], ["wave", "Stay", "Relaxed"], ["volume", "Once comfortable", "Practise soft to loud"]]},
+      {"cue": "Alternate hoh and wah/woh in falsetto, wider intervals.", "facts": [["target", "Feel", "Free and disconnected"], ["stop", "Don’t", "Force a chest connection"]]}
+     ]},
+    {"id": "upperlower", "name": "Upper to lower voice", "rim": "#FFCC00", "focus": "register", "syll": "woh woo wee wah",
+     "lv": [
+      {"cue": "Descend from upper to lower voice on woh.", "facts": [["speed", "Speed", "Slow motion, legato"], ["volume", "Volume", "Low"], ["mouth", "Keep", "Lips and tongue relaxed, open"]]},
+      {"cue": "Sing we-we-we descending.", "facts": [["link", "Transition", "Smooth, no noticeable break"], ["straw", "Instead of a vowel", "Lip bubbles or a straw"]]},
+      {"cue": "Alternate wah and way descending.", "facts": [["link", "Registers", "Blend seamlessly"], ["note", "Tone", "No change from one register to the next"]]}
+     ]},
+    {"id": "straw", "name": "Singing through a straw", "rim": "#A2845E", "focus": "cord-closure", "syll": "hmmm",
+     "lv": [
+      {"cue": "Blow bubbles through a straw into water.", "facts": [["breath", "Breath", "Abdominals support it"], ["straw", "Straw", "Start with a wide one"], ["wave", "Feel", "Effortless and soothing"]]},
+      {"cue": "Hum a melodic pattern through the straw.", "facts": [["breath", "Air", "Keep it flowing forward"], ["spark", "Water resistance", "Builds breath-support muscle memory"]]},
+      {"cue": "Sing a longer pattern through the straw.", "facts": [["straw", "As you progress", "Try smaller straws"], ["next", "Afterwards", "A whole song through the straw"]]}
+     ]},
+    {"id": "rung", "name": "Singing on the rung", "rim": "#FF2D55", "focus": "resonance", "syll": "runnng",
+     "lv": [
+      {"cue": "Sing runnng to blend registers through the mix.", "facts": [["jaw", "Jaw", "Drop open vertically"], ["mouth", "Tongue", "Tip behind lower front teeth"], ["volume", "Volume", "Light, moderately quiet"]]},
+      {"cue": "Runnng through a longer scale.", "facts": [["jaw", "Jaw", "Dropping freely throughout"], ["spark", "Builds", "Open-jaw muscle memory"], ["stop", "Breaks", "The habit of singing tight"]]},
+      {"cue": "Runnng through a wide-range pattern.", "facts": [["jaw", "Jaw", "Open"], ["mouth", "Tongue", "Relaxed"], ["note", "Free jaw", "Free tone"]]}
+     ]},
+    {"id": "hinge", "name": "Squeaky hinge", "rim": "#C82EDE", "focus": "register", "syll": "hmmm",
+     "lv": [
+      {"cue": "Make a squeaky door hinge sound.", "facts": [["target", "Focus", "Centre of your head"], ["up", "Going higher", "Thinner and lighter"], ["wave", "Effort", "None at all"]]},
+      {"cue": "Squeaky hinge through a scale, with glissandos.", "facts": [["wave", "Stay", "Loose"], ["breath", "Strain", "None, when placement and breath are right"]]},
+      {"cue": "Extended squeaky hinge pattern.", "facts": [["up", "Highest range", "Let the voice in freely"], ["spark", "For some", "A way into the whistle register"]]}
+     ]},
+    {"id": "half", "name": "Half squeaky / half normal", "rim": "#C82EDE", "focus": "blend", "syll": "wah bow way",
+     "lv": [
+      {"cue": "Sing wah, bridging from squeaky to natural.", "facts": [["target", "Placement", "Squeaky hinge"], ["note", "Tone", "Normal singing"], ["jaw", "Jaw", "Fully open"]]},
+      {"cue": "Sing bow-bow with squeaky hinge glissandos.", "facts": [["arrow", "Placement", "Keep it forward"], ["link", "Bridges", "Squeaky hinge to your normal voice"]]},
+      {"cue": "Sing way, half squeaky, half normal.", "facts": [["wave", "Feel", "Flowing 6/8"], ["link", "Carry", "Hinge placement into real singing"]]}
+     ]},
+    {"id": "vertical", "name": "Vertical mouth", "rim": "#FF9500", "focus": "resonance", "syll": "mum lum yum",
+     "lv": [
+      {"cue": "Sing mum-mum with a slightly vertical mouth.", "facts": [["stop", "Avoid", "Spreading it wide"], ["head", "Spread mouth", "Tenses the neck"], ["note", "Vertical feels", "Warmer and freer"]]},
+      {"cue": "Sing lum-lum through a scale.", "facts": [["jaw", "Mouth", "Vertical throughout"], ["stop", "Breaks", "Smiling while singing"]]},
+      {"cue": "Sing yum-yum through a 6/8 pattern.", "facts": [["jaw", "Mouth", "Vertical"], ["ear", "Listen for", "Freedom and warmth in the tone"]]}
+     ]},
+    {"id": "nasal", "name": "Nasal exercise", "rim": "#FF2D55", "focus": "resonance", "syll": "may me nay",
+     "lv": [
+      {"cue": "Sing may-may-may.", "facts": [["arrow", "Placement", "Forward, nasal"], ["stop", "Not", "Back of throat"], ["ear", "Sounds nasal?", "Fine. It’s healthily forward"]]},
+      {"cue": "Sing me-me-me through a scale.", "facts": [["arrow", "Keep it", "Bright and forward"], ["spark", "Low notes", "Gain clarity and strength"]]},
+      {"cue": "Sing nay-yay-yay through a 6/8 pattern.", "facts": [["arrow", "Placement", "Forward, nasal"], ["link", "Also", "A route into your mixed middle range"]]}
+     ]},
+    {"id": "flex", "name": "Vocal flexibility", "rim": "#FF3B30", "focus": "agility", "syll": "woo wah he",
+     "lv": [
+      {"cue": "Sing woo through a pentatonic scale.", "facts": [["speed", "Speed", "Slow first, then build"], ["spark", "Builds", "Runs, riffs and improvisation"]]},
+      {"cue": "Alternate woo and wah through a longer pattern.", "facts": [["speed", "Order", "Accuracy, then speed"], ["next", "Once you know it", "Try it a cappella"]]},
+      {"cue": "Sing he through a fast 12/8 pattern.", "facts": [["spark", "Builds", "Agility and riffs"], ["speed", "Once notes are clean", "Go faster than the recording"]]}
+     ]}
+  ]
+}
