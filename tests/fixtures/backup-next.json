@@ -1,0 +1,374 @@
+{
+ "README": [
+  "A made-up backup for the tests: shaped as the version after 3.36 would write it, with marks, timing, markers",
+  "and a loop carrying fields 3.36 doesn't know (in `ext` and elsewhere). No real lyrics or recordings."
+ ],
+ "app": "vocal-sessions",
+ "format": 2,
+ "appVersion": "3.37",
+ "exportedAt": "2026-11-15T10:00:00.000Z",
+ "device": "iPhone",
+ "summary": {
+  "sessions": 0,
+  "songs": 1
+ },
+ "data": {
+  "v2": true,
+  "ex": {},
+  "custom": [],
+  "songs": [
+   {
+    "id": "g_n1",
+    "name": "Next Version Song",
+    "artist": "",
+    "pinned": false,
+    "added": 1761955200000,
+    "ext": {
+     "voice": "baritone"
+    },
+    "original": "[Verse]\nla la la la\ndo re mi\n\n[Chorus]\noh oh\nyeah",
+    "sections": {
+     "x1": {
+      "label": "Verse",
+      "cue": "",
+      "lines": [
+       [
+        "la",
+        "la",
+        "la",
+        "la"
+       ],
+       [
+        "do",
+        "re",
+        "mi"
+       ]
+      ],
+      "ext": {
+       "focus": "register"
+      },
+      "marks": [
+       {
+        "id": "k1",
+        "L": "delivery",
+        "type": "register",
+        "opt": "Chest",
+        "line": 0,
+        "w0": 0,
+        "w1": 0,
+        "text": "",
+        "ext": {
+         "transition": {
+          "to": "Mix",
+          "at": 2
+         }
+        }
+       },
+       {
+        "id": "k2",
+        "L": "delivery",
+        "type": "register",
+        "opt": "Vocal fry",
+        "line": 0,
+        "w0": 1,
+        "w1": 1,
+        "text": ""
+       },
+       {
+        "id": "k3",
+        "L": "delivery",
+        "type": "somatic",
+        "opt": "Jaw",
+        "line": 0,
+        "w0": 2,
+        "w1": 3,
+        "text": "loose jaw",
+        "ext": {
+         "area": "jaw"
+        }
+       },
+       {
+        "id": "k4",
+        "L": "body",
+        "type": "tension",
+        "opt": "",
+        "line": 1,
+        "w0": 0,
+        "w1": 2,
+        "text": "shoulders"
+       },
+       {
+        "id": "k5",
+        "L": "delivery",
+        "type": "breath",
+        "opt": "",
+        "line": 1,
+        "w0": 0,
+        "w1": 0,
+        "text": ""
+       },
+       {
+        "id": "k6",
+        "L": "phrasing",
+        "type": "breath",
+        "opt": "Quick",
+        "line": 1,
+        "w0": 2,
+        "w1": 2,
+        "text": "",
+        "ext": {
+         "ms": 300
+        },
+        "cue": "a field outside ext"
+       },
+       {
+        "id": "k7",
+        "L": "delivery",
+        "type": "intention",
+        "opt": "",
+        "line": -1,
+        "w0": 0,
+        "w1": 0,
+        "text": "Tell a story"
+       },
+       {
+        "id": "k8",
+        "L": "delivery",
+        "type": "arc",
+        "opt": "",
+        "line": -1,
+        "w0": 0,
+        "w1": 0,
+        "text": "Build slowly"
+       },
+       {
+        "id": "k9",
+        "L": "note",
+        "type": "note",
+        "opt": "Trouble spot",
+        "line": 0,
+        "w0": 3,
+        "w1": 3,
+        "text": "watch pitch",
+        "ext": {
+         "somatic": "tight throat"
+        }
+       },
+       {
+        "id": "k10",
+        "L": "notes",
+        "type": "pitch",
+        "opt": "Up",
+        "line": 1,
+        "w0": 1,
+        "w1": 1,
+        "text": "",
+        "ext": {
+         "cents": 20
+        }
+       }
+      ],
+      "held": [
+       {
+        "id": "h1",
+        "L": "phrasing",
+        "type": "breath",
+        "opt": "Full",
+        "text": "",
+        "was": "fa",
+        "ext": {
+         "note": "x"
+        }
+       },
+       {
+        "id": "h2",
+        "L": "delivery",
+        "type": "register",
+        "opt": "Vocal fry",
+        "text": "",
+        "was": "so"
+       },
+       {
+        "id": "h3",
+        "L": "body",
+        "type": "tension",
+        "opt": "",
+        "text": "neck",
+        "was": "ti"
+       }
+      ],
+      "ann": {
+       "1:2": {
+        "br": 1
+       },
+       "0:3": {
+        "nt": "watch pitch"
+       },
+       "1:1": {
+        "up": 1
+       }
+      },
+      "orphans": [
+       {
+        "id": "h1",
+        "was": "fa",
+        "ann": {
+         "br": 1
+        }
+       }
+      ]
+     },
+     "x2": {
+      "label": "Chorus",
+      "cue": "",
+      "lines": [
+       [
+        "oh",
+        "oh"
+       ],
+       [
+        "yeah"
+       ]
+      ],
+      "marks": [
+       {
+        "id": "c1",
+        "L": "phrasing",
+        "type": "phrase",
+        "opt": "",
+        "line": 0,
+        "w0": 0,
+        "w1": 1,
+        "text": ""
+       }
+      ],
+      "held": [],
+      "ann": {},
+      "orphans": []
+     }
+    },
+    "order": [
+     {
+      "o": "o1",
+      "sid": "x1"
+     },
+     {
+      "o": "o2",
+      "sid": "x2"
+     },
+     {
+      "o": "o3",
+      "sid": "x1"
+     }
+    ],
+    "timing": {
+     "ext": {
+      "tempo": 96
+     },
+     "grid": "a field outside ext",
+     "len": 200,
+     "real": false,
+     "est": false,
+     "lenLink": true,
+     "slots": {
+      "o1": {
+       "ext": {
+        "transition": "chest to mix"
+       },
+       "lines": [
+        [
+         10.5,
+         14.25,
+         {
+          "anchor": "onset"
+         }
+        ],
+        [
+         15,
+         19.5
+        ]
+       ],
+       "anch": true,
+       "marks": [],
+       "flag": "kept"
+      },
+      "o2": {
+       "lines": [
+        [
+         20,
+         22.5
+        ],
+        [
+         null,
+         null,
+         {
+          "somatic": "relax"
+         }
+        ]
+       ],
+       "anch": true,
+       "marks": [
+        1
+       ]
+      },
+      "o3": {
+       "lines": [
+        [
+         30,
+         33
+        ],
+        [
+         34,
+         37.5
+        ]
+       ],
+       "anch": true,
+       "marks": []
+      }
+     }
+    },
+    "track": {
+     "name": "synthetic.wav",
+     "dur": 200
+    },
+    "markers": [
+     {
+      "ext": {
+       "register": "Mix"
+      },
+      "colour": "blue",
+      "id": "mk1",
+      "t": 12.5,
+      "end": 18,
+      "name": "Flip"
+     },
+     {
+      "id": "mk2",
+      "t": 40
+     }
+    ],
+    "loop": {
+     "ext": {
+      "reps": 3
+     },
+     "start": 12.5,
+     "end": 18,
+     "on": false,
+     "mk": "mk1"
+    }
+   }
+  ],
+  "sessions": [],
+  "months": {},
+  "songSessions": [],
+  "words": {},
+  "prefs": {},
+  "schema": 4,
+  "ext": {
+   "from": "next version"
+  }
+ },
+ "draft": null,
+ "takes": [],
+ "checkCode": "1a7014570aa201195176727693b3f9530fa74f86ceccd05cc16ffa2c91935fc0"
+}

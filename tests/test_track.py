@@ -6,7 +6,7 @@ plays, speed with the pitch kept, the jog wheel, the floating window and one sou
 restored song without its track, deleting, and every size in light and dark.
 The fixtures are synthetic: tones with gaps, written by the test as WAV files. Nothing copyrighted is ever used."""
 import os, wave, struct, math, json
-from harness import OUT, ready, fix
+from harness import OUT, ready, fix, until
 
 LAUNCH_ARGS = ['--autoplay-policy=no-user-gesture-required']
 # counts every decodeAudioData, so a reopen can prove it didn't decode again
@@ -212,6 +212,11 @@ def loops(b, t):
     pg.evaluate("TRACK.seek(12)"); pg.click('[data-a=trkSet][data-v=end]'); pg.wait_for_timeout(100)
     ok(loop(pg) == {'start': 10, 'end': 12, 'on': True}, f'Set end at the playhead: {loop(pg)}')
     ok(pg.evaluate("JSON.parse(localStorage.getItem('vocalTracker')).songs.find(s=>s.id==='g_1').loop.end") == 12, 'the loop is saved with the song')
+    # Q15: a field a newer version added to the loop survives setting a new range
+    pg.evaluate("songById('g_1').loop.ext={reps:3};TRACK.seek(14)"); pg.click('[data-a=trkSet][data-v=end]')
+    until(pg, "songById('g_1').loop.end===14")
+    ok(loop(pg) == {'start': 10, 'end': 14, 'on': True, 'ext': {'reps': 3}}, f'setting a new end keeps the loop’s extra fields: {loop(pg)}')
+    pg.evaluate("delete songById('g_1').loop.ext;TRACK.seek(12)"); pg.click('[data-a=trkSet][data-v=end]'); until(pg, "songById('g_1').loop.end===12")
     pg.evaluate("TRACK.seek(8)"); pg.click('[data-a=trkSet][data-v=end]'); pg.wait_for_timeout(100)
     ok(loop(pg) == {'start': 0, 'end': 8, 'on': True}, f'an end before the start starts a fresh range from 0:00 (FCP’s In and Out): {loop(pg)}')
     pg.evaluate("songById('g_1').loop={start:10,end:12,on:true};TRACK.seek(11)"); pg.wait_for_timeout(50)

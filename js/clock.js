@@ -120,16 +120,26 @@ function ckPref(k, v) {
 /* ===== Song Clock: checking saved timing =====
    sg.timing = {len, real, est, slots: {o: {lines: [[start, end|null], …], anch, marks: [line…]}}}
    Timing belongs to places in the running order (o), not to sections: Chorus 2 is sung at a different time from
-   Chorus 1. Anything malformed is dropped without touching the rest of the song. */
+   Chorus 1. Anything malformed is dropped without touching the rest of the song.
+   Q15: fields this version doesn't know are kept at every level (the timing, each slot, and each line's items after
+   its start and end), as they are; new ones go in `ext` (`timing.ext`, `slot.ext`, `[start, end, ext]`). ckStore()
+   keeps them too. */
+const CK_T_KNOWN = ['len', 'real', 'est', 'lenLink', 'slots'],
+  CK_S_KNOWN = ['lines', 'anch', 'marks', 'fix', 'sb'];
+// a line's items after its start and end (Q15: its `ext`), copied
+const ckLineExtra = (r) => (Array.isArray(r) && r.length > 2 ? JSON.parse(JSON.stringify(r.slice(2))) : []);
+// timing with nothing in it: no length, no slots and nothing a newer version added
+const ckEmpty = (t) =>
+  t.len == null && !Object.keys(t.slots || {}).length && !Object.keys(dataExtras(t, CK_T_KNOWN)).length;
 function cleanTiming(t, sg) {
   if (!t || typeof t !== 'object' || Array.isArray(t)) return null;
   const num = (x) => typeof x === 'number' && isFinite(x) && x >= 0;
-  const out = {
+  const out = Object.assign(dataExtras(t, CK_T_KNOWN), {
     len: num(t.len) && t.len > 0 && t.len <= CK_MAXLEN ? Math.round(t.len) : null,
     real: t.real === true,
     est: t.est === true,
     slots: {},
-  };
+  });
   // 3.20: the length follows the song's track (set when a track is added; unlinked by hand)
   if (t.lenLink === true && out.len != null) out.lenLink = true;
   const order = sg && Array.isArray(sg.order) ? sg.order : [];
@@ -152,7 +162,7 @@ function cleanTiming(t, sg) {
         if (prev && prev[1] != null && prev[1] > a) prev[1] = a;
         if (b != null && b < a + CK_MIN - 1e-6) b = null;
       }
-      const l = [a, b];
+      const l = [a, b].concat(ckLineExtra(r));
       lines.push(l);
       if (a != null) prev = l;
     }
@@ -160,7 +170,7 @@ function cleanTiming(t, sg) {
       (Array.isArray(a) ? a : [])
         .filter((m, i, arr) => Number.isInteger(m) && m >= 0 && m < n && arr.indexOf(m) === i)
         .sort((p, q) => p - q);
-    const slot = { lines, anch: s.anch === true, marks: list(s.marks) };
+    const slot = Object.assign(dataExtras(s, CK_S_KNOWN), { lines, anch: s.anch === true, marks: list(s.marks) });
     // Q05 (optional, older versions drop them): lines placed by hand on an estimated song, and suggested breaths (a gap
     // after a placed line). A suggested breath goes once the line has a breath mark of Ivan's
     const fix = list(s.fix),
@@ -169,7 +179,7 @@ function cleanTiming(t, sg) {
     if (sb.length) slot.sb = sb;
     out.slots[x.o] = slot;
   });
-  if (!Object.keys(out.slots).length && out.len == null) return null;
+  if (ckEmpty(out)) return null;
   return out;
 }
 
@@ -365,17 +375,21 @@ function ckStore(sg, L, T, anch, marks, flags, fix) {
   const old = sg.timing || {},
     os = old.slots || {},
     slots = {};
+  // Q15: each slot keeps the fields this version doesn't know, and each line its items after start and end
   sg.order.forEach((x, k) => {
-    slots[x.o] = { lines: [], anch: !!(anch && anch[k]), marks: [] };
+    slots[x.o] = Object.assign(dataExtras(os[x.o], CK_S_KNOWN), { lines: [], anch: !!(anch && anch[k]), marks: [] });
   });
   const fx = L.map((l, i) => (fix ? !!fix[i] : !!(os[l.o] && (os[l.o].fix || []).includes(l.li))));
   L.forEach((l, i) => {
     const s = slots[l.o];
-    s.lines[l.li] = [T[i][0] == null ? null : +T[i][0].toFixed(3), T[i][1] == null ? null : +T[i][1].toFixed(3)];
+    s.lines[l.li] = [T[i][0] == null ? null : +T[i][0].toFixed(3), T[i][1] == null ? null : +T[i][1].toFixed(3)].concat(
+      ckLineExtra(os[l.o] && Array.isArray(os[l.o].lines) && os[l.o].lines[l.li])
+    );
     if (marks && marks[i]) s.marks.push(l.li);
     if (fx[i]) (s.fix || (s.fix = [])).push(l.li);
   });
   const t = Object.assign(
+    dataExtras(old, CK_T_KNOWN),
     { len: old.len == null ? null : old.len, real: !!old.real, est: !!old.est },
     old.lenLink && old.len != null ? { lenLink: true } : {},
     flags || {},
@@ -1730,7 +1744,7 @@ function ckSetLen(sg, v) {
   if (!sg.timing) sg.timing = { len: null, real: false, est: false, slots: {} };
   sg.timing.len = v > 0 ? Math.min(CK_MAXLEN, Math.round(v)) : null;
   delete sg.timing.lenLink; // a length set by hand is the song's own (3.20)
-  if (sg.timing.len == null && !Object.keys(sg.timing.slots || {}).length) delete sg.timing;
+  if (ckEmpty(sg.timing)) delete sg.timing;
   save();
   rerender();
   ckToast(v > 0 ? 'Song length ' + ckFmt(v) : 'Song length cleared', ckUndo);

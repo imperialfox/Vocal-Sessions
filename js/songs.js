@@ -982,7 +982,7 @@ function sgWord(o, sid, li, wi, w, mask, d, chk) {
 // the words of a line that have a mark to check, on any layer (shown while editing)
 function sgChecks(sec, li) {
   const b = new Set();
-  (sec.marks || []).forEach((m) => {
+  MARKS.live(sec.marks).forEach((m) => {
     if (m.check && m.line === li) for (let w = m.w0; w <= m.w1; w++) b.add(w);
   });
   return b;
@@ -1046,7 +1046,7 @@ function sgSection(sg, idx) {
   else if (n && !sel) h += '<span class="shared">' + nTakes(n) + '</span>';
   h += '</div>';
   if (ed)
-    (sec.held || []).forEach((op) => {
+    MARKS.live(sec.held).forEach((op) => {
       h +=
         '<div class="sgwarn"><span>' +
         esc(MARKS.name(op)) +
@@ -1776,14 +1776,15 @@ function selectWord(w) {
   if (SG.pend) {
     const pm = SG.pend,
       src = sg.sections[pm.sid],
-      op = src && (src.held || []).find((x) => x.id === pm.id);
+      op = src && MARKS.live(src.held).find((x) => x.id === pm.id);
     SG.pend = null;
     if (op) {
       sgSnap();
       const dst = sg.sections[w.sid];
       src.held = src.held.filter((x) => x !== op);
       MARKS.mirror(src);
-      const r = MARKS.add(dst, { li: w.li, w0: w.wi, w1: w.wi }, op.type, op.opt, op.text);
+      // Q15: the moved mark keeps its own extra fields (`ext`)
+      const r = MARKS.add(dst, { li: w.li, w0: w.wi, w1: w.wi }, op.type, op.opt, op.text, op);
       if (r) r.m.id = op.id;
       const m = op;
       save();

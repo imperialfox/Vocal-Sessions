@@ -72,11 +72,14 @@ def run(b, t):
           const s=cleanSong({id:'z',name:'Z',sections:{x:{label:'Verse',lines:L,marks:[mk({}),mk({type:'zap'}),mk({L:'notes'}),mk({opt:'Huge'}),mk({line:5}),mk({w0:2,w1:1,type:'phrase'}),
             mk({w1:7}),mk({type:'intention',L:'delivery',line:-1,text:'first'}),mk({type:'intention',L:'delivery',line:-1,text:'second'}),mk({type:'say',L:'words'}),
             mk({type:'peak',w0:0,w1:2}),mk({type:'phrase',w0:0,w1:2}),mk({type:'note',L:'note',text:'x'.repeat(300)}),mk({w0:1,w1:1,extra:{k:1}})]}},order:[{o:'o',sid:'x'}]});
-          return s.sections.x.marks.map(m=>[m.type,m.w0,m.w1,(m.text||'').length,!!m.extra])}""")
-        types = [x[0] for x in bad]
+          return s.sections.x.marks.map(m=>[m.type,m.w0,m.w1,(m.text||'').length,!!m.extra,MARKS.active(m)])}""")
+        types = [x[0] for x in bad if x[5]]
+        idle = [x[0] for x in bad if not x[5]]
         ok(types.count('breath') == 2 and 'zap' not in types and types.count('intention') == 1 and 'say' not in types,
-           f'unknown types, wrong layers, bad options, lines or words out of range, a second Intention and missing text are dropped ({types})')
-        ok(['peak', 0, 0, 0, False] in bad and ['phrase', 0, 2, 0, False] in bad, 'a one-word mark given a range sits on its word; a range keeps it')
+           f'lines or words out of range, a second Intention and missing text are dropped; unknown types, wrong layers and bad options aren’t used ({types})')
+        # Q15: a mark from a newer version (unknown type, option or layer) is kept, inactive, rather than dropped
+        ok(sorted(idle) == ['breath', 'breath', 'zap'], f'unknown types, wrong layers and unknown options are kept, inactive ({idle})')
+        ok(['peak', 0, 0, 0, False, True] in bad and ['phrase', 0, 2, 0, False, True] in bad, 'a one-word mark given a range sits on its word; a range keeps it')
         ok(any(x[0] == 'note' and x[3] == 200 for x in bad) and any(x[4] for x in bad), 'long notes are cut to 200 characters, and fields from a newer version are kept')
 
         # device prefs: the layer is remembered, never in a backup

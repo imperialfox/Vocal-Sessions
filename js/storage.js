@@ -196,6 +196,20 @@ function saveDraft() {
     }
   }
 }
+/* Q15 · Optional extras. A newer version may add fields to a record this version knows (a mark, the timing, a timing
+   slot, a timed line, a marker, the loop). New optional fields go in one place on each record, `ext` (an object:
+   `mark.ext`, `timing.ext`, `slot.ext`, a timed line's third item `[start, end, ext]`, `marker.ext`, `loop.ext`), so a
+   later feature checks its own fields there. Every checker and writer keeps fields it doesn't know, `ext` or not, as
+   they are. dataExtras(rec, known): the fields of a record that aren't in `known`, copied (so an Undo copy never
+   shares them). */
+function dataExtras(rec, known) {
+  const o = {};
+  if (rec && typeof rec === 'object' && !Array.isArray(rec))
+    for (const k in rec)
+      if (!known.includes(k) && rec[k] !== undefined && typeof rec[k] !== 'function')
+        o[k] = JSON.parse(JSON.stringify(rec[k]));
+  return o;
+}
 /* Data version. When the shape of saved data has to change, add a numbered step to UPGRADES and raise SCHEMA.
    Steps may only add things, so older backups and the previous version of the app keep working. */
 const SCHEMA = 4,
@@ -223,6 +237,9 @@ const UPGRADES = {
   // 3.27 (Q03): marks come in layers. Each section's older Annotate marks (`ann`, `orphans`) are moved across into
   // `marks` and `held` by cleanSection() as the data loads (marks.js); this step makes sure every song has been, and
   // the older shape is kept beside them, so nothing is lost and a backup still opens in 3.26.
+  // Q15 note: in practice this step finds nothing to do. cleanData() runs before upgradeData() (on launch and on a
+  // restore), and cleanSection() has already moved every section across by then. It stays as a safety net, and
+  // because a numbered step can't be removed.
   4: (d) => {
     (d.songs || []).forEach((s) => {
       for (const k in s.sections || {}) {

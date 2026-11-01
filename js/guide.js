@@ -497,8 +497,7 @@ const MKG = (() => {
       const sec = sg.sections[x.sid];
       if (!sec || seen.has(x.sid)) return; // a linked repeat shares its section's marks: counted once
       seen.add(x.sid);
-      (sec.marks || []).forEach((m) => {
-        if (!MK_DEF[m.type]) return;
+      MARKS.live(sec.marks).forEach((m) => {
         if (m.type === 'note') return notes.push({ m, sec });
         const u = by[m.type] || (by[m.type] = { n: 0, opts: new Set() });
         u.n++;

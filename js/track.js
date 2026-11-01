@@ -32,7 +32,11 @@ const TRK_BAD = 'That file can’t be opened. Try an MP3 or M4A from Files.';
 const TRK_LENGTH = 'This track is a different length, so timings may be off';
 
 /* ===== Track player: checking a saved loop (used by cleanSong in songs.js) =====
-   sg.loop = {start, end, on}: seconds, end after start by at least TRK_MIN, end clamped to the track's length. */
+   sg.loop = {start, end, on}: seconds, end after start by at least TRK_MIN, end clamped to the track's length.
+   Q15: fields this version doesn't know (new ones go in `ext`) are kept, on the loop and on each marker, and setLoop()
+   keeps the loop's when it sets a new range. */
+const TRK_LOOP_KNOWN = ['start', 'end', 'on', 'mk'],
+  TRK_MK_KNOWN = ['id', 't', 'end', 'name'];
 function cleanLoop(l, dur) {
   if (!l || typeof l !== 'object' || Array.isArray(l)) return null;
   const num = (x) => typeof x === 'number' && isFinite(x) && x >= 0;
@@ -41,7 +45,11 @@ function cleanLoop(l, dur) {
     e = l.end;
   if (dur > 0 && e > dur) e = dur;
   if (e - s < TRK_MIN - 1e-6) return null;
-  const o = { start: Math.round(s * 100) / 100, end: Math.round(e * 100) / 100, on: l.on === true };
+  const o = Object.assign(dataExtras(l, TRK_LOOP_KNOWN), {
+    start: Math.round(s * 100) / 100,
+    end: Math.round(e * 100) / 100,
+    on: l.on === true,
+  });
   if (typeof l.mk === 'string' && l.mk) o.mk = l.mk; // 3.20: the chip this loop belongs to (checked in cleanSong)
   return o;
 }
@@ -59,7 +67,7 @@ function cleanMarkers(list, dur) {
     if (!num(m.t)) return;
     let t = m.t;
     if (dur > 0 && t > dur) return;
-    const o = { id: m.id.slice(0, 40), t: Math.round(t * 100) / 100 };
+    const o = Object.assign(dataExtras(m, TRK_MK_KNOWN), { id: m.id.slice(0, 40), t: Math.round(t * 100) / 100 });
     if (num(m.end)) {
       let e = m.end;
       if (dur > 0 && e > dur) e = dur;
@@ -586,7 +594,7 @@ const TRACK = (() => {
     s = Math.max(0, Math.min(d, s));
     e = Math.max(0, Math.min(d, e));
     if (e - s < TRK_MIN) return false;
-    sg.loop = { start: r2(s), end: r2(e), on: on !== false };
+    sg.loop = Object.assign(dataExtras(sg.loop, TRK_LOOP_KNOWN), { start: r2(s), end: r2(e), on: on !== false }); // Q15
     if (mk) sg.loop.mk = mk;
     return true;
   }

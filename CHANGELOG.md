@@ -9,6 +9,28 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.36 · 1 Nov 2026
+*Room for register details in your marks and timing (Q15)*
+<!-- area: songs -->
+
+Nothing looks different: marks and timing look and behave the same. This gets the app ready for register work, so a future version can add details without older versions losing them.
+
+**Marks**
+- A mark this version doesn't know yet (a new kind of mark, a new option such as a new register, or a new layer) is kept when a backup from a newer version is restored, instead of being thrown away. It stays hidden: it isn't drawn, counted, listed in Key for this song or shown while playing along, and adding a mark never replaces it. It still follows its words when you edit the lyrics.
+- Extra details on a mark now stay with it when you change it on the same words or move it from the top of its section to a word.
+
+**Timing, markers and the loop**
+- Extra details on a song's timing, its sections' timing and each timed line are kept when you re-time a line, nudge, move a section, trim or clear the length, instead of being dropped at the next change.
+- Markers and the loop keep theirs too, including when you set a new loop start or end.
+
+**Backups**
+- A backup made by the next version restores here with nothing lost, and a backup made afterwards carries it all back out unchanged. A new check proves it with a made-up backup from the next version.
+
+<!-- area: fixes -->
+**Notes for whoever works on the app**
+- New optional fields go in one place on each record, `ext` (for example a mark's `ext`, or a timed line's third item). See Rules that keep old data working in MAINTAINING.md.
+- Data step 4 turned out to have nothing to do (the marks are already moved across as data loads); it's now noted in the code and left as a safety net.
+
 ## 3.35.1 · 1 Nov 2026
 *Hold-menu checks wait like a finger would (Q18)*
 <!-- area: fixes -->

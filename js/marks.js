@@ -117,18 +117,43 @@ function mkSetLayer(L) {
 }
 
 /* ===== Marks: checking saved marks =====
-   sec.marks = [{id, L, type, opt, line, w0, w1, text, check?, was?}], stored once per section, so every repeat of a
-   chorus shows the same marks. sec.held = marks whose word was removed, waiting at the top of the section to be moved
-   or removed: [{id, L, type, opt, text, was}]. A bad mark is dropped on its own; the song is never touched. Fields
-   this version doesn't know are kept on each mark. */
+   sec.marks = [{id, L, type, opt, line, w0, w1, text, check?, was?, ext?}], stored once per section, so every repeat
+   of a chorus shows the same marks. sec.held = marks whose word was removed, waiting at the top of the section to be
+   moved or removed: [{id, L, type, opt, text, was, ext?}]. A bad mark is dropped on its own; the song is never
+   touched. Fields this version doesn't know are kept on each mark (Q15: new ones go in `ext`, see storage.js).
+   Q15 · Inactive marks: a mark from a newer version (a type or option this version doesn't know, or a layer that
+   doesn't match its type) is kept as it is, but inactive: nothing draws it, counts it or lists it, and adding marks
+   never replaces it. It still follows its words when the lyrics change (and waits in `held` if its word goes), like
+   any mark. So a backup made by the next version restores here and goes back out with nothing lost. Readers go
+   through mkActive() / mkLive() (MARKS.active, MARKS.live). */
+const MK_KNOWN = ['id', 'L', 'type', 'opt', 'line', 'w0', 'w1', 'text', 'check', 'was'];
+function mkActive(m) {
+  const d = m && MK_DEF[m.type];
+  return !!d && m.L === d.L && (!m.opt || typeof m.opt !== 'string' || d.opts.includes(m.opt));
+}
+// a section's marks (or held marks) this version can use
+const mkLive = (list) => (Array.isArray(list) ? list : []).filter(mkActive);
+// the fields of a mark this version doesn't know (`ext` and anything else), copied
+const mkExtra = (m) => dataExtras(m, MK_KNOWN);
+// an inactive mark: only its place is checked (a mark on a missing word goes, like any other); everything else is
+// kept as it was, unchanged, since its rules belong to the version that made it
+function mkCleanIdle(m, lines) {
+  if (typeof m.type !== 'string' || !m.type || typeof m.L !== 'string') return null;
+  const b = Object.assign({}, m);
+  b.id = typeof b.id === 'string' && b.id ? b.id.slice(0, 40) : mkId();
+  if (lines === null || b.line === -1) return b;
+  if (!Number.isInteger(b.line) || !lines[b.line]) return null;
+  const n = lines[b.line].length;
+  if (!Number.isInteger(b.w0) || !Number.isInteger(b.w1) || b.w0 < 0 || b.w1 >= n || b.w0 > b.w1) return null;
+  return b;
+}
 function mkClean(m, lines) {
   if (!m || typeof m !== 'object' || Array.isArray(m)) return null;
+  if (!mkActive(m)) return mkCleanIdle(m, lines);
   const d = MK_DEF[m.type];
-  if (!d || m.L !== d.L) return null;
   const b = Object.assign({}, m);
   b.id = typeof b.id === 'string' && b.id ? b.id.slice(0, 40) : mkId();
   if (typeof b.opt !== 'string') b.opt = '';
-  if (b.opt && !d.opts.includes(b.opt)) return null;
   b.text = typeof b.text === 'string' ? b.text.trim().slice(0, mkMax(b.type)) : '';
   if (mkNeedsText(b.type, b.opt) && !b.text) return null;
   if (b.check) b.check = 1;
@@ -157,6 +182,20 @@ function mkClean(m, lines) {
   else if (at === 'last') b.w0 = b.w1;
   return b;
 }
+// a stable text for a value, keys sorted, so two marks' extra fields compare the same whatever their order
+function mkStable(v) {
+  if (Array.isArray(v)) return '[' + v.map(mkStable).join(',') + ']';
+  if (v && typeof v === 'object')
+    return (
+      '{' +
+      Object.keys(v)
+        .sort()
+        .map((k) => JSON.stringify(k) + ':' + mkStable(v[k]))
+        .join(',') +
+      '}'
+    );
+  return JSON.stringify(v === undefined ? null : v);
+}
 function mkCleanList(list, lines) {
   const out = [],
     seen = new Set(),
@@ -165,11 +204,14 @@ function mkCleanList(list, lines) {
   (Array.isArray(list) ? list : []).forEach((m) => {
     const b = mkClean(m, lines);
     if (!b) return;
-    if (b.type === 'intention') {
+    const live = mkActive(b);
+    if (live && b.type === 'intention') {
       if (intent) return; // one Intention per section
       intent = true;
     }
-    const k = [b.L, b.type, b.opt, b.line, b.w0, b.w1, b.text].join('|');
+    // exact duplicates go; Q15: two marks that differ only in fields this version doesn't know (`ext`) are both kept
+    const text = live ? b.text : mkStable(b.text),
+      k = [b.L, b.type, b.opt, b.line, b.w0, b.w1, text, mkStable(mkExtra(b))].join('|');
     if (seen.has(k)) return;
     seen.add(k);
     if (ids.has(b.id)) b.id = mkId();
@@ -254,7 +296,7 @@ function mkOld(m) {
 }
 function mkMirror(sec) {
   const ann = {};
-  (sec.marks || []).forEach((m) => {
+  mkLive(sec.marks).forEach((m) => {
     if (m.line < 0) return;
     const o = mkOld(m);
     if (!o) return;
@@ -266,7 +308,7 @@ function mkMirror(sec) {
     }
   });
   sec.ann = ann;
-  sec.orphans = (sec.held || [])
+  sec.orphans = mkLive(sec.held)
     .map((m) => {
       const o = mkOld(m);
       return o ? { id: m.id, was: m.was || '', ann: o } : null;
@@ -286,7 +328,7 @@ function mkCleanSection(c, lines) {
 }
 // marks to check: those flagged after a lyric edit, and those waiting at the top of their section
 function mkCheckCount(sec) {
-  return (sec.held || []).length + (sec.marks || []).filter((m) => m.check).length;
+  return mkLive(sec.held).length + mkLive(sec.marks).filter((m) => m.check).length;
 }
 
 /* ===== Marks: marks follow their words =====
@@ -333,7 +375,7 @@ function mkRelink(sec, A, B, ops) {
       delete h.w1;
       delete h.check;
       sec.held = (sec.held || []).concat(h);
-      flagged++;
+      if (mkActive(m)) flagged++; // Q15: an inactive mark follows its words too, but isn't counted
       return;
     }
     const same = kept.filter((p) => p.li === first.li),
@@ -343,7 +385,7 @@ function mkRelink(sec, A, B, ops) {
       n.check = 1;
       const c = pts.find((p) => p && p.changed);
       n.was = m.was || (c ? c.was : (sec.lines[m.line] || []).slice(m.w0, m.w1 + 1).join(' '));
-      flagged++;
+      if (mkActive(m)) flagged++;
     }
     out.push(n);
   });
@@ -376,7 +418,7 @@ function mkDeco(sec, li, show) {
     ph = [],
     st = [],
     notes = [];
-  (sec.marks || []).forEach((m) => {
+  mkLive(sec.marks).forEach((m) => {
     if (m.line !== li || m.w1 >= n || !show(m)) return;
     const w = W[m.w0],
       e = W[m.w1],
@@ -526,8 +568,9 @@ function mkGlyph(type) {
 /* ===== Marks: changing them =====
    add(): puts a mark on a selection {sid, li, w0, w1}, keeping the layer's rules: a one-word mark on its word, one of
    each type and option per word, ranges of one kind on a line never overlapping, one Intention per section. Returns
-   the marks it replaced, so Undo can put them back. */
-function mkAdd(sec, sel, type, opt, text) {
+   the marks it replaced, so Undo can put them back. Inactive marks (Q15) are never replaced. `from`: a mark whose
+   extra fields the new one keeps (moving a held mark). */
+function mkAdd(sec, sel, type, opt, text, from) {
   const d = MK_DEF[type];
   if (!d) return null;
   const at = mkAt(type, opt),
@@ -550,7 +593,7 @@ function mkAdd(sec, sel, type, opt, text) {
   const gone = [];
   sec.marks = (sec.marks || []).filter((x) => {
     let out = false;
-    if (x.type === type) {
+    if (x.type === type && mkActive(x)) {
       if (at === 'section') out = true;
       else if (x.line === m.line) {
         if (at === 'range')
@@ -563,6 +606,10 @@ function mkAdd(sec, sel, type, opt, text) {
     if (out) gone.push(x);
     return !out;
   });
+  // Q15: the mark keeps the fields this version doesn't know (`ext`) from the mark it's made from (a held mark being
+  // moved), or else from the mark of its type it replaces on these words, so editing never loses them
+  const src = from || gone[0];
+  if (src) Object.assign(m, mkExtra(src));
   sec.marks.push(m);
   mkMirror(sec);
   return { m, gone };
@@ -576,9 +623,10 @@ function mkRemove(sec, id) {
 }
 // marks of a layer (and Notes) touching a selection, plus any flagged to check on any layer
 function mkOnSel(sec, sel, L) {
-  return (sec.marks || [])
+  const live = mkLive(sec.marks);
+  return live
     .filter((m) => m.line === sel.li && m.w0 <= sel.w1 && sel.w0 <= m.w1 && (m.L === L || m.L === 'note' || m.check))
-    .concat(L === 'delivery' ? (sec.marks || []).filter((m) => m.type === 'intention') : []);
+    .concat(L === 'delivery' ? live.filter((m) => m.type === 'intention') : []);
 }
 
 const MARKS = {
@@ -606,7 +654,7 @@ const MARKS = {
   // Song Clock: which words of a line have a breath mark of Ivan's
   breaths(sec, li) {
     const b = sec.lines[li].map(() => false);
-    (sec.marks || []).forEach((m) => {
+    mkLive(sec.marks).forEach((m) => {
       if (m.type === 'breath' && m.line === li && b[m.w1] != null) b[m.w1] = true;
     });
     return b;
@@ -614,10 +662,14 @@ const MARKS = {
   // which words of a line have a mark of any kind (the lyrics editor highlights them)
   marked(sec, li) {
     const b = sec.lines[li].map(() => false);
-    (sec.marks || []).forEach((m) => {
+    mkLive(sec.marks).forEach((m) => {
       if (m.line === li) for (let w = m.w0; w <= m.w1 && w < b.length; w++) b[w] = true;
     });
     return b;
   },
-  intention: (sec) => (sec.marks || []).find((m) => m.type === 'intention') || null,
+  intention: (sec) => mkLive(sec.marks).find((m) => m.type === 'intention') || null,
+  // Q15: whether this version can use a mark, the marks it can use, and a mark's fields it doesn't know
+  active: mkActive,
+  live: mkLive,
+  extra: mkExtra,
 };
