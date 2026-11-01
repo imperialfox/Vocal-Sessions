@@ -15,7 +15,7 @@ Every queued item has a queue ID and a standard name, used in the queue, in hand
 - **Items:** `Q[##] · [Subsystem]: [Feature Name]`, e.g. `Q02 · Track: Waveform Sections`.
 - **Files** (handoffs, specs, wireframes, prototypes): `q##_[subsystem]_[feature]_[type].[ext]`, lower case with underscores, e.g. `q02_track_waveform_sections_handoff.md`.
 - **Releases:** the shipped version's `CHANGELOG.md` headline ends with the queue ID in brackets, e.g. `*Waveform sections on the track player (Q02)*` under `## 3.23 · 27 Oct 2026` (the `##` line keeps its exact format for the app's Changelog page). That's the bridge from queue ID to version. Q01 shipped as 3.22, headline `*Search, from every tab (Q01)*`; Q08 as 3.23.
-- **New items:** an idea gets its ID when Ivan says **Render** for it, taking the next unused number (the next is **Q24**). IDs are never reused or renumbered, even when the queue is reordered or an item ships.
+- **New items:** an idea gets its ID when Ivan says **Render** for it, taking the next unused number (the next is **Q25**). IDs are never reused or renumbered, even when the queue is reordered or an item ships.
 - **Exception, 30 Oct 2026:** Ivan asked for the six stages of the 30 Oct read-only audit, plus its clean-up list, to get IDs straight away, before Render, most critical first. They are **Q11–Q17**. All seven got Render on 30 Oct 2026 and have shipped (3.29–3.31, 3.34, 3.36, 3.37 and 3.38).
 - **Exception, 31 Oct 2026:** Ivan asked for the status bar fix to be queued with an ID before Render. It is **Q23**; Render and Build followed the same evening (shipped in 3.33).
 
@@ -46,6 +46,7 @@ Every ID with its **Status** (`Awaiting Render`, `Approved — awaiting Build`, 
 | Q21 | Session: Saved Screen | Approved — awaiting Build | "Session saved" splash, 2+5, 31 Oct 2026 |
 | Q22 | Session: Clock Redesign | Approved — awaiting Build | Session clock ring prototype, 31 Oct 2026 |
 | Q23 | Interface: Status Bar Glow | Shipped 3.33 | Gradient clipped at the top, 31 Oct 2026 |
+| Q24 | Coach: Video Redesign | Approved — awaiting Build | Coach video redesign, 31 Oct–1 Nov 2026 |
 
 Work shipped before this standard (for example Track 1 and Song Clock A1) keeps its version numbers and has no queue ID.
 
@@ -62,7 +63,7 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 
 ## Order (1 Nov 2026)
 
-Most critical first: **Q20 → Q21 → Q22 → Q07** (Q19 shipped in 3.39). Q22 got Render on 31 Oct 2026 (20:59) and goes after Q21, because it builds on the one-page session and the saved screen. Q19–Q21 got Render on 31 Oct 2026 (19:58), in one instruction; each still needs its own Build. They follow Q17 (shipped in 3.38; Q20 needs Q16's track-while-recording, shipped in 3.37). Q11–Q17 got Render on 30 Oct 2026 (06:42) and have all shipped. What has shipped is in the table's Status column. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
+Most critical first: **Q20 → Q21 → Q22 → Q07** (Q19 shipped in 3.39). **Q24** got Render on 1 Nov 2026 (13:15); it changes no app code, so it can be built alongside the app items whenever Ivan says Build. Q22 got Render on 31 Oct 2026 (20:59) and goes after Q21, because it builds on the one-page session and the saved screen. Q19–Q21 got Render on 31 Oct 2026 (19:58), in one instruction; each still needs its own Build. They follow Q17 (shipped in 3.38; Q20 needs Q16's track-while-recording, shipped in 3.37). Q11–Q17 got Render on 30 Oct 2026 (06:42) and have all shipped. What has shipped is in the table's Status column. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
 
 ## Q20 · Session: Application Redesign
 
@@ -99,6 +100,19 @@ Most critical first: **Q20 → Q21 → Q22 → Q07** (Q19 shipped in 3.39). Q22 
 - **Out of scope:** tapping a slice to jump to a step (dropped by Ivan); any auto-pause, buzz or Lock Screen timer; Progress's time split.
 - **Next action:** after Ivan separately says Build for Q22, check its **Needs** are live, then implement only this scope in a fresh chat from its handoff.
 - **Done when:** the ring, pause, finish, swipe to close and each of the eight features work, light and dark, with and without Reduce Motion, and the full suite passes.
+
+## Q24 · Coach: Video Redesign
+
+**Status:** Approved — awaiting Build. **Approval:** Render given by Ivan on 1 Nov 2026 (13:15) for the scope below. The build handoff is in Ivan's project notes as `q24_coach_video_redesign_handoff.md`, with the plan, the approved wording and the audio timeline beside it.
+**Needs:** nothing from the app. Ivan's Mac linked and awake for copying sections and the DaVinci Resolve stage.
+
+- **Goal:** the coach video looks like part of the redesigned session and reads at a glance: exercise, level, progress, place in the whole video, and Your turn / With coach / Listen.
+- **Scope:** a scripted render of new graphics for all 12 exercises (36 levels), built in 12 checked sections (Humming first), then finished in DaVinci Resolve on Ivan's Mac with the original audio untouched, markers and chapters. A render kit in `tools/coach-video/` (slide, tokens, content data, renderer, check script).
+- **Defaults if unanswered:** one key = one round; "from" is the note the round starts on; Vocal slides counts his slides; no app version or changelog entry (the app doesn't change).
+- **Out of scope:** any app code change (`COACH_TIMES`, a dark copy, links to the Foundation rings); changing the audio or timing; exercises 13–15.
+- **Never commit:** the coach video, its audio, rendered sections or fonts (the repo is public). The kit only.
+- **Next action:** after Ivan separately says Build for Q24, work from its handoff in a fresh chat.
+- **Done when:** all 12 sections are rendered and checked; every level change lands within one frame of the original's; the audio and length are identical; the chapters are in the file; Ivan has watched it in the floating window, the player and full screen.
 
 ## Q07 · Song Clock: Dynamic Sync
 
