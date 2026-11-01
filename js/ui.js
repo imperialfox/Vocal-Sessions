@@ -245,7 +245,7 @@ function renderDock1() {
       '</span><button class="stopb" data-a="sgStop" aria-label="Stop recording"><i></i></button></div>';
     return null;
   }
-  // 3.18 Song Clock: the play-along transport, or Sync's pad, takes the place of the tab bar
+  // 3.18 Song Clock: the play-along transport takes the place of the tab bar
   const ck = CLOCK.dock();
   if (ck) {
     $('dock').innerHTML = ck;

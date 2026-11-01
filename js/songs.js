@@ -1878,7 +1878,7 @@ function sgRelink(sg, ok) {
     U.sd = { k: sg.id };
     return rerender();
   }
-  if (!sg.timing) sg.timing = { len: null, real: false, est: false, slots: {} };
+  if (!sg.timing) sg.timing = { len: null, est: false, slots: {} };
   sg.timing.len = L;
   sg.timing.lenLink = true;
   save();
@@ -1917,7 +1917,7 @@ async function sgSaveDraft() {
     }
     // the length as set on the sheet: linked to the track, or the song's own
     if (d.len) {
-      if (!sg.timing) sg.timing = { len: null, real: false, est: false, slots: {} };
+      if (!sg.timing) sg.timing = { len: null, est: false, slots: {} };
       sg.timing.len = d.len;
       if (media && d.lenLink && d.len === Math.round(media.r.dur)) sg.timing.lenLink = true;
       else delete sg.timing.lenLink;

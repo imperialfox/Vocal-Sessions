@@ -642,7 +642,7 @@ const ZOOM = (() => {
       lastY = window.scrollY; // a scroll put back, not one you made: the tab bar stays as it is
       if (moving()) zoomed = top.kind === 'push' ? pushClose(ctx) : close(ctx, top.key);
     } else if (ctx.armed && ctx.armed.replace && top && top.to === ctx.sp) {
-      top.to = nsp; // a pushed page that became another (Sync finishing into Check timing): Back still slides it away
+      top.to = nsp; // a pushed page that became another (retarget()): Back still slides it away
     } else if (ctx.armed && ctx.armed.key) {
       const push = pushing(ctx.armed);
       stack.push({ key: ctx.armed.key, from: ctx.sp, to: nsp, y: ctx.y, kind: push ? 'push' : 'zoom' });
@@ -664,7 +664,7 @@ const ZOOM = (() => {
   function tap(el) {
     const c = el && el.closest && el.closest('[data-zk]');
     armed = c ? { key: c.dataset.zk, el: c, push: c.hasAttribute('data-push') } : null;
-    // a Back button, or a button that leaves a pushed page the same way (Sync's ✕, Check timing's Done: data-pop)
+    // a Back button, or a button that leaves a pushed page the same way (Check timing's Done: data-pop)
     backing = !!(
       el &&
       el.closest &&
@@ -679,12 +679,12 @@ const ZOOM = (() => {
   function arm(el) {
     if (el && el.dataset && el.dataset.zk) armed = { key: el.dataset.zk, el, push: el.hasAttribute('data-push') };
   }
-  // for code that opens a page with no card (Song Clock's Sync and Check timing from a song page): push it
+  // for code that opens a page with no card (Check timing from a song page, the track player on a line): push it
   function armPush(key) {
     armed = { key, el: null, push: true };
   }
-  // the pushed page on screen is being replaced by another (Sync → Check timing): Back from the new one slides it
-  // away to where the first was pushed from
+  // the pushed page on screen is being replaced by another: Back from the new one slides it away to where the first
+  // was pushed from (Q17: unused since Sync by sections, its only caller, was retired in Q05)
   function retarget() {
     armed = { replace: true };
   }

@@ -362,8 +362,8 @@ const TRACK = (() => {
       p = await tx(['peaks'], 'readonly', (s) => s.get(id));
     } catch (e) {}
     if (loading !== id) return;
-    loading = null;
     if (!okAudio(a)) {
+      loading = null;
       have.delete(id);
       return rerender();
     }
@@ -376,7 +376,10 @@ const TRACK = (() => {
       } catch (e) {
         p = { p: new Uint8Array(0), rate: TRK_RATE, dur: +a.dur };
       }
+      // Q17: another song's track was asked for while this one was read again: that one goes in the player, not this
+      if (loading !== id) return;
     }
+    loading = null;
     unload();
     cur = { id, peaks: p.p, rate: +p.rate, dur: +a.dur, url: URL.createObjectURL(a.blob) };
     const v = audio();
@@ -1879,7 +1882,7 @@ const TRACK = (() => {
       pl[fk] = true;
       ckStore(sg, M.L, ckOrder(T, pl), anch, M.marks);
     } else {
-      // not timed yet: the lines are spread from this start, as Sync by sections does
+      // not timed yet: the lines are spread evenly by syllables from this start (ckSpread)
       const starts = sg.order.map(() => null);
       starts[k] = t;
       ckStore(sg, M.L, ckSpread(sg, M.L, starts), anch, M.marks, { est: true });
@@ -2454,7 +2457,7 @@ const TRACK = (() => {
     const t = sg.timing;
     if (replacing && t && t.lenLink) t.len = L;
     else if (!t || !t.len) {
-      if (!sg.timing) sg.timing = { len: null, real: false, est: false, slots: {} };
+      if (!sg.timing) sg.timing = { len: null, est: false, slots: {} };
       sg.timing.len = L;
       sg.timing.lenLink = true;
     } else if (t.len === L) t.lenLink = true;

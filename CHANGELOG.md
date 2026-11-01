@@ -9,6 +9,21 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.38 · 1 Nov 2026
+*Undo that stays with its own song, and a tidy-up behind the scenes (Q17)*
+<!-- area: fixes -->
+
+Nothing else looks different: this clears out code and styles nothing used any more.
+
+**Fixes**
+- Fixed: Undo on a timing change could put back a different song's timing if that song had been changed since. Each song now has its own Undo, so a toast's Undo only ever changes the song it was shown for.
+- Fixed: if a track's waveform had gone missing and you opened another song's track while it was being read again, the first track could take over the player. The track you went to now stays, and the first one's waveform is still saved for next time.
+
+**Behind the scenes**
+- Removed leftovers from Sync by sections and play-along without a track (both retired in 3.28): code that no longer did anything, and out-of-date notes.
+- Timing no longer saves an unused setting (`real`). Timing saved by older versions still opens as before.
+- Removed ten styles nothing on screen used any more.
+
 ## 3.37.1 · 1 Nov 2026
 *The microphone's sound engine rests properly after a refused recording (Q16)*
 <!-- area: fixes -->

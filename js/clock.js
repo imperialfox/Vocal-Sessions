@@ -28,7 +28,8 @@ const CK = {
   head: false, // the pencil: title, artist and length edited in place
   gridEdit: false, // the controls grid is choosing what to pin
   ret: null, // where Check timing goes back to
-  undo: [], // timing as it was before each change, for the Undo toasts
+  undo: {}, // Q17: each song's own Undo steps (song id → the timing as it was before each change), for the Undo toasts
+  undoId: null, // Q17: the song the last change was made to: an Undo toast undoes that song's last step
   lastA: -2, // the line play-along last drew as current
   sig: '', // what the play-along view was built from
   raf: 0,
@@ -38,7 +39,6 @@ const CK = {
   wlBusy: false,
   pk: null, // the length picker on screen
   lastTxt: '',
-  trk: false, // Q02: play-along follows the song's track on this device (backing audio), not its own clock
   mute: false, // Q02: the backing audio muted (this time only; it starts on)
   pi: null, // Q05 punch-in: holding the lyrics while playing along {x, y, t (when pressed), timer, on, i}
   piAt: 0, // when a punch-in ended (its click isn't also a tap on a line)
@@ -55,7 +55,7 @@ const ckClk = (c) => (c.run ? c.base + (ckMs() - c.perf) / 1000 : c.base);
 // Q02: while play-along plays the song's track, its time is the track's (so speed, a stall or a seek all follow);
 // until the audio is playing, Song Clock's own clock carries on
 function ckNow(c) {
-  if (c === CK.pc && c.run && CK.trk) {
+  if (c === CK.pc && c.run) {
     const v = TRACK.alongNow(CK.songId);
     if (v != null) return v;
   }
@@ -118,12 +118,14 @@ function ckPref(k, v) {
 }
 
 /* ===== Song Clock: checking saved timing =====
-   sg.timing = {len, real, est, slots: {o: {lines: [[start, end|null], …], anch, marks: [line…]}}}
+   sg.timing = {len, est, slots: {o: {lines: [[start, end|null], …], anch, marks: [line…]}}}
    Timing belongs to places in the running order (o), not to sections: Chorus 2 is sung at a different time from
    Chorus 1. Anything malformed is dropped without touching the rest of the song.
    Q15: fields this version doesn't know are kept at every level (the timing, each slot, and each line's items after
    its start and end), as they are; new ones go in `ext` (`timing.ext`, `slot.ext`, `[start, end, ext]`). ckStore()
-   keeps them too. */
+   keeps them too.
+   Q17: `real` (until 3.37: the clock matched the music app's time) was never used. It stays a known field so old
+   saved timing that has it still loads, and it's dropped as the timing is checked; nothing writes it now. */
 const CK_T_KNOWN = ['len', 'real', 'est', 'lenLink', 'slots'],
   CK_S_KNOWN = ['lines', 'anch', 'marks', 'fix', 'sb'];
 // a line's items after its start and end (Q15: its `ext`), copied
@@ -136,7 +138,6 @@ function cleanTiming(t, sg) {
   const num = (x) => typeof x === 'number' && isFinite(x) && x >= 0;
   const out = Object.assign(dataExtras(t, CK_T_KNOWN), {
     len: num(t.len) && t.len > 0 && t.len <= CK_MAXLEN ? Math.round(t.len) : null,
-    real: t.real === true,
     est: t.est === true,
     slots: {},
   });
@@ -390,7 +391,7 @@ function ckStore(sg, L, T, anch, marks, flags, fix) {
   });
   const t = Object.assign(
     dataExtras(old, CK_T_KNOWN),
-    { len: old.len == null ? null : old.len, real: !!old.real, est: !!old.est },
+    { len: old.len == null ? null : old.len, est: !!old.est },
     old.lenLink && old.len != null ? { lenLink: true } : {},
     flags || {},
     { slots }
@@ -448,14 +449,19 @@ function ckTrim(sg, dur) {
   ckStore(sg, M.L, T, anch, marks, null, fix);
 }
 // withMarks (Q02): a marker made into a section start; the same Undo puts the marker (and its loop) back too
+// Q17: each song keeps its own steps, so an Undo only ever puts back the song it was made for
 function ckSnap(sg, withMarks) {
   const u = { id: sg.id, t: JSON.stringify(sg.timing || null) };
   if (withMarks) u.mk = JSON.stringify({ markers: sg.markers || null, loop: sg.loop || null });
-  CK.undo.push(u);
-  if (CK.undo.length > 40) CK.undo.shift();
+  const st = CK.undo[sg.id] || (CK.undo[sg.id] = []);
+  st.push(u);
+  if (st.length > 40) st.shift();
+  CK.undoId = sg.id;
 }
-function ckUndo() {
-  const u = CK.undo.pop(),
+// id: the song to undo (left out: the song the last change was made to)
+function ckUndo(id) {
+  const st = CK.undo[id == null ? CK.undoId : id],
+    u = st && st.pop(),
     sg = u && songById(u.id);
   if (!sg) return;
   const t = JSON.parse(u.t);
@@ -482,13 +488,14 @@ function ckToast(text, undo) {
   const el = document.querySelector('.toast');
   if (!el) return;
   el.classList.add('ckundo');
-  const b = document.createElement('button');
+  const b = document.createElement('button'),
+    id = CK.undoId; // Q17: the toast undoes the song its change was made to, whatever changes after it
   b.className = 'ckub';
   b.textContent = 'Undo';
   b.addEventListener('click', (e) => {
     e.stopPropagation();
     el.remove();
-    undo();
+    undo(id);
   });
   el.appendChild(b);
   clearTimeout(toastT);
@@ -665,7 +672,6 @@ function ckArm(sg) {
   CK.songId = sg.id;
   CK.on = true;
   CK.ever = false;
-  CK.trk = true;
   CK.mute = false;
   ckHalt(CK.pc);
 }
@@ -692,7 +698,6 @@ function ckPlay(i) {
   ckGo(CK.pc);
   // Q02: play-along plays the song's track and follows its time (where it should be is fixed now: a redraw below
   // would otherwise read the track's old place back)
-  CK.trk = true;
   const t0 = ckClk(CK.pc),
     m0 = ckMs();
   TRACK.along(sg.id, () => t0 + (ckMs() - m0) / 1000, CK.mute);
@@ -949,6 +954,7 @@ function ckBuild(sg) {
           : word) + br
       );
     });
+    // data-a="ckLine" names the line for the random taps; a tap on it is handled by the layer's own click handler
     h +=
       '<p class="ckl fut' +
       (r.labelled ? ' hasv' : '') +
@@ -1024,7 +1030,7 @@ function ckDots(sg) {
 // draw the current line, word fill, distance blur and dots; called every frame while the clock runs
 function ckTick() {
   // Q02: Song Clock's own clock keeps up with the track, so a jump or a pause carries on from the right place
-  if (CK.pc.run && CK.trk) {
+  if (CK.pc.run) {
     const v = TRACK.alongNow(CK.songId);
     if (v != null) {
       CK.pc.base = v;
@@ -1741,7 +1747,7 @@ function ckPickClose() {
 function ckSetLen(sg, v) {
   if (!sg) return;
   ckSnap(sg);
-  if (!sg.timing) sg.timing = { len: null, real: false, est: false, slots: {} };
+  if (!sg.timing) sg.timing = { len: null, est: false, slots: {} };
   sg.timing.len = v > 0 ? Math.min(CK_MAXLEN, Math.round(v)) : null;
   delete sg.timing.lenLink; // a length set by hand is the song's own (3.20)
   if (ckEmpty(sg.timing)) delete sg.timing;
@@ -1940,7 +1946,8 @@ const CLOCK = {
       '<span id="ckT">' +
       ckFmt(ckNow(CK.pc)) +
       '</span></button><button class="cknb" data-a="ckNudge" data-v="0.2" aria-label="Move all lyrics 0.2 seconds later">+0.2</button>' +
-      // Q02: the song's track plays under play-along (on by default); without it on this device, no mute button
+      // Q02: the song's track plays under play-along (on by default); without it on this device, no mute button.
+      // Q17: kept, as it isn't dead: Remove track with play-along on leaves this transport up until the next redraw
       (TRACK.has(CK.songId)
         ? '<button class="cknb ckmute' +
           (CK.mute ? ' on' : '') +
@@ -2022,10 +2029,10 @@ const CLOCK = {
     head: CK.head,
     wake: CK.wlWant,
     picker: !!CK.pk,
-    undo: CK.undo.length,
-    trk: CK.trk,
+    undo: CK.undoId && CK.undo[CK.undoId] ? CK.undo[CK.undoId].length : 0,
     mute: CK.mute,
   }),
+  undos: (id) => (CK.undo[id] || []).length, // Q17 tests: one song's Undo steps
   // stop everything (Reset all data, a restore)
   reset() {
     CK.on = CK.ever = false;
@@ -2034,7 +2041,8 @@ const CLOCK = {
     ckPunchOff();
     CK.lm = null;
     CK.head = false;
-    CK.undo = [];
+    CK.undo = {};
+    CK.undoId = null;
     ckPickClose();
     ckWake();
   },
@@ -2138,8 +2146,6 @@ Object.assign(SG_ACT, {
     const sg = songById(U.songId);
     if (sg) TRACK.pick(sg.id);
   },
-  // the lines work through the layer's own click handler; this is just their name
-  ckLine() {},
   ckPickSet() {
     const pk = CK.pk;
     if (!pk) return;

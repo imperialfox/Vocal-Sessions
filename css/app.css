@@ -3115,26 +3115,6 @@ body.land .sgbar {
   flex-wrap: wrap;
   margin-top: 2px;
 }
-.newtag {
-  font-size: var(--t-caption1);
-  font-weight: 600;
-  color: var(--accent);
-  background: var(--accent-wash);
-  border-radius: 999px;
-  padding: 1px 8px;
-}
-.rright {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  color: var(--fg2);
-  font-size: var(--t-footnote);
-  font-variant-numeric: tabular-nums;
-}
-.rright svg.i {
-  width: 15px;
-  height: 15px;
-}
 .hitline {
   font-size: var(--t-subhead);
   color: var(--fg2);
@@ -3476,8 +3456,7 @@ body.wide .etool {
   padding: 0 1px;
   text-indent: 0;
 }
-.w .v,
-.sgvk {
+.w .v {
   font-size: var(--t-caption1);
   font-weight: 600;
   color: var(--accent);
@@ -3925,49 +3904,6 @@ textarea.field.sglyr {
   align-items: center;
   gap: 14px;
 }
-.playbig {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: var(--accent);
-  color: #fff;
-  display: grid;
-  place-items: center;
-  flex-shrink: 0;
-}
-.playbig svg {
-  width: 22px;
-  height: 22px;
-}
-.sgtag {
-  display: block;
-  font-size: var(--t-caption1);
-  font-weight: 600;
-  color: var(--accent);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  margin-bottom: 1px;
-}
-.prog {
-  display: block;
-  height: 3px;
-  border-radius: 2px;
-  background: var(--fill);
-  margin-top: 6px;
-  overflow: hidden;
-}
-.prog i {
-  display: block;
-  height: 100%;
-  width: 0;
-  background: var(--accent);
-}
-.sgtake {
-  min-height: 64px;
-}
-.foot.sgfresh {
-  margin: 8px 16px 4px;
-}
 .sgagain {
   display: flex;
   justify-content: center;
@@ -4010,17 +3946,10 @@ textarea.field.sglyr {
 .recbar.glass {
   background: var(--glass-strong);
 }
-.tkw {
-  white-space: nowrap;
-}
 @media (max-width: 359px) {
   .newtake {
     gap: 10px;
     padding: 12px;
-  }
-  .playbig {
-    width: 46px;
-    height: 46px;
   }
 }
 /* 3.10 Recall: hidden letters keep their place. 3.10.1: each hidden run is a soft rounded pill; the letters stay
@@ -4756,7 +4685,7 @@ textarea.field.sglyr {
   }
 }
 
-/* ===== 3.18 Song Clock (clock.js): the song header, controls grid, play-along, Sync and Check timing ===== */
+/* ===== 3.18 Song Clock (clock.js): the song header, controls grid, play-along and Check timing ===== */
 .ckrow {
   display: flex;
   align-items: center;
@@ -5200,9 +5129,6 @@ html.ckplay body {
 }
 .ckcta {
   margin-top: 22px;
-}
-.ckcen {
-  text-align: center;
 }
 .ckfootc {
   margin: 16px 16px 0;

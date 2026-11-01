@@ -493,7 +493,50 @@ def sizes(b, t):
             pg.context.close()
 
 
+PEAKS_DEL = ("async id=>{const d=await new Promise(r=>{const q=indexedDB.open('vocalTracks',1);q.onsuccess=()=>r(q.result)});"
+             "await new Promise(r=>{const x=d.transaction('peaks','readwrite');x.objectStore('peaks').delete(id);x.oncomplete=r});d.close()}")
+PEAKS_HAS = ("async id=>{const d=await new Promise(r=>{const q=indexedDB.open('vocalTracks',1);q.onsuccess=()=>r(q.result)});"
+             "const v=await new Promise(r=>{const q=d.transaction('peaks').objectStore('peaks').get(id);q.onsuccess=()=>r(q.result)});d.close();return !!v}")
+# reading a track's audio again waits until the test lets it go (only a track whose peaks went missing is read again)
+HOLD = ("(()=>{window.__held=0;window.__hold=new Promise(r=>window.__go=r);const o=Blob.prototype.arrayBuffer;"
+        "Blob.prototype.arrayBuffer=async function(){window.__held++;await window.__hold;return o.call(this)}})()")
+
+
+def peaks_again(b, t):
+    """Q17: a track whose saved peaks went missing is read again on opening; switching to another song's track while
+    that happens leaves the other track in the player."""
+    ok = t.ok
+    pg = t.page(b, init=COUNT)
+    pg.evaluate(SONG); pg.wait_for_timeout(250)
+    add_row(pg)
+    pg.evaluate("D.songs.push({id:'g_2',name:'Second',added:Date.now()});save();go(()=>{U.view='lyr';U.songId='g_2'})"); pg.wait_for_timeout(200)
+    add_row(pg, F('Second.wav', 20), sid='g_2')
+    # the peaks go missing: opening reads the audio once more, draws it and keeps them
+    pg.evaluate(PEAKS_DEL, 'g_1')
+    pg.reload(); ready(pg)
+    pg.evaluate("TRACK.open('g_1')"); loaded(pg, 'g_1')
+    ok(pg.evaluate("__dec") == 1 and pg.evaluate(INK) > 1000 and pg.evaluate(PEAKS_HAS, 'g_1'),
+       f'missing peaks are read again once, drawn and kept ({pg.evaluate("__dec")} decoded)')
+    # missing again, and another song's track asked for while they're read: that one stays in the player
+    pg.evaluate(PEAKS_DEL, 'g_1')
+    pg.reload(); ready(pg)
+    pg.evaluate(HOLD)
+    pg.evaluate("TRACK.open('g_1')")
+    ok(until(pg, "__held===1"), 'opening it starts reading the audio again')
+    pg.evaluate("TRACK.open('g_2')"); loaded(pg, 'g_2')
+    pg.evaluate("__go()")
+    ok(until(pg, "__dec===1"), 'the first track is still read')
+    ok(until(pg, "(()=>{(%s)('g_1').then(v=>window.__pk=v);return window.__pk===true})()" % PEAKS_HAS), 'and its peaks are kept')
+    ok(pg.evaluate("TRACK.state().id") == 'g_2' and pg.evaluate("U.songId") == 'g_2' and 'Second' in pg.locator('#barT').inner_text(),
+       f'but the player keeps the track you went to ({pg.evaluate("TRACK.state().id")})')
+    # and the first track opens normally afterwards, from the peaks it kept
+    pg.evaluate("TRACK.open('g_1')"); loaded(pg, 'g_1')
+    ok(pg.evaluate("__dec") == 1 and pg.evaluate(INK) > 1000, 'going back to the first track opens it without reading it again')
+    pg.context.close()
+
+
 def run(b, t):
+    peaks_again(b, t)
     importing(b, t)
     levels(b, t)
     loops(b, t)

@@ -8,7 +8,7 @@ size in light and dark.
 Play-along's audio is stubbed here (TRACK.along), so the test clock drives the lyrics; test_waveform plays the real
 synthetic track. The audio files are tones with gaps, written by the test. Nothing copyrighted is ever used."""
 import json, copy
-from harness import sample, ready, OUT, now, iso
+from harness import sample, ready, OUT, now, iso, until
 from test_track import F, loaded
 
 LYR = """[Verse 1]
@@ -72,7 +72,39 @@ def hold(pg, sel, ms=650):
     pg.hover(sel); pg.mouse.down(); pg.wait_for_timeout(ms); pg.mouse.up(); pg.wait_for_timeout(250)
 
 
+def undo_per_song(b, t):
+    """Q17: each song has its own timing Undo, so an Undo never puts back another song's timing."""
+    ok = t.ok
+    pg = t.page(b, w=390, h=844, touch=True)
+    a = song(pg)
+    b2 = pg.evaluate(ADD, ['River', 'River Band', LYR]); pg.wait_for_timeout(300)
+    for s in (a, b2): pg.evaluate(SPREAD, [s, [0, 12, 24, 36]])
+    T = "id=>JSON.stringify(songById(id).timing)"
+    a0, b0 = pg.evaluate(T, a), pg.evaluate(T, b2)
+    pg.evaluate(OPEN, a); until(pg, "id=>U.songId===id&&!!document.querySelector('.ckrow')", arg=a)
+    # a change to the song on screen, with its toast; then a quiet change to another song while the toast is up
+    pg.evaluate("id=>ckSetLines(songById(id),{1:[3,5]})", a)
+    ok(until(pg, "!!document.querySelector('.toast .ckub')"), 'a change to the song shows a toast with Undo')
+    a1 = pg.evaluate(T, a)
+    pg.evaluate("id=>ckSetLines(songById(id),{2:[7,9]},true)", b2)
+    b1 = pg.evaluate(T, b2)
+    ok(a1 != a0 and b1 != b0 and pg.evaluate("id=>CLOCK.undos(id)", a) == 1 and pg.evaluate("id=>CLOCK.undos(id)", b2) == 1,
+       'each song keeps its own Undo step')
+    pg.click('.toast .ckub')
+    ok(until(pg, "([id,t])=>JSON.stringify(songById(id).timing)===t", arg=[a, a0]), 'the toast’s Undo puts back the song it was shown for')
+    ok(pg.evaluate(T, b2) == b1 and pg.evaluate("id=>CLOCK.undos(id)", b2) == 1, 'and leaves the other song’s timing and its Undo alone')
+    # Undo with nothing left for that song changes nothing anywhere
+    pg.evaluate("id=>ckUndo(id)", a)
+    ok(pg.evaluate(T, a) == a0 and pg.evaluate(T, b2) == b1, 'an Undo with no step left for its song changes no song')
+    # left out, Undo goes to the song the last change was made to
+    pg.evaluate("ckUndo()")
+    ok(until(pg, "([id,t])=>JSON.stringify(songById(id).timing)===t", arg=[b2, b0]) and pg.evaluate(T, a) == a0,
+       'Undo on its own undoes the song changed last')
+    pg.close()
+
+
 def run(b, t):
+    undo_per_song(b, t)
     ok = t.ok
     pg = t.page(b, w=390, h=844, touch=True)
     pg.evaluate(WAKE)
@@ -601,8 +633,9 @@ def run(b, t):
     p3 = t.page(b, data=bad)
     tm = p3.evaluate("D.songs[0].timing")
     ok(p3.evaluate("D.songs.length") == 2 and p3.evaluate("D.songs[0].sections.x1.lines.length") == 2, 'damaged timing never breaks a song')
-    ok(tm['len'] is None and tm['real'] is False and tm['slots']['o1']['lines'] == [[1, 2], [None, None]] and tm['slots']['o1']['marks'] == [1],
+    ok(tm['len'] is None and tm['slots']['o1']['lines'] == [[1, 2], [None, None]] and tm['slots']['o1']['marks'] == [1],
        f'out-of-order lines, junk and extra lines are dropped, markers checked ({tm["slots"]["o1"]})')
+    ok('real' not in tm, f'Q17: the unused `real` in older saved timing still loads, and is dropped ({list(tm)})')
     ok(tm['slots']['o1'].get('fix') == [0] and tm['slots']['o1'].get('sb') == [0] and 'sb' not in tm['slots']['o2'],
        f'Q05: placed lines and suggested breaths are checked (in range, no repeats, only on timed lines) ({tm["slots"]["o1"]})')
     ok(tm['slots']['o2']['lines'] == [[10, 12], [12, 13]] and tm['slots']['o2']['anch'] is False, 'an overlapping end is trimmed to the next start; a bad set start is dropped')

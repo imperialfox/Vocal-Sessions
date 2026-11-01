@@ -35,6 +35,10 @@ def by_id(lst): return {m['id']: m for m in lst}
 def run(b, t):
     ok = t.ok
     src = json.load(open(NEXT, encoding='utf-8'))
+    # Q17: the timing's `real` (written until 3.37, never used) loads and is dropped, so it's the one field that doesn't
+    # come back; everything else does, exactly
+    ok('real' in src['data']['songs'][0]['timing'], 'the fixture’s timing has the retired `real`, as 3.37 wrote it')
+    src['data']['songs'][0]['timing'].pop('real')
     want = src['data']['songs'][0]
     x1 = want['sections']['x1']
     idle_ids = ['k2', 'k3', 'k4', 'k5', 'k8']
