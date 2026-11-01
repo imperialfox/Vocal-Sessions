@@ -9,6 +9,28 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.41 · 1 Nov 2026
+*Session saved: a calm finish that becomes Today (Q21)*
+<!-- area: practice -->
+
+Finishing a session lands on a calm "Session saved" screen that belongs to Today, then becomes Today with one tap.
+
+**Session saved**
+- This week's arch, with only today's minutes drawing in on top of the week so far. The numbers are your real ones, and nothing counts up.
+- "41 min · Sunday", plus "weekly goal reached" once you've reached it.
+- The week's circles, with today's turning green, and "N-week streak continues" when you have a streak.
+- Done sits just below, in the middle of the screen.
+
+<!-- area: look -->
+**Done becomes Today**
+- The arch, the circles and the streak line move into their places on Today, Done becomes Start session, and the rest of Today rises in around them.
+- With Reduce Motion it fades instead, and so does a screen it can't line up exactly (iPad, landscape, or no streak yet).
+
+<!-- area: practice -->
+**Kept as it was**
+- Song practice keeps its own finish: How did it go?, then its summary.
+- Copy for Toggl is on the session's own sheet, from the calendar or All sessions.
+
 ## 3.40 · 1 Nov 2026
 *Application: carry on, sing, compare and keep your best take (Q20)*
 <!-- area: practice -->

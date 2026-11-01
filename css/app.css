@@ -1158,6 +1158,47 @@ html.motion-reduced .tl-item.now .tl-node::after {
   color: var(--fg2);
   margin-top: 3px;
 }
+/* Q21 the Session saved screen (saved.js): Today's arch, week row and streak line, centred, with Done below. The
+   pieces share Today's own classes so Done can move them onto Today exactly */
+.svd {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  text-align: center;
+  padding-top: 34px;
+}
+.svd h1.svd-t {
+  margin: 0 4px 10px;
+  text-align: center;
+}
+.svd-arch {
+  cursor: default;
+}
+.svd-arch:active {
+  transform: none;
+}
+.svd-arch .svd-was {
+  opacity: 0.4;
+}
+.svd-line {
+  margin: 8px 0 0;
+  font-size: var(--t-subhead);
+  color: var(--fg2);
+}
+.svd .week {
+  width: 100%;
+  margin-top: 18px;
+}
+.week span.svd-now {
+  background: var(--good);
+  border-color: var(--good);
+  color: var(--on-done);
+}
+.cta.svd-done {
+  width: calc(100% - 80px);
+  max-width: 300px;
+  margin: 22px auto 0;
+}
 .track {
   height: 6px;
   border-radius: 3px;

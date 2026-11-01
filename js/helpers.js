@@ -405,6 +405,7 @@ const freshU = () => ({
   fEdit: null,
   rSort: 'old',
   cvWin: null,
+  saved: null, // Q21 the Session saved screen: {k: the session's id}
 });
 let U = freshU();
 let E = null,

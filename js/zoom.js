@@ -690,12 +690,13 @@ const ZOOM = (() => {
   }
 
   /* ----- Finish: the session shrinks back into Start session (song practice into its row) ----- */
-  function finishing() {
+  // noShot (Q21): a focused session lands on Session saved instead, so there's nothing to shrink
+  function finishing(noShot) {
     armed = null;
     backing = false;
     if (Z) end(Z);
     const ctx = { place: here() };
-    if (moving()) {
+    if (moving() && !noShot) {
       ctx.title = titleOf();
       ctx.shot = shot();
     }
@@ -704,7 +705,7 @@ const ZOOM = (() => {
   function finished(ctx, key) {
     stack = [];
     prev.clear();
-    if (moving() && ctx.shot) close(ctx, key);
+    if (moving() && ctx.shot && key) close(ctx, key);
   }
 
   /* ----- the new song's paste sheet shrinks into its row ----- */

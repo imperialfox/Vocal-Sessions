@@ -5,7 +5,8 @@
      Rows and blocks opt in with data-fk (rows) and data-gk (the group they sit in, which closes or opens smoothly).
    - Progress: the bars ripple to their new heights, the headline total slides with the direction of time, the
      breakdown bars grow from the left, row by row. Scrubbing across bars stays instant (it never calls these).
-   - Today: the arch fills and the week row ripples once the launch ripple has gone; today's circle pops after a session.
+   - Today: the arch fills and the week row ripples once the launch ripple has gone. (A finished session's circle turns
+     green on the Session saved screen since Q21: saved.js.)
    - Recall: stepping the hint level masks (or unmasks) word by word, in reading order or back to front.
    - Calendar days ripple in; the session steps slide in the direction you're going; the song's bottom capsules swap.
    - Reduce Motion: none of this moves (MOTION.on() is false); fades are handled by motion.js and app.css. Motion off
@@ -14,7 +15,6 @@
 const DET = (() => {
   const EXIT_MS = 220; // a removed row leaves quicker than it arrived
   let armed = null; // what the page looked like before the change
-  let popToday = false; // a session just finished: pop today's circle when Today shows without a sheet
   let todayPins = null; // the pinned songs Today last showed, so pins made elsewhere slide in on return
   const on = () => MOTION.on();
 
@@ -236,15 +236,9 @@ const DET = (() => {
       })
     );
   }
-  // today's circle pops in once a finished session's sheet has gone
+  // after a redraw of Today
   function after() {
     if (U.view || U.tab !== 'today') return;
-    if (popToday && !U.sheet && !(typeof LAUNCH !== 'undefined' && LAUNCH.busy())) {
-      popToday = false;
-      const t = document.querySelector('.week span.today');
-      if (t && on())
-        MOTION.animate(t, [{ transform: 'scale(0.6)' }, { transform: 'none' }], { spring: 'ripple', fill: 'backwards' });
-    }
     // songs pinned somewhere else slide into Today's pinned list
     const now = [...document.querySelectorAll('[data-fk^="tp:"]')].map((el) => el.dataset.fk);
     if (todayPins && on() && !(typeof LAUNCH !== 'undefined' && LAUNCH.busy()))
@@ -261,7 +255,6 @@ const DET = (() => {
       });
     todayPins = now;
   }
-  const finished = () => (popToday = true);
 
   /* ----- calendar, session steps, All sessions ----- */
   // the days of a month ripple in, along the diagonal
@@ -421,7 +414,6 @@ const DET = (() => {
     todayIn,
     weekWave,
     after,
-    finished,
     calendarIn,
     listIn,
     hxSnap,

@@ -64,12 +64,14 @@ def run(b, t):
     t.shot(pg, 'application', full_page=True)
     pg.click('[data-a=cta]'); pg.wait_for_timeout(700)
     # Q20: finishing goes straight on, with no How did it go?
-    ok(pg.evaluate("X") is None and pg.evaluate("U.sheet") == 'done', 'finishing saves straight away, with no How did it go?')
+    ok(pg.evaluate("X") is None and pg.evaluate("U.sheet") is None and pg.evaluate("U.view") == 'saved', 'finishing saves straight away, with no How did it go?, onto Session saved (Q21)')
     ss = pg.evaluate("D.sessions[D.sessions.length-1]")
     ok(ss['how'] == [] and ss['howNote'] == '' and ss['rate'] == {'Pitch': 2} and ss['songName'] == 'Versace on the Floor · bridge', 'saved with its song and rating')
     ok(ss['f']['lip'] == 0, 'Skip is stored as 0')
     ok(cnt('lip') == lip0 and cnt('humming') == hum0 + 1, 'a skipped exercise is not counted as done')
     t.shot(pg, 'done', full_page=True)
+    pg.click('[data-a=savedDone]'); until(pg, "U.view===null&&U.tab==='today'")
+    pg.evaluate("U.sheet='session';U.sd={k:D.sessions[D.sessions.length-1].id};rerender()")  # its sheet, as from the calendar
     tg = pg.evaluate("togglLines(D.sessions[D.sessions.length-1])")
     ok('Lip bubbling skipped' in tg and '(Lost the buzz, Nose tickle)' in tg and 'How it went' not in tg and '— Low notes clear #rotation' in tg
        and 'Application: Versace on the Floor · bridge — pitch 2' in tg,
@@ -84,13 +86,13 @@ def run(b, t):
     ss2 = pg.evaluate("D.sessions[D.sessions.length-1]")
     ok(ss2['mins'] == 50 and pg.evaluate(f"D.months['{mk}']") == m0 - mins0 + 50, 'editing minutes updates the month')
     ok(cnt('lip') == lip0 + 1 and ss2['how'] == ['Bit tight'], 'editing a level from Skip counts the exercise, and how it went can still be added')
-    ok(pg.evaluate("U.sheet") == 'done', 'saving returns to the summary')
+    ok(pg.evaluate("U.sheet") == 'session', 'saving returns to the session')
     pg.click('[data-a=editSess]'); pg.wait_for_timeout(400)
     old = (now - dt.timedelta(days=40)).strftime('%Y-%m-%d'); pg.fill('#edDate', old); pg.click('[data-a=saveEdit]'); pg.wait_for_timeout(300)
     if old[:7] != mk:
         ok(pg.evaluate(f"D.months['{mk}']") == m0 - mins0, 'moving the date moves the minutes to that month')
     ok(pg.evaluate("D.ex.lip.last") < pg.evaluate("new Date().toISOString()"), 'last-done dates are recalculated')
-    pg.click('.scrim .ghost >> text=Done'); pg.wait_for_timeout(300)
+    pg.click('.sheet .xbtn[data-a=close]'); pg.wait_for_timeout(300)
 
     # song practice, with the long-session check and a take note
     w0 = pg.evaluate("weekInfo().mins"); m1 = pg.evaluate(f"D.months['{mk}']||0")
@@ -110,7 +112,7 @@ def run(b, t):
     so = pg.evaluate("D.songSessions[0]"); ok(so['mins'] == 30 and so['how'] == ['Breath ran short'], 'song practice saved with 30 minutes')
     ok(pg.evaluate("weekInfo().mins") == w0 and pg.evaluate(f"D.months['{mk}']||0") == m1, 'song practice leaves weekly and monthly minutes alone')
     ok(pg.evaluate("togglLines(D.songSessions[0])").endswith('#song-practice'), 'song practice is tagged #song-practice in Toggl')
-    pg.click('.scrim .ghost >> text=Done'); pg.wait_for_timeout(300)
+    pg.click('.sheet .xbtn[data-a=close]'); pg.wait_for_timeout(300)
     ok('This week · 1 session' in pg.inner_text('main'), 'the Song practice card shows its own stats')
 
     # the same song practice from several doors

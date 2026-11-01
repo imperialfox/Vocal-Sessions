@@ -18,19 +18,18 @@ function backupNudge() {
     '</button>'
   );
 }
-function scrToday() {
-  const w = weekInfo(),
-    p = Math.min(100, Math.round((w.mins / WEEK_TARGET) * 100)),
-    mm = monthMins(),
-    mp = Math.min(100, Math.round((mm / TARGET) * 100)),
-    s = suggested();
+// Today's week arch (also drawn by the Session saved screen, Q21, so the two line up exactly)
+const ARC_D = 'M24 150 A126 126 0 0 1 276 150';
+// the week's seven circles: practised days filled, today outlined. now (Q21, the Session saved screen) is the day just
+// practised, whose circle turns green
+function weekSpans(w, now) {
   const today = startOfDay(new Date()).getTime();
-  const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
+  return ['M', 'T', 'W', 'T', 'F', 'S', 'S']
     .map((l, i) => {
       const d = new Date(w.ws);
       d.setDate(d.getDate() + i);
       const t = d.getTime();
-      const cls = (w.days.has(t) ? 'done ' : '') + (t === today ? 'today' : '');
+      const cls = (w.days.has(t) ? 'done ' : '') + (t === today ? 'today' : '') + (t === now ? ' svd-now' : '');
       return (
         '<span class="' +
         cls +
@@ -43,6 +42,14 @@ function scrToday() {
       );
     })
     .join('');
+}
+function scrToday() {
+  const w = weekInfo(),
+    p = Math.min(100, Math.round((w.mins / WEEK_TARGET) * 100)),
+    mm = monthMins(),
+    mp = Math.min(100, Math.round((mm / TARGET) * 100)),
+    s = suggested();
+  const days = weekSpans(w);
   const left = Math.max(0, WEEK_TARGET - Math.round(w.mins));
   let st, sub;
   if (w.mins >= WEEK_TARGET) {
@@ -72,9 +79,9 @@ function scrToday() {
     Math.round(w.mins) +
     ' of your ' +
     WEEK_TARGET +
-    '-minute goal. Open Progress"><svg viewBox="0 0 300 165" aria-hidden="true"><path d="M24 150 A126 126 0 0 1 276 150" fill="none" stroke="var(--fill)" stroke-width="16" stroke-linecap="round"/>' +
+    '-minute goal. Open Progress"><svg viewBox="0 0 300 165" aria-hidden="true"><path d="' + ARC_D + '" fill="none" stroke="var(--fill)" stroke-width="16" stroke-linecap="round"/>' +
     (p > 0
-      ? '<path d="M24 150 A126 126 0 0 1 276 150" pathLength="100" stroke-dasharray="' +
+      ? '<path d="' + ARC_D + '" pathLength="100" stroke-dasharray="' +
         p +
         ' 100" fill="none" stroke="' +
         (p >= 100 ? 'var(--good)' : 'var(--accent)') +

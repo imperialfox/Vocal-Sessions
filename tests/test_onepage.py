@@ -167,13 +167,13 @@ def finishing(b, t):
     pg.click('#dock [data-a=cta]'); until(pg, "X===null")  # Q20: no How did it go?
     ss = pg.evaluate("D.sessions[D.sessions.length-1]")
     ok(ss.get('mixed') is False and ss['split'] == {'f': 15, 'r': 15, 'a': 10} and ss['rot'] == {'rung': 3}, 'Progress’s split is unchanged: ' + json.dumps(ss.get('split')))
-    pg.evaluate("U.sheet=null;rerender()")
+    pg.evaluate("go(()=>{U.view=null;U.sheet=null})")
     # Just Foundation today? Finish here: Rotation ends at the save, Application gets none
     draft(pg, 'midRotation')
     pg.evaluate("X.rot={};saveDraft()")
     pg.click('[data-a=resume]'); pg.wait_for_timeout(200)
     pg.click('#dock [data-a=finHere]')
-    ok(until(pg, "X===null&&U.sheet==='done'") and not pg.evaluate("U.finHere"), 'Finish here saves straight away (Q20: no How did it go?)')
+    ok(until(pg, "X===null&&U.view==='saved'") and not pg.evaluate("U.finHere"), 'Finish here saves straight away (Q20: no How did it go?)')
     ss = pg.evaluate("D.sessions[D.sessions.length-1]")
     ok(ss['rot'] == {} and ss['split']['a'] == 0 and abs(ss['split']['f'] - 20) < 0.5 and ss['split']['r'] > 0 and pg.evaluate("X") is None,
        'saved with no Rotation and no Application time: ' + json.dumps(ss['split']))

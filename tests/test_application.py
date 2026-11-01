@@ -214,11 +214,13 @@ def done_and_norec(b, t):
     t.shot(pg, 'done')
     # finishing: no "How did it go?"
     pg.click('#dock [data-a=cta]')
-    ok(until(pg, "X===null&&U.sheet==='done'"), 'finishing goes straight on, with no How did it go?')
+    ok(until(pg, "X===null&&U.view==='saved'&&!U.sheet"), 'finishing goes straight on to Session saved, with no How did it go?')
     ss = pg.evaluate("D.sessions[D.sessions.length-1]")
     ok(ss['songName'] == 'Versace on the Floor · bridge' and len(ss['takes']) == 2 and ss['how'] == [] and ss['ext'] == {'app': {'song': 'g_1'}},
        'the session keeps its song and takes: ' + json.dumps(ss.get('ext')))
     # the edit sheet still has the words
+    pg.click('[data-a=savedDone]'); until(pg, "U.view===null")
+    pg.evaluate("U.sheet='session';U.sd={k:D.sessions[D.sessions.length-1].id};rerender()")  # Q21: its sheet, as from the calendar
     pg.click('[data-a=editSess]'); until(pg, "U.sheet==='edit'")
     ok(pg.locator('.sheet [data-a=wTog][data-v="In control"]').count() == 1, 'How it went can still be added on the edit sheet')
     pg.evaluate("U.sheet=null;rerender()")
@@ -255,7 +257,7 @@ def old_answers(b, t):
     pg.click('#dock [data-a=cta]')
     ok(until(pg, "U.sheet==='long'"), 'over 90 minutes still asks how long you practised')
     pg.fill('#longMins', '40'); pg.click('[data-a=longOk]')
-    ok(until(pg, "X===null&&U.sheet==='done'") and pg.evaluate("D.sessions[D.sessions.length-1].mins") == 40, 'then saves, with no How did it go?')
+    ok(until(pg, "X===null&&U.view==='saved'&&!U.sheet") and pg.evaluate("D.sessions[D.sessions.length-1].mins") == 40, 'then saves, with no How did it go?')
     pg.context.close()
 
 

@@ -152,12 +152,10 @@ def today(b, t):
     quiet(pg)
     pg.evaluate("go(()=>{U.tab='songs'})"); pg.evaluate("go(()=>{U.tab='today'})"); pg.wait_for_timeout(100)
     ok(not pg.evaluate(ANIM, '.arch svg path[pathLength]') and not pg.evaluate(ANIM, '.week span'), 'returning to Today does not replay them')
-    # a finished session: today's circle pops once its sheet has gone
-    pg.evaluate("DET.finished();U.sheet='done';U.sd={k:'s0'};rerender()"); pg.wait_for_timeout(100)
-    ok(not pg.evaluate(ANIM, '.week span.today'), 'while the sheet is up, it waits')
+    # Q21: a finished session's circle turns green on the Session saved screen (test_saved.py), so Today never pops it
+    pg.evaluate("U.sheet='session';U.sd={k:'s0'};rerender()"); pg.wait_for_timeout(60)
     pg.evaluate("U.sheet=null;U.sd={};rerender()"); pg.wait_for_timeout(60)
-    pop = pg.evaluate(ANIM, '.week span.today')
-    ok(len(pop) == 1 and pop[0]['k'] == 'transform', "then today's circle pops")
+    ok(not pg.evaluate(ANIM, '.week span.today'), "closing a session's sheet doesn't pop today's circle")
     quiet(pg)
     # the backup reminder: after backing up it shrinks away and the page closes the gap
     ok(pg.locator('.nudge').count() == 1, 'the backup reminder is showing (last backup 20 days ago)')

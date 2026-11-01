@@ -130,7 +130,8 @@ function afterLong() {
   rerender();
 }
 function finishSession() {
-  const zc = ZOOM.finishing(); // a still of the session, to shrink back into Start session once Today is drawn
+  // song practice shrinks back into its card (a still of it, taken now); a focused session lands on Session saved (Q21)
+  const zc = ZOOM.finishing(X.kind !== 'song');
   const end = Date.now(),
     mins = finalMins();
   const song = D.songs.find((s) => s.id === X.song);
@@ -200,7 +201,6 @@ function finishSession() {
         }
   );
   D.sessions.push(ss);
-  DET.finished();
   const k = monthKey(new Date(X.start));
   D.months[k] = (D.months[k] || 0) + mins;
   exIds(ss).forEach((id) => {
@@ -211,15 +211,19 @@ function finishSession() {
   save();
   X = null;
   saveDraft();
-  U.view = null;
+  // Q21: the Session saved screen, which Done turns into Today (saved.js). The session's own sheet, with Copy for
+  // Toggl, is still a tap away on Today's calendar and in All sessions
+  U.view = 'saved';
+  U.saved = { k: ss.id };
   U.tab = 'today';
   U.clock = false;
   U.noteOpen = null;
-  U.sheet = 'done';
-  U.sd = { k: ss.id };
+  U.sheet = null;
+  U.sd = {};
   window.scrollTo(0, 0);
   render();
-  ZOOM.finished(zc, 'start');
+  ZOOM.finished(zc);
+  SAVED.enter();
 }
 function deleteSession(id) {
   const ss = D.sessions.find((x) => x.id === id);

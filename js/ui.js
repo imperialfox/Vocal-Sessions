@@ -68,6 +68,11 @@ function renderBar() {
     $('barT').innerHTML = b.t;
     $('barR').innerHTML = b.r;
     bar.classList.add('always');
+  } else if (U.view === 'saved') {
+    // Q21 the Session saved screen: no buttons, only Done on the page
+    $('barT').textContent = 'Session saved';
+    $('barL').innerHTML = '';
+    $('barR').innerHTML = '';
   } else if (U.view === 'ex') {
     const e = exById(U.exId);
     $('barT').textContent = e ? e.name : '';
@@ -260,6 +265,11 @@ function renderDock1() {
   // Recall: the hint capsule takes the place of the tab bar
   if (recallOn()) {
     $('dock').innerHTML = hintCapHTML();
+    return null;
+  }
+  // Q21 the Session saved screen: Done is on the page, and the tab bar comes back with Today
+  if (U.view === 'saved') {
+    $('dock').innerHTML = '';
     return null;
   }
   if (isFlow(U.view)) {
@@ -1193,6 +1203,8 @@ function render(keepScroll) {
             ? scrSongView()
             : v === 'ckCheck'
               ? CLOCK.page()
+            : v === 'saved'
+              ? SAVED.page() // Q21 the Session saved screen (saved.js)
             : v === 'trk'
               ? TRACK.page()
             : v
@@ -1218,6 +1230,7 @@ function render(keepScroll) {
     v === 'coach' ||
     v === 'ckCheck' ||
     v === 'trk' ||
+    v === 'saved' ||
     (v === 'ex' && !split())
       ? ' narrow'
       : '');

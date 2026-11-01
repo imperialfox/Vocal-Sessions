@@ -362,12 +362,12 @@ def capsules(b, t):
     pg.evaluate("FOUND.forEach(e=>X.f[e.id]=2);X.fEnd=Date.now()-6e5;X.rot={rung:2};X.rEnd=Date.now()-3e5;X.start=Date.now()-9e5;saveDraft();go(()=>{U.view='app'})")
     quiet(pg)
     pg.click('#dock .cta')  # Q20: Finish session saves straight away (no How did it go?)
-    ok(pg.locator('.zm').count() == 1 and pg.locator('#app [data-zk=start].zm-src').count() == 1,
-       'Finish: the session shrinks back into Start session (hidden until it lands)')
+    ok(pg.locator('.zm').count() == 0 and where(pg) == 'today|saved',
+       'Finish: the session lands on Session saved (Q21), with no shrink into Start session')
     quiet(pg)
-    ok(pg.evaluate(CLEAN) and pg.evaluate("U.sheet") == 'done' and where(pg) == 'today|', 'then the summary sheet is up over Today, nothing left over')
-    pg.evaluate("closeSheet()")
+    pg.click('[data-a=savedDone]')
     quiet(pg)
+    ok(pg.evaluate(CLEAN) and not pg.evaluate("U.sheet") and where(pg) == 'today|', 'Done turns it into Today, nothing left over')
     # 3.20: the Song practice card switches to the Songs tab (a tab switch, no zoom; its capsule-expand is retired)
     pg.click('[data-a=songStart]')
     quiet(pg)

@@ -116,6 +116,11 @@ def run(b, t):
             pg.evaluate("U.view='rot';render()"); pg.wait_for_timeout(250); check('rotation')
             pg.evaluate("U.view='app';render()"); pg.wait_for_timeout(250); check('application')
             pg.evaluate("U.view='found';render()"); pg.click('[data-a=exit]'); pg.wait_for_timeout(200)
+            # Q21 the Session saved screen (for the newest session)
+            pg.evaluate("U.tab='today';U.view='saved';U.saved={k:D.sessions[D.sessions.length-1].id};render()"); pg.wait_for_timeout(200)
+            if name != 'landscape' and not pg.evaluate(INSIDE, '#app .svd-done'): bad.append('Session saved: Done off screen')  # landscape scrolls
+            check('saved')
+            pg.evaluate("U.view=null;U.saved=null;render()"); pg.wait_for_timeout(150)
             ok(not bad, f'{tag}: every screen fits' + (' — ' + '; '.join(bad) if bad else ''))
             if sc == 'light' and name in ('ipad', 'ipad-landscape', 'mac'):
                 pg.evaluate("U.tab='history';render()"); pg.click('[data-a=openAll][data-v=sessions]'); pg.wait_for_timeout(300)
