@@ -8076,3 +8076,388 @@ body:has(#dock .ophint) .dock .in {
   padding: 0 12px;
   font-size: var(--t-footnote);
 }
+/* ===== Q20 Application: carry on, sing, compare, keep the best take (application.js; take rows in screens.js) ===== */
+.apcard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 20px;
+  background: var(--surface);
+  overflow: hidden;
+}
+.apcard > * {
+  position: relative;
+  z-index: 1;
+}
+.apcard > .apsweep {
+  position: absolute;
+  z-index: 0;
+}
+.aphead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.aphead .tile {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+}
+.aphead .tile svg {
+  width: 26px;
+  height: 26px;
+}
+.apeye {
+  display: block;
+  font-size: var(--t-caption1);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--accent);
+}
+.apname {
+  display: block;
+  font-size: var(--t-title3);
+  font-weight: 600;
+  line-height: 1.2;
+}
+.appills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.appill {
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: var(--fill);
+  font-size: var(--t-subhead);
+}
+.appill.on {
+  background: var(--accent);
+  color: #fff;
+}
+.apcard .aptrk {
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 14px;
+  background: var(--fill);
+  font-size: var(--t-callout);
+  text-align: left;
+}
+.apsing {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 54px;
+  border-radius: 999px;
+  background: var(--rec);
+  color: #fff;
+  font-size: var(--t-body);
+  font-weight: 600;
+  transition: transform 0.5s cubic-bezier(0.3, 1.7, 0.45, 1);
+}
+.apsing .dot {
+  background: #fff;
+  border-radius: 50%;
+}
+.apsing:active,
+.apsoft:active,
+.apstop:active {
+  transform: scale(0.96);
+  transition-duration: 0.12s;
+}
+.aplinks {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  font-size: var(--t-subhead);
+  color: var(--fg3);
+}
+.aplinks button {
+  min-height: 36px;
+  padding: 0 2px;
+  color: var(--accent);
+}
+.aprow {
+  display: flex;
+  gap: 8px;
+}
+.apsoft {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 46px;
+  border-radius: 999px;
+  background: var(--fill);
+  font-size: var(--t-callout);
+  font-weight: 600;
+  transition: transform 0.5s cubic-bezier(0.3, 1.7, 0.45, 1);
+}
+/* the takes: the newest on a fill, the older ones plain */
+.apcard .tkgrp {
+  background: transparent;
+  border-radius: 14px;
+}
+.apcard .tkgrp > * + *::before {
+  display: none;
+}
+.tkgrp .row.tkrow {
+  gap: 8px;
+  padding: 6px 4px 6px 10px;
+}
+.apcard .tkgrp:not(.tkolder) .row.tkrow {
+  background: var(--fill);
+  border-radius: 14px;
+}
+.apcard .tkgrp .sw {
+  border-radius: 14px;
+  overflow: hidden;
+}
+.tkrow.playing,
+.apcard .tkgrp:not(.tkolder) .row.tkrow.playing {
+  background: var(--rg-blue);
+}
+.tkplay {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  background: var(--surface);
+  color: var(--fg);
+  box-shadow: 0 1px 4px var(--glass-shadow);
+}
+.tkplay svg.i {
+  width: 16px;
+  height: 16px;
+}
+.tkrow .lbl.tk {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+  min-height: 44px;
+  justify-content: center;
+}
+.tkn {
+  font-size: var(--t-subhead);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tkn em {
+  font-style: normal;
+  font-size: var(--t-caption1);
+  color: var(--accent);
+  margin-left: 4px;
+}
+.tkn .tkd {
+  display: inline;
+  font-weight: 400;
+  margin-left: 4px;
+}
+.tkwv {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 20px;
+}
+.tkwv i {
+  flex: 1;
+  min-width: 1px;
+  height: 14%;
+  border-radius: 2px;
+  background: var(--fg3);
+  opacity: 0.7;
+}
+.tkwv.wait i {
+  opacity: 0.35;
+}
+.tkrow.playing .tkwv i {
+  background: var(--accent);
+  opacity: 0.5;
+}
+.tkpg {
+  position: absolute;
+  left: 0;
+  top: -2px;
+  bottom: -2px;
+  width: 0;
+  border-right: 2px solid var(--accent);
+  pointer-events: none;
+}
+.tkrow:not(.playing) .tkpg {
+  display: none;
+}
+.tklen {
+  font-size: var(--t-footnote);
+  color: var(--fg2);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+.tkrow .ibtn.star {
+  color: var(--fg3);
+}
+.tkrow .ibtn.star.on {
+  color: var(--star);
+}
+.apcard.tkcard {
+  gap: 8px;
+  padding: 10px;
+  margin-top: 10px;
+}
+.seg.apcmp {
+  display: flex;
+}
+.seg.apcmp button {
+  flex: 1;
+  min-width: 0;
+  padding: 0 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.seg.apcmp button.on {
+  font-weight: 600;
+}
+/* while it records: the card is the recording; everything else steps back and keeps still */
+.apcard.rec {
+  box-shadow: inset 0 0 0 2px var(--rec);
+}
+.apcard.rec .aphead small {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.aptime {
+  margin-left: auto;
+  font-size: var(--t-title2);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.apcard .apmeter {
+  flex: none;
+  display: flex;
+  width: 100%;
+  height: 34px;
+  gap: 4px;
+}
+.apmeter i {
+  flex: 1;
+  width: auto;
+  background: var(--rec);
+}
+.aply p {
+  margin: 0;
+  font-size: var(--t-body);
+  line-height: 1.5;
+}
+.aply small {
+  display: block;
+  margin-top: 8px;
+  font-size: var(--t-footnote);
+  color: var(--fg2);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.aply small:first-child {
+  margin-top: 0;
+}
+.apstop {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 54px;
+  border-radius: 999px;
+  background: var(--fill);
+  font-size: var(--t-body);
+  font-weight: 600;
+  transition: transform 0.5s cubic-bezier(0.3, 1.7, 0.45, 1);
+}
+.apstop span {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  background: var(--rec);
+}
+body.apprec #app .osec:not(.active),
+body.apprec #dock {
+  opacity: 0.3;
+  pointer-events: none;
+}
+#app .osec,
+#dock {
+  transition: opacity var(--dur-gentle) var(--ease-gentle);
+}
+/* Done: the song folded to one line */
+.apcard.closed {
+  padding: 0;
+  background: transparent;
+}
+.apline {
+  margin-bottom: 0;
+}
+.apline .lbl {
+  font-size: var(--t-callout);
+}
+/* the red track window while a take is sung over the track */
+.fw[data-kind='rectrack'] {
+  width: 188px;
+  min-height: 0;
+  padding: 9px 12px 10px;
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--rec) 88%, transparent);
+  color: #fff;
+}
+.fw .fwrec {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  min-width: 0;
+}
+.fw[data-kind='rectrack'] .fwk {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: var(--t-caption2);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.fw .fwtm {
+  position: absolute;
+  top: 0;
+  right: 0;
+  font-size: var(--t-caption2);
+  font-variant-numeric: tabular-nums;
+  color: rgba(255, 255, 255, 0.85);
+}
+.fw[data-kind='rectrack'] .fwt {
+  font-size: var(--t-subhead);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.fw[data-kind='rectrack'] .fwp {
+  position: relative;
+  left: auto;
+  right: auto;
+  bottom: auto;
+  margin-top: 4px;
+  background: rgba(255, 255, 255, 0.3);
+}
+.fw[data-kind='rectrack'] .fwp i {
+  background: #fff;
+}

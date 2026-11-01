@@ -151,6 +151,43 @@ const FW_KINDS = [
     },
   },
 ];
+// Q20: while Application records over the song's track, the window is the track, in red: what's playing under
+// the take and where it's got to. It's only to see (nothing to tap but the drag), and it's never in FW_KINDS: it's
+// the one window shown during a recording
+const FW_REC = {
+  id: 'rectrack',
+  active: () =>
+    !!(rec && rec.app && rec.over && NOW.under() === 'track' && U.view === 'app' && typeof TRACK !== 'undefined' && TRACK.state().playing),
+  own: () => false,
+  info() {
+    const sg = songById(rec.songId),
+      st = TRACK.state();
+    return {
+      k: '♪ Track',
+      t: mmss(st.t),
+      p: Math.min(1, st.t / Math.max(1, st.dur)),
+      on: true,
+      open: '',
+      label: 'Track playing under your take: ' + (sg ? songTitle(sg) + ' · ' + APPL.secName(sg, rec.o) : 'track'),
+      sub: sg ? songTitle(sg) + ' · ' + APPL.secName(sg, rec.o) : '',
+    };
+  },
+  toggle() {},
+  open() {},
+  draw(el, i) {
+    if (FW.build !== 'rectrack') {
+      FW.build = 'rectrack';
+      el.innerHTML =
+        '<div class="fwrec"><span class="fwk">' +
+        i.k +
+        '</span><span class="fwtm"></span><span class="fwt"></span><span class="fwp"><i></i></span></div>';
+    }
+    el.classList.remove('paused', 'hasx');
+    el.querySelector('.fwtm').textContent = i.t;
+    el.querySelector('.fwt').textContent = i.sub;
+    el.querySelector('.fwp i').style.width = (i.p * 100).toFixed(1) + '%';
+  },
+};
 function fwGo(fn, y) {
   U.clock = false;
   fn();
@@ -158,10 +195,11 @@ function fwGo(fn, y) {
   render();
   window.scrollTo(0, y || 0);
 }
-const fwKindNow = () => FW_KINDS.find((k) => k.id === FW.shown);
+const fwKindNow = () => (FW.shown === FW_REC.id ? FW_REC : FW_KINDS.find((k) => k.id === FW.shown));
 // the window that should be on screen now, if any
 function fwPick() {
-  if (!D || U.sheet || U.clock || rec || overlayOpen() || U.sFocus) return null;
+  if (!D || U.sheet || U.clock || overlayOpen() || U.sFocus) return null;
+  if (rec) return FW_REC.active() ? FW_REC : null; // Q20: during a recording, only the red track window
   if (typeof LAUNCH !== 'undefined' && LAUNCH.busy()) return null; // appears after the launch ripple (3.13)
   if (KEYS.typing()) return null; // keep the keyboard clear
   if (FW.shut) return null; // ✕ always visibly closes something: nothing pops up in its place (3.20)

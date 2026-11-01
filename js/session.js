@@ -111,14 +111,22 @@ function togglLines(ss) {
   if (how) L.push('How it went: ' + how);
   return L.join('\n');
 }
-// Finish: long-session check (over 90 min), then "How did it go?", then save
+// Finish: long-session check (over 90 min), then save. Q20: a focused session no longer asks "How did it go?" (its
+// words can still be added on the session's edit sheet); song practice still does
 function startFinish() {
   U.clock = false;
   U.noteOpen = null;
   X.minsOverride = null;
-  U.sheet = elapsedSec() > LONG_MINS * 60 ? 'long' : 'how';
+  U.sheet = elapsedSec() > LONG_MINS * 60 ? 'long' : isSong() ? 'how' : null;
   U.sd = {};
   saveDraft();
+  if (!U.sheet) return finishSession();
+  rerender();
+}
+// after the long-session check: song practice asks how it went, a focused session is saved
+function afterLong() {
+  if (!isSong()) return finishSession();
+  U.sheet = 'how';
   rerender();
 }
 function finishSession() {
@@ -170,6 +178,14 @@ function finishSession() {
     rE = Math.min(e, Math.max(fE, X.rE || fE)),
     sc = (mins * 60) / e;
   const mixed = fE < QUICK_STEP || rE - fE < QUICK_STEP; // a step under 2 minutes means the levels were filled in afterwards
+  // Q20: the song Application practised, its section, and whether it was practised without a take (Carry on reads it)
+  if (song) {
+    const sp = X.sing && X.sing.id === song.id ? X.sing : null,
+      app = { song: song.id };
+    if (sp && sp.o) app.o = sp.o;
+    if (!(X.takes || []).some((k) => (TAKES.find((t) => t.id === k) || {}).songId === song.id)) app.noRec = true;
+    base.ext = { app };
+  }
   const ss = Object.assign(
     base,
     { f: X.f, fNote: X.fNote || '', rot: X.rot, rNote: X.rNote || '', rotNames, xn: X.xn || {}, rate: X.rate, mixed },
@@ -384,10 +400,12 @@ async function startRec(target, over) {
     o: tg.o || null,
     started: Date.now(),
     over: keep ? over || 'hp' : null, // Q16: recorded over the track ('hp' or 'spk')
+    app: !!tg.app, // Q20: sung in Application: its card is the recording, and the take joins the session
+    from: keep && tg.from != null ? tg.from : null, // Q20: where the track started
   };
   NOW.start('rec', null, () => stopRec(), keep ? 'track' : null);
   // 3.20: a take on any song page starts (or carries on) song practice for that song, timed from its first take
-  if (rec.o && songById(rec.songId)) {
+  if (rec.o && !rec.app && songById(rec.songId)) {
     if (!X) {
       newSong();
       X.song = rec.songId;
@@ -413,14 +431,23 @@ async function startRec(target, over) {
     if (l) l.textContent = 'Stop · ' + mmss(rec.t) + ' of ' + mmss(MAX_TAKE);
     const c = $('recT');
     if (c) c.textContent = mmss(rec.t);
+    if (FW.shown === 'rectrack') fwTick(); // Q20: the red track window's time
     if (rec.t >= MAX_TAKE) stopRec();
   }, 250);
-  if (rec.o) {
+  if (rec.app) recMeter(rec);
+  else if (rec.o) {
     recMeter(rec);
     U.sSec = rec.o;
   }
   rerender();
-  if (rec.o) scrollToSec(rec.o);
+  if (rec.o && !rec.app) scrollToSec(rec.o);
+  if (rec.app) {
+    // the card is the recording: it comes into view if it's out of it, then nothing moves
+    const c = $('apcard'),
+      r = c && c.getBoundingClientRect();
+    if (r && (r.top < 70 || r.bottom > window.innerHeight - 150))
+      window.scrollTo({ top: Math.max(0, window.scrollY + r.top - 90), behavior: MOTION.on() ? 'smooth' : 'auto' });
+  }
 }
 
 /* ===== Recording over the track (Q16) =====
@@ -429,7 +456,7 @@ async function startRec(target, over) {
    processing off, the track through the speaker would be heard in the take, so it's for headphones by default and
    asks first. Saying headphones is remembered only while the track keeps playing: it's forgotten when the track
    pauses (iOS pauses it when headphones come out), when audio devices change and when the app goes to the background. */
-const REC_OVER = { hp: false };
+const REC_OVER = { hp: false, mine: 0 }; // mine (Q20): when the app itself last paused the track
 const trackUnder = () =>
   NOW.kind() === 'track' && typeof TRACK !== 'undefined' && TRACK.state().playing && !TRACK.state().along;
 function askOver(tg) {
@@ -450,17 +477,30 @@ function recOver(v) {
   const tg = (U.sd || {}).tg;
   U.sheet = null;
   U.sd = {};
+  // Q20 Sing over the track: Application starts the track itself, then records (application.js)
+  if (tg && tg.sing) {
+    rerender();
+    return APPL.over(tg, v === 'hp' ? 'hp' : 'spk');
+  }
   if (v === 'hp') hpSaid();
   rerender();
   if (tg) startRec(tg, v === 'hp' ? 'hp' : 'spk');
 }
+// Q20: a pause the app makes itself (Application's take ending, or a take about to play) isn't headphones coming
+// out, so the answer is kept for ↻ Again; any other pause, a change of audio devices or leaving the app forgets it
 function hpSaid() {
   REC_OVER.hp = true;
-  const forget = () => (REC_OVER.hp = false),
-    v = typeof TRACK !== 'undefined' && TRACK.el();
-  if (v) v.addEventListener('pause', forget, { once: true });
+  const v = typeof TRACK !== 'undefined' && TRACK.el(),
+    onPause = () => {
+      if (Date.now() - REC_OVER.mine < 500) {
+        if (REC_OVER.hp && v) v.addEventListener('pause', onPause, { once: true });
+        return;
+      }
+      REC_OVER.hp = false;
+    };
+  if (v) v.addEventListener('pause', onPause, { once: true });
   try {
-    navigator.mediaDevices.addEventListener('devicechange', forget, { once: true });
+    navigator.mediaDevices.addEventListener('devicechange', () => (REC_OVER.hp = false), { once: true });
   } catch (e) {}
 }
 document.addEventListener('visibilitychange', () => {
@@ -503,6 +543,7 @@ function stopRec() {
   if (!rec || rec.stopping) return;
   rec.stopping = true;
   NOW.ended('rec');
+  if (rec.app && rec.over) APPL.quietPause(); // Q20: the track was for this take; it stops with it
   clearInterval(rec.timer);
   if (rec.meterOff) rec.meterOff();
   try {
@@ -578,18 +619,20 @@ async function saveRec() {
   await refreshTakes(); // 3.20: every take is kept; nothing is removed automatically
   if (saved) analyseTake(t);
   // straight to the review sheet, layered over the song, if it's still on screen
-  const sh = saved && r.o && songShown();
+  const sh = saved && r.o && !r.app && songShown();
   if (sh && sh.id === r.songId && !U.sheet) {
     U.sheet = 'sgTakes';
     U.sd = { k: r.songId, o: r.o, fresh: t.id };
   }
   rerender();
   if (U.sd && U.sd.fresh === t.id) DET.takeIn();
+  if (saved && r.app) APPL.arrived(t.id);
 }
 // a saved take joins its practice (if that's still the one running) and marks its song as practised
 function tookTake(t, r, xs) {
-  if (X && X.start === xs && (!r.o || (r.sp && isSong() && X.song === r.songId))) {
+  if (X && X.start === xs && (!r.o || r.app || (r.sp && isSong() && X.song === r.songId))) {
     if (!X.takes.includes(t.id)) X.takes.push(t.id);
+    if (r.app && !isSong()) X.song = r.songId; // Q20: the song Application practised
     saveDraft();
   }
   const song = D.songs.find((s) => s.id === r.songId);
@@ -697,7 +740,8 @@ function playTake(id, at) {
     if (e && e.type === 'pause' && !p.ended) fwPaused('take');
     if (typeof TAKE !== 'undefined') TAKE.paint();
     // its own play button shows the change; elsewhere only the floating window does
-    if (document.querySelector('[data-a=playTake][data-k="' + id + '"]') && !(typeof TAKE !== 'undefined' && TAKE.inPlace()))
+    if (APPL.inPlace()) APPL.paint(); // Q20: the take rows change in place, so Compare's knob can slide
+    else if (document.querySelector('[data-a=playTake][data-k="' + id + '"]') && !(typeof TAKE !== 'undefined' && TAKE.inPlace()))
       rerender();
     else fwUpdate();
   };
@@ -714,6 +758,7 @@ function playTake(id, at) {
   });
   const p = player;
   if (typeof TAKE !== 'undefined' && TAKE.inPlace()) TAKE.paint();
+  else if (APPL.inPlace()) APPL.paint();
   else rerender();
   const tick = () => {
     if (player !== p) return;

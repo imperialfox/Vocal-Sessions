@@ -361,9 +361,7 @@ def capsules(b, t):
     ok(pg.locator('#dock .cta').count() == 1, 'with its own button in place of the tab bar')
     pg.evaluate("FOUND.forEach(e=>X.f[e.id]=2);X.fEnd=Date.now()-6e5;X.rot={rung:2};X.rEnd=Date.now()-3e5;X.start=Date.now()-9e5;saveDraft();go(()=>{U.view='app'})")
     quiet(pg)
-    pg.click('#dock .cta')
-    quiet(pg)
-    pg.click('[data-a=saveHow]')
+    pg.click('#dock .cta')  # Q20: Finish session saves straight away (no How did it go?)
     ok(pg.locator('.zm').count() == 1 and pg.locator('#app [data-zk=start].zm-src').count() == 1,
        'Finish: the session shrinks back into Start session (hidden until it lands)')
     quiet(pg)

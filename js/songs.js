@@ -102,7 +102,7 @@ const takesOf = (id) => TAKES.filter((t) => t.songId === id).length;
 // takes recorded from one place in a song (an entry in its order), oldest first
 const takesAt = (id, o) => TAKES.filter((t) => t.songId === id && t.o === o);
 // a section of this song is being recorded: the screen is locked to it
-const recHere = (sg) => !!(rec && rec.o && sg && rec.songId === sg.id);
+const recHere = (sg) => !!(rec && rec.o && !rec.app && sg && rec.songId === sg.id); // Q20: not Application's takes
 // Recall is on for the song on screen (not while editing)
 const recallOn = () => U.sMode === 'recall' && !U.sEdit && hasLyrics(songShown());
 const hintLv = () => (recallOn() ? U.sHint || 0 : 0);
@@ -614,6 +614,7 @@ function sgp() {
     'trkSongLyrics',
     'trkLvV',
     'mkLayer',
+    'singOver', // Q20 Application's Sing over the track (false when switched off)
   ].forEach((k) => {
     if (k in o) SGP[k] = o[k];
   });
@@ -2954,7 +2955,7 @@ function slayerHTML() {
 }
 function songsAfter() {
   sgEnsure();
-  if (rec && rec.o && !rec.stopping) {
+  if (rec && rec.o && !rec.app && !rec.stopping) {
     const sh = songShown();
     if (!sh || sh.id !== rec.songId) {
       stopRec();

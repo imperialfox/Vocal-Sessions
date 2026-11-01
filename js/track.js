@@ -245,6 +245,7 @@ const TRACK = (() => {
       changed();
     });
     el.addEventListener('pause', () => {
+      plain = false;
       clearTimeout(wrapT);
       wrapT = 0;
       if (cur) pos[cur.id] = el.currentTime;
@@ -323,7 +324,10 @@ const TRACK = (() => {
   // the player page for the open track is on screen
   const here = () => U.view === 'trk' && !!cur && U.songId === cur.id;
   const song = () => (cur ? songById(cur.id) : null);
+  // Q20: Application plays the track straight through from a section (plain), so the loop never wraps it
+  let plain = false;
   const loopNow = () => {
+    if (plain) return null;
     const sg = song();
     return sg && sg.loop && sg.loop.end > sg.loop.start ? sg.loop : null;
   };
@@ -461,8 +465,9 @@ const TRACK = (() => {
   }
 
   /* ----- playing ----- */
-  function play() {
+  function play(straight) {
     if (!cur) return;
+    plain = straight === true; // Q20: only playFrom() plays it straight; everything else plays as before
     const v = audio();
     // one sound at a time (3.20): whatever else plays stops
     NOW.start('track', cur.id, () => pause());
@@ -1468,6 +1473,25 @@ const TRACK = (() => {
     await open1(id);
     if (!cur || cur.id !== id) return paintRows();
     play();
+  }
+  // Q20 Sing over the track: the song's track from a time, straight through (no loop), started in the tap the way a
+  // song row's play button is. Resolves true once it's playing
+  async function playFrom(id, t) {
+    if (!songById(id) || !have.has(id)) return false;
+    const v = audio();
+    if (!(cur && cur.id === id)) {
+      unload();
+      try {
+        v.src = HUSH;
+        const p = v.play();
+        if (p && p.catch) p.catch(() => {});
+      } catch (e) {}
+      await ensure(id);
+      if (!cur || cur.id !== id) return false;
+    }
+    seek(t);
+    play(true);
+    return playing();
   }
   const rowIsOn = (id) => !!(cur && cur.id === id && playing());
   function rowPlay(sg) {
@@ -3260,6 +3284,7 @@ const TRACK = (() => {
     endAt,
     chipLoop,
     playSong,
+    playFrom,
     rowPlay,
     paintRows,
     read,

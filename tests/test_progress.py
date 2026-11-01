@@ -37,14 +37,14 @@ def run(b, t):
     # a timed session
     pg.click('[data-a=tab][data-v=today]'); pg.click('[data-a=start]'); pg.wait_for_timeout(200)
     pg.evaluate("for(const e of FOUND)X.f[e.id]=3;X.rot={rung:3};X.start=Date.now()-50*60000;X.fE=25*60;X.rE=40*60;X.fEnd=Date.now();X.rEnd=Date.now();saveDraft();U.view='app';render()")
-    pg.click('[data-a=cta]'); pg.wait_for_timeout(500); pg.click('[data-a=saveHow]'); pg.wait_for_timeout(500)
+    pg.click('[data-a=cta]'); pg.wait_for_function("X===null", timeout=5000); pg.wait_for_timeout(300)  # Q20: no How did it go?
     ss = pg.evaluate("D.sessions[D.sessions.length-1]")
     ok(ss['mixed'] is False and ss['split'] == {'f': 25, 'r': 15, 'a': 10}, 'a timed session saves its real split ' + json.dumps(ss.get('split')))
     pg.click('.xbtn[data-a=close]'); pg.wait_for_timeout(300)
     # filled in at the end
     pg.click('[data-a=start]'); pg.wait_for_timeout(200)
     pg.evaluate("for(const e of FOUND)X.f[e.id]=3;X.rot={vertical:2};X.start=Date.now()-45*60000;X.fE=44*60;X.rE=44.5*60;X.fEnd=Date.now();X.rEnd=Date.now();saveDraft();U.view='app';render()")
-    pg.click('[data-a=cta]'); pg.wait_for_timeout(500); pg.click('[data-a=saveHow]'); pg.wait_for_timeout(500)
+    pg.click('[data-a=cta]'); pg.wait_for_function("X===null", timeout=5000); pg.wait_for_timeout(300)  # Q20: no How did it go?
     ss = pg.evaluate("D.sessions[D.sessions.length-1]"); sp = pg.evaluate("splitOf(D.sessions[D.sessions.length-1])")
     ok(ss['mixed'] is True and 'split' not in ss, 'quick steps mark the session as filled in at the end')
     ok(abs(sp['f'] - 25.4) < 0.1 and abs(sp['r'] - 460 * 2 / 3 / 60) < 0.1, 'and it is split by the coach video')

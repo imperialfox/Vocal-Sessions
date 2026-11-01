@@ -409,15 +409,13 @@ document.addEventListener('click', (e) => {
       if (!(m >= 1)) return toast('Enter the minutes you practised');
       X.minsOverride = Math.min(m, max);
       saveDraft();
-      U.sheet = 'how';
-      rerender();
+      afterLong(); // Q20: a focused session is saved; song practice asks how it went
       break;
     }
     case 'longAll':
       X.minsOverride = null;
       saveDraft();
-      U.sheet = 'how';
-      rerender();
+      afterLong();
       break;
     case 'saveHow':
       finishSession();

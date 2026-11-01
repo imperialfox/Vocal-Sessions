@@ -1000,64 +1000,96 @@ function songPicker() {
     '</button></div>'
   );
 }
+// Q20 one take: play, its name and waveform (the playhead drawn over it while it plays), its length and its star.
+// Shared by Application's card and Song practice. Tap the name for its notes (and Save or share, Delete); swipe left
+// to delete. o: {fresh: marked new, name: what it's called, date: show the day it was sung}
+function takeRow(t, o) {
+  o = o || {};
+  const n = noteStr(t.note),
+    on = takePlaying(t.id),
+    nm = o.name || 'Take';
+  return sw(
+    '<div class="row tkrow' +
+      (on ? ' playing' : '') +
+      '" data-tk="' +
+      t.id +
+      '"><button class="tkplay" data-a="playTake" data-k="' +
+      t.id +
+      '" aria-label="' +
+      (on ? 'Pause ' : 'Play ') +
+      esc(nm) +
+      '">' +
+      (on ? ICON.pause : ICON.play) +
+      '</button><button class="lbl tk" data-a="takeNote" data-k="' +
+      t.id +
+      '" aria-label="Notes for ' +
+      esc(nm) +
+      '"><span class="tkn">' +
+      esc(nm) +
+      (o.fresh ? ' <em>new</em>' : '') +
+      (o.date ? ' <small class="tkd">' + shortDate(t.created) + '</small>' : '') +
+      '</span>' +
+      APPL.wave(t.id) +
+      (n ? '<small class="acc">' + esc(n) + '</small>' : '') +
+      '</button><span class="tklen">' +
+      mmss(t.len) +
+      '</span><button class="ibtn star' +
+      (t.star ? ' on' : '') +
+      '" data-a="star" data-k="' +
+      t.id +
+      '" aria-label="' +
+      (t.star ? 'Unstar ' : 'Star ') +
+      esc(nm) +
+      '" aria-pressed="' +
+      !!t.star +
+      '">' +
+      ICON.star +
+      '</button></div>',
+    'delTake',
+    t.id
+  );
+}
+// Q20 the takes, newest first: the newest, then Compare ("This take | Take N", from the second take on), then the
+// rest. list: newest first; o: {fresh: the newest was just sung, prev: the take to compare it with, name(t), date}
+function takesBlock(list, o) {
+  if (!list.length) return '';
+  const nm = (t) => (o.name ? o.name(t) : 'Take');
+  let h = '<div class="grp tkgrp">' + takeRow(list[0], { fresh: o.fresh, name: nm(list[0]), date: o.date && !sameDay(list[0].created) }) + '</div>';
+  if (o.prev) h += APPL.cmpHTML(list[0], o.prev, nm(o.prev));
+  if (list.length > 1)
+    h +=
+      '<div class="grp tkgrp tkolder">' +
+      list
+        .slice(1)
+        .map((t) => takeRow(t, { name: nm(t), date: o.date && !sameDay(t.created) }))
+        .join('') +
+      '</div>';
+  return h;
+}
+// Song practice: the record button (↻ Again once this practice has a take), then the song's takes, newest first
 function takeRows(sid) {
-  const tk = TAKES.filter((t) => t.songId === sid),
-    sg = songById(sid);
-  // takes recorded from a section say which one
-  const where = (t) => {
-    const i = t.o && hasLyrics(sg) ? occIdx(sg, t.o) : -1;
-    return i < 0 ? '' : esc(occLabel(sg, i)) + ' · ';
-  };
+  const sg = songById(sid),
+    tk = TAKES.filter((t) => t.songId === sid).reverse(),
+    mine = (X && X.takes) || [],
+    fresh = !!(tk.length && mine.includes(tk[0].id)),
+    again = tk.some((t) => mine.includes(t.id));
   return (
     '<div class="hdr">Takes</div><div class="grp"><button class="row recbtn' +
     (rec ? ' on' : '') +
     '" data-a="rec"><span class="dot" aria-hidden="true"></span><span id="recLbl">' +
-    (rec ? 'Stop · ' + mmss(rec.t) + ' of ' + mmss(MAX_TAKE) : 'Record a take') +
-    '</span></button>' +
-    tk
-      .map((t) => {
-        const n = noteStr(t.note);
-        return sw(
-          '<div class="row"><button class="ibtn acc" data-a="playTake" data-k="' +
-            t.id +
-            '" aria-label="Play take">' +
-            (takePlaying(t.id) ? ICON.pause : ICON.play) +
-            '</button><button class="lbl tk" data-a="takeNote" data-k="' +
-            t.id +
-            '" aria-label="Notes for this take">' +
-            where(t) +
-            shortDate(t.created) +
-            ' · ' +
-            mmss(t.len) +
-            '<small class="' +
-            (n ? 'acc' : '') +
-            '">' +
-            (n ? esc(n) : 'Add a note') +
-            '</small></button><button class="ibtn star' +
-            (t.star ? ' on' : '') +
-            '" data-a="star" data-k="' +
-            t.id +
-            '" aria-label="' +
-            (t.star ? 'Unstar' : 'Star') +
-            ' take" style="' +
-            (t.star ? '' : 'color:var(--fg3)') +
-            '">' +
-            ICON.star +
-            '</button><button class="ibtn acc" data-a="shareTake" data-k="' +
-            t.id +
-            '" aria-label="Save or share take">' +
-            ICON.share +
-            '</button><button class="ibtn dng" data-a="sheet" data-v="delTake" data-k="' +
-            t.id +
-            '" aria-label="Delete take">' +
-            ICON.trash +
-            '</button></div>',
-          'delTake',
-          t.id
-        );
-      })
-      .join('') +
-    '</div><p class="foot">Tap a take to add notes. Every take is kept. If you leave the app while recording, the take stops and is saved.</p>'
+    (rec ? 'Stop · ' + mmss(rec.t) + ' of ' + mmss(MAX_TAKE) : again ? '↻ Again' : 'Record a take') +
+    '</span></button></div>' +
+    (tk.length
+      ? '<div class="apcard tkcard">' +
+        takesBlock(tk, {
+          fresh,
+          prev: fresh && tk[1] ? tk[1] : null,
+          name: (t) => TAKE.nameOf(t.id) || 'Take',
+          date: true,
+        }) +
+        '</div>'
+      : '') +
+    '<p class="foot">Tap a take’s name for its notes. Swipe left to delete. Every take is kept. If you leave the app while recording, the take stops and is saved.</p>'
   );
 }
 /* ===== The one-page session (Q19) =====
@@ -1067,7 +1099,7 @@ function takeRows(sid) {
 const FLOW_STEPS = [
   { v: 'found', name: 'Foundation', desc: 'Four core exercises. Tap a row for the level you reached, or Skip.' },
   { v: 'rot', name: 'Rotation', desc: 'Pick as many as you like. Each one gets its own level.' },
-  { v: 'app', name: 'Application', desc: 'Sing a real song or section and record a take to listen back.' },
+  { v: 'app', name: 'Application', desc: 'Sing a song or a section, then keep your best take.' },
 ];
 const flowCur = () => ({ found: 0, rot: 1, app: 2 })[U.view] || 0;
 // how long since an exercise was last done, for Rotation's rows
@@ -1259,17 +1291,8 @@ function flowBody(i) {
       '</button></div>'
     );
   }
-  // Application keeps its content as it was until Q20
-  let h = songPicker();
-  if (X.song) h += takeRows(X.song);
-  return (
-    h +
-    '<div class="hdr">Rate the song</div><div class="grp">' +
-    ['Pitch', 'Tone', 'Ease']
-      .map((k) => '<div class="row"><span class="lbl">' + k + '</span>' + seg('rate', k, X.rate[k]) + '</div>')
-      .join('') +
-    '</div>'
-  );
+  // Q20: carry on where you left off, sing, compare, keep the best take (application.js)
+  return APPL.body();
 }
 // a finished step folded to one line: what was done and how long it took. Tap to reopen it
 function flowLine(i) {

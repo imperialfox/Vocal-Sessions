@@ -34,6 +34,8 @@ function startOfDay(d) {
   x.setHours(0, 0, 0, 0);
   return x;
 }
+// Q20: a time (ms or date) on today's date
+const sameDay = (d) => +startOfDay(d) === +startOfDay(new Date());
 function weekStart(d) {
   const x = startOfDay(d);
   x.setDate(x.getDate() - ((x.getDay() + 6) % 7));

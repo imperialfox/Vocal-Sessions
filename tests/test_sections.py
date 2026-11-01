@@ -146,7 +146,7 @@ def run(b, t):
        'a take without a place isn’t counted on any section')
     pg.click(f'[data-a=sgPractise]'); pg.wait_for_timeout(400)
     rows = pg.evaluate("[...document.querySelectorAll('.tk')].map(x=>x.textContent)")
-    ok(len(rows) == 6 and sum('Verse 1 · ' in r for r in rows) == 3 and sum('Chorus 2 · ' in r for r in rows) == 2,
+    ok(len(rows) == 6 and sum('· Verse 1' in r for r in rows) == 3 and sum('· Chorus 2' in r for r in rows) == 2,  # Q20: "Take 3 · Verse 1"
        'song practice lists every take, saying which section each came from')
     ok(pg.evaluate("X.takes.length") == 5, 'the section takes belong to this song practice')
     pg.click('#bar [data-a=exit]'); pg.wait_for_timeout(300)

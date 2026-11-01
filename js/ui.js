@@ -235,8 +235,8 @@ function renderDock1() {
     $('dock').innerHTML = '';
     return null;
   }
-  // recording a section: the recording bar takes the place of the tab bar
-  if (rec && rec.o) {
+  // recording a section: the recording bar takes the place of the tab bar (Q20: Application's card is its own)
+  if (rec && rec.o && !rec.app) {
     $('dock').innerHTML =
       '<div class="recbar glass" role="group" aria-label="Recording"><span class="rectime"><span class="recdot" aria-hidden="true"></span><span id="recT">' +
       mmss(rec.t) +
@@ -444,7 +444,13 @@ function renderSheet() {
         '<p class="note">Tap words that describe this take.</p>' +
           chipsHTML(wordList('take', TAKE_WORDS), t.note.w, 'take') +
           noteBlock('tnText', t.note.t, 'More detail on this take') +
-          '<div style="margin-top:14px"><button class="cta" data-a="close">Done</button></div>',
+          '<div style="margin-top:14px"><button class="cta" data-a="close">Done</button></div>' +
+          // Q20: the take's row is play, name, waveform and star; saving it and deleting it are here
+          '<button class="ghost" data-a="shareTake" data-k="' +
+          esc(t.id) +
+          '">Save or share</button><button class="ghost" data-a="sheet" data-v="delTake" data-k="' +
+          esc(t.id) +
+          '" style="color:var(--danger)">Delete take</button>',
         'Notes for this take'
       );
     }
@@ -1232,6 +1238,7 @@ function render(keepScroll) {
   FIND.after(); // 3.22 Search: the field focused when the page is opened from its circle
   MKG.after(); // Q04 the peek card goes with its marks sheet
   OP.after(); // Q19 the one-page session: the coach video cued, the pull put back
+  APPL.after(); // Q20 Application: the page dims around its card while it records
   fwUpdate();
   DET.dockSwap(dk);
   DET.play();

@@ -9,6 +9,32 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.40 · 1 Nov 2026
+*Application: carry on, sing, compare and keep your best take (Q20)*
+<!-- area: practice -->
+
+Application, the session's last step, is quicker: pick up where you left off, sing, compare, keep the best take and move on.
+
+**Carry on**
+- A card picks up the song and section you last sang. Change section shows Whole song and each section of the song; a song with no sections is always Whole song.
+- Other songs sit underneath, sorted by Recently practised or A–Z.
+- "Practised, not recorded" logs a song you practised without a take, for days in the car.
+- With nothing sung yet, the pinned button reads Skip and finish.
+
+**Singing**
+- Sing over the track (remembered on this phone): with the song's track on the phone, Sing plays it from just before the section and records over it. It asks first, with headphones as the default and the speaker only after you say so, as agreed for recording over the track. <!-- area: recordings -->
+- While it records, the card becomes the recording (the section, the time, its words and Stop), the rest of the page steps back and keeps still, and the floating window turns into a red window for the track. <!-- area: recordings -->
+
+**Takes**
+- Each take shows its waveform, its length and a star to mark your keeper. <!-- area: recordings -->
+- Compare switches between this take and the one before in one tap, from the same moment, one at a time. <!-- area: recordings -->
+- ↻ Again sings the same section again. Done flashes green and the song folds to one line; tap it to change anything.
+- Song practice has the same take rows, with Compare and ↻ Again. A take's Save or share and Delete are on its notes sheet (tap its name), and swiping left still deletes. <!-- area: recordings -->
+- Every take is kept, as before.
+
+**Finishing**
+- Finishing a session no longer asks How did it go? It's saved straight away (the long-session check stays). Past answers still show, and you can still add them from a session's edit sheet. Song practice still asks.
+
 ## 3.39 · 1 Nov 2026
 *A session on one page, with rings for each exercise (Q19)*
 <!-- area: practice -->

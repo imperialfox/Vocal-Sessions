@@ -152,7 +152,7 @@ def rotation(b, t):
     ok(pg.evaluate("U.view") == 'app' and pg.evaluate("X.rot") == {} and abs(pg.evaluate("X.rE") - e0) < 1.5,
        'Skip rotation goes on to Application, recording Rotation’s end as before')
     ok('Not today' in pg.inner_text('#app .osec.folded[data-sec="1"]'), 'Rotation’s line says Not today')
-    ok(cta(pg) == 'Finish session' and pg.locator('#app .osec.active [data-a=song]').count() >= 1, 'Application keeps its song list, with Finish session')
+    ok(cta(pg) == 'Skip and finish' and pg.locator('#app .osec.active [data-a=apSong]').count() >= 1, 'Application (Q20): its songs, and Skip and finish until one is sung')
     t.shot(pg, 'application')
     pg.context.close()
 
@@ -164,7 +164,7 @@ def finishing(b, t):
     draft(pg, 'midApplication')
     pg.click('[data-a=resume]'); pg.wait_for_timeout(200)
     ok(pg.evaluate("U.view") == 'app' and pg.locator('#app .osec.folded').count() == 2, 'a 3.31 draft in Application resumes there, both steps folded')
-    pg.click('#dock [data-a=cta]'); pg.wait_for_timeout(300); pg.click('[data-a=saveHow]'); pg.wait_for_timeout(400)
+    pg.click('#dock [data-a=cta]'); until(pg, "X===null")  # Q20: no How did it go?
     ss = pg.evaluate("D.sessions[D.sessions.length-1]")
     ok(ss.get('mixed') is False and ss['split'] == {'f': 15, 'r': 15, 'a': 10} and ss['rot'] == {'rung': 3}, 'Progress’s split is unchanged: ' + json.dumps(ss.get('split')))
     pg.evaluate("U.sheet=null;rerender()")
@@ -172,11 +172,8 @@ def finishing(b, t):
     draft(pg, 'midRotation')
     pg.evaluate("X.rot={};saveDraft()")
     pg.click('[data-a=resume]'); pg.wait_for_timeout(200)
-    pg.click('#dock [data-a=finHere]'); pg.wait_for_timeout(300)
-    ok(pg.evaluate("U.sheet") == 'how', 'Finish here opens How did it go?')
-    pg.evaluate("closeSheet()"); pg.wait_for_timeout(200)
-    ok(pg.evaluate("U.view") == 'rot' and not pg.evaluate("X.rEnd") and not pg.evaluate("U.finHere"), 'closing it leaves the session running on Rotation')
-    pg.click('#dock [data-a=finHere]'); pg.wait_for_timeout(300); pg.click('[data-a=saveHow]'); pg.wait_for_timeout(400)
+    pg.click('#dock [data-a=finHere]')
+    ok(until(pg, "X===null&&U.sheet==='done'") and not pg.evaluate("U.finHere"), 'Finish here saves straight away (Q20: no How did it go?)')
     ss = pg.evaluate("D.sessions[D.sessions.length-1]")
     ok(ss['rot'] == {} and ss['split']['a'] == 0 and abs(ss['split']['f'] - 20) < 0.5 and ss['split']['r'] > 0 and pg.evaluate("X") is None,
        'saved with no Rotation and no Application time: ' + json.dumps(ss['split']))

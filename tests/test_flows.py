@@ -59,24 +59,21 @@ def run(b, t):
     pg.click(f'{nb} [data-a=rcue][data-v="Low notes clear"]')
     t.shot(pg, 'rotation')
     pg.click('[data-a=cta]'); pg.wait_for_timeout(200)
-    pg.click('[data-a=song][data-k=g_1]'); pg.click('[data-a=rate][data-k=Pitch][data-v="2"]')
+    pg.click('[data-a=apSong][data-k=g_1]'); pg.click('[data-a=apNoRec]'); pg.wait_for_timeout(100)
+    pg.click('[data-a=rate][data-k=Pitch][data-v="2"]')
     t.shot(pg, 'application', full_page=True)
     pg.click('[data-a=cta]'); pg.wait_for_timeout(700)
-    ok(pg.evaluate("U.sheet") == 'how', 'finishing opens How did it go?')
-    pg.click('.sheet [data-a=wTog][data-v="In control"]'); pg.click('.sheet [data-a=wTog][data-v="Bit tight"]')
-    pg.click('.sheet [data-a=openNote]'); pg.wait_for_timeout(200)
-    ok(pg.evaluate("document.querySelector('.sheet').classList.contains('still')"), 'the sheet does not replay its animation on update')
-    pg.fill('#howNote', 'Top felt easier'); t.shot(pg, 'how')
-    pg.click('[data-a=saveHow]'); pg.wait_for_timeout(700)
+    # Q20: finishing goes straight on, with no How did it go?
+    ok(pg.evaluate("X") is None and pg.evaluate("U.sheet") == 'done', 'finishing saves straight away, with no How did it go?')
     ss = pg.evaluate("D.sessions[D.sessions.length-1]")
-    ok(ss['how'] == ['In control', 'Bit tight'] and ss['howNote'] == 'Top felt easier', 'how it went is saved')
+    ok(ss['how'] == [] and ss['howNote'] == '' and ss['rate'] == {'Pitch': 2} and ss['songName'] == 'Versace on the Floor · bridge', 'saved with its song and rating')
     ok(ss['f']['lip'] == 0, 'Skip is stored as 0')
     ok(cnt('lip') == lip0 and cnt('humming') == hum0 + 1, 'a skipped exercise is not counted as done')
     t.shot(pg, 'done', full_page=True)
     tg = pg.evaluate("togglLines(D.sessions[D.sessions.length-1])")
-    ok('Lip bubbling skipped' in tg and '(Lost the buzz, Nose tickle)' in tg
-       and 'How it went: In control, Bit tight — Top felt easier' in tg and '— Low notes clear #rotation' in tg,
-       'Toggl text includes skips, notes and how it went')
+    ok('Lip bubbling skipped' in tg and '(Lost the buzz, Nose tickle)' in tg and 'How it went' not in tg and '— Low notes clear #rotation' in tg
+       and 'Application: Versace on the Floor · bridge — pitch 2' in tg,
+       'Toggl text includes skips, notes and the song')
 
     # edit a finished session
     mk = now.strftime('%Y-%m'); m0 = pg.evaluate(f"D.months['{mk}']"); mins0 = ss['mins']
@@ -86,7 +83,7 @@ def run(b, t):
     pg.click('[data-a=saveEdit]'); pg.wait_for_timeout(500)
     ss2 = pg.evaluate("D.sessions[D.sessions.length-1]")
     ok(ss2['mins'] == 50 and pg.evaluate(f"D.months['{mk}']") == m0 - mins0 + 50, 'editing minutes updates the month')
-    ok(cnt('lip') == lip0 + 1 and ss2['how'] == ['In control'], 'editing a level from Skip counts the exercise')
+    ok(cnt('lip') == lip0 + 1 and ss2['how'] == ['Bit tight'], 'editing a level from Skip counts the exercise, and how it went can still be added')
     ok(pg.evaluate("U.sheet") == 'done', 'saving returns to the summary')
     pg.click('[data-a=editSess]'); pg.wait_for_timeout(400)
     old = (now - dt.timedelta(days=40)).strftime('%Y-%m-%d'); pg.fill('#edDate', old); pg.click('[data-a=saveEdit]'); pg.wait_for_timeout(300)

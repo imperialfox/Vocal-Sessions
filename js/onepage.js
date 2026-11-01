@@ -301,7 +301,10 @@ const OP = (() => {
         ? { lab: 'Log ' + n + ' exercise' + (n > 1 ? 's' : ''), hint: 'Next: Application' }
         : { lab: 'Skip rotation', skip: true, hint: 'Pick some, or skip for today', fin: true };
     }
-    return { lab: 'Finish session', hint: 'Last step' };
+    // Q20: nothing sung yet, it can still finish
+    return APPL.empty()
+      ? { lab: 'Skip and finish', skip: true, hint: 'Pick a song, or finish without one' }
+      : { lab: 'Finish session', hint: 'Last step' };
   }
   const FIN = '<button class="opfin" data-a="finHere">Just Foundation today? Finish here</button>';
   function dock() {
@@ -481,23 +484,31 @@ const OP = (() => {
     if (menu) menu.remove();
     menu = null;
   }
-  function sortMenu(btn) {
+  // list, now and act (Q20): Application's Other songs uses the same menu with its own orders
+  function sortMenu(btn, list, now, act) {
     if (menu) return closeMenu();
+    list = list || ROT_SORTS;
+    now = now || U.rSort || 'old';
+    act = act || 'rSortPick';
     const m = document.createElement('div');
     m.className = 'opmenu';
     m.setAttribute('role', 'menu');
-    m.innerHTML = ROT_SORTS.map(
-      (o) =>
-        '<button role="menuitemradio" aria-checked="' +
-        ((U.rSort || 'old') === o[0]) +
-        '" data-a="rSortPick" data-v="' +
-        o[0] +
-        '"><span>' +
-        o[1] +
-        '</span><span class="tk" aria-hidden="true">' +
-        ((U.rSort || 'old') === o[0] ? ICON.check : '') +
-        '</span></button>'
-    ).join('');
+    m.innerHTML = list
+      .map(
+        (o) =>
+          '<button role="menuitemradio" aria-checked="' +
+          (now === o[0]) +
+          '" data-a="' +
+          act +
+          '" data-v="' +
+          o[0] +
+          '"><span>' +
+          o[1] +
+          '</span><span class="tk" aria-hidden="true">' +
+          (now === o[0] ? ICON.check : '') +
+          '</span></button>'
+      )
+      .join('');
     const r = btn.getBoundingClientRect();
     m.style.top = window.scrollY + r.bottom + 4 + 'px';
     document.body.appendChild(m);
@@ -527,7 +538,7 @@ const OP = (() => {
   document.addEventListener(
     'click',
     (e) => {
-      if (menu && !e.target.closest('.opmenu') && !e.target.closest('[data-a=rSort]')) closeMenu();
+      if (menu && !e.target.closest('.opmenu') && !e.target.closest('[data-a=rSort],[data-a=apSort]')) closeMenu();
     },
     true
   );
@@ -666,7 +677,7 @@ const OP = (() => {
       hideMsg();
       return;
     }
-    if (menu && !q('#app [data-a=rSort]')) closeMenu();
+    if (menu && !q('#app [data-a=rSort],#app [data-a=apSort]')) closeMenu();
     COACH.sessCue(); // the first time the coach window shows in a session, it's cued to the step's exercise
   }
 
@@ -683,6 +694,7 @@ const OP = (() => {
     reclose,
     sortMenu,
     sortPick,
+    closeMenu,
     after,
     needText,
     state: () => ({ pull: PULL.on, off: PULL.off, menu: !!menu }), // for the tests
