@@ -124,4 +124,13 @@ def ready(pg):
     pg.wait_for_function("!document.getElementById('splash')&&!(typeof LAUNCH!=='undefined'&&LAUNCH.busy())", timeout=15000)
     pg.wait_for_timeout(150)
 
+def until(pg, js, timeout=10000, arg=None):
+    """Q18: wait for a condition in the page instead of a fixed time. True once it holds, False if it never does (so
+    the check fails with its own message rather than the file crashing)."""
+    try:
+        pg.wait_for_function(js, arg=arg, timeout=timeout)
+        return True
+    except Exception:
+        return False
+
 def fix(name): return os.path.join(FIX, name)

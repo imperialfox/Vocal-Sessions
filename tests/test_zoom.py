@@ -165,9 +165,13 @@ def swipes(b, t):
     quiet(pg)
     # (3.23: flicked on the title, since on GitHub's fonts y 400 can land on the page's segmented control, which owns it)
     fy = pg.evaluate("(()=>{const r=document.querySelector('#app h1').getBoundingClientRect();return r.top+r.height/2})()")
-    drag(pg, 100, fy, 170, fy, steps=3, ms=0)
+    # (Q18: each touch stamped 16 ms apart, so the flick's speed doesn't depend on how busy the machine is)
+    drag(pg, 100, fy, 170, fy, steps=3, ms=0, stamp=16)
     quiet(pg)
     ok(where(pg) == 'today|', 'a quick flick goes back even before the threshold')
+    if where(pg) != 'today|':  # so one failed flick doesn't stop the checks after it
+        pg.click(BACK)
+        quiet(pg)
     # gesture priority: a row's own swipe, a segmented control, a sheet
     pg.click(SUG)
     quiet(pg)
@@ -382,6 +386,10 @@ def calendar(b, t):
     quiet(pg)
     pg.click('.titlerow [data-a=openCal]')
     quiet(pg)
+    # Q18: daily() fills the last 15 days, so on the 1st or 2nd of a month this one has fewer than three: use last month
+    if pg.locator('.cal button.p').count() < 3:
+        pg.click('[data-a=calMove][data-v="-1"]')
+        quiet(pg)
     pg.click('.cal button.p >> nth=2')
     ok(pg.locator('#layer .zm-day').count() == 1, 'tapping a day: the day grows towards its sessions and fades')
     ok(pg.evaluate("document.querySelector('[data-zday]').getAnimations().some(a=>'transform' in a.effect.getKeyframes()[0])"),

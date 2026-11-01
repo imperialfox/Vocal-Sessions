@@ -2,7 +2,7 @@
 IndexedDB helper (abort, a dropped connection, blocked), takes that fail to save kept for Retry, a draft that can't be
 saved, and a launch that always ends even when the first draw or the data goes wrong."""
 import json, os
-from harness import ready, url, APP_PATH, SP, sample, SEED
+from harness import ready, url, APP_PATH, SP, sample, SEED, until
 
 LAUNCH_ARGS = ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream']
 
@@ -138,6 +138,8 @@ def run(b, t):
     pg.evaluate("window.__abort=false;document.querySelector('.toast')&&document.querySelector('.toast').remove()")
     pg.evaluate("Object.defineProperty(document,'hidden',{configurable:true,get:()=>false});document.dispatchEvent(new Event('visibilitychange'))")
     pg.wait_for_function("UNSAVED.length===0", timeout=5000)
+    # Q18: the take leaves UNSAVED once stored, and TAKES is read back just after it: wait for that too
+    until(pg, "TAKES.length===2", timeout=5000)
     ok(pg.evaluate("TAKES.length") == 2, 'a take still waiting is saved when the app comes back to the screen')
     pg.context.close()
 

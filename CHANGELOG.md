@@ -9,6 +9,20 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.35 · 1 Nov 2026
+*Steadier checks behind the scenes (Q18)*
+<!-- area: fixes -->
+
+Nothing in the app changes. This makes the automatic checks give the same answer on GitHub as on the computer that builds the app, so a new version no longer shows a red cross for no real reason.
+
+**Checks that now wait properly**
+- Quick flicks (swiping back, and throwing the floating window into a corner) are now sent at a fixed speed, so a busy computer can't make them look like slow drags.
+- The calendar checks now work on the first day of a month, and just after midnight on it.
+- A few checks now wait for the thing they're checking (a saved take, the Rename field) instead of waiting a fixed time.
+
+**Notes for whoever works on the app**
+- How to run the checks the same way GitHub does, and a list of known check problems and why they happen.
+
 ## 3.34 · 31 Oct 2026
 *Smoother play-along and waveform on older iPhones (Q14)*
 <!-- area: songs -->

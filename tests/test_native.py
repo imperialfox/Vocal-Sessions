@@ -343,7 +343,7 @@ def push(b, t):
     quiet(pg)
     ok(pg.evaluate(CLEAN), 'and slides away with nothing left over')
     pg.click('#app .rowc[data-zk="sg:g_x1"]'); quiet(pg)
-    drag(pg, 100, 400, 170, 400, steps=3, ms=0)
+    drag(pg, 100, 400, 170, 400, steps=3, ms=0, stamp=16)  # (Q18: stamped, so a busy machine can't slow the flick)
     quiet(pg)
     ok(pg.evaluate(WHERE) == 'songs|' and pg.evaluate(CLEAN), 'a quick flick goes back too')
     # catching a push still opening

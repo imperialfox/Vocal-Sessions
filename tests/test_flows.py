@@ -1,6 +1,6 @@
 """A full day of use on iPhone: suggestions, a session with notes, the clock, editing, song practice, Toggl text."""
 import json, datetime as dt
-from harness import now, OLD_DRAFT, ready, SP
+from harness import now, OLD_DRAFT, ready, SP, until
 
 def run(b, t):
     pg = t.page(b)
@@ -116,7 +116,13 @@ def run(b, t):
     pg.click('[data-a=openAll][data-v=songs]'); pg.wait_for_timeout(300)
     ok(pg.locator('[data-v=songSession]').count() == 1, 'All sessions › Song practice lists it')
     pg.click('[data-a=allBack]'); pg.wait_for_timeout(200)
-    pg.click('[data-a=tab][data-v=today]'); pg.click('[data-a=openCal]'); pg.wait_for_timeout(500)
+    pg.click('[data-a=tab][data-v=today]'); pg.click('[data-a=openCal]')
+    pg.wait_for_selector('.cal')
+    # Q18: it's dated when it started (125 minutes ago), so in the first two hours of a month it's in last month,
+    # and the calendar opens on this one: go back a month first
+    if pg.evaluate("(()=>{const d=new Date(D.songSessions[0].date),n=new Date();return d.getMonth()!==n.getMonth()})()"):
+        pg.click('[data-a=calMove][data-v="-1"]')
+    until(pg, "document.querySelectorAll('.cal button.s').length===1", timeout=3000)
     ok(pg.locator('.cal button.s').count() == 1, 'the calendar shows a coral dot for it')
     pg.click('.scrim .ghost'); pg.wait_for_timeout(300)
     pg.evaluate("U.view='ex';U.exId='humming';U.exTab='history';render()"); pg.wait_for_timeout(200)

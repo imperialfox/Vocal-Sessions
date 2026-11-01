@@ -5,7 +5,7 @@ takes sheet (All takes, the scrubber, ±5 s, swipes, hold, rename, timestamped c
 tracks playing again after they finish, takes playing in both ears, and the track player's markers and chips.
 Every fixture is synthetic: tones written by the tests as WAV files. No real music or recordings are ever used."""
 import os, json, wave, struct, math
-from harness import OUT, ready
+from harness import OUT, ready, until
 from test_track import track, F, loaded, NIDB, LYRICS, tones
 from test_clock import LYR, ADD, SPREAD
 from test_layout import FITS
@@ -563,9 +563,12 @@ def takes(b, t):
     bb = pg.locator('.sheet .tkr[data-tk=k2]').bounding_box()
     pg.mouse.move(bb['x'] + 60, bb['y'] + 20); pg.mouse.down(); held(pg); pg.mouse.up(); pg.wait_for_timeout(250)
     ok(pg.evaluate("U.sheet") == 'sgTakeMenu' and all(x in pg.inner_text('.sheet') for x in ('Star', 'Rename', 'Delete')), 'holding a row: Star · Rename · Delete')
-    pg.click('.sheet [data-a=tkMenuRename]'); pg.wait_for_timeout(300)
+    pg.click('.sheet [data-a=tkMenuRename]')
+    until(pg, "U.sheet==='sgTakes'&&!!document.getElementById('tkNameIn')", timeout=5000)  # (Q18: was a fixed 300 ms)
     ok(pg.evaluate("U.sheet") == 'sgTakes' and pg.locator('#tkNameIn').count() == 1, 'Rename opens the take with its name field')
-    pg.press('#tkNameIn', 'Escape'); pg.evaluate("closeSheet()"); pg.wait_for_timeout(200)
+    if pg.locator('#tkNameIn').count():
+        pg.press('#tkNameIn', 'Escape')
+    pg.evaluate("closeSheet()"); pg.wait_for_timeout(200)
     pg.context.close()
 
 

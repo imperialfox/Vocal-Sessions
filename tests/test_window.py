@@ -1,7 +1,8 @@
 """3.12 the floating window: a running session or a playing take stays in sight on every other screen. Its clock,
 pausing from it, going back to exactly where you were, a take winning over a session, dragging and throwing it to a
 corner (remembered after a reload), where it hides, and every size in light and dark."""
-from harness import with_song_practice, SP
+import time
+from harness import with_song_practice, SP, until
 from test_layout import SIZES
 from test_sections import LYR, ADD
 
@@ -12,6 +13,9 @@ TEXT = "(()=>{const f=document.getElementById('fw');return f?f.querySelector('.f
 RECT = "(()=>{const r=document.getElementById('fw').getBoundingClientRect();return {l:r.left,t:r.top,r:r.right,b:r.bottom,w:r.width,h:r.height}})()"
 # where the corner should be, and the room the window has
 SPOT = "c=>{const p=fwCornerXY(c),B=fwBounds();return {x:p.x,y:p.y,B}}"
+# Q18: settled in a corner (the same test as at_corner, in the page, to wait for)
+CORNERED = """c=>{const f=document.getElementById('fw');if(!f||FW.corner!==c)return false;const r=f.getBoundingClientRect(),p=fwCornerXY(c);
+  return Math.abs(r.left-p.x)<1.5&&Math.abs(r.top-p.y)<1.5}"""
 # what the window must stay clear of: the tab bar or dock button, the top bar, the sidebar and Recall's hint capsule
 CLEAR = """(()=>{const f=document.getElementById('fw').getBoundingClientRect(),hit=[];
  const over=(a,b)=>a.left<b.right-0.5&&a.right>b.left+0.5&&a.top<b.bottom-0.5&&a.bottom>b.top+0.5;
@@ -25,14 +29,19 @@ CLEAR = """(()=>{const f=document.getElementById('fw').getBoundingClientRect(),h
 LEAVE = "go(()=>{U.view=null;U.tab='today'})"
 
 
-def drag(pg, x0, y0, x1, y1, steps=12, ms=16):
-    """A real one-finger drag, sent the way a touchscreen sends it."""
+def drag(pg, x0, y0, x1, y1, steps=12, ms=16, stamp=None):
+    """A real one-finger drag, sent the way a touchscreen sends it.
+    stamp (Q18): ms between touches as the page sees them (each touch carries its own time stamp, which becomes the
+    event's timeStamp). A flick's speed is measured from those, so with stamp it's the same however busy the machine
+    is; without it, a busy runner spaces the touches out and a flick reads as a slow drag."""
     cdp = pg.context.new_cdp_session(pg)
-    cdp.send('Input.dispatchTouchEvent', {'type': 'touchStart', 'touchPoints': [{'x': x0, 'y': y0}]})
+    t0 = time.time()
+    at = (lambda i: {'timestamp': t0 + i * stamp / 1000}) if stamp else (lambda i: {})
+    cdp.send('Input.dispatchTouchEvent', {'type': 'touchStart', 'touchPoints': [{'x': x0, 'y': y0}], **at(0)})
     for i in range(1, steps + 1):
-        cdp.send('Input.dispatchTouchEvent', {'type': 'touchMove', 'touchPoints': [{'x': x0 + (x1 - x0) * i / steps, 'y': y0 + (y1 - y0) * i / steps}]})
+        cdp.send('Input.dispatchTouchEvent', {'type': 'touchMove', 'touchPoints': [{'x': x0 + (x1 - x0) * i / steps, 'y': y0 + (y1 - y0) * i / steps}], **at(i)})
         pg.wait_for_timeout(ms)
-    cdp.send('Input.dispatchTouchEvent', {'type': 'touchEnd', 'touchPoints': []})
+    cdp.send('Input.dispatchTouchEvent', {'type': 'touchEnd', 'touchPoints': [], **at(steps)})
     pg.wait_for_timeout(400)
     cdp.detach()
 
@@ -109,7 +118,9 @@ def session(b, t):
         ok(pg.evaluate("U.view") is None, 'dragging doesn’t open it')
     # a quick flick goes to the corner it's thrown towards, though it's let go of before halfway up
     x, y = centre(pg)
-    drag(pg, x, y, x - 150, y - 150, steps=3, ms=0)
+    # (Q18: each touch stamped 16 ms apart, so the flick's speed doesn't depend on how busy the machine is)
+    drag(pg, x, y, x - 150, y - 150, steps=3, ms=0, stamp=16)
+    until(pg, CORNERED, arg='tl', timeout=5000)
     ok(pg.evaluate("FW.corner") == 'tl' and at_corner(pg, 'tl'), 'a quick flick up and left lands in the top left')
     x, y = centre(pg)
     drag(pg, x, y, x + 20, y + 14, steps=12, ms=40)  # (3.23: the corners sit 21 pt in on iPhone, a little closer)
