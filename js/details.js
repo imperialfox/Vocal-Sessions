@@ -276,13 +276,6 @@ const DET = (() => {
       })
     );
   }
-  // moving between Foundation, Rotation and Application: the new step comes in from the side you're heading
-  const STEP = { found: 0, rot: 1, app: 2 };
-  const stepDir = (from, to) => (from in STEP && to in STEP ? Math.sign(STEP[to] - STEP[from]) : 0);
-  function stepIn(dir) {
-    if (!dir) return;
-    slide(document.getElementById('app'), dir, 36, 'nav');
-  }
   // All sessions: the new list's rows ripple in
   function listIn() {
     ripple(document.querySelectorAll('#app .grp > .sw, #app .grp > .row, #app .grp > .srow'), { y: 10, max: 14 });
@@ -430,8 +423,6 @@ const DET = (() => {
     after,
     finished,
     calendarIn,
-    stepDir,
-    stepIn,
     listIn,
     hxSnap,
     hxWave,

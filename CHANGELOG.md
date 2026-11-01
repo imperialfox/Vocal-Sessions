@@ -9,6 +9,36 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.39 · 1 Nov 2026
+*A session on one page, with rings for each exercise (Q19)*
+<!-- area: practice -->
+
+Foundation, Rotation and Application now follow each other on one page, so a session feels like one piece from start to finish.
+
+**One page**
+- A finished step folds to a one-line summary and the next slides up into its place, with the step after it showing faded underneath. Tap a summary to change anything, then Done.
+- You can't jump ahead: the next step is only a preview, and pulling past the bottom springs back, like pull to refresh, saying what's still needed.
+- One button stays pinned at the bottom with the same labels as before (Log foundation, Log 2 exercises, Finish session) and a hint above it. Each step's end is recorded exactly as before, so Progress's time split is unchanged.
+- It says Foundation everywhere in the session.
+- Back now leaves the session (it keeps running) from any step.
+
+**Levels**
+- Each exercise is a row with a ring. Tap the row to go up a level: Foundation goes 1, 2, 3, then Skip; Rotation goes 1, 2, 3, then off.
+- Level 3 sweeps the card blue, then a green flash, and asks How did it feel?
+- Levels 1 and 2 ask What kept it at level 1 (or 2)? after a moment, with reasons for that exercise, Still warming up, Voice felt tired, Short on time, Kept it easy today and + Your own.
+- Words you pick are saved as that exercise's note, as before, and the row folds to one line so the next exercise gets a nudge.
+
+**Rotation**
+- The suggested exercise sits on top, then More exercises, sorted by Longest ago, Most recent or A–Z, each saying when you last did it.
+- With nothing picked, the button says Skip rotation, and Just Foundation today? Finish here ends the session there.
+
+**Coach video**
+- In Foundation and Rotation the coach video sits in the floating window, ready at the step's exercise. Application has a Coach ▸ pill instead. Drag either to any corner; ✕ tucks the video into the pill.
+- Application itself is unchanged for now.
+
+**Behind the scenes**
+- A session saved part-way through by an earlier version opens where it was left.
+
 ## 3.38 · 1 Nov 2026
 *Undo that stays with its own song, and a tidy-up behind the scenes (Q17)*
 <!-- area: fixes -->

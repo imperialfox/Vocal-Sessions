@@ -2,9 +2,9 @@
 
 A mobile-first companion for structured vocal practice, styled like a native iOS app. It's a single HTML file with no install, no backend and no account. It's designed to live on your iPhone Home Screen.
 
-![Version 3.38](https://img.shields.io/badge/version-3.38-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
+![Version 3.39](https://img.shields.io/badge/version-3.39-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
 
-**Current version: 3.38 · 1 Nov 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
+**Current version: 3.39 · 1 Nov 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
 
 ---
 
@@ -14,7 +14,7 @@ It brings guided practice sessions, progress tracking, and song practice togethe
 
 | Step | What | Time |
 |---|---|---|
-| Foundation | 4 core SOVT exercises, all required | ~25 min |
+| Foundation | 4 core exercises, all required | ~25 min |
 | Rotation | One or more exercises from a pool of 8, plus any you add | ~15 min |
 | Application | Sing a real song or section, record a take, rate it | ~5–10 min |
 
@@ -136,9 +136,11 @@ And **Songs**, for learning a song: paste the lyrics, and they're split into lab
 
 ## Session details
 
-- **Levels:** each exercise has 3 levels. Foundation uses a Skip · 1 · 2 · 3 picker, and skipped exercises don't count as done.
-- **Multi-select rotation:** pick as many as you like, each with its own level
-- **Notes per exercise:** the pencil opens quick words written for that exercise, your own saved words, and an optional note
+- **One page (3.39):** Foundation, Rotation and Application follow each other on one page. A finished step folds to a one-line summary (tap it to change anything, then Done), the next one slides up, and the one after shows faded underneath. You can't jump ahead: pulling past the bottom springs back and says what's still needed. One pinned button logs each step: **Log foundation**, **Log N exercises** (or **Skip rotation** with nothing picked) and **Finish session**.
+- **Levels:** each exercise has 3 levels. Tap an exercise's row to go up a level: Foundation goes 1, 2, 3, then Skip (skipped exercises don't count as done); Rotation goes 1, 2, 3, then off.
+  - At level 3 the card sweeps blue then green and asks **How did it feel?**; at levels 1 and 2, after a moment, **What kept it at level N?** Tap any words (or **+ Your own**); they're saved as that exercise's note, and the row folds to one line so you can move on to the next.
+- **Rotation:** the suggested exercise on top, then **More exercises**, sorted by Longest ago, Most recent or A–Z, each saying when you last did it. Pick as many as you like. **Just Foundation today? Finish here** ends the session from an empty Rotation.
+- **Coach video in a session:** it sits in the floating window during Foundation and Rotation, cued to the step's exercise; Application shows a **Coach ▸** pill instead. Drag either to any corner. ✕ tucks the video into the pill.
 - **Session clock:** a live timer in the top bar
   - Tap it for a larger clock with Pause and a time for each step. Paused time isn't counted.
   - Song practice's clock starts when you record your first take; until then the timer says **Not started**.
@@ -231,7 +233,7 @@ Since 3.16 the coach video can play inside the app, from a copy kept on your iPh
 - **Keep the file in Files.** After re-adding the app or moving to a new phone, restore your backup, then add the video again the same way.
 - **Replace or remove it:** Settings › Coach video › Replace video… or Remove video. Reset all data doesn't remove it.
 - **Chapters:** a video the length of the coach video (79:33) gets its 12 exercises, starting at the YouTube timestamps (`COACH_TIMES` in `js/content.js`). Give an exercise three times there (Level 1, 2 and 3) and it gets the L1 · L2 · L3 picker too. Any other video plays as a plain video, without the exercise list.
-- **Where it plays:** the player (Exercises › Coach video), Play with coach on an exercise's page, and a Coach video row in Foundation and Rotation that shows the video when you tap it. Leaving while it plays keeps it going in a small window.
+- **Where it plays:** the player (Exercises › Coach video), Play with coach on an exercise's page, and the floating window during a session's Foundation and Rotation (Application has a Coach ▸ pill; tapping the window opens the player). Leaving while it plays keeps it going in a small window.
 - A Home Screen web app may pause when the phone locks. That's iOS, not the app.
 
 ## Offline

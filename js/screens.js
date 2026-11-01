@@ -953,7 +953,7 @@ function scrEx() {
   }
   return h;
 }
-// one exercise with its level picker and notes pencil (used in Foundation, Rotation and Edit)
+// one exercise with its level picker and notes pencil (the Edit session sheet)
 function exBlock(e, a, v, skip, T, src) {
   const n = noteStr((T.xn || {})[e.id]);
   return (
@@ -977,70 +977,6 @@ function exBlock(e, a, v, skip, T, src) {
     '</div>' +
     (n ? '<div class="notetxt">' + esc(n) + '</div>' : '') +
     '</div>'
-  );
-}
-function scrFound() {
-  return (
-    '<h1>Foundation</h1><p class="note">Set how many levels you got through, or Skip. Tap the pencil for quick notes.</p>' +
-    COACH.stepHTML('found') +
-    '<div class="grp tiled">' +
-    FOUND.map((e) => exBlock(e, 'flv', X.f[e.id], true, X)).join('') +
-    '</div>' +
-    '<p class="foot">Tap the time at the top to see the full clock or pause it. With YouTube Premium, the coach video keeps playing in picture-in-picture while you use this app.</p>'
-  );
-}
-function rotRow(e, sug) {
-  const on = e.id in X.rot,
-    n = noteStr(X.xn[e.id]);
-  return (
-    '<button class="row" data-a="tog" data-k="' +
-    e.id +
-    '" aria-pressed="' +
-    on +
-    '">' +
-    tile(e) +
-    '<span class="lbl">' +
-    esc(e.name) +
-    '<small>' +
-    (sug ? 'Longest since last done · ' : '') +
-    lastDone(e.id) +
-    '</small></span><span class="' +
-    (on ? 'acc' : 'mut') +
-    '" aria-hidden="true">' +
-    (on ? ICON.circleOn : ICON.circle) +
-    '</span></button>' +
-    (on
-      ? '<div class="sub" style="padding-left:62px"><span class="tag" style="flex:1">' +
-        esc(e.focus) +
-        '</span><button class="nbtn' +
-        (n ? ' has' : '') +
-        '" data-a="exNote" data-k="' +
-        e.id +
-        '" aria-label="Notes for ' +
-        esc(e.name) +
-        '">' +
-        ICON.pen +
-        '</button>' +
-        seg('rlv', e.id, X.rot[e.id]) +
-        '</div>' +
-        (n ? '<div class="notetxt">' + esc(n) + '</div>' : '')
-      : '')
-  );
-}
-function scrRot() {
-  const s = suggested();
-  const rest = allRot().filter((e) => e.id !== s.id);
-  return (
-    '<h1>Rotation</h1><p class="note">Pick as many as you like. Each one gets its own level.</p>' +
-    COACH.stepHTML('rot') +
-    '<div class="hdr">Suggested</div><div class="grp tiled">' +
-    rotRow(s, true) +
-    '</div>' +
-    '<div class="hdr">More exercises</div><div class="grp tiled">' +
-    rest.map((e) => rotRow(e)).join('') +
-    '<button class="row acc" data-a="sheet" data-v="addEx"><span class="lbl">Add exercise</span>' +
-    ICON.plus +
-    '</button></div>'
   );
 }
 function songPicker() {
@@ -1124,18 +1060,271 @@ function takeRows(sid) {
     '</div><p class="foot">Tap a take to add notes. Every take is kept. If you leave the app while recording, the take stops and is saved.</p>'
   );
 }
-function scrApp() {
-  let h =
-    '<h1>Application</h1><p class="note">Sing a real song or section and record a take to listen back.</p>' +
-    songPicker();
+/* ===== The one-page session (Q19) =====
+   Foundation, Rotation and Application on one page. The step you're on (U.view: found, rot or app) is open; finished
+   steps fold to a line you can tap to reopen (U.fEdit); the next one shows faded underneath. The taps, the folding and
+   the pinned button live in onepage.js (OP) */
+const FLOW_STEPS = [
+  { v: 'found', name: 'Foundation', desc: 'Four core exercises. Tap a row for the level you reached, or Skip.' },
+  { v: 'rot', name: 'Rotation', desc: 'Pick as many as you like. Each one gets its own level.' },
+  { v: 'app', name: 'Application', desc: 'Sing a real song or section and record a take to listen back.' },
+];
+const flowCur = () => ({ found: 0, rot: 1, app: 2 })[U.view] || 0;
+// how long since an exercise was last done, for Rotation's rows
+function agoTxt(id) {
+  const e = D.ex[id];
+  if (e && e.last) {
+    const r = relDay(e.last);
+    return r === 'today' ? 'Done today' : r.charAt(0).toUpperCase() + r.slice(1);
+  }
+  if (e && e.n) return 'Done before ' + UPDATE_DAY;
+  return 'Not done yet';
+}
+// an exercise's note in the session, as the exercise notes sheet saves it: {w: [words], t: text}
+function xnObj(id) {
+  X.xn = X.xn || {};
+  const n = X.xn[id];
+  if (!n || typeof n !== 'object') X.xn[id] = { w: [], t: n || '' };
+  if (!Array.isArray(X.xn[id].w)) X.xn[id].w = [];
+  return X.xn[id];
+}
+const ringLv = (s, id) => (s === 'f' ? X.f : X.rot)[id];
+// a row's box: open (the words showing), fold (picked, so it stepped back to one line) or shut
+function ringState(s, id) {
+  const st = (U.rings || {})[s + ':' + id],
+    v = ringLv(s, id);
+  if (st) return st;
+  return v > 0 && noteStr(X.xn[id]) ? 'fold' : 'shut';
+}
+function ringSub(s, id) {
+  const v = ringLv(s, id);
+  if (v > 0) {
+    const n = ringState(s, id) === 'fold' ? noteStr(X.xn[id]) : '';
+    return 'Level ' + v + (n ? ' · ' + n : '');
+  }
+  if (s === 'f') return v === 0 ? 'Skipped' : 'Tap to set';
+  return v === 0 ? 'Tap to set a level' : agoTxt(id);
+}
+const RING_C = 100.53; // the ring's length (2π × 16)
+function ringSVG(s, v) {
+  const t = v > 0 ? v : v === 0 ? (s === 'f' ? 'Skip' : '–') : s === 'f' ? '–' : '+';
+  return (
+    '<svg class="ring' +
+    (v === 3 ? ' peak' : '') +
+    '" viewBox="0 0 40 40" aria-hidden="true"><circle class="rtrack" cx="20" cy="20" r="16"/><circle class="arc" cx="20" cy="20" r="16" stroke-dasharray="' +
+    RING_C +
+    '" style="stroke-dashoffset:' +
+    (RING_C * (1 - (v > 0 ? v / 3 : 0))).toFixed(2) +
+    '" transform="rotate(-90 20 20)"/><text x="20" y="25" class="' +
+    (v === 0 && s === 'f' ? 'sk' : v > 0 ? 'on' : '') +
+    '">' +
+    t +
+    '</text></svg>'
+  );
+}
+const ringLabel = (e, s) => {
+  const v = ringLv(s, e.id);
+  return (
+    e.name +
+    ', ' +
+    (v > 0 ? 'level ' + v : v === 0 && s === 'f' ? 'skipped' : 'not set') +
+    '. Tap for ' +
+    (s === 'f' ? 'the next level or Skip' : v === 3 ? 'none' : 'the next level')
+  );
+};
+// the words for a row's box: how it felt at level 3, what kept it lower at 1 and 2; your own words and any picked
+// words not in the list come last, so nothing picked is ever hidden
+function cueWords(id, v) {
+  const custom = !EX_WORDS[id];
+  const base =
+    v === 3 ? EX_WORDS[id] || EX_WORDS_DEFAULT : (EX_WHY[id] || (custom ? EX_WHY_DEFAULT : [])).concat(EX_WHY_ALL);
+  const l = wordList('x_' + id, base);
+  ((X.xn[id] && X.xn[id].w) || []).forEach((w) => {
+    if (!l.includes(w)) l.push(w);
+  });
+  return l;
+}
+function cueHTML(s, id) {
+  const v = ringLv(s, id);
+  if (!(v > 0)) return '';
+  const n = X.xn[id] && typeof X.xn[id] === 'object' ? X.xn[id] : { w: [], t: X.xn[id] || '' };
+  return (
+    '<p class="cueq">' +
+    (v === 3 ? 'How did it feel?' : 'What kept it at level ' + v + '?') +
+    '</p><div class="chips cues">' +
+    cueWords(id, v)
+      .map(
+        (w) =>
+          '<button class="chip' +
+          (n.w.includes(w) ? ' on' : '') +
+          '" data-a="rcue" data-k="' +
+          esc(id) +
+          '" data-s="' +
+          s +
+          '" data-v="' +
+          esc(w) +
+          '" aria-pressed="' +
+          n.w.includes(w) +
+          '">' +
+          esc(w) +
+          '</button>'
+      )
+      .join('') +
+    '<button class="chip add" data-a="rown" data-k="' +
+    esc(id) +
+    '" data-s="' +
+    s +
+    '">+ Your own</button></div>' +
+    (n.t ? '<p class="cuet">' + esc(n.t) + '</p>' : '')
+  );
+}
+// one exercise: tap the row to go up a level (Foundation: 1, 2, 3, Skip; Rotation: 1, 2, 3, off)
+function ringRow(e, s, big) {
+  const v = ringLv(s, e.id),
+    st = ringState(s, e.id);
+  return (
+    '<div class="rgi' +
+    (big ? ' big' : '') +
+    (v === 3 ? ' peak' : '') +
+    (v > 0 && st === 'fold' ? ' folded' : '') +
+    '" data-rk="' +
+    s +
+    ':' +
+    esc(e.id) +
+    '"><span class="rsweep" aria-hidden="true"></span><button class="row rgrow' +
+    (v === 0 && s === 'f' ? ' skipped' : '') +
+    '" data-a="ring" data-k="' +
+    esc(e.id) +
+    '" data-s="' +
+    s +
+    '" aria-label="' +
+    esc(ringLabel(e, s)) +
+    '">' +
+    tile(e) +
+    '<span class="lbl">' +
+    (big ? '<span class="eyebrow">Suggested</span>' : '') +
+    esc(e.name) +
+    '<small>' +
+    esc(ringSub(s, e.id)) +
+    '</small></span>' +
+    ringSVG(s, v) +
+    '</button><div class="unfold' +
+    (v > 0 && st === 'open' ? ' open' : '') +
+    '"><div><div class="cuebox">' +
+    (v > 0 && st === 'open' ? cueHTML(s, e.id) : '') +
+    '</div></div></div></div>'
+  );
+}
+const ROT_SORTS = [
+  ['old', 'Longest ago'],
+  ['recent', 'Most recent'],
+  ['az', 'A–Z'],
+];
+// More exercises, in the order picked: longest ago (never done first, as the suggestion), most recent, or A to Z
+function rotSorted(list) {
+  const score = (e) => {
+    const x = D.ex[e.id];
+    if (!x || (!x.n && !x.last)) return -2e13;
+    if (!x.last) return -1e13 + (x.n || 0);
+    return new Date(x.last).getTime();
+  };
+  const l = list.map((e, i) => ({ e, i, s: score(e) }));
+  const by = U.rSort || 'old';
+  if (by === 'az') l.sort((a, b) => a.e.name.localeCompare(b.e.name, 'en-GB') || a.i - b.i);
+  else if (by === 'recent') l.sort((a, b) => b.s - a.s || a.i - b.i);
+  else l.sort((a, b) => a.s - b.s || a.i - b.i);
+  return l.map((x) => x.e);
+}
+function flowBody(i) {
+  if (i === 0)
+    return (
+      '<div class="grp rings">' +
+      FOUND.map((e) => ringRow(e, 'f')).join('') +
+      '</div><p class="foot">Tap a row to go up a level: 1, 2, 3, then Skip.</p>'
+    );
+  if (i === 1) {
+    const sg = suggested(),
+      rest = rotSorted(allRot().filter((e) => e.id !== sg.id));
+    return (
+      '<div class="grp rings">' +
+      ringRow(sg, 'r', true) +
+      '</div><button class="sorthdr" data-a="rSort" aria-haspopup="menu"><span>More exercises&nbsp;·&nbsp;</span><span class="sortname">' +
+      ROT_SORTS.find((x) => x[0] === (U.rSort || 'old'))[1] +
+      '</span>' +
+      ICON.down +
+      '</button><div class="grp rings sortlist">' +
+      rest.map((e) => ringRow(e, 'r')).join('') +
+      '<button class="row acc" data-a="sheet" data-v="addEx"><span class="lbl">Add exercise</span>' +
+      ICON.plus +
+      '</button></div>'
+    );
+  }
+  // Application keeps its content as it was until Q20
+  let h = songPicker();
   if (X.song) h += takeRows(X.song);
-  h +=
+  return (
+    h +
     '<div class="hdr">Rate the song</div><div class="grp">' +
     ['Pitch', 'Tone', 'Ease']
       .map((k) => '<div class="row"><span class="lbl">' + k + '</span>' + seg('rate', k, X.rate[k]) + '</div>')
       .join('') +
-    '</div>';
-  return h;
+    '</div>'
+  );
+}
+// a finished step folded to one line: what was done and how long it took. Tap to reopen it
+function flowLine(i) {
+  const e = elapsedSec(),
+    fE = Math.min(e, X.fE || 0),
+    secs = i === 0 ? fE : Math.max(0, Math.min(e, X.rE || 0) - fE);
+  let sum = '',
+    skipped = false;
+  if (i === 0) {
+    const d = FOUND.filter((x) => X.f[x.id] > 0).length,
+      sk = FOUND.length - d;
+    sum = d + ' done' + (sk ? ' · ' + sk + ' skipped' : '');
+    skipped = !d;
+  } else {
+    const n = Object.keys(X.rot).filter((k) => X.rot[k] > 0).length;
+    sum = n + ' exercise' + (n === 1 ? '' : 's');
+    skipped = !n;
+  }
+  return (
+    '<button class="osum' +
+    (skipped ? ' skipped' : '') +
+    '" data-a="flowOpen" data-v="' +
+    i +
+    '" aria-label="' +
+    FLOW_STEPS[i].name +
+    (skipped ? ', not today' : ', ' + sum) +
+    '. Tap to change"><span class="otick" aria-hidden="true">' +
+    (skipped ? '–' : ICON.check) +
+    '</span><span class="lbl">' +
+    FLOW_STEPS[i].name +
+    '<small>' +
+    (skipped ? 'Not today' : sum + ' · ' + clk(secs)) +
+    '</small></span><span class="oedit" aria-hidden="true">Edit</span></button>'
+  );
+}
+function flowSec(i, cur) {
+  const st = U.fEdit === i && i < cur ? 'reopened' : i < cur ? 'folded' : i === cur ? 'active' : i === cur + 1 ? 'preview' : '';
+  if (!st) return '';
+  const s = FLOW_STEPS[i];
+  let h = '<section class="osec ' + st + '" data-sec="' + i + '"' + (st === 'preview' ? ' inert aria-hidden="true"' : '') + '>';
+  if (st === 'folded') h += flowLine(i);
+  else if (st === 'reopened')
+    h +=
+      '<div class="osedit"><h1>' +
+      s.name +
+      '</h1><button class="osdone" data-a="flowDone">Done</button></div><p class="note">Change anything, then tap Done.</p>' +
+      flowBody(i);
+  else if (st === 'preview')
+    h += '<p class="osnext">Coming up · ' + (i + 1) + ' of 3</p><h1>' + s.name + '</h1><p class="note">' + s.desc + '</p>' + flowBody(i);
+  else h += '<h1>' + s.name + '</h1><p class="note">' + s.desc + '</p>' + flowBody(i);
+  return h + '</section>';
+}
+function scrFlow() {
+  const cur = flowCur();
+  return '<div class="onep">' + [0, 1, 2].map((i) => flowSec(i, cur)).join('') + '</div>';
 }
 function scrSong() {
   let h =

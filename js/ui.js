@@ -5,8 +5,8 @@
 /* ===== Chrome ===== */
 const VIEWS = {
   found: ['Foundation', '1 of 3', null],
-  rot: ['Rotation', '2 of 3', 'found'],
-  app: ['Application', '3 of 3', 'rot'],
+  rot: ['Rotation', '2 of 3', null], // Q19: one page, so Back always leaves the session (it keeps running)
+  app: ['Application', '3 of 3', null],
   song: ['Song practice', '', null],
 };
 function pillText() {
@@ -263,18 +263,16 @@ function renderDock1() {
     return null;
   }
   if (isFlow(U.view)) {
-    const n = Object.keys(X.rot).length;
-    const lab = {
-      found: 'Log foundation',
-      rot: n ? 'Log ' + n + ' exercise' + (n > 1 ? 's' : '') : 'Pick an exercise',
-      app: 'Finish session',
-      song: unstarted() ? 'Record a take first' : 'Save song practice',
-    }[U.view];
+    // Q19: Foundation, Rotation and Application share one pinned button, with a hint above it (onepage.js)
+    if (U.view !== 'song') {
+      $('dock').innerHTML = OP.dock();
+      return null;
+    }
     $('dock').innerHTML =
       '<button class="cta glass tinted' +
-      (U.view === 'song' && unstarted() ? ' wait" aria-disabled="true' : '') +
+      (unstarted() ? ' wait" aria-disabled="true' : '') +
       '" data-a="cta">' +
-      lab +
+      (unstarted() ? 'Record a take first' : 'Save song practice') +
       '</button>';
     return null;
   }
@@ -389,20 +387,6 @@ function renderSheet() {
   else if (s === 'ckGrid') h = CLOCK.gridSheet();
   else if (s === 'recOver') h = recOverSheet(); // Q16: recording while the track plays
   else if (s && /^trk/.test(s)) h = TRACK.sheet(s);
-  else if (s === 'confirmF')
-    h = sheetWrap(
-      'Confirm foundation',
-      '<div class="grp">' +
-        FOUND.map(
-          (e) =>
-            '<div class="row"><span class="lbl">' +
-            esc(e.name) +
-            '</span><span class="mut">' +
-            (X.f[e.id] ? 'Level ' + X.f[e.id] : 'Skipped') +
-            '</span></div>'
-        ).join('') +
-        '</div><div style="margin-top:14px"><button class="cta" data-a="confirmF">Log foundation</button></div><button class="ghost" data-a="close">Edit</button>'
-    );
   else if (s === 'how' && X) {
     h =
       '<div class="scrim" data-a="close"><div class="sheet glass" role="dialog" aria-modal="true" aria-label="How did it go?"><div class="shead"><div class="grab"></div><div class="shtop"><button class="shbtn glass" data-a="skipHow" aria-label="Skip and save">' +
@@ -1206,7 +1190,9 @@ function render(keepScroll) {
             : v === 'trk'
               ? TRACK.page()
             : v
-              ? { found: scrFound, rot: scrRot, app: scrApp, song: scrSong }[v]()
+              ? v === 'song'
+                ? scrSong()
+                : scrFlow()
               : {
                   today: scrToday,
                   history: scrHistory,
@@ -1245,6 +1231,7 @@ function render(keepScroll) {
   TAKE.after(); // 3.20 the takes sheet: the expanded take's waveform and the field being typed in
   FIND.after(); // 3.22 Search: the field focused when the page is opened from its circle
   MKG.after(); // Q04 the peek card goes with its marks sheet
+  OP.after(); // Q19 the one-page session: the coach video cued, the pull put back
   fwUpdate();
   DET.dockSwap(dk);
   DET.play();
@@ -1262,10 +1249,8 @@ function go(fn) {
   }
   window.scrollTo(0, 0);
   render();
-  COACH.stepped(was); // Next / Back in a session cue the coach video to the new step, paused
-  // a card zoom or Back into a card (zoom.js); otherwise, moving between the session's steps slides the new one in
-  // from the side you're heading
-  if (!ZOOM.after(z)) DET.stepIn(DET.stepDir(was, U.view));
+  COACH.stepped(was); // a session's step changing cues the coach video to the new step, paused
+  ZOOM.after(z); // a card zoom or Back into a card (zoom.js)
 }
 var toastT = null;
 // cls 'long' (Q11) lets a longer message wrap onto a second line instead of being cut off

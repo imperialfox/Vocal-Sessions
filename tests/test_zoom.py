@@ -204,19 +204,23 @@ def swipes(b, t):
     # a vertical swipe scrolls, never goes back
     drag(pg, 100, 600, 130, 300)
     ok(where(pg) == 'history|all', 'swiping up the page scrolls it')
-    # pages without a card: a step of the session goes back a step, the page fading away
+    # Q19 the one-page session: Back (and swiping back) from any step leaves the session for Today, into its capsule
     pg.evaluate("go(()=>{U.tab='today';U.view=null})")
     quiet(pg)
     pg.click('[data-zk=start]')
     quiet(pg)
-    pg.evaluate("FOUND.forEach(e=>X.f[e.id]=2);X.fEnd=Date.now();saveDraft();go(()=>{U.view='rot'})")
+    pg.evaluate("FOUND.forEach(e=>X.f[e.id]=2);X.fEnd=Date.now();X.fE=1;saveDraft();go(()=>{U.view='rot'})")
     quiet(pg)
     drag(pg, 40, 400, 300, 400)
     quiet(pg)
-    ok(where(pg) == 'today|found' and pg.evaluate(CLEAN), 'swiping back on Rotation goes back to Foundation')
+    ok(where(pg) == 'today|' and pg.evaluate(CLEAN) and pg.evaluate("!!X&&X.fEnd>0"),
+       'swiping back on Rotation leaves the session (still running) for Today, into the Resume session capsule')
+    pg.click('[data-a=resume]')
+    quiet(pg)
+    ok(where(pg) == 'today|rot' and pg.evaluate(CLEAN), 'Resume opens it on Rotation again')
     drag(pg, 40, 400, 300, 400)
     quiet(pg)
-    ok(where(pg) == 'today|' and pg.evaluate(CLEAN), 'and on Foundation back to Today, into the Resume session capsule')
+    ok(where(pg) == 'today|' and pg.evaluate(CLEAN), 'and swiping back leaves it again')
     # Today has no Back: nothing happens
     drag(pg, 40, 400, 300, 400)
     ok(where(pg) == 'today|' and pg.locator('.zm').count() == 0, 'Today (no Back button) has no swipe back')

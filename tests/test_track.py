@@ -295,7 +295,7 @@ def playing(b, t):
 def windows(b, t):
     ok = t.ok
     pg = t.page(b)
-    ok(pg.evaluate("FW_KINDS.map(k=>k.id)") == ['take', 'video', 'track', 'clock', 'session'], 'the floating window order is take → video → track → playing along → session')
+    ok(pg.evaluate("FW_KINDS.map(k=>k.id)") == ['take', 'video', 'coachpill', 'track', 'clock', 'session'], 'the floating window order is take → video (Q19: and its Coach pill) → track → playing along → session')
     pg.evaluate(SONG); pg.wait_for_timeout(200); add_row(pg)
     pg.click('#app .trklv button[data-v="0"]'); pg.wait_for_timeout(100)
     pg.evaluate("TRACK.seek(12)"); pg.click('#trkPP'); pg.wait_for_timeout(300)

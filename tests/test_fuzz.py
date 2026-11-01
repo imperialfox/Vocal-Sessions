@@ -37,8 +37,13 @@ INV=r"""(()=>{const p=[];const L=document.getElementById('layer');
    if(FW.shown==='session'&&isFlow(U.view))p.push('session window on its own screen');
    const r=fw.getBoundingClientRect();if(!FW.drag&&!FW.stopSpring&&!fw.getAnimations().length&&(r.left<-1||r.right>innerWidth+1||r.top<-1||r.bottom>innerHeight+1))p.push('floating window off screen');}
  else if(X&&X.start&&!LAUNCH.busy()&&!FW.shut&&!FW_KINDS.find(k=>k.id==='session').own()&&!U.sheet&&!U.clock&&!L.firstElementChild&&!rec&&!U.sFocus&&!typing)p.push('session running but no floating window');
- if(FW.shown&&FW.shown!=='session'&&FW.dis[FW.shown])p.push('a closed sound’s window came back without a play');
- if(FW.shown&&FW.shown!=='session'&&!document.querySelector('#fw [data-a=fwX]'))p.push('a sound’s window without its ✕');
+ if(FW.shown&&FW.shown!=='session'&&FW.shown!=='coachpill'&&FW.dis[FW.shown])p.push('a closed sound’s window came back without a play');
+ if(FW.shown&&FW.shown!=='session'&&FW.shown!=='coachpill'&&!document.querySelector('#fw [data-a=fwX]'))p.push('a sound’s window without its ✕');
+ // Q19 the one-page session: the Coach pill only there, never with the video's window; nothing jumped ahead
+ if(FW.shown==='coachpill'&&!COACH.sessWant())p.push('the Coach pill away from the session’s page');
+ if(isFlow(U.view)&&U.view!=='song'&&X&&!X.fEnd&&U.view!=='found'&&!U.sheet)p.push('a later step open before Foundation was logged');
+ if(document.querySelector('#app .osec.preview [data-a]:focus'))p.push('the faded next step took focus');
+ if(OP.state().pull&&!isFlow(U.view))p.push('a pull left on outside the session');
  const cv=document.getElementById('cv'),cvs=document.querySelector('#app .cv-slot');
  if(document.querySelectorAll('video').length>1)p.push('more than one video element');
  if(cv&&cvs&&!cvs.contains(cv))p.push('coach video not in its slot');
@@ -90,7 +95,7 @@ VIS=r"""(()=>{const L=document.getElementById('layer');const pk=document.getElem
  return els.map((e,i)=>{e.setAttribute('data-fz',i);return {i,a:e.dataset.a||e.tagName.toLowerCase(),v:e.dataset.v||'',k:e.dataset.k||'',id:e.id||'',type:e.type||''};});})()"""
 # no microphone here: Record shows on a selected section, but recording itself is covered by test_recording and test_sections
 SKIP = {'importPick', 'checkPick', 'exportSave', 'saveReadme', 'rec', 'sgRec', 'coachAdd', 'coachFS', 'trkAdd', 'trkReplace', 'sgAddPick', 'ckAddTrack'}
-HEAVY = ('sgOpen','sgSec','sgTakes','playTake','star','sgMode','sgHint','sgHMenu','sgSetHint','sgRMenu','sgOrder','sgAnywhere','sgEdit','sgWord','sgEditMode','mkLayer','mkPick','mkOpt','mkText','mkRm','mkKeep','mkClear','sgOMove','sgORemove','sgNew','sgSplit','sgSave','sgSearch','sgListEdit','sgToggle','sgCue','sgUnlink','start','songStart','resume','cta','confirmF','tog','rlv','flv','wTog','saveHow','skipHow','editSess','saveEdit','exNote','takeNote','addWord','saveWord',
+HEAVY = ('sgOpen','sgSec','sgTakes','playTake','star','sgMode','sgHint','sgHMenu','sgSetHint','sgRMenu','sgOrder','sgAnywhere','sgEdit','sgWord','sgEditMode','mkLayer','mkPick','mkOpt','mkText','mkRm','mkKeep','mkClear','sgOMove','sgORemove','sgNew','sgSplit','sgSave','sgSearch','sgListEdit','sgToggle','sgCue','sgUnlink','start','songStart','resume','cta','ring','rcue','rown','flowOpen','flowDone','rSort','rSortPick','finHere','wTog','saveHow','skipHow','editSess','saveEdit','exNote','takeNote','addWord','saveWord',
          'openNote','longOk','pauseToggle','fwOpen','fwToggle','clock','sheet','calDay','calSession','eflv','input','textarea',
          # 3.18 Song Clock
          'ckGrid','ckTile','ckLine','ckPP','ckNudge','ckCheckDone','ckLen','ckPickSet','ckPencil','ckHeadDone',

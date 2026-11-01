@@ -177,6 +177,7 @@ function fwPaused(id) {
 function fwClose() {
   const k = fwKindNow();
   if (!k || !k.close) return;
+  if (k.tuck && k.tuck()) return; // Q19: the coach video over the session's page goes into its Coach pill
   FW.dis[k.id] = true;
   FW.shut = true;
   NOW.ended(k.id);

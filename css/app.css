@@ -4340,28 +4340,6 @@ textarea.field.sglyr {
   width: 16px;
   height: 16px;
 }
-.cvbig {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  z-index: 2;
-  width: 56px;
-  height: 56px;
-  margin: -28px 0 0 -28px;
-  border-radius: 50%;
-  display: none;
-  place-items: center;
-  background: rgba(255, 255, 255, 0.88);
-  color: #000;
-}
-.cv-slot.paused .cvbig {
-  display: grid;
-}
-.cvbig svg.i {
-  width: 24px;
-  height: 24px;
-  margin-left: 3px;
-}
 .cvnow {
   margin: 14px 4px 8px;
 }
@@ -4541,30 +4519,6 @@ textarea.field.sglyr {
   height: 14px;
   fill: var(--accent);
   flex-shrink: 0;
-}
-.cvstep {
-  margin-bottom: 14px;
-}
-.cvcapr {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 6px;
-}
-.cvcap {
-  flex: 1;
-  min-width: 0;
-  text-align: center;
-  font-size: var(--t-footnote);
-  color: var(--fg2);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.cvnav svg.i {
-  width: 20px;
-  height: 20px;
-  color: var(--fg2);
 }
 /* the floating window holding the coach video */
 .fw[data-kind='video'] {
@@ -7711,4 +7665,414 @@ body.lmopen #app .sgsec .sgrecp {
   justify-content: flex-end;
   gap: 8px;
   margin-top: 12px;
+}
+
+/* ===== Q19 the one-page session: Foundation, Rotation and Application on one page (screens.js scrFlow, onepage.js) ===== */
+:root {
+  --rg-blue: color-mix(in srgb, var(--accent) 17%, transparent); /* level 3's sweep, then its green flash */
+  --rg-green: color-mix(in srgb, var(--good) 18%, transparent);
+  --rg-green-s: color-mix(in srgb, var(--good) 42%, transparent);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --rg-blue: color-mix(in srgb, var(--accent) 32%, transparent);
+    --rg-green: color-mix(in srgb, var(--good) 24%, transparent);
+    --rg-green-s: color-mix(in srgb, var(--good) 50%, transparent);
+  }
+}
+.osec.active,
+.osec.reopened {
+  margin-bottom: 22px;
+}
+/* the next step: faded, fading out downwards, and out of reach (no jumping ahead) */
+.osec.preview {
+  opacity: 0.36;
+  pointer-events: none;
+  filter: saturate(0.6);
+  max-height: 200px;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(#000 35%, transparent);
+  mask-image: linear-gradient(#000 35%, transparent);
+}
+.osnext {
+  font-size: var(--t-footnote);
+  color: var(--fg2);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin: 0 4px 4px;
+}
+.osedit {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.osdone {
+  color: var(--accent);
+  font-size: var(--t-body);
+  font-weight: 600;
+  padding: 8px 4px;
+  min-height: 44px;
+}
+/* a finished step, folded to one line */
+.osum {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 50px;
+  padding: 10px 16px;
+  margin-bottom: 10px;
+  border-radius: 20px;
+  background: var(--surface);
+  text-align: left;
+  transition: transform 0.5s cubic-bezier(0.3, 1.7, 0.45, 1);
+}
+.osum:active {
+  transform: scale(0.98);
+  transition-duration: 0.12s;
+}
+.otick {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--good);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  font-weight: 700;
+}
+.otick svg.i {
+  width: 14px !important;
+  height: 14px !important;
+  stroke-width: 3;
+}
+.osum.skipped .otick {
+  background: var(--fill);
+  color: var(--fg2);
+}
+.osum.skipped .lbl {
+  color: var(--fg2);
+}
+.oedit {
+  font-size: var(--t-subhead);
+  color: var(--fg3);
+}
+/* an exercise's row: tap for the next level. Its sweep sits behind the row and its box */
+.rgi {
+  background: var(--surface);
+  transition: opacity var(--dur-gentle) var(--ease-gentle);
+}
+.grp.rings > * + *::before {
+  left: 62px;
+}
+.rgi .rgrow {
+  position: relative;
+  z-index: 1;
+  min-height: 60px;
+  padding: 8px 16px;
+  gap: 12px;
+  text-align: left;
+  background: transparent;
+}
+.rgi > .unfold {
+  position: relative;
+  z-index: 1;
+}
+.rsweep {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: 0;
+  transform-origin: left center;
+  background: var(--rg-blue);
+  pointer-events: none;
+}
+.rgi.peak .lbl small {
+  color: var(--good);
+}
+.rgrow.skipped .lbl {
+  color: var(--fg3);
+}
+.rgi.folded {
+  opacity: 0.42;
+}
+.rgi.big .rgrow {
+  min-height: 84px;
+  padding: 14px 16px;
+}
+.rgi.big .lbl {
+  font-size: var(--t-title3);
+  font-weight: 600;
+  line-height: 1.2;
+}
+.rgi.big .lbl small {
+  font-weight: 400;
+}
+.rgi.big .tile {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+}
+.rgi.big .tile svg {
+  width: 30px;
+  height: 30px;
+}
+.rgi.big .ring {
+  width: 48px;
+  height: 48px;
+}
+.eyebrow {
+  display: block;
+  font-size: var(--t-caption1);
+  font-weight: 600;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 2px;
+}
+.ring {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  overflow: visible;
+}
+.ring circle {
+  fill: none;
+  stroke-width: 4;
+}
+.ring .rtrack {
+  stroke: var(--fill);
+}
+.ring .arc {
+  stroke: var(--accent);
+  stroke-linecap: round;
+  transition:
+    stroke-dashoffset var(--dur-gentle) var(--ease-gentle),
+    stroke 0.3s;
+}
+.ring.peak .arc {
+  stroke: var(--good);
+}
+.ring text {
+  font-size: var(--t-subhead);
+  font-weight: 600;
+  fill: var(--fg2);
+  text-anchor: middle;
+}
+.ring text.on {
+  fill: var(--fg);
+}
+.ring text.sk {
+  font-size: var(--t-caption2);
+  transform: translateY(-1px);
+}
+/* the box under a row: "How did it feel?" or "What kept it at level N?" */
+.unfold {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--dur-gentle) var(--ease-gentle);
+}
+.unfold.open {
+  grid-template-rows: 1fr;
+}
+.unfold > div {
+  overflow: hidden;
+  min-height: 0;
+}
+.cuebox {
+  padding: 0 16px 14px 62px;
+  opacity: 0;
+  transform: translateY(-6px);
+  transition:
+    opacity 0.3s 0.08s,
+    transform var(--dur-gentle) var(--ease-gentle) 0.05s;
+}
+.unfold.open .cuebox {
+  opacity: 1;
+  transform: none;
+}
+html.motion-off .cuebox {
+  transition: none;
+}
+.unfold.open .cuebox.waiting {
+  opacity: 0.35;
+  transition: opacity 0.2s;
+}
+.cueq {
+  font-size: var(--t-footnote);
+  color: var(--fg2);
+  margin: 0 0 8px;
+}
+.cues {
+  gap: 6px;
+}
+.cuet {
+  font-size: var(--t-footnote);
+  color: var(--accent);
+  margin: 8px 0 0;
+}
+.field.ownin {
+  width: 180px;
+  min-height: 36px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: var(--fill);
+  color: var(--fg);
+  font-size: var(--t-callout);
+}
+.rgi.rnudge > .rgrow {
+  animation: opnudge 1.2s ease-out 1;
+}
+.rgi.rneed > .rgrow {
+  animation: opnudge 1.1s ease-out 1;
+}
+@keyframes opnudge {
+  30%,
+  55% {
+    background-color: var(--hl);
+  }
+}
+/* More exercises · Longest ago ⌄, and its menu */
+.sorthdr {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 44px;
+  margin: 12px 0 2px;
+  padding: 0 16px;
+  font-size: var(--t-footnote);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--fg2);
+  text-align: left;
+}
+.sorthdr .sortname {
+  color: var(--accent);
+  font-weight: 600;
+  margin-right: 4px;
+}
+.sorthdr svg.i {
+  width: 14px;
+  height: 14px;
+  color: var(--accent);
+  stroke-width: 3;
+}
+.opmenu {
+  position: absolute;
+  z-index: 45;
+  min-width: 200px;
+  border-radius: 14px;
+  background: var(--glass-strong);
+  -webkit-backdrop-filter: blur(30px);
+  backdrop-filter: blur(30px);
+  box-shadow: 0 12px 36px var(--glass-shadow);
+  overflow: hidden;
+  transform-origin: top right;
+}
+.opmenu button {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 16px;
+  font-size: var(--t-body);
+  text-align: left;
+}
+.opmenu button + button {
+  border-top: 0.5px solid var(--sep);
+}
+.opmenu .tk {
+  color: var(--accent);
+  display: grid;
+}
+/* the pinned button, its hint and "Finish here" */
+.ophint {
+  text-align: center;
+  font-size: var(--t-footnote);
+  color: var(--fg2);
+  margin: 0 auto 8px;
+  min-height: 17px;
+}
+.cta.opwait,
+.cta.opskip {
+  background: var(--glass);
+  color: var(--fg2);
+  box-shadow:
+    inset 0 -0.5px 0 var(--glass-lo),
+    inset 0 0 16px var(--glass-glow),
+    0 12px 32px var(--glass-shadow);
+}
+.cta.opskip {
+  color: var(--fg);
+}
+.opfin {
+  display: block;
+  margin: 6px auto 0;
+  padding: 8px 14px;
+  min-height: 44px;
+  font-size: var(--t-subhead);
+  color: var(--accent);
+}
+/* pulling past the bottom: what's still needed */
+.oppull {
+  position: fixed;
+  left: 50%;
+  bottom: 160px;
+  z-index: 31;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border-radius: 999px;
+  font-size: var(--t-subhead);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-50%);
+}
+.oppull svg.i {
+  width: 16px;
+  height: 16px;
+}
+/* the floating window's Coach pill (Application, or after the coach window's ✕) */
+.fw[data-kind='coachpill'] {
+  width: auto;
+  min-height: 0;
+  padding: 0;
+  border-radius: 999px;
+}
+.fw .fwpill {
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 16px;
+  font-size: var(--t-subhead);
+  font-weight: 600;
+  border-radius: 999px;
+}
+.fw .fwpill svg.i {
+  width: 14px;
+  height: 14px;
+  color: var(--accent);
+}
+/* the page fades out under the pinned button, its hint and Finish here, so they read over the exercises */
+body:has(#dock .ophint) .dock::before {
+  content: '';
+  position: absolute;
+  inset: -44px 0 0;
+  background: linear-gradient(to top, var(--bg) 72%, transparent);
+  pointer-events: none;
+}
+body:has(#dock .ophint) .dock .in {
+  position: relative;
+}
+.cues .chip {
+  height: 32px;
+  padding: 0 12px;
+  font-size: var(--t-footnote);
 }

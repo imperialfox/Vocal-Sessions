@@ -407,8 +407,7 @@ const FIND = (() => {
       toSec(o);
       return;
     }
-    const was = U.view,
-      z = ZOOM.before();
+    const z = ZOOM.before();
     U.sRet = 'find';
     U.songId = id;
     U.tab = 'songs';
@@ -419,7 +418,7 @@ const FIND = (() => {
     window.scrollTo(0, 0);
     render();
     toSec(o);
-    if (!ZOOM.after(z)) DET.stepIn(DET.stepDir(was, U.view));
+    ZOOM.after(z);
   }
   function toSec(o) {
     const s = document.querySelector('.sgsec[data-o="' + (window.CSS && CSS.escape ? CSS.escape(o) : o) + '"]');

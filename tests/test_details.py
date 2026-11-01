@@ -184,15 +184,16 @@ def calendar_and_steps(b, t):
     ok(ds[0] == 0 and ds[1] - ds[0] == 28 * SLOW, 'along the diagonal, a little apart')
     quiet(pg)
     pg.evaluate("U.sheet=null;U.sd={};rerender()"); quiet(pg)
-    # session steps: Next comes in from the right, Back from the left
+    # Q19 the one-page session: logging a step folds it to a line, the next one moves up into its place and the one
+    # after arrives faded from below; leaving the session is not a step
     pg.evaluate("newSession();go(()=>{U.view='found'})"); quiet(pg)
-    pg.evaluate("go(()=>{U.view='rot'})"); pg.wait_for_timeout(40)
-    a = pg.evaluate("document.getElementById('app').getAnimations().map(a=>a.effect.getKeyframes()[0].transform)")
-    ok(len(a) == 1 and a[0].startswith('translateX(') and not a[0].startswith('translateX(-'), 'going on, the next step slides in from the right')
-    quiet(pg)
-    pg.evaluate("go(()=>{U.view='found'})"); pg.wait_for_timeout(40)
-    a = pg.evaluate("document.getElementById('app').getAnimations().map(a=>a.effect.getKeyframes()[0].transform)")
-    ok(len(a) == 1 and a[0].startswith('translateX(-'), 'going back, the earlier step slides in from the left')
+    pg.evaluate("FOUND.forEach(e=>X.f[e.id]=2);saveDraft();OP.advance()"); pg.wait_for_timeout(40)
+    a = pg.evaluate("[...document.querySelectorAll('#app .osec')].map(s=>[s.className.split(' ')[1],s.getAnimations().map(a=>a.effect.getKeyframes()[0].transform)])")
+    st = {c: k for c, k in a}
+    ok(pg.evaluate("U.view") == 'rot' and len(a) == 3, 'Log foundation keeps the page: Foundation, Rotation and Application')
+    ok(st.get('folded') and st['folded'][0].startswith('translateY(') and 'scale(0.96)' in st['folded'][0], 'Foundation folds into its line')
+    ok(st.get('active') and st['active'][0].startswith('translateY('), 'Rotation moves up from where it was')
+    ok(st.get('preview') and st['preview'][0] == 'translateY(60px)', 'Application arrives from below, faded')
     quiet(pg)
     pg.evaluate("go(()=>{U.view=null;U.tab='today'})"); pg.wait_for_timeout(40)
     ok(not pg.evaluate("document.getElementById('app').getAnimations().length"), 'leaving the session is not a step: no slide')

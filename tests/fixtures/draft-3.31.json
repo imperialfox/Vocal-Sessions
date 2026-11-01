@@ -1,0 +1,76 @@
+{
+ "_about": "Synthetic. A session draft (localStorage vocalDraft) as Vocal Sessions 3.31 saved it mid-session. No real data.",
+ "midRotation": {
+  "kind": "focused",
+  "start": 1761900000000,
+  "f": {
+   "slides": 3,
+   "humming": 2,
+   "lip": 0,
+   "straw": 2
+  },
+  "xn": {
+   "humming": {
+    "w": [
+     "Buzz in the mask"
+    ],
+    "t": "Better after straw"
+   },
+   "slides": "old string note"
+  },
+  "fEnd": 1761901230000,
+  "fE": 1200,
+  "rot": {
+   "nasal": 2,
+   "falsetto": 0
+  },
+  "rEnd": null,
+  "song": null,
+  "rate": {},
+  "takes": [],
+  "how": [],
+  "howNote": "",
+  "pausedTotal": 30000,
+  "cv": true
+ },
+ "midApplication": {
+  "kind": "focused",
+  "start": 1761900000000,
+  "f": {
+   "slides": 2,
+   "humming": 2,
+   "lip": 2,
+   "straw": 2
+  },
+  "xn": {},
+  "fEnd": 1761900900000,
+  "fE": 900,
+  "rot": {
+   "rung": 3
+  },
+  "rEnd": 1761901800000,
+  "rE": 1800,
+  "song": "g_1",
+  "rate": {
+   "Pitch": 2
+  },
+  "takes": [],
+  "how": [],
+  "howNote": "",
+  "pausedTotal": 0
+ },
+ "noStamps": {
+  "start": 1761900000000,
+  "f": {
+   "slides": 2
+  },
+  "fNote": "",
+  "fEnd": 1761900600000,
+  "rot": {},
+  "rNote": "",
+  "rEnd": null,
+  "song": null,
+  "rate": {},
+  "takes": []
+ }
+}

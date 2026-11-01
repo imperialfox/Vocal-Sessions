@@ -126,7 +126,9 @@ const COACH = (() => {
       clearTimeout(wrapT);
       wrapT = 0;
       keep(true);
-      if (!el.ended) fwPaused('video'); // paused on its own screen: leaving shows no window (3.20)
+      // paused on its own screen: leaving shows no window (3.20). Q19: over the session's page the window is its place,
+      // so pausing there is pausing in the window
+      if (!el.ended && !sessWin()) fwPaused('video');
       changed();
     });
     el.addEventListener('ended', () => {
@@ -213,6 +215,7 @@ const COACH = (() => {
       fwv = FW.shown === 'video' && FW.el ? FW.el.querySelector('.cv-fw') : null,
       to = slot || fwv || hold;
     if (slot) where = { view: U.view, y: (where && where.view === U.view && where.y) || 0, back: U.coachBack };
+    else if (fwv && sessWant()) where = { view: U.view, y: window.scrollY }; // Q19: shown over the session's page
     if (el.parentNode !== to) to.insertBefore(el, to.firstChild);
     paint();
   }
@@ -467,11 +470,6 @@ const COACH = (() => {
       }
       paintLevel();
     }
-    const cap = $('cvCap');
-    if (cap) {
-      const a = here();
-      cap.textContent = a ? 'Exercise ' + a.n + ' · ' + exName(a.id) + lvTxt(a) : '';
-    }
   }
   function paintLevel() {
     const a = here();
@@ -571,33 +569,6 @@ const COACH = (() => {
     if (!l.length) return null;
     if (view === 'found') return l.find((id) => !(id in (X.f || {}))) || l[0];
     return l[0];
-  }
-  // a focused session step: hidden until tapped, then the video sits under the title for the rest of the session
-  function stepHTML(view) {
-    if (!chapters() || !X || X.kind === 'song') return '';
-    const id = stepEx(view);
-    if (!id) return '';
-    if (!X.cv)
-      return (
-        '<div class="grp cvstep"><button class="row cvrow" data-a="coachShow">' +
-        thumb() +
-        '<span class="lbl">Coach video' +
-        (hasLevels(id) ? ' · Level ' + level(id) : '') +
-        '<small>' +
-        esc(exName(id)) +
-        ' · tap to show</small></span></button></div>'
-      );
-    return (
-      '<div class="cvstep shown"><div class="cv-slot inline" data-a="coachPlay">' +
-      '<button class="cvbig" data-a="coachPlay" aria-label="Play">' +
-      ICON.play +
-      '</button></div>' +
-      '<div class="cvcapr"><button class="circ cvnav" data-a="coachStepEx" data-v="-1" aria-label="Previous exercise in the video">' +
-      ICON.back +
-      '</button><span class="cvcap" id="cvCap" role="status"></span><button class="circ cvnav" data-a="coachStepEx" data-v="1" aria-label="Next exercise in the video">' +
-      ICON.fwd +
-      '</button></div></div>'
-    );
   }
   // the player page
   function page() {
@@ -874,7 +845,8 @@ const COACH = (() => {
         U.view = 'ex';
         U.exId = b.exId;
         U.prevTab = b.prevTab;
-      } else U.view = null;
+      } else if (isFlow(b.view) && X && !isSong()) U.view = fwResumeView(); // Q19: back to the session's page
+      else U.view = null;
       U.tab = b.tab || 'exercises';
     });
   }
@@ -883,27 +855,35 @@ const COACH = (() => {
     U.coachBack = null;
     SET.open('coach');
   }
-  // a session step: tap to show, then cue this step's exercise at its level and play
-  function show() {
-    if (!X) return;
+  // Q19 the one-page session: in Foundation and Rotation the video sits in the floating window (cued to the step's
+  // exercise, paused, the first time it shows: X.cv on the draft), and Application shows a "Coach ▸" pill instead.
+  // The pill brings the window back; the window's ✕ tucks it into the pill. U.cvWin is that choice for this step
+  // (null: the step's own default), cleared when the step changes
+  const sessWant = () => !!(X && X.kind !== 'song' && isFlow(U.view) && U.view !== 'song' && has() && chapters());
+  const sessWin = () => sessWant() && (U.cvWin == null ? U.view !== 'app' : !!U.cvWin);
+  function sessCue() {
+    if (!sessWin() || X.cv) return;
     X.cv = true;
+    FW.dis.video = false; // the session asks for it, whatever was closed before
     saveDraft();
     const id = stepEx(U.view);
-    rerender();
-    if (id) cue(id, level(id), true);
+    if (id) cue(id, level(id), false);
   }
-  // ‹ › under the video in a step: the step's previous or next exercise, keeping play or pause as it was
-  function stepMove(d) {
-    const l = stepList(U.view);
-    if (!l.length) return;
-    const a = here(),
-      i = a ? l.indexOf(a.id) : -1;
-    const j = i < 0 ? (d > 0 ? 0 : l.length - 1) : (i + d + l.length) % l.length;
-    cue(l[j], level(l[j]), !!(el && !el.paused));
+  function sessShow() {
+    U.cvWin = true;
+    FW.dis.video = false; // asked for: the window comes back
+    sessCue();
+    fwUpdate();
+  }
+  function sessTuck() {
+    U.cvWin = false;
+    pause();
+    fwUpdate();
   }
   // Next / Back between steps: cue the new step's exercise, paused; a step with nothing to show pauses the video
   function stepped(was) {
     if (!X || !X.cv || !chapters() || !isFlow(was) || !isFlow(U.view) || was === U.view) return;
+    if (sessWin()) FW.dis.video = false; // Q19: a new step asks for its window again
     const id = stepEx(U.view);
     if (id) cue(id, level(id), false);
     else pause();
@@ -1011,26 +991,50 @@ const COACH = (() => {
   /* ----- the floating window (window.js): coach video, between a playing take and a session ----- */
   const fwKind = {
     id: 'video',
-    active: () => !!(has() && el && woke && !dismissed && !el.ended && (!el.paused || el.currentTime > 0.5)),
+    // Q19: on the session's page it shows while it's wanted there (sessWin), played or not; elsewhere as before
+    active: () =>
+      sessWant() ? sessWin() : !!(has() && el && woke && !dismissed && !el.ended && (!el.paused || el.currentTime > 0.5)),
     own: () => U.view === 'coach' || !!document.querySelector('#app .cv-slot'),
     info() {
       const a = here(),
-        on = !el.paused;
+        on = !el.paused,
+        inSess = sessWant();
       return {
         k: a ? (COACH_SHORT[a.id] || exName(a.id)) + lvTxt(a, true) : 'Coach video',
         t: fmt(now()),
         p: Math.min(1, now() / Math.max(1, end())),
         on,
-        open: where && isFlow(where.view) && X ? 'Back to ' + VIEWS[where.view][0] : 'Back to the coach video',
+        open: inSess
+          ? 'Open the coach video'
+          : where && isFlow(where.view) && X && !isSong()
+            ? 'Back to ' + VIEWS[fwResumeView()][0]
+            : 'Back to the coach video',
         label: 'Coach video ' + (on ? 'playing' : 'paused'),
       };
     },
     toggle: () => toggle(),
     close: () => dismiss(),
+    // Q19: ✕ over the session's page tucks it into the Coach pill instead (window.js fwClose)
+    tuck() {
+      if (!sessWant()) return false;
+      sessTuck();
+      return true;
+    },
     open() {
-      if (where && isFlow(where.view) && X && X.cv) {
-        const v = where.view,
-          y = where.y || 0;
+      // Q19: over the session's page, the window opens the player, whose Back returns to the session
+      if (sessWant()) {
+        const v = U.view;
+        go(() => {
+          U.coachBack = { view: v, tab: U.tab };
+          U.view = 'coach';
+          U.sheet = null;
+          U.sd = {};
+        });
+        return;
+      }
+      if (where && isFlow(where.view) && X && X.cv && !isSong()) {
+        const v = fwResumeView(),
+          y = where.view === v ? where.y || 0 : 0;
         fwGo(() => {
           U.view = v;
           U.sheet = null;
@@ -1069,6 +1073,26 @@ const COACH = (() => {
     },
   };
   FW_KINDS.splice(1, 0, fwKind); // take → video → session
+  // Q19: the "Coach ▸" pill on the session's page, when the video window isn't showing there (Application, or after ✕)
+  const pillKind = {
+    id: 'coachpill',
+    active: () => sessWant() && !(sessWin() && !FW.dis.video),
+    own: () => false,
+    info: () => ({ k: 'Coach', t: '', p: null, on: false, open: 'Show the coach video', label: 'Coach video' }),
+    toggle: () => sessShow(),
+    open: () => sessShow(),
+    draw(fw) {
+      if (FW.build !== 'coachpill') {
+        FW.build = 'coachpill';
+        fw.innerHTML =
+          '<button class="fwopen fwpill" data-a="fwOpen" aria-label="Show the coach video">Coach<span aria-hidden="true">' +
+          ICON.play +
+          '</span></button>';
+      }
+      fw.classList.remove('paused', 'hasx');
+    },
+  };
+  FW_KINDS.splice(2, 0, pillKind); // take → video → the Coach pill → session
   function dismiss() {
     dismissed = true;
     FW.dis.video = true;
@@ -1097,9 +1121,11 @@ const COACH = (() => {
     open,
     back,
     toSettings,
-    show,
-    stepMove,
     stepped,
+    sessCue,
+    sessShow,
+    sessWant,
+    sessWin,
     stepList,
     stepEx,
     fullscreen,
@@ -1110,7 +1136,6 @@ const COACH = (() => {
     page,
     exercisesRow,
     exerciseRow,
-    stepHTML,
     settings,
     storageRow,
     busy: () => busy,

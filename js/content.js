@@ -111,6 +111,25 @@ const EX_WORDS = {
   flex: ['Clean runs', 'Pitch slipped', 'Ready to speed up', 'Tripped on the run'],
 };
 const EX_WORDS_DEFAULT = ['Felt good', 'Tight today', 'Clear tone', 'Needed more warm-up'];
+// Q19 the one-page session: EX_WORDS answer "How did it feel?" at level 3. At levels 1 and 2 the question is "What kept
+// it at level N?": two reasons for the exercise (EX_WHY, EX_WHY_DEFAULT for your own exercises), then the shared ones.
+// Picked words are saved as the exercise's note, the same as EX_WORDS
+const EX_WHY = {
+  slides: ['Cracked going up', 'Gaps in the middle'],
+  humming: ['Lost the buzz', 'Lips felt tense'],
+  lip: ['Lips kept stopping', 'Ran out of air'],
+  straw: ['Air kept stopping', 'Too much pressure'],
+  falsetto: ['Too breathy', 'Wobbly'],
+  upperlower: ['Clunk into chest', 'Lost volume'],
+  rung: ['Got heavy', 'Jaw kept closing'],
+  hinge: ['Squeak kept dropping', 'Throat felt tight'],
+  half: ['Too squeaky', 'Too heavy'],
+  vertical: ['Spread on high notes', 'Jaw felt tight'],
+  nasal: ['Too nasal', 'Low notes fuzzy'],
+  flex: ['Pitch slipped', 'Tripped on the run'],
+};
+const EX_WHY_DEFAULT = ['Cracked at the top', 'Ran out of air'];
+const EX_WHY_ALL = ['Still warming up', 'Voice felt tired', 'Short on time', 'Kept it easy today'];
 
 /* ===== Toggl tags ===== */
 // added to the end of each line of Copy for Toggl; rotation exercises also get #<their focus>

@@ -19,6 +19,10 @@ function newSession() {
     howNote: '',
     pausedTotal: 0,
   };
+  // Q19: a fresh page: no boxes open, nothing reopened, the coach window at each step's default
+  U.rings = {};
+  U.fEdit = null;
+  U.cvWin = null;
   saveDraft();
 }
 function newSong() {
@@ -154,6 +158,13 @@ function finishSession() {
     const e = exById(id);
     if (e) rotNames[id] = e.name;
   });
+  // Q19 "Just Foundation today? Finish here" from an empty Rotation: Rotation ends now, as its button would have
+  // ended it, so Application gets no time (the split is worked out exactly as before)
+  if (U.finHere && X.fEnd && !X.rEnd) {
+    X.rEnd = Date.now();
+    X.rE = elapsedSec();
+  }
+  U.finHere = false;
   const e = Math.max(1, elapsedSec()),
     fE = Math.min(e, X.fE || 0),
     rE = Math.min(e, Math.max(fE, X.rE || fE)),
@@ -278,6 +289,7 @@ function closeSheet() {
     }
   }
   if (s === 'edit') E = null;
+  if (s === 'how' || s === 'long') U.finHere = false; // Q19: Finish here only counts if the session is saved
   if (s === 'sgTakes' && !takePlaying(playingId)) stopPlayback(); // a playing take carries on, in the floating window
   const r = U.sd && U.sd.ret;
   if (typeof r === 'string') {

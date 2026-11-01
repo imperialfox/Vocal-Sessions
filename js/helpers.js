@@ -196,9 +196,6 @@ const ICON = {
   bad: '<svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M9 9l6 6M15 9l-6 6"/></svg>',
   check: '<svg class="i" viewBox="0 0 24 24" style="width:20px;height:20px"><path d="M5 12l5 5 9-10"/></svg>',
   plus: '<svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
-  circle: '<svg class="i" viewBox="0 0 24 24" style="width:24px;height:24px"><circle cx="12" cy="12" r="9.5"/></svg>',
-  circleOn:
-    '<svg class="i" viewBox="0 0 24 24" style="width:24px;height:24px"><circle cx="12" cy="12" r="10" fill="currentColor" stroke="none"/><path d="M7.5 12.2l3 3 6-6.4" stroke="#fff"/></svg>',
 };
 const chev = '<span class="mut" aria-hidden="true" style="font-size:var(--t-title3)">›</span>';
 /* Layout: phone (compact), phone on its side (land), iPad or Mac window (reg), wide enough for a sidebar (wide) */
@@ -399,6 +396,13 @@ const freshU = () => ({
   fq: '', // 3.22 Search: what's typed on the search page, the groups showing all, and focus on the next draw
   fAll: [],
   fFocus: false,
+  // Q19 the one-page session: each exercise row's box ('open', 'fold' or 'shut', keyed 'f:<id>' or 'r:<id>'), the
+  // finished step reopened (0 or 1, else null), the order of More exercises, and the coach window's choice for this
+  // step (null: the step's default)
+  rings: {},
+  fEdit: null,
+  rSort: 'old',
+  cvWin: null,
 });
 let U = freshU();
 let E = null,

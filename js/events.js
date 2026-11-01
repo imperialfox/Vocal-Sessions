@@ -313,16 +313,6 @@ document.addEventListener('click', (e) => {
         DET.listIn();
       }, 180);
       break;
-    case 'flv':
-      X.f[k] = +v;
-      saveDraft();
-      segPick(el);
-      break;
-    case 'rlv':
-      X.rot[k] = +v;
-      saveDraft();
-      segPick(el);
-      break;
     case 'rate':
       X.rate[k] = +v;
       saveDraft();
@@ -347,12 +337,6 @@ document.addEventListener('click', (e) => {
         E.rate[k] = +v;
         segPick(el);
       }
-      break;
-    case 'tog':
-      if (k in X.rot) delete X.rot[k];
-      else X.rot[k] = 0;
-      saveDraft();
-      rerender();
       break;
     case 'song':
       if (rec) return toast('Stop recording first');
@@ -385,41 +369,39 @@ document.addEventListener('click', (e) => {
       })();
       break;
     case 'cta':
-      if (U.view === 'found') {
-        if (FOUND.some((x) => !(x.id in X.f))) return toast('Set a level or Skip for each exercise');
-        U.sheet = 'confirmF';
-        rerender();
-      } else if (U.view === 'rot') {
-        const ks = Object.keys(X.rot);
-        if (!ks.length) return toast('Pick at least one exercise');
-        if (ks.some((i) => !X.rot[i])) return toast('Set a level for each exercise you picked');
-        X.rEnd = Date.now();
-        X.rE = elapsedSec();
-        saveDraft();
-        go(() => {
-          U.view = 'app';
-        });
-      } else if (U.view === 'app') {
-        if (rec) return toast('Stop recording first');
-        stopPlayback();
-        startFinish();
-      } else if (U.view === 'song') {
+      if (U.view === 'song') {
         if (!X.start)
           return toast(X.song ? 'Your practice starts with your first take' : 'Pick a song, then record a take');
         if (!X.song) return toast('Pick a song first');
         if (rec) return toast('Stop recording first');
         stopPlayback();
         startFinish();
-      }
+      } else OP.advance(); // Q19: Foundation, Rotation and Application on one page (onepage.js)
       break;
-    case 'confirmF':
-      X.fEnd = Date.now();
-      X.fE = elapsedSec();
-      saveDraft();
-      U.sheet = null;
-      go(() => {
-        U.view = 'rot';
-      });
+    // Q19 the one-page session
+    case 'ring':
+      OP.ring(el);
+      break;
+    case 'rcue':
+      OP.cue(el);
+      break;
+    case 'rown':
+      OP.own(el);
+      break;
+    case 'flowOpen':
+      OP.reopen(+v);
+      break;
+    case 'flowDone':
+      OP.reclose();
+      break;
+    case 'rSort':
+      OP.sortMenu(el);
+      break;
+    case 'rSortPick':
+      OP.sortPick(v);
+      break;
+    case 'finHere':
+      OP.finishHere();
       break;
     case 'longOk': {
       const m = Math.round(+($('longMins') || {}).value || 0);
@@ -506,12 +488,6 @@ document.addEventListener('click', (e) => {
       break;
     case 'coachEx':
       COACH.cue(k, COACH.level(k), true);
-      break;
-    case 'coachShow':
-      COACH.show();
-      break;
-    case 'coachStepEx':
-      COACH.stepMove(+v);
       break;
     case 'coachX':
     case 'fwX':
@@ -738,13 +714,10 @@ document.addEventListener('click', (e) => {
       DET.arm();
       D.custom.push({ id, name: n, focus: f ? f.v : 'custom', what: ($('exWhat').value || '').trim() });
       save();
-      if (X && U.view === 'rot') {
-        X.rot[id] = 0;
-        saveDraft();
-      }
       U.sheet = null;
       rerender();
       toast('Exercise added');
+      if (X && U.view === 'rot') OP.nudge('r:' + id); // Q19: it's in More exercises, ready to tap
       break;
     }
     case 'saveWhat': {
