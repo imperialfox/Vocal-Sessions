@@ -9,6 +9,12 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.37.1 · 1 Nov 2026
+*The microphone's sound engine rests properly after a refused recording (Q16)*
+<!-- area: fixes -->
+
+- Fixed: if the microphone was refused just as you tapped Record, the app's sound engine could stay switched on with nothing to listen to. It now rests once it has woken, as it does after every take.
+
 ## 3.37 · 1 Nov 2026
 *Record over your song's track, and Loop that plays each level to its end (Q16)*
 <!-- area: recordings -->

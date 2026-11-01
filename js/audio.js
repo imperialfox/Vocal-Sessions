@@ -31,6 +31,7 @@ const AUDIO = (() => {
     return ac;
   }
   // in a tap: make the context or wake it up. Resolves true once it runs, false if it doesn't within ms (400 by default)
+  let waking = null; // a resume under way
   function wake(ms) {
     const c = ctx();
     if (!c) return Promise.resolve(false);
@@ -41,13 +42,20 @@ const AUDIO = (() => {
     } catch (e) {
       p = Promise.resolve();
     }
+    waking = p;
+    p.then(() => {
+      if (waking === p) waking = null;
+    });
     return Promise.race([p, new Promise((r) => setTimeout(r, ms == null ? 400 : ms))]).then(
       () => c.state === 'running'
     );
   }
-  // nothing listening: rest the context (suspended, not closed, so the next take reuses it)
+  // nothing listening: rest the context (suspended, not closed, so the next take reuses it). If it's still waking up
+  // (the microphone was refused straight after the tap), it rests once it has
   function rest() {
-    if (users || !ac || ac.state !== 'running') return;
+    if (users || !ac) return;
+    if (waking) return waking.then(rest);
+    if (ac.state !== 'running') return;
     try {
       Promise.resolve(ac.suspend()).catch(() => {});
     } catch (e) {}
@@ -135,6 +143,6 @@ const AUDIO = (() => {
     listen,
     rest,
     frame,
-    state: () => ({ made, users, ctx: ac ? ac.state : null, frames: subs.size }),
+    state: () => ({ made, users, ctx: ac ? ac.state : null, waking: !!waking, frames: subs.size }),
   };
 })();
