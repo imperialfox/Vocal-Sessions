@@ -22,6 +22,14 @@ def run(b, t):
     pg.wait_for_timeout(500)
 
     pg.evaluate(SP); pg.wait_for_timeout(200)
+    # Q16: the microphone blocked: nothing records, and the shared audio context (woken by the tap) rests again
+    pg.evaluate("window.__gum=navigator.mediaDevices.getUserMedia;navigator.mediaDevices.getUserMedia=()=>Promise.reject(new Error('NotAllowedError'));0")
+    pg.click('[data-a=rec]')
+    pg.wait_for_function("[...document.querySelectorAll('.toast')].some(e=>e.textContent.includes('Microphone access was blocked'))", timeout=5000)
+    pg.wait_for_function("AUDIO.state().ctx!=='running'", timeout=3000)
+    ok(not pg.evaluate("!!rec") and pg.evaluate("AUDIO.state().users") == 0 and pg.evaluate("AUDIO.state().made") == 1,
+       'Q16: with the microphone blocked, nothing records and the one shared audio context rests again')
+    pg.evaluate("navigator.mediaDevices.getUserMedia=window.__gum;0")
     for _ in range(3):
         pg.click('[data-a=rec]'); pg.wait_for_timeout(1100); pg.click('[data-a=rec]'); pg.wait_for_timeout(900)
     ok(pg.evaluate("TAKES.filter(t=>t.songId==='g_1'&&!t.star).length") == 6, '3.20: every take is kept (no keep-last-3 rule)')

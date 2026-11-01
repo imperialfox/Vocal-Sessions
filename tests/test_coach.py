@@ -170,6 +170,24 @@ def player(b, t):
     pg.evaluate(f"COACH.el().currentTime={CH[4][2] - 1}"); pg.wait_for_timeout(2600)
     tt = pg.evaluate(T)
     ok(CH[4][1] - 0.5 <= tt < CH[4][1] + 4, f'Loop jumps back to Level 2’s start at its end (at {tt:.1f})')
+    # Q16: the jump back is timed like the track's loop: within a few ms of the level's end, never ¼ s early,
+    # at 1× and at 0.75× (pitch kept)
+    for sp in (1, 0.75):
+        pg.evaluate("v=>{COACH.el().playbackRate=v}", sp)
+        n0 = len(pg.evaluate("COACH.wraps()"))
+        pg.evaluate(f"COACH.el().currentTime={CH[4][2] - 0.8}")
+        pg.wait_for_function("COACH.el().currentTime<" + str(CH[4][2] - 0.5), timeout=3000)
+        pg.evaluate("window.__mx=0;(function f(){const v=COACH.el();if(v&&!v.paused){if(v.currentTime<" + str(CH[4][2] + 1) + ")window.__mx=Math.max(window.__mx,v.currentTime);requestAnimationFrame(f)}})()")
+        pg.wait_for_function("n=>COACH.wraps().length>n", arg=n0, timeout=int(6000 / sp))
+        W = pg.evaluate("COACH.wraps()")[n0:]
+        w = W[0]
+        over = round(w['t'] - w['end'], 3)
+        ok(w['start'] == CH[4][1] and w['end'] == CH[4][2] and -0.03 <= over <= 0.03,
+           f'Q16 {sp}×: Loop jumps back to Level 2’s start within a few ms of its end ({over:+.3f} s, by {w["by"]})')
+        ok(pg.evaluate("window.__mx") >= CH[4][2] - 0.03 and pg.evaluate("window.__mx") < CH[4][2] + 0.05 and pg.evaluate("COACH.el().preservesPitch!==false"),
+           f'Q16 {sp}×: the level plays right to its end, no further ({pg.evaluate("window.__mx") - CH[4][2]:+.3f} s)')
+        ok(pg.evaluate("COACH.here().l") == 2 and abs(pg.evaluate(T) - CH[4][1]) < 1.5, f'Q16 {sp}×: and it’s still Level 2')
+    pg.evaluate("COACH.el().playbackRate=COACH.prefs().speed")
     pg.click('#app [data-a=coachLoop]'); pg.wait_for_timeout(100)
     pg.evaluate(f"COACH.el().currentTime={CH[4][2] - 1}"); pg.wait_for_timeout(2000)
     ok(pg.evaluate(T) > CH[4][2], 'with Loop off it carries on into Level 3')

@@ -61,6 +61,16 @@ def run(b, t):
        'the recording bar, with the timer and a level meter, takes the place of the tab bar')
     ok(pg.locator(sec(o4) + '.recording').count() == 1 and pg.locator('[data-a=sgRec]').count() == 0, 'the section being recorded is marked, without its pills')
     ok(pg.evaluate("rec.lv.length") > 0, 'the level meter is listening')
+    # Q16: one shared audio service for the meter and the mono mix, and the meter on the one frame clock
+    a = pg.evaluate("[AUDIO.state(),!!rec.mic&&rec.mic.ctx===AUDIO.ctx(),AUDIO.state().frames]")
+    ok(a[0]['made'] == 1 and a[0]['users'] == 1 and a[1], f'Q16: the meter and the mono mix listen through one shared audio context ({a[0]})')
+    ok(a[2] >= 1, 'Q16: the meter draws on the shared frame clock')
+    pg.evaluate("window.__qs=0;const q=document.querySelectorAll.bind(document);document.querySelectorAll=s=>{if(String(s).includes('recMeter'))window.__qs++;return q(s)};window.__at=rec.lvAt")
+    pg.wait_for_function("rec&&rec.lv.length>=14&&rec.lvAt>window.__at+600", timeout=5000)
+    ok(pg.evaluate("window.__qs") == 0, f'Q16: the meter keeps moving without looking up its bars each time ({pg.evaluate("window.__qs")} look-ups)')
+    pg.evaluate("rerender()"); pg.wait_for_timeout(400)
+    ok(pg.evaluate("window.__qs") == 1 and pg.evaluate("[...document.querySelectorAll('#recMeter i')].every(i=>!!i.style.height)"),
+       'Q16: after a redraw it finds its new bars once, and draws them')
     ok(pg.evaluate("scrollY") > 100 and pg.evaluate("(()=>{const r=document.querySelector('.sgsec.recording').getBoundingClientRect(),b=document.querySelector('.recbar').getBoundingClientRect();return r.top<260&&r.top>0&&r.bottom<b.top})()"),
        'the page scrolls to the section, clear of the recording bar')
     ok(pg.evaluate("/\\d:\\d\\d/.test(document.getElementById('recT').textContent)"), 'the timer runs')
@@ -94,6 +104,8 @@ def run(b, t):
     pg.click('.sheet [data-a=sgRec]'); pg.wait_for_function("!!rec", timeout=5000); pg.wait_for_timeout(1200)
     ok(pg.evaluate("U.sheet") is None, 'Record again closes the sheet and records')
     pg.click('[data-a=sgStop]'); pg.wait_for_function("U.sheet==='sgTakes'&&TAKES.length===2", timeout=5000); pg.wait_for_timeout(200)
+    a = pg.evaluate("AUDIO.state()")
+    ok(a['made'] == 1 and a['users'] == 0 and a['frames'] == 0, f'Q16: the second take reused the same audio context, let go of when it stopped ({a})')
     ok(pg.locator('.sheet .tkr').count() == 2 and pg.locator('.sheet .tkr .tkstar').count() == 1, 'the starred take is listed under the new one')
     pg.click('.sheet .xbtn'); pg.wait_for_timeout(300)
     ok(pg.locator(sec(o4) + ' [data-a=sgTakes]').inner_text().strip() == '2 takes', 'the selected section shows "2 takes"')

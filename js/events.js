@@ -364,6 +364,9 @@ document.addEventListener('click', (e) => {
     case 'rec':
       rec ? stopRec() : startRec();
       break;
+    case 'recOver': // Q16: record over the track, with headphones or through the speaker
+      recOver(v);
+      break;
     case 'playTake':
       playTake(k);
       break;

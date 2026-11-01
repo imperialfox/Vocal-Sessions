@@ -187,37 +187,77 @@ function fwClose() {
 /* ===== One sound at a time (3.20) =====
    Every sound starts through NOW: a take, a recording, the coach video, the song's track (its player or a song row's
    play button) and Song Clock's play-along. Starting one stops whatever was playing, and the stopped one's window
-   stays closed until it's played again. The lock screen's play and pause follow whichever sound started last. */
+   stays closed until it's played again. The lock screen's play and pause follow whichever sound started last.
+   Q16, the one exception: a recording started with over 'track' keeps the song's track playing under it (`under`).
+   Stopping the recording leaves the track as the sound playing; anything else starting stops both. */
 const NOW = (() => {
-  let cur = null; // {kind, id, stop}
+  let cur = null; // {kind, id, stop, over?}
+  let under = null; // Q16: the track carrying on under a recording made over it
   let last = null; // the kind the lock screen controls
-  function start(kind, id, stop) {
-    if (cur && !(cur.kind === kind && cur.id === id)) {
-      const c = cur;
-      cur = null;
-      if (c.kind !== kind) FW.dis[c.kind] = true; // stopped by another sound: it doesn't wait in a window
-      try {
-        c.stop();
-      } catch (e) {}
+  const same = (a, b) => a.kind === b.kind && a.id === b.id;
+  function halt(c, kind) {
+    if (c.kind !== kind) FW.dis[c.kind] = true; // stopped by another sound: it doesn't wait in a window
+    try {
+      c.stop();
+    } catch (e) {}
+  }
+  // over: the one kind that may carry on under this sound (Q16: a recording over the track)
+  function start(kind, id, stop, over) {
+    const me = { kind, id: id == null ? null : id, stop: stop || (() => {}) };
+    // the track playing again during a recording made over it (the lock screen's play): it stays under the recording
+    if (cur && cur.over && cur.over === kind) {
+      if (under && !same(under, me)) {
+        const u = under;
+        under = null;
+        halt(u, kind);
+      }
+      under = me;
+      FW.dis[kind] = false;
+      return;
     }
-    cur = { kind, id: id == null ? null : id, stop: stop || (() => {}) };
+    const c = cur,
+      u = under,
+      keep = over && c && c.kind === over ? c : null;
+    cur = null;
+    under = null;
+    if (c && c !== keep && !same(c, me)) halt(c, kind);
+    if (u) halt(u, kind);
+    under = keep;
+    if (keep) me.over = over;
+    cur = me;
     FW.dis[kind] = false; // an explicit play brings its window back
     FW.shut = false;
     last = kind;
     media();
   }
-  // stop whatever plays (or only this kind)
+  // stop whatever plays (or only this kind), and the track under a recording with it
   function stop(kind) {
     if (!cur || (kind && cur.kind !== kind)) return;
-    const c = cur;
+    const c = cur,
+      u = under;
     cur = null;
+    under = null;
     try {
       c.stop();
     } catch (e) {}
+    if (u)
+      try {
+        u.stop();
+      } catch (e) {}
   }
   // a sound finished or was stopped from its own controls
   function ended(kind, id) {
-    if (cur && cur.kind === kind && (id == null || cur.id === id)) cur = null;
+    const is = (x) => x && x.kind === kind && (id == null || x.id === id);
+    if (is(under)) under = null;
+    else if (is(cur)) {
+      // Q16: a recording made over the track ends, and the track it was made over is the sound playing again
+      cur = under;
+      under = null;
+      if (cur) {
+        last = cur.kind;
+        media();
+      }
+    }
   }
   const kindOf = (id) => FW_KINDS.find((k) => k.id === id);
   function media() {
@@ -251,6 +291,7 @@ const NOW = (() => {
     ended,
     kind: () => (cur ? cur.kind : null),
     id: () => (cur ? cur.id : null),
+    under: () => (under ? under.kind : null), // Q16: the track under a recording made over it
     last: () => last,
   };
 })();

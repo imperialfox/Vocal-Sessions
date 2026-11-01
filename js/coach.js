@@ -123,6 +123,8 @@ const COACH = (() => {
       changed();
     });
     el.addEventListener('pause', () => {
+      clearTimeout(wrapT);
+      wrapT = 0;
       keep(true);
       if (!el.ended) fwPaused('video'); // paused on its own screen: leaving shows no window (3.20)
       changed();
@@ -141,7 +143,11 @@ const COACH = (() => {
       tick();
       keep();
     });
-    el.addEventListener('seeked', () => paint());
+    el.addEventListener('seeked', () => {
+      if (el) prevT = el.currentTime;
+      if (!el.paused) armWrap();
+      paint();
+    });
     el.addEventListener('loadedmetadata', () => {
       if (prefs.t > 0 && prefs.t < el.duration - 1 && el.currentTime < 0.5) el.currentTime = prefs.t;
       el.playbackRate = prefs.speed;
@@ -297,25 +303,63 @@ const COACH = (() => {
     changed();
     return true;
   }
-  // Loop: at the end of the level you're on, back to its start
-  function tick() {
+  // Loop: at the end of the level you're on, back to its start. Q16: as the track player does it (track.js armWrap):
+  // a check every frame and on timeupdate (the only one while the screen is locked), and a timer set for the very end
+  // once it's under WRAP_SOON away, so the end of a level isn't cut short (it used to jump on timeupdate, up to ¼ s early)
+  const WRAP_SOON = 0.3; // seconds of real time before the end that the timer is set
+  const WRAP_NEAR = 0.012; // seconds of real time: close enough to the end to jump now
+  let wrapT = 0,
+    prevT = 0;
+  const wraps = []; // the last jumps back, for the tests: {t, start, end, rate, by}
+  const looping = () => !!(prefs.loop && chapters() && cur && el && !drag);
+  function wrapTo(t, by) {
+    wraps.push({ t: Math.round(t * 1000) / 1000, start: cur.s, end: cur.e, rate: el.playbackRate, by });
+    if (wraps.length > 30) wraps.shift();
+    clearTimeout(wrapT);
+    wrapT = 0;
+    el.currentTime = cur.s;
+    prevT = cur.s;
+  }
+  // crossing the level's end jumps back. True when it did
+  function keepLoop(by) {
+    if (!el) return false;
+    const t = el.currentTime;
+    if (looping() && Date.now() - seekBy > 400 && prevT < cur.e && t >= cur.e - 0.005 && t < cur.e + 3) {
+      wrapTo(t, by);
+      return true;
+    }
+    prevT = t;
+    return false;
+  }
+  function armWrap() {
+    clearTimeout(wrapT);
+    wrapT = 0;
+    if (!looping() || el.paused || el.readyState < 1) return;
+    const t = el.currentTime,
+      rate = el.playbackRate || 1,
+      left = (cur.e - t) / rate;
+    if (t < cur.s - 0.3 || left <= 0 || left > WRAP_SOON) return;
+    wrapT = setTimeout(
+      () => {
+        wrapT = 0;
+        if (!looping() || el.paused) return;
+        const t2 = el.currentTime;
+        if (t2 < cur.s - 0.3 || t2 > cur.e + 0.25) return; // moved away meanwhile: the frame check decides
+        if ((cur.e - t2) / (el.playbackRate || 1) > WRAP_NEAR) return armWrap(); // the timer came early: once more
+        wrapTo(t2, 'timer');
+      },
+      Math.max(0, left * 1000 - 4)
+    );
+  }
+  function tick(by) {
     const t = el ? el.currentTime : 0;
     if (chapters()) {
+      if (keepLoop(by || 'tick')) return;
+      armWrap();
+      // looping, the level is held right to its end (at() moves on ¼ s before the next level starts)
+      const hold = looping() && t >= cur.s - 0.3 && t < cur.e;
       const a = at(t);
-      if (
-        prefs.loop &&
-        cur &&
-        !drag &&
-        Date.now() - seekBy > 400 &&
-        a.s !== cur.s &&
-        t >= cur.e - 0.35 &&
-        t < cur.e + 3
-      ) {
-        el.currentTime = cur.s;
-        seekBy = Date.now();
-        return;
-      }
-      if (!cur || a.s !== cur.s) {
+      if (!hold && (!cur || a.s !== cur.s)) {
         const was = cur;
         cur = a;
         if (!was || was.n !== a.n || was.l !== a.l) chapterChanged();
@@ -327,6 +371,10 @@ const COACH = (() => {
     cancelAnimationFrame(raf);
     const f = () => {
       if (!el || el.paused) return;
+      if (chapters() && prefs.loop) {
+        keepLoop('frame');
+        armWrap();
+      }
       paint();
       if (FW.shown === 'video') fwTick();
       raf = requestAnimationFrame(f);
@@ -1071,5 +1119,6 @@ const COACH = (() => {
     meta: () => (meta ? Object.assign({}, meta) : null),
     where: () => (where ? Object.assign({}, where) : null),
     here,
+    wraps: () => wraps.map((w) => Object.assign({}, w)), // Q16 tests
   };
 })();

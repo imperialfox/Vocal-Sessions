@@ -387,6 +387,7 @@ function renderSheet() {
   let h = '';
   if (s && /^sg[A-Z]/.test(s)) h = songSheet(s);
   else if (s === 'ckGrid') h = CLOCK.gridSheet();
+  else if (s === 'recOver') h = recOverSheet(); // Q16: recording while the track plays
   else if (s && /^trk/.test(s)) h = TRACK.sheet(s);
   else if (s === 'confirmF')
     h = sheetWrap(

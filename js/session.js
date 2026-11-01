@@ -319,17 +319,25 @@ function pickMime() {
     }) || ''
   );
 }
-// target: {songId, o} for a section of a song; nothing for song practice (the song picked in the session)
+// target: {songId, o} for a section of a song; nothing for song practice (the song picked in the session).
+// over: how Ivan said he's listening when the track is playing ('hp' headphones, 'spk' the speaker), from recOverSheet
 let recBusy = false;
-async function startRec(target) {
+async function startRec(target, over) {
   const tg = target || { songId: X && X.song };
   if (rec || recBusy) return;
-  NOW.stop(); // one sound at a time (3.20): whatever plays stops before a recording starts
+  // Q16: the song's track may keep playing under a recording, the one exception to one sound at a time. It's for
+  // headphones: the app can't tell whether they're in, so it asks first (recOverSheet), unless he said headphones while
+  // this play of the track has kept going. Through the speaker it asks every time
+  const onTrack = trackUnder(),
+    keep = onTrack && (over === 'hp' || over === 'spk' || REC_OVER.hp);
+  if (onTrack && !keep) return askOver(tg);
+  if (!keep) NOW.stop(); // one sound at a time (3.20): whatever plays stops before a recording starts
   if (!navigator.mediaDevices || !window.MediaRecorder) {
     toast('Recording isn’t supported in this browser');
     return;
   }
   recBusy = true;
+  AUDIO.wake(); // in the tap: iOS only starts the shared audio context from one
   let stream;
   try {
     // voice processing off, so the take sounds like the voice in the room
@@ -338,10 +346,12 @@ async function startRec(target) {
     });
   } catch (e) {
     recBusy = false;
+    AUDIO.rest(); // nothing to listen to: the context rests again
     toast('Microphone access was blocked. Allow it in Settings, then try again.');
     return;
   }
-  const mono = await monoStream(stream); // 3.20: one channel, so takes play in both ears
+  const mic = AUDIO.listen(stream), // Q16: the microphone, heard once through the shared audio service
+    mono = await monoStream(stream, mic); // 3.20: one channel, so takes play in both ears
   recBusy = false;
   const mime = pickMime();
   let mr;
@@ -351,8 +361,19 @@ async function startRec(target) {
   } catch (e) {
     mr = new MediaRecorder(mono.stream);
   }
-  rec = { mr, stream, mono, chunks: [], t: 0, songId: tg.songId, o: tg.o || null, started: Date.now() };
-  NOW.start('rec', null, () => stopRec());
+  rec = {
+    mr,
+    stream,
+    mono,
+    mic,
+    chunks: [],
+    t: 0,
+    songId: tg.songId,
+    o: tg.o || null,
+    started: Date.now(),
+    over: keep ? over || 'hp' : null, // Q16: recorded over the track ('hp' or 'spk')
+  };
+  NOW.start('rec', null, () => stopRec(), keep ? 'track' : null);
   // 3.20: a take on any song page starts (or carries on) song practice for that song, timed from its first take
   if (rec.o && songById(rec.songId)) {
     if (!X) {
@@ -389,30 +410,75 @@ async function startRec(target) {
   rerender();
   if (rec.o) scrollToSec(rec.o);
 }
-// the level meter in the recording bar: the last few moments of loudness, newest on the right
+
+/* ===== Recording over the track (Q16) =====
+   The song's track (the track player's sound, NOW kind 'track') may carry on while a take is recorded: NOW keeps it
+   playing under the recording, and stopping the take leaves it playing. Everything else still stops. With voice
+   processing off, the track through the speaker would be heard in the take, so it's for headphones by default and
+   asks first. Saying headphones is remembered only while the track keeps playing: it's forgotten when the track
+   pauses (iOS pauses it when headphones come out), when audio devices change and when the app goes to the background. */
+const REC_OVER = { hp: false };
+const trackUnder = () =>
+  NOW.kind() === 'track' && typeof TRACK !== 'undefined' && TRACK.state().playing && !TRACK.state().along;
+function askOver(tg) {
+  U.sheet = 'recOver';
+  U.sd = { tg: Object.assign({}, tg) };
+  rerender();
+}
+function recOverSheet() {
+  return sheetWrap(
+    'Record over the track?',
+    '<p class="note">The track keeps playing while you record. Use headphones, so only your voice is in the take. Through the speaker, the track may be heard in the take.</p>' +
+      '<button class="cta" data-a="recOver" data-v="hp">Record with headphones</button>' +
+      '<button class="ghost" data-a="recOver" data-v="spk">Record through the speaker</button>'
+  );
+}
+// the sheet's buttons: record now, the track carrying on
+function recOver(v) {
+  const tg = (U.sd || {}).tg;
+  U.sheet = null;
+  U.sd = {};
+  if (v === 'hp') hpSaid();
+  rerender();
+  if (tg) startRec(tg, v === 'hp' ? 'hp' : 'spk');
+}
+function hpSaid() {
+  REC_OVER.hp = true;
+  const forget = () => (REC_OVER.hp = false),
+    v = typeof TRACK !== 'undefined' && TRACK.el();
+  if (v) v.addEventListener('pause', forget, { once: true });
+  try {
+    navigator.mediaDevices.addEventListener('devicechange', forget, { once: true });
+  } catch (e) {}
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) REC_OVER.hp = false;
+});
+
+// the level meter in the recording bar: the last few moments of loudness, newest on the right. Q16: it listens through
+// the shared audio service and draws on its one frame clock, a new level about every 90 ms; its bars are found again
+// only when the bar has been drawn again, never looked up each time
 function recMeter(r) {
   r.lv = [];
-  try {
-    const AC = window.AudioContext || window.webkitAudioContext;
-    if (!AC) return;
-    r.ac = new AC();
-    const an = r.ac.createAnalyser();
-    an.fftSize = 512;
-    r.ac.createMediaStreamSource(r.stream).connect(an);
-    if (r.ac.state === 'suspended') r.ac.resume().catch(() => {});
-    const buf = new Uint8Array(an.fftSize);
-    r.mt = setInterval(() => {
-      if (rec !== r) return;
-      an.getByteTimeDomainData(buf);
-      let sum = 0;
-      for (let i = 0; i < buf.length; i++) sum += (buf[i] - 128) * (buf[i] - 128);
-      r.lv.push(Math.min(1, (Math.sqrt(sum / buf.length) / 128) * 4));
-      if (r.lv.length > 14) r.lv.shift();
-      const bars = document.querySelectorAll('#recMeter i'),
-        off = bars.length - r.lv.length;
-      bars.forEach((b, i) => (b.style.height = Math.round(16 + (i < off ? 0 : r.lv[i - off]) * 84) + '%'));
-    }, 90);
-  } catch (e) {}
+  const an = r.mic && r.mic.analyser(512);
+  if (!an) return;
+  const buf = new Uint8Array(an.fftSize);
+  let next = 0,
+    bars = null;
+  r.meterOff = AUDIO.frame((ts) => {
+    if (rec !== r || r.stopping) return r.meterOff && r.meterOff();
+    if (ts < next) return;
+    next = ts + 90;
+    r.lvAt = ts; // when it last listened
+    an.getByteTimeDomainData(buf);
+    let sum = 0;
+    for (let i = 0; i < buf.length; i++) sum += (buf[i] - 128) * (buf[i] - 128);
+    r.lv.push(Math.min(1, (Math.sqrt(sum / buf.length) / 128) * 4));
+    if (r.lv.length > 14) r.lv.shift();
+    if (!bars || !bars.length || !bars[0].isConnected) bars = document.querySelectorAll('#recMeter i');
+    const off = bars.length - r.lv.length;
+    bars.forEach((b, i) => (b.style.height = Math.round(16 + (i < off ? 0 : r.lv[i - off]) * 84) + '%'));
+  });
 }
 function scrollToSec(o) {
   const s = document.querySelector('.sgsec[data-o="' + o + '"]');
@@ -426,8 +492,7 @@ function stopRec() {
   rec.stopping = true;
   NOW.ended('rec');
   clearInterval(rec.timer);
-  clearInterval(rec.mt);
-  if (rec.ac) rec.ac.close().catch(() => {});
+  if (rec.meterOff) rec.meterOff();
   try {
     rec.mr.stop();
   } catch (e) {
@@ -435,31 +500,28 @@ function stopRec() {
   }
   rec.stream.getTracks().forEach((t) => t.stop());
   if (rec.mono && rec.mono.close) rec.mono.close();
+  if (rec.mic) rec.mic.close(); // Q16: lets go of the shared context, which rests once nothing listens
 }
 // 3.20: the microphone mixed down to one channel before it's encoded (a headset can give the voice on one side only).
-// Anything that doesn't work falls back to the microphone as it is, so a take is never lost to this
-async function monoStream(stream) {
+// Anything that doesn't work falls back to the microphone as it is, so a take is never lost to this. Q16: through the
+// shared audio service (mic: the recording's AUDIO.listen(), else one made and let go of here)
+async function monoStream(stream, mic) {
   const plain = { stream };
+  let own = null;
   try {
-    const AC = window.AudioContext || window.webkitAudioContext;
-    if (!AC) return plain;
     const tr = stream.getAudioTracks()[0],
       st = tr && tr.getSettings ? tr.getSettings() : {};
     if (st.channelCount === 1) return plain; // already one channel
-    const ac = new AC(),
-      src = ac.createMediaStreamSource(stream),
-      dst = ac.createMediaStreamDestination();
-    dst.channelCount = 1;
-    dst.channelCountMode = 'explicit';
-    dst.channelInterpretation = 'speakers';
-    src.connect(dst);
-    if (ac.state !== 'running') await Promise.race([ac.resume(), new Promise((r) => setTimeout(r, 400))]);
-    if (ac.state !== 'running') {
-      ac.close().catch(() => {});
+    const m = mic || (own = AUDIO.listen(stream));
+    if (!m) return plain;
+    if (!(await AUDIO.wake())) {
+      if (own) own.close();
       return plain;
     }
-    return { stream: dst.stream, close: () => ac.close().catch(() => {}) };
+    const out = m.mono();
+    return { stream: out, close: () => own && own.close() };
   } catch (e) {
+    if (own) own.close();
     return plain;
   }
 }

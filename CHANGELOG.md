@@ -9,6 +9,26 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.37 · 1 Nov 2026
+*Record over your song's track, and Loop that plays each level to its end (Q16)*
+<!-- area: recordings -->
+
+**Recording over the track**
+- The song's track can now keep playing while you record a take. Tap Record while it plays and the app asks first: **Record with headphones** or **Record through the speaker**. Through the speaker, the track may be heard in the take.
+- Said headphones, the next takes go straight in while the track keeps playing. The app asks again once the track pauses, when headphones come out or other audio devices change, and after you leave the app. The speaker asks every time.
+- Stopping the take leaves the track playing, and the lock screen still controls it. Anything else that plays (a take, the coach video, play-along) still stops everything, the track and the recording included, and the take is saved.
+- With the track paused, Record starts straight away, as before.
+
+<!-- area: practice -->
+**Coach video**
+- Loop now plays each level right to its end before going back to its start. It used to jump back up to a quarter of a second early, cutting off the end of the level.
+
+<!-- area: fixes -->
+**Notes for whoever works on the app**
+- One shared audio service (`AUDIO`, js/audio.js) for everything that listens to the microphone: the mono mix, the level meter and, later, the voice analysers. It never plays the track, takes or the coach video.
+- One frame clock (`AUDIO.frame`) for anything drawn from the microphone. The level meter now uses it and no longer looks up its bars every 90 ms.
+- The coach video's Loop uses the same precise timer as the track's loop.
+
 ## 3.36 · 1 Nov 2026
 *Room for register details in your marks and timing (Q15)*
 <!-- area: songs -->

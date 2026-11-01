@@ -243,19 +243,82 @@ def one_sound(b, t):
             ok(pg.evaluate("NOW.last()") == c, f'the lock screen follows {c}')
     pg.evaluate("NOW.stop()"); pg.wait_for_timeout(200)
     ok(not any(pg.evaluate(PLAYING[k]) for k in kinds), 'NOW.stop() stops whatever plays')
-    # recording stops every sound
+    # Q16: recording while the track plays asks first (headphones by default), and the track carries on under it
     pg.evaluate(S['track']); pg.wait_for_function(PLAYING['track'], timeout=5000)
     pg.evaluate(SONG, sid); pg.wait_for_timeout(200)
     o = pg.evaluate("id=>songById(id).order[0].o", sid)
-    pg.evaluate("o=>{U.sSec=o;rerender()}", o); pg.wait_for_timeout(150)
-    pg.click(f'.sgsec[data-o="{o}"] [data-a=sgRec]'); pg.wait_for_function("!!rec", timeout=5000); pg.wait_for_timeout(1200)
-    ok(not pg.evaluate(PLAYING['track']) and pg.evaluate("NOW.kind()") == 'rec', 'a recording stops the track')
+    SEL = "o=>{U.sSec=o;U.sheet=null;U.sd={};rerender()}"
+    REC = f'.sgsec[data-o="{o}"] [data-a=sgRec]'
+    pg.evaluate(SEL, o); pg.wait_for_timeout(150)
+    pg.click(REC); pg.wait_for_function("U.sheet==='recOver'", timeout=5000); pg.wait_for_timeout(200)
+    txt = pg.inner_text('.sheet')
+    ok(not pg.evaluate("!!rec") and pg.evaluate(PLAYING['track']) and 'Record over the track?' in txt and 'the track may be heard in the take' in txt,
+       'Q16: Record while the track plays asks first, saying the track may be heard in the take, and the track plays on')
+    ok(pg.locator('.sheet [data-a=recOver][data-v=hp]').inner_text().strip() == 'Record with headphones'
+       and pg.locator('.sheet [data-a=recOver][data-v=spk]').inner_text().strip() == 'Record through the speaker',
+       'Q16: headphones first, the speaker as the other choice')
+    t.shot(pg, 'q16-record-over-track')
+    pg.click('.sheet .xbtn'); pg.wait_for_timeout(300)
+    ok(not pg.evaluate("!!rec") and pg.evaluate("U.sheet") is None and pg.evaluate(PLAYING['track']), 'Q16: closing it records nothing and the track plays on')
+    # through the speaker
+    pg.evaluate(SEL, o); pg.wait_for_timeout(150)
+    pg.click(REC); pg.wait_for_function("U.sheet==='recOver'", timeout=5000)
+    pg.click('.sheet [data-a=recOver][data-v=spk]'); pg.wait_for_function("!!rec", timeout=5000); pg.wait_for_timeout(1200)
+    ok(pg.evaluate(PLAYING['track']) and pg.evaluate("[NOW.kind(),NOW.under(),rec.over]") == ['rec', 'track', 'spk'],
+       'Q16: through the speaker, the take records and the track keeps playing under it')
+    ok(pg.evaluate("AUDIO.state().users") == 1 and pg.evaluate("U.sheet") is None, 'Q16: the microphone is listened to through the shared audio service')
+    pg.click('[data-a=sgStop]'); pg.wait_for_function("!rec&&U.sheet==='sgTakes'", timeout=5000); pg.wait_for_timeout(300)
+    ok(pg.evaluate(PLAYING['track']) and pg.evaluate("[NOW.kind(),NOW.under(),NOW.last()]") == ['track', None, 'track'],
+       'Q16: stopping the take leaves the track playing, as the sound the lock screen follows')
+    ok(pg.evaluate("TAKES.filter(t=>t.songId===window.__ck&&t.o).length") == 1, 'Q16: and the take is saved')
+    # the speaker isn't remembered; headphones are, while the track keeps playing
+    pg.evaluate(SEL, o); pg.wait_for_timeout(150)
+    pg.click(REC); pg.wait_for_function("U.sheet==='recOver'", timeout=5000)
+    ok(not pg.evaluate("!!rec"), 'Q16: through the speaker asks every time')
+    pg.click('.sheet [data-a=recOver][data-v=hp]'); pg.wait_for_function("!!rec", timeout=5000); pg.wait_for_timeout(1100)
+    ok(pg.evaluate("rec.over") == 'hp' and pg.evaluate(PLAYING['track']), 'Q16: with headphones, the take records over the track')
+    pg.click('[data-a=sgStop]'); pg.wait_for_function("!rec&&U.sheet==='sgTakes'", timeout=5000); pg.wait_for_timeout(300)
+    pg.evaluate(SEL, o); pg.wait_for_timeout(150)
+    pg.click(REC); pg.wait_for_function("!!rec", timeout=5000); pg.wait_for_timeout(1100)
+    ok(pg.evaluate("rec.over") == 'hp' and pg.evaluate("U.sheet") is None and pg.evaluate(PLAYING['track']),
+       'Q16: said headphones, the next take while the track keeps playing doesn’t ask again')
+    # anything else starting stops both: one sound at a time for everything but the track
+    pg.evaluate(S['video']); pg.wait_for_function(PLAYING['video'], timeout=8000); pg.wait_for_timeout(300)
+    ok(not pg.evaluate("!!rec") and not pg.evaluate(PLAYING['track']) and pg.evaluate("[NOW.kind(),NOW.under()]") == ['video', None],
+       'Q16: the coach video starting stops the take and the track')
+    pg.wait_for_function("TAKES.filter(t=>t.songId===window.__ck&&t.o).length===3", timeout=5000)
+    ok(True, 'Q16: and that take is saved too')
+    pg.evaluate("COACH.pause()"); pg.wait_for_timeout(150)
+    # once the track has paused, headphones are asked about again; and when audio devices change
+    pg.evaluate(S['track']); pg.wait_for_function(PLAYING['track'], timeout=5000)
+    pg.evaluate(SEL, o); pg.wait_for_timeout(150)
+    pg.click(REC); pg.wait_for_function("U.sheet==='recOver'", timeout=5000)
+    ok(not pg.evaluate("!!rec"), 'Q16: after the track paused, it asks again')
+    pg.click('.sheet [data-a=recOver][data-v=hp]'); pg.wait_for_function("!!rec", timeout=5000); pg.wait_for_timeout(1100)
+    pg.click('[data-a=sgStop]'); pg.wait_for_function("!rec&&U.sheet==='sgTakes'", timeout=5000); pg.wait_for_timeout(300)
+    pg.evaluate("navigator.mediaDevices.dispatchEvent(new Event('devicechange'))")
+    pg.evaluate(SEL, o); pg.wait_for_timeout(150)
+    pg.click(REC); pg.wait_for_function("U.sheet==='recOver'", timeout=5000)
+    ok(not pg.evaluate("!!rec") and pg.evaluate(PLAYING['track']), 'Q16: when audio devices change (headphones out), it asks again')
+    pg.click('.sheet .xbtn'); pg.wait_for_timeout(250)
+    # the track paused: a recording is as before
+    pg.evaluate("TRACK.pause()"); pg.wait_for_timeout(200)
+    pg.evaluate(SEL, o); pg.wait_for_timeout(150)
+    pg.click(REC); pg.wait_for_function("!!rec", timeout=5000); pg.wait_for_timeout(600)
+    ok(pg.evaluate("rec.over") is None and pg.evaluate("[NOW.kind(),NOW.under()]") == ['rec', None], 'Q16: with the track paused, Record starts straight away, as before')
     pg.click('[data-a=sgStop]'); pg.wait_for_function("!rec&&U.sheet==='sgTakes'", timeout=5000); pg.wait_for_timeout(300)
     pg.evaluate("closeSheet()"); pg.wait_for_timeout(200)
+    # every other sound still stops for a recording (play-along too: only the track player's sound carries on)
     o = pg.evaluate("id=>songById(id).order[1].o", sid)
     for k in kinds:
         pg.evaluate(S[k]); pg.wait_for_function(PLAYING[k], timeout=8000); pg.wait_for_timeout(150)
-        pg.evaluate("([id,o])=>startRec({songId:id,o})", [sid, o]); pg.wait_for_function("!!rec", timeout=5000); pg.wait_for_timeout(250)
+        pg.evaluate("([id,o])=>startRec({songId:id,o})", [sid, o])
+        if k == 'track':
+            pg.wait_for_function("U.sheet==='recOver'", timeout=5000)
+            ok(not pg.evaluate("!!rec") and pg.evaluate(PLAYING[k]), 'Q16: a recording started any other way asks first too, the track playing on')
+            pg.evaluate("closeSheet()"); pg.wait_for_timeout(200); pg.evaluate("TRACK.pause()"); pg.wait_for_timeout(150)
+            continue
+        pg.wait_for_function("!!rec", timeout=5000); pg.wait_for_timeout(250)
         ok(not pg.evaluate(PLAYING[k]), f'recording stops the {k}')
         pg.evaluate("stopRec()"); pg.wait_for_function("!rec", timeout=5000); pg.wait_for_timeout(400)
         pg.evaluate("U.sheet=null;U.sd={};rerender()"); pg.wait_for_timeout(150)

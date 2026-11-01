@@ -2,9 +2,9 @@
 
 A mobile-first companion for structured vocal practice, styled like a native iOS app. It's a single HTML file with no install, no backend and no account. It's designed to live on your iPhone Home Screen.
 
-![Version 3.36](https://img.shields.io/badge/version-3.36-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
+![Version 3.37](https://img.shields.io/badge/version-3.37-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
 
-**Current version: 3.36 · 1 Nov 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
+**Current version: 3.37 · 1 Nov 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
 
 ---
 
@@ -145,6 +145,7 @@ And **Songs**, for learning a song: paste the lyrics, and they're split into lab
   - Sessions over 90 minutes ask how long you actually practised.
 - **Floating window:** leave a session, or switch away while something plays, and a small window stays on every other screen.
   - **One sound at a time:** a take, a recording, the coach video, a song's track and play-along all go through one place, so starting any of them stops whatever was playing. The lock screen's buttons follow whichever started last.
+  - **Recording over the track (3.37):** the one exception. Tap Record while a song's track plays and the app asks first: **Record with headphones** or **Record through the speaker** (the track may be heard in the take). The track keeps playing through the take and after it. Headphones are remembered while the track keeps playing; the speaker asks every time.
   - Every sound's window has a **✕**, playing or paused. It stops the sound and closes the window, and nothing brings it back except playing it again: not switching tabs, a sheet, coming back to the app or a reload. Nothing else pops up in its place on that screen. When a sound finishes, its window goes.
   - A sound's window shows while it plays, and when you paused it from the window (or the lock screen). Paused anywhere else, it doesn't follow you.
   - A session shows what's running (for example "Focused session · Rotation"), its live time and a pause button. Paused, it says Paused and the time stops.

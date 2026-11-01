@@ -1,6 +1,6 @@
 # Render queue
 
-App work Ivan has queued, in the order he wants it built. Each item is one build, in a fresh chat, started from a handoff (see [HANDOFF.md](HANDOFF.md)). Last checked against `main` at **3.36** (1 Nov 2026). **Shipped:** Q01 · Search: Global Find in 3.22; Q08 · Interface: Native iOS Polish in 3.23; Q02 · Track: Waveform Sections in 3.24; Q09 · Track: Waveform Sections Follow-up in 3.25; Q10 · Interface: HIG Foundations Pass in 3.26; Q03 · Marks: Layered Annotations in 3.27; Q05 · Song Clock: Tap Re-Anchor in 3.28; Q11 · Data: Save Safety in 3.29; Q12 · Song Clock: Timing Integrity in 3.30; Q13 · Interface: Keyboard Guards in 3.31; Q04 · Marks: Practice Guide in 3.32; Q23 · Interface: Status Bar Glow in 3.33; Q14 · Playback: Smooth Frames in 3.34; Q18 · Tests: GitHub Match in 3.35; Q15 · Marks: Register-Ready Data in 3.36.
+App work Ivan has queued, in the order he wants it built. Each item is one build, in a fresh chat, started from a handoff (see [HANDOFF.md](HANDOFF.md)). Last checked against `main` at **3.37** (1 Nov 2026). **Shipped:** Q01 · Search: Global Find in 3.22; Q08 · Interface: Native iOS Polish in 3.23; Q02 · Track: Waveform Sections in 3.24; Q09 · Track: Waveform Sections Follow-up in 3.25; Q10 · Interface: HIG Foundations Pass in 3.26; Q03 · Marks: Layered Annotations in 3.27; Q05 · Song Clock: Tap Re-Anchor in 3.28; Q11 · Data: Save Safety in 3.29; Q12 · Song Clock: Timing Integrity in 3.30; Q13 · Interface: Keyboard Guards in 3.31; Q04 · Marks: Practice Guide in 3.32; Q23 · Interface: Status Bar Glow in 3.33; Q14 · Playback: Smooth Frames in 3.34; Q18 · Tests: GitHub Match in 3.35; Q15 · Marks: Register-Ready Data in 3.36; Q16 · Audio: Voice Analysis Foundations in 3.37.
 
 - **Every item has two separate gates.** `Awaiting Render` means it is not approved. Ivan's **Render** approves only the named item's exact scope and moves it to `Approved — awaiting Build`; it does not start work or authorize a push. A separate **Build** instruction starts implementation for that approved item. Do not treat approval of one item as approval of the whole queue.
 - **The code wins on what's built.** This is a summary, not a spec. Check each note against the code before relying on it.
@@ -16,7 +16,7 @@ Every queued item has a queue ID and a standard name, used in the queue, in hand
 - **Files** (handoffs, specs, wireframes, prototypes): `q##_[subsystem]_[feature]_[type].[ext]`, lower case with underscores, e.g. `q02_track_waveform_sections_handoff.md`.
 - **Releases:** the shipped version's `CHANGELOG.md` headline ends with the queue ID in brackets, e.g. `*Waveform sections on the track player (Q02)*` under `## 3.23 · 27 Oct 2026` (the `##` line keeps its exact format for the app's Changelog page). That's the bridge from queue ID to version. Q01 shipped as 3.22, headline `*Search, from every tab (Q01)*`; Q08 as 3.23.
 - **New items:** an idea gets its ID when Ivan says **Render** for it, taking the next unused number (the next is **Q24**). IDs are never reused or renumbered, even when the queue is reordered or an item ships.
-- **Exception, 30 Oct 2026:** Ivan asked for the six stages of the 30 Oct read-only audit, plus its clean-up list, to get IDs straight away, before Render, most critical first. They are **Q11–Q17**. All seven got Render on 30 Oct 2026; Q11–Q15 have shipped (3.29–3.31, 3.34 and 3.36), and Q16–Q17 are `Approved — awaiting Build`.
+- **Exception, 30 Oct 2026:** Ivan asked for the six stages of the 30 Oct read-only audit, plus its clean-up list, to get IDs straight away, before Render, most critical first. They are **Q11–Q17**. All seven got Render on 30 Oct 2026; Q11–Q16 have shipped (3.29–3.31, 3.34, 3.36 and 3.37), and Q17 is `Approved — awaiting Build`.
 - **Exception, 31 Oct 2026:** Ivan asked for the status bar fix to be queued with an ID before Render. It is **Q23**; Render and Build followed the same evening (shipped in 3.33).
 
 Every ID with its **Status** (`Awaiting Render`, `Approved — awaiting Build`, `Building`, `Shipped <version>`, `Blocked` or `Retired`) and the working names older chats, notes and prototypes use. Render adds the row (or sets it to `Approved — awaiting Build`); the Build that ships it sets `Shipped <version>` in the same push.
@@ -38,7 +38,7 @@ Every ID with its **Status** (`Awaiting Render`, `Approved — awaiting Build`, 
 | Q13 | Interface: Keyboard Guards | Shipped 3.31 | Audit stage 3, input hygiene |
 | Q14 | Playback: Smooth Frames | Shipped 3.34 | Audit stage 4, per-frame work |
 | Q15 | Marks: Register-Ready Data | Shipped 3.36 | Audit stage 5, room for register data |
-| Q16 | Audio: Voice Analysis Foundations | Approved — awaiting Build | Audit stage 6, Web Audio seam |
+| Q16 | Audio: Voice Analysis Foundations | Shipped 3.37 | Audit stage 6, Web Audio seam |
 | Q17 | Hygiene: Dead Code Sweep | Approved — awaiting Build | Audit clean-up list |
 | Q18 | Tests: GitHub Match | Shipped 3.35 | Workflow review, 31 Oct 2026 |
 | Q19 | Session: One-Page Flow | Approved — awaiting Build | One-page session prototype, 31 Oct 2026 |
@@ -62,24 +62,7 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 
 ## Order (1 Nov 2026)
 
-Most critical first: **Q16 → Q17 → Q19 → Q20 → Q21 → Q22 → Q07**. Q22 got Render on 31 Oct 2026 (20:59) and goes after Q21, because it builds on the one-page session and the saved screen. Q19–Q21 got Render on 31 Oct 2026 (19:58), in one instruction; each still needs its own Build. They go after Q17 (Q20 needs Q16's track-while-recording). Q11–Q17 got Render on 30 Oct 2026 (06:42); each still needs its own Build. What has shipped is in the table's Status column. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
-
-## Q16 · Audio: Voice Analysis Foundations
-
-**Status:** Approved — awaiting Build. **Approval:** Render given by Ivan on 30 Oct 2026 (06:42) for the scope below, in one instruction covering Q11–Q17. Each item is still its own build, in queue order, and needs its own **Build**. The build handoff is in Ivan's project notes as `q16_audio_voice_analysis_foundations_handoff.md`.
-**Needs:** Q14 and Q15 live.
-
-- **Goal:** a clean place for future pitch and vocal-weight analysis to plug in, without risking one sound at a time, the lock screen, or the pitch-kept slow-down.
-- **Scope:**
-  - **One shared audio service** (a single AudioContext) used by the mono mix and the level meter, and later by the analysers. It listens to the microphone only; the track stays on its own player.
-  - **One frame clock** for any visualiser, with no page look-ups per frame.
-  - **The coach video's level loop** uses the track's precise timer, so the end of a level isn't clipped (today it cuts up to about ¼ s).
-  - **Ivan checks the track loop's join on his iPhone** at 1× and 0.5×. If there's an audible gap, try a short fade at the join.
-- **Out of scope:** the pitch / vocal-weight analysis and visualiser themselves (a later item).
-- **Decided by Ivan (30 Oct 2026):** the backing track may keep playing while the microphone is listened to or recorded. Today, starting a recording stops every sound; this changes that, and only for the backing track. Everything else still follows one sound at a time.
-- **Decided by Ivan (31 Oct 2026), the speaker leak:** voice processing is off for takes, so through the speaker the track would leak into the microphone (and into the take and any analysis). By default, recording while the track plays is for headphones. Ivan can always override it, with a confirmation first, to record with the track through the speaker.
-- **Next action:** after Ivan separately says Build for Q16, check its **Needs** are live, then implement only this scope in a fresh chat from its handoff.
-- **Done when:** the meter and mono mix share one audio service; the coach loop wraps within a few ms in tests; the full suite passes; Ivan's phone check is recorded.
+Most critical first: **Q17 → Q19 → Q20 → Q21 → Q22 → Q07**. Q22 got Render on 31 Oct 2026 (20:59) and goes after Q21, because it builds on the one-page session and the saved screen. Q19–Q21 got Render on 31 Oct 2026 (19:58), in one instruction; each still needs its own Build. They go after Q17 (Q20 needs Q16's track-while-recording, shipped in 3.37). Q11–Q17 got Render on 30 Oct 2026 (06:42); each still needs its own Build. What has shipped is in the table's Status column. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
 
 ## Q17 · Hygiene: Dead Code Sweep
 
