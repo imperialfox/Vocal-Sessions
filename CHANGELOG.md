@@ -9,6 +9,14 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.35.1 · 1 Nov 2026
+*Hold-menu checks wait like a finger would (Q18)*
+<!-- area: fixes -->
+
+Nothing in the app changes.
+
+- Fixed: the checks that hold a take, a comment or a marker and then tap the menu sometimes tapped too soon. The app rightly ignores a tap in the first moment after letting go of a hold, so on GitHub's quicker computer that tap was sometimes ignored and the check went red. They now wait as long as a finger would.
+
 ## 3.35 · 1 Nov 2026
 *Steadier checks behind the scenes (Q18)*
 <!-- area: fixes -->

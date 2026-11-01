@@ -37,6 +37,15 @@ def held(pg):
     pg.wait_for_timeout(120)
 
 
+def let_go(pg):
+    """Let go after a hold (Q18). The app ignores a click within 400 ms of letting go of a hold, so the release can't tap
+    the menu it just opened (takes.js and track.js heldAt). Wait that out on the page's own clock, as a finger moving to
+    the menu would, before the next tap: a fixed 250 ms let a quick runner's next click land inside it and be ignored."""
+    pg.mouse.up()
+    t0 = pg.evaluate("Date.now()")
+    pg.wait_for_function("t0=>Date.now()-t0>500", arg=t0, timeout=5000)
+
+
 def lyric_song(pg, name='Harbour'):
     sid = pg.evaluate(ADD, [name, 'Harbour Lights', LYR]); pg.wait_for_timeout(300)
     return sid
@@ -501,8 +510,8 @@ def takes(b, t):
     ok(pg.locator('.sheet .tkdots .tkdot').count() == 2 and pg.locator('.sheet .tkcl .tkcm').count() == 2, 'dots under the waveform and a list')
     # pop-ups while playing, not on a jump
     pg.evaluate("TAKE.seekTo('k1',0.3)"); pg.click('.sheet #tkPP')
-    pg.wait_for_function("TAKE.state().pop.includes('Breath here')", timeout=4000)
-    ok(True, 'while playing, a comment pops up above the waveform as the playhead passes it')
+    # (Q18: up to 10 s, since playback can be slow to start on a busy machine; a miss fails this check, not the whole part)
+    ok(until(pg, "TAKE.state().pop.includes('Breath here')", timeout=10000), 'while playing, a comment pops up above the waveform as the playhead passes it')
     pg.click('.sheet #tkPP'); pg.wait_for_timeout(2200)
     pg.evaluate("TAKE.seekTo('k1',4.6)"); pg.wait_for_timeout(100)
     ok(pg.evaluate("TAKE.state().pop") == '', 'jumping past a comment doesn’t pop it up')
@@ -510,14 +519,14 @@ def takes(b, t):
     ok(pg.evaluate("TAKE.now('k1')") == 4 and 'Flat on the high note' in pg.evaluate("TAKE.state().pop"), 'tapping a dot jumps there and shows it')
     # hold a comment: Edit · Delete
     box = pg.locator('.sheet .tkcm >> nth=0').bounding_box()
-    pg.mouse.move(box['x'] + 20, box['y'] + 10); pg.mouse.down(); held(pg); pg.mouse.up(); pg.wait_for_timeout(250)
+    pg.mouse.move(box['x'] + 20, box['y'] + 10); pg.mouse.down(); held(pg); let_go(pg)
     ok(pg.evaluate("U.sheet") == 'sgCmtMenu', 'holding a comment offers Edit and Delete')
     pg.click('.sheet [data-a=tkCEdit]'); pg.wait_for_timeout(300)
     ok(pg.evaluate("U.sheet") == 'sgTakes' and pg.locator('#tkCIn').count() == 1 and pg.input_value('#tkCIn') == 'Breath here', 'Edit puts it back in the field: ' + str(pg.evaluate("[U.sheet,JSON.stringify(U.sd),TAKE.state()]")))
     pg.fill('#tkCIn', 'Breathe before this'); pg.dispatch_event('#tkCIn', 'input'); pg.click('.sheet [data-a=tkPost]'); pg.wait_for_timeout(300)
     ok(pg.evaluate("id=>songById(id).takeNotes.k1.comments[0]", sid) == {'t': 1, 'text': 'Breathe before this'}, 'and saves it in place')
     box = pg.locator('.sheet .tkcm >> nth=0').bounding_box()
-    pg.mouse.move(box['x'] + 20, box['y'] + 10); pg.mouse.down(); held(pg); pg.mouse.up(); pg.wait_for_timeout(250)
+    pg.mouse.move(box['x'] + 20, box['y'] + 10); pg.mouse.down(); held(pg); let_go(pg)
     pg.click('.sheet [data-a=tkCDel]'); pg.wait_for_timeout(300)
     ok(pg.evaluate("id=>songById(id).takeNotes.k1.comments.length", sid) == 1, 'Delete removes it')
     t.shot(pg, 'takes-open')
@@ -561,11 +570,12 @@ def takes(b, t):
     ok(pg.evaluate("TAKE.ext('k1')") is None, 'and its waveform on the device')
     # hold a row: Star · Rename · Delete
     bb = pg.locator('.sheet .tkr[data-tk=k2]').bounding_box()
-    pg.mouse.move(bb['x'] + 60, bb['y'] + 20); pg.mouse.down(); held(pg); pg.mouse.up(); pg.wait_for_timeout(250)
+    pg.mouse.move(bb['x'] + 60, bb['y'] + 20); pg.mouse.down(); held(pg); let_go(pg)
     ok(pg.evaluate("U.sheet") == 'sgTakeMenu' and all(x in pg.inner_text('.sheet') for x in ('Star', 'Rename', 'Delete')), 'holding a row: Star · Rename · Delete')
     pg.click('.sheet [data-a=tkMenuRename]')
     until(pg, "U.sheet==='sgTakes'&&!!document.getElementById('tkNameIn')", timeout=5000)  # (Q18: was a fixed 300 ms)
-    ok(pg.evaluate("U.sheet") == 'sgTakes' and pg.locator('#tkNameIn').count() == 1, 'Rename opens the take with its name field')
+    rn = pg.evaluate("[U.sheet,JSON.stringify(U.sd),TAKE.state().renaming,TAKE.state().open,TAKE.state().tab,(document.activeElement||{}).id||(document.activeElement||{}).className]")
+    ok(rn[0] == 'sgTakes' and pg.locator('#tkNameIn').count() == 1, f'Rename opens the take with its name field' + ('' if rn[0] == 'sgTakes' and rn[2] else f' ({rn})'))
     if pg.locator('#tkNameIn').count():
         pg.press('#tkNameIn', 'Escape')
     pg.evaluate("closeSheet()"); pg.wait_for_timeout(200)
@@ -747,7 +757,7 @@ def markers(b, t):
     # hold a chip
     pg.locator('#trkMk .trkchip >> nth=0 >> .trkchb').scroll_into_view_if_needed()
     bb = pg.locator('#trkMk .trkchip >> nth=0 >> .trkchb').bounding_box()
-    pg.mouse.move(bb['x'] + 10, bb['y'] + 10); pg.mouse.down(); held(pg); pg.mouse.up(); pg.wait_for_timeout(250)
+    pg.mouse.move(bb['x'] + 10, bb['y'] + 10); pg.mouse.down(); held(pg); let_go(pg)
     txt = pg.inner_text('.sheet')
     ok(pg.evaluate("U.sheet") == 'trkMkMenu' and all(x in txt for x in ('Rename', 'Move to playhead', 'Set end here', 'Delete marker', 'Clear all markers')),
        'holding a chip: Rename · Move to playhead · Set end here · Delete marker · Clear all markers…')
@@ -757,12 +767,12 @@ def markers(b, t):
     pg.evaluate("TRACK.seek(30)"); pg.wait_for_timeout(100)
     pg.locator('#trkMk .trkchip >> nth=0 >> .trkchb').scroll_into_view_if_needed()
     bb = pg.locator('#trkMk .trkchip >> nth=0 >> .trkchb').bounding_box()
-    pg.mouse.move(bb['x'] + 10, bb['y'] + 10); pg.mouse.down(); held(pg); pg.mouse.up(); pg.wait_for_timeout(250)
+    pg.mouse.move(bb['x'] + 10, bb['y'] + 10); pg.mouse.down(); held(pg); let_go(pg)
     pg.click('.sheet [data-a=trkMkMove]'); pg.wait_for_timeout(250)
     ok([m['t'] for m in pg.evaluate("TRACK.markers()")][-1] == 30 and pg.evaluate("TRACK.markers()[2].name") == 'Run', 'Move to playhead moves it, renumbering by time')
     pg.locator('#trkMk .trkchip >> nth=2 >> .trkchb').scroll_into_view_if_needed()
     bb = pg.locator('#trkMk .trkchip >> nth=2 >> .trkchb').bounding_box()
-    pg.mouse.move(bb['x'] + 10, bb['y'] + 10); pg.mouse.down(); held(pg); pg.mouse.up(); pg.wait_for_timeout(250)
+    pg.mouse.move(bb['x'] + 10, bb['y'] + 10); pg.mouse.down(); held(pg); let_go(pg)
     pg.click('.sheet [data-a=trkMkDel]'); pg.wait_for_timeout(250)
     ok(len(pg.evaluate("TRACK.markers()")) == 2 and 'Marker deleted' in pg.inner_text('.toast'), 'Delete marker removes it')
     # backups carry markers, with or without the track
