@@ -15,7 +15,7 @@ Every queued item has a queue ID and a standard name, used in the queue, in hand
 - **Items:** `Q[##] · [Subsystem]: [Feature Name]`, e.g. `Q02 · Track: Waveform Sections`.
 - **Files** (handoffs, specs, wireframes, prototypes): `q##_[subsystem]_[feature]_[type].[ext]`, lower case with underscores, e.g. `q02_track_waveform_sections_handoff.md`.
 - **Releases:** the shipped version's `CHANGELOG.md` headline ends with the queue ID in brackets, e.g. `*Waveform sections on the track player (Q02)*` under `## 3.23 · 27 Oct 2026` (the `##` line keeps its exact format for the app's Changelog page). That's the bridge from queue ID to version. Q01 shipped as 3.22, headline `*Search, from every tab (Q01)*`; Q08 as 3.23.
-- **New items:** an idea gets its ID when Ivan says **Render** for it, taking the next unused number (the next is **Q25**). IDs are never reused or renumbered, even when the queue is reordered or an item ships.
+- **New items:** an idea gets its ID when Ivan says **Render** for it, taking the next unused number (the next is **Q28**). IDs are never reused or renumbered, even when the queue is reordered or an item ships.
 - **Exception, 30 Oct 2026:** Ivan asked for the six stages of the 30 Oct read-only audit, plus its clean-up list, to get IDs straight away, before Render, most critical first. They are **Q11–Q17**. All seven got Render on 30 Oct 2026 and have shipped (3.29–3.31, 3.34, 3.36, 3.37 and 3.38).
 - **Exception, 31 Oct 2026:** Ivan asked for the status bar fix to be queued with an ID before Render. It is **Q23**; Render and Build followed the same evening (shipped in 3.33).
 
@@ -47,6 +47,9 @@ Every ID with its **Status** (`Awaiting Render`, `Approved — awaiting Build`, 
 | Q22 | Session: Clock Redesign | Shipped 3.42 | Session clock ring prototype, 31 Oct 2026 |
 | Q23 | Interface: Status Bar Glow | Shipped 3.33 | Gradient clipped at the top, 31 Oct 2026 |
 | Q24 | Coach: Video Redesign | Shipped (tooling, no app version) | Coach video redesign, 31 Oct–1 Nov 2026 |
+| Q25 | Coach: Frame-Accurate Chapters | Approved — awaiting Build | Coach timings, level picker, 1 Nov 2026 |
+| Q26 | Window: Picture in Picture | Approved — awaiting Build | Floating window picture in picture and audit fixes, 1 Nov 2026 |
+| Q27 | Interface: Landscape Tab Bar Fit | Approved — awaiting Build | "Exerc" cut off on its side, 1 Nov 2026 |
 
 Work shipped before this standard (for example Track 1 and Song Clock A1) keeps its version numbers and has no queue ID.
 
@@ -63,7 +66,61 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 
 ## Order (1 Nov 2026)
 
-Most critical first: **Q07** (awaiting Render). Q19 shipped in 3.39, Q20 in 3.40, Q21 in 3.41 and Q22 in 3.42. Q22 got Render on 31 Oct 2026 (20:59) and was built on the one-page session and the saved screen. Q19–Q21 got Render on 31 Oct 2026 (19:58), in one instruction, each with its own Build. They follow Q17 (shipped in 3.38; Q20 needs Q16's track-while-recording, shipped in 3.37). Q11–Q17 got Render on 30 Oct 2026 (06:42) and have all shipped. What has shipped is in the table's Status column. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
+Next to build: **Q25 → Q26 → Q27** (Render given by Ivan on 1 Nov 2026, 19:59, in one instruction, each with its own Build; Q26 needs Q25 shipped; Q27 can go any time). Then **Q07** (awaiting Render). Q19 shipped in 3.39, Q20 in 3.40, Q21 in 3.41 and Q22 in 3.42. Q22 got Render on 31 Oct 2026 (20:59) and was built on the one-page session and the saved screen. Q19–Q21 got Render on 31 Oct 2026 (19:58), in one instruction, each with its own Build. They follow Q17 (shipped in 3.38; Q20 needs Q16's track-while-recording, shipped in 3.37). Q11–Q17 got Render on 30 Oct 2026 (06:42) and have all shipped. What has shipped is in the table's Status column. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
+
+## Q25 · Coach: Frame-Accurate Chapters
+
+**Status:** Approved — awaiting Build. **Approval:** Render given by Ivan on 1 Nov 2026 (19:59) for the scope below, with all defaults. The build handoff is in Ivan's project notes as `q25_coach_frame_accurate_chapters_handoff.md`.
+**Needs:** 3.42 on `main` (verified 1 Nov 2026).
+
+- **Goal:** a tap jumps the coach video to the exact start of an exercise or level, never into the end of the previous one; every exercise opens at Level 1; L1 · L2 · L3 jumps to or replays any level.
+- **Scope:**
+  - `COACH_TIMES` gets all 36 measured level starts, to the hundredth of a second. The frames are in `tools/coach-video/data/level_frames.json`.
+  - `coachSecs` reads part-seconds.
+  - Opening an exercise (session step, exercise page, player) starts at Level 1, and "Play with coach" reads "From Level 1".
+  - The existing level switch appears for every exercise. A tap jumps to the level's first frame, and tapping the lit level restarts it.
+  - The video's level never changes the level logged.
+  - `VID` gets the measured lengths. Past totals are unchanged; only the split of sessions filled in at the end shifts slightly.
+- **Out of scope:** level buttons in the floating window (Q26); skipping the coach's intro to the first round; the video file; exercises 13–15.
+- **Done when:** a test checks all 36 level taps (±1 frame), Level 1 first everywhere, replay and Loop ends; the full suite passes; changelog headline ends "(Q25)".
+
+## Q26 · Window: Picture in Picture
+
+**Status:** Approved — awaiting Build. **Approval:** Render given by Ivan on 1 Nov 2026 (19:59) for the scope below, with all defaults, as one build in four stages. The build handoff is in Ivan's project notes as `q26_window_picture_in_picture_handoff.md`, with the two floating window audits and the wireframes (boards C and D).
+**Needs:** Q25 shipped.
+
+- **Goal:** the floating window feels like Apple's picture in picture, and every kind of window reads well, behaves the same and never gets in the way.
+- **Scope:**
+  - **Coach video:** a clean picture. One tap shows controls that fade after about 3 s: ✕, open the player, −10 / play-pause / +10, and L1 L2 L3. Pinch or double-tap moves between three sizes (176 pt, 264 pt, full width), and the last size is remembered.
+  - **Tuck at the edge, for every kind:** an arrow tab, with sound and timers carrying on, and a dot while playing.
+  - **The 16 audit fixes:**
+    - the session step name in the text colour, its colour kept on the ring and a dot;
+    - nothing carries over between kinds (the coach video ✕ bug);
+    - 44 pt touch areas;
+    - a readable recording window;
+    - one progress line style;
+    - name first, no "Playing ·";
+    - one capsule shape;
+    - a stronger dark ring track;
+    - room at the bottom of every page;
+    - the end of long names cut, never the start;
+    - a Reduce Motion fade;
+    - a cross-fade between kinds;
+    - a press and a lift when dragged;
+    - a steady VoiceOver label.
+  - **Build stages:** fixes → look → behaviour → picture in picture.
+- **Out of scope:** iPhone's own system picture in picture; pinch for kinds that aren't video; the landscape tab bar (Q27).
+- **Done when:** each fix and both features have a check; light and dark at 390, 375, on its side and iPad; the full suite passes; changelog headline ends "(Q26)".
+
+## Q27 · Interface: Landscape Tab Bar Fit
+
+**Status:** Approved — awaiting Build. **Approval:** Render given by Ivan on 1 Nov 2026 (19:59) for the scope below, with the default. The build handoff is in Ivan's project notes as `q27_interface_landscape_tab_bar_fit_handoff.md`.
+**Needs:** nothing in particular; it can be built before or after Q25 and Q26.
+
+- **Goal:** with the iPhone on its side, every tab label shows in full. At 844 × 390 "Exercises" reads "Exerc" under the search circle (found 1 Nov 2026 on 3.42).
+- **Scope:** when the compact tab bar is short of room, the tabs tighten (padding and gap) so every icon and label fits beside the search circle. Label sizes stay the same.
+- **Out of scope:** the upright tab bar; the iPad and Mac tab capsule or sidebar; the floating window.
+- **Done when:** a test checks no tab label is cut off at 844 × 390, 812 × 375 and 667 × 375, in light and dark; the full suite passes; changelog headline ends "(Q27)".
 
 ## Q07 · Song Clock: Dynamic Sync
 
