@@ -113,13 +113,6 @@ const APPL = (() => {
       );
     let h = c ? card(c) : '';
     if (!recNow && !(c && c.st !== 'open')) h += others(c);
-    if (c && !recNow && X.song)
-      h +=
-        '<div class="hdr">Rate the song</div><div class="grp">' +
-        ['Pitch', 'Tone', 'Ease']
-          .map((k) => '<div class="row"><span class="lbl">' + k + '</span>' + seg('rate', k, X.rate[k]) + '</div>')
-          .join('') +
-        '</div>';
     return h;
   }
   function head(c, eye, sub) {

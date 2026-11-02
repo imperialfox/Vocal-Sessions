@@ -313,11 +313,6 @@ document.addEventListener('click', (e) => {
         DET.listIn();
       }, 180);
       break;
-    case 'rate':
-      X.rate[k] = +v;
-      saveDraft();
-      segPick(el);
-      break;
     case 'eflv':
       if (E) {
         E.f = E.f || {};
@@ -328,13 +323,6 @@ document.addEventListener('click', (e) => {
     case 'erlv':
       if (E) {
         E.rot[k] = +v;
-        segPick(el);
-      }
-      break;
-    case 'erate':
-      if (E) {
-        E.rate = E.rate || {};
-        E.rate[k] = +v;
         segPick(el);
       }
       break;

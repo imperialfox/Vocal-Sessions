@@ -6,7 +6,7 @@ their waveforms, Star, Compare from the same moment (one sound at a time), ↻ A
 the chips still on the edit sheet), Song practice's shared take rows, Reduce Motion and motion on, and 390 and 375 in
 light and dark. Synthetic data only: tones made in the test, a fake microphone."""
 import json
-from harness import until, with_song_practice
+from harness import until, with_song_practice, fix
 from test_clock import LYR, ADD, SPREAD
 from test_batch12 import add_track, wav_take
 from test_track import track
@@ -230,6 +230,7 @@ def done_and_norec(b, t):
     pg.click('#app [data-a=apSong][data-k="' + sid + '"]'); pg.wait_for_timeout(150)
     pg.click(f'{CARD} [data-a=apNoRec]')
     ok(until(pg, "APPL.state().st==='norec'") and 'practised, not recorded' in pg.inner_text('#apcard'), 'Practised, not recorded folds the song')
+    ok(pg.locator('#app [data-a=rate]').count() == 0 and 'Rate the song' not in pg.inner_text('#app'), 'with no Rate the song under it (Q29)')
     t.shot(pg, 'norec')
     ok(pg.inner_text('#dock [data-a=cta]').strip() == 'Finish session', 'and counts as Application')
     pg.click('#dock [data-a=cta]'); until(pg, "X===null")
@@ -256,6 +257,41 @@ def old_answers(b, t):
     ok(until(pg, "U.sheet==='long'"), 'over 90 minutes still asks how long you practised')
     pg.fill('#longMins', '40'); pg.click('[data-a=longOk]')
     ok(until(pg, "X===null&&U.view==='saved'&&!U.sheet") and pg.evaluate("D.sessions[D.sessions.length-1].mins") == 40, 'then saves, with no How did it go?')
+    pg.context.close()
+
+
+def old_ratings(b, t):
+    """Q29: ratings are no longer asked for or shown; an old session's ratings stay in its data, through editing, a reload and a restore."""
+    from test_backup import pick, write
+    ok = t.ok
+    d = with_song_practice()
+    s2 = d['sessions'][-1]; s2['songName'] = 'Harbour Lights'; s2['rate'] = {'Pitch': 2, 'Tone': 3}
+    s1 = d['sessions'][-2]; s1['rate'] = {'Ease': 1}  # a rating with no song: once an Application section of its own
+    pg = t.page(b, data=d)
+    pg.evaluate("U.sheet='session';U.sd={k:'s2'};rerender()"); until(pg, "!!document.querySelector('.sheet')")
+    sh = pg.inner_text('.sheet')
+    ok('Harbour Lights' in sh and 'of 3' not in sh and 'Pitch' not in sh and 'Tone' not in sh, 'an old rated session opens with its song and no scores')
+    pg.click('[data-a=editSess]'); until(pg, "U.sheet==='edit'")
+    ok(pg.locator('.sheet [data-a=erate]').count() == 0 and 'Pitch' not in pg.inner_text('.sheet'), 'its edit sheet has no Pitch · Tone · Ease')
+    pg.fill('#edMins', '33'); pg.click('[data-a=saveEdit]'); until(pg, "U.sheet==='session'")
+    ok(pg.evaluate("D.sessions.find(s=>s.id==='s2').rate") == {'Pitch': 2, 'Tone': 3} and pg.evaluate("D.sessions.find(s=>s.id==='s2').mins") == 33,
+       'editing it keeps its old rating in the data')
+    pg.evaluate("U.sheet='session';U.sd={k:'s1'};rerender()"); until(pg, "!!document.querySelector('.sheet')")
+    ok(pg.evaluate("[...document.querySelectorAll('.sheet .hdr')].filter(h=>h.textContent.trim()==='Application').length") == 0,
+       'a rating with no song leaves no empty Application section')
+    pg.evaluate("U.sheet=null;rerender()"); pg.reload(); until(pg, "!!window.D&&!document.querySelector('#launch')")
+    ok(pg.evaluate("D.sessions.find(s=>s.id==='s2').rate") == {'Pitch': 2, 'Tone': 3} and pg.evaluate("D.sessions.find(s=>s.id==='s1').rate") == {'Ease': 1},
+       'and after a reload')
+    # a backup holding ratings restores them exactly
+    src = json.load(open(fix('backup-3.6.json'), encoding='utf-8'))
+    src['data']['sessions'][2]['rate'] = {'Pitch': 3, 'Ease': 2}; src['data']['sessions'][2]['songName'] = 'Versace on the Floor · bridge'
+    path = write('rated-q29.json', src)
+    pg.evaluate("U.tab='settings';U.view='set';U.setPg='backup';U.sheet=null;render()")
+    pick(pg, 'importPick', path)
+    pg.click('[data-a=importYes]'); until(pg, "U.sheet===null")
+    ok(pg.evaluate("D.sessions.find(s=>s.id==='s2').rate") == {'Pitch': 3, 'Ease': 2}, 'a backup with old ratings restores them')
+    pg.evaluate("U.tab='today';U.view=null;U.sheet='session';U.sd={k:'s2'};render()"); until(pg, "!!document.querySelector('.sheet')")
+    ok('of 3' not in pg.inner_text('.sheet') and 'Versace on the Floor · bridge' in pg.inner_text('.sheet'), 'and its sheet still shows no scores')
     pg.context.close()
 
 
@@ -327,5 +363,5 @@ def sizes(b, t):
 
 
 def run(b, t):
-    for part in (carry_on, singing, done_and_norec, old_answers, song_practice, motion, sizes):
+    for part in (carry_on, singing, done_and_norec, old_answers, old_ratings, song_practice, motion, sizes):
         part(b, t)

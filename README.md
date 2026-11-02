@@ -4,9 +4,9 @@
 
 It's a web app styled like a native iOS app: a single HTML file with no install, no backend and no account, designed to live on your iPhone Home Screen. It runs on its own, with no other apps needed.
 
-![Version 3.46](https://img.shields.io/badge/version-3.46-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
+![Version 3.47](https://img.shields.io/badge/version-3.47-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
 
-**Current version: 3.46 · 2 Nov 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
+**Current version: 3.47 · 2 Nov 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
 
 ---
 
@@ -38,7 +38,7 @@ It brings guided practice sessions, progress tracking, and song practice togethe
 |---|---|---|
 | Foundation | 4 core exercises, all required | ~25 min |
 | Rotation | One or more exercises from a pool of 8, plus any you add | ~15 min |
-| Application | Sing a real song or section, record a take, rate it | ~5–10 min |
+| Application | Sing a real song or section and record a take | ~5–10 min |
 
 There's also **Song practice**, for when you just want to sing a song and record it. Its clock starts with your first take, and it's kept separate from the focused stats above.
 

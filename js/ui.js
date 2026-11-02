@@ -936,7 +936,8 @@ function sessionBody(ss, mode) {
         .join('') +
       (ss.rNote ? '<div class="row"><span class="lbl mut">' + esc(ss.rNote) + '</span></div>' : '') +
       '</div>';
-  if (ss.songName || Object.keys(ss.rate || {}).length)
+  // Q29: no ratings shown; an old session's rate stays in its saved data
+  if (ss.songName)
     b +=
       '<div class="hdr">Application</div><div class="grp">' +
       (ss.songName
@@ -948,13 +949,6 @@ function sessionBody(ss, mode) {
             : '') +
           '</div>'
         : '') +
-      ['Pitch', 'Tone', 'Ease']
-        .filter((x) => (ss.rate || {})[x])
-        .map(
-          (x) =>
-            '<div class="row"><span class="lbl">' + x + '</span><span class="mut">' + ss.rate[x] + ' of 3</span></div>'
-        )
-        .join('') +
       '</div>';
   if (done) b += '<button class="ghost" data-a="close">Done</button>';
   if (!done)
@@ -1083,17 +1077,6 @@ function editSheet() {
         ? 'Application is whatever’s left of the total.'
         : 'Split using the coach video’s length for each exercise and the levels you did. Application is whatever’s left.') +
       '</p>';
-    if (E.songName)
-      b +=
-        '<div class="hdr">Application · ' +
-        esc(E.songName) +
-        '</div><div class="grp">' +
-        ['Pitch', 'Tone', 'Ease']
-          .map(
-            (x) => '<div class="row"><span class="lbl">' + x + '</span>' + seg('erate', x, (E.rate || {})[x]) + '</div>'
-          )
-          .join('') +
-        '</div>';
   }
   b +=
     '<div class="hdr">How it went</div>' +

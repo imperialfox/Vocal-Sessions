@@ -9,6 +9,16 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.47 · 2 Nov 2026
+*No more rating the song at the end of a session (Q29)*
+<!-- area: practice -->
+
+Application ends at your take. The app no longer asks you to score the song.
+
+- "Rate the song" (Pitch · Tone · Ease) is gone from Application, and from a session's edit sheet.
+- A session's sheet no longer shows scores from before. They're still kept in your data and backups, so nothing is lost.
+- Song practice's "How did it go?" words and Star on takes are unchanged.
+
 ## 3.46 · 2 Nov 2026
 *Copy for Toggl is gone (Q28)*
 <!-- area: practice -->

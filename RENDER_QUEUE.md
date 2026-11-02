@@ -52,7 +52,7 @@ Every ID with its **Status** (`Awaiting Render`, `Approved — awaiting Build`, 
 | Q26 | Window: Picture in Picture | Shipped 3.44 | Floating window picture in picture and audit fixes, 1 Nov 2026 |
 | Q27 | Interface: Landscape Tab Bar Fit | Shipped 3.45 | "Exerc" cut off on its side, 1 Nov 2026 |
 | Q28 | Hygiene: Toggl Removal | Shipped 3.46 | Get rid of Copy for Toggl, 2 Nov 2026 |
-| Q29 | Session: Song Rating Removal | Approved — awaiting Build | Remove "Rate the song", 2 Nov 2026 |
+| Q29 | Session: Song Rating Removal | Shipped 3.47 | Remove "Rate the song", 2 Nov 2026 |
 
 Work shipped before this standard (for example Track 1 and Song Clock A1) keeps its version numbers and has no queue ID.
 
@@ -69,21 +69,7 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 
 ## Order (2 Nov 2026)
 
-Next: **Q29** (approved; Build given 2 Nov 2026, 09:33, with Q28). Q28 shipped in 3.46 (Render 2 Nov 2026, 09:29; Build 09:33); Q29 follows it because both touch a session's sheet. **Q07** is still awaiting Render. Q27 shipped in 3.45 (Build 2 Nov 2026). Q25 shipped in 3.43 and Q26 in 3.44 (Build 2 Nov 2026); Q25–Q27 got Render on 1 Nov 2026 (19:59), in one instruction, each with its own Build. Q19 shipped in 3.39, Q20 in 3.40, Q21 in 3.41 and Q22 in 3.42. Q22 got Render on 31 Oct 2026 (20:59) and was built on the one-page session and the saved screen. Q19–Q21 got Render on 31 Oct 2026 (19:58), in one instruction, each with its own Build. They follow Q17 (shipped in 3.38; Q20 needs Q16's track-while-recording, shipped in 3.37). Q11–Q17 got Render on 30 Oct 2026 (06:42) and have all shipped. What has shipped is in the table's Status column. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
-
-## Q29 · Session: Song Rating Removal
-
-**Status:** Approved — awaiting Build.
-**Render:** 2 Nov 2026, 09:29. Ivan: "the application rate the song can also go since I always seem to skip that at the end any ways: render - approved." Scope below. Build not yet given. Build after Q28.
-
-- **Why:** the app isn't a grader ([README › What it's for](README.md#what-its-for)), and Ivan always skips the rating.
-- **Scope:**
-  - remove "Rate the song" (Pitch · Tone · Ease) from a session's Application step;
-  - remove the Pitch · Tone · Ease rows from a session's edit sheet.
-- **Default if unanswered:** old ratings stop showing on a session's sheet as well, so no scores show anywhere. They stay in the saved data.
-- **Not changed:** saved data and backups. The `rate` field stays, per [rules that keep old data working](MAINTAINING.md#rules-that-keep-old-data-working), and old backups still restore. Song practice's "How did it go?" words (words, not scores) and Star on takes stay.
-- **Done when:** no Pitch · Tone · Ease rating can be given or seen; sessions with old ratings still open, edit and restore; the full suite passes locally and on GitHub; a normal app version with a changelog headline ending "(Q29)".
-- **Handoff:** `q29_session_song_rating_removal_handoff.md` in Ivan's project notes.
+Q28 shipped in 3.46 and Q29 in 3.47 (Render 2 Nov 2026, 09:29; Build 09:33, in one instruction, built one after the other). **Q07** is still awaiting Render. Q27 shipped in 3.45 (Build 2 Nov 2026). Q25 shipped in 3.43 and Q26 in 3.44 (Build 2 Nov 2026); Q25–Q27 got Render on 1 Nov 2026 (19:59), in one instruction, each with its own Build. Q19 shipped in 3.39, Q20 in 3.40, Q21 in 3.41 and Q22 in 3.42. Q22 got Render on 31 Oct 2026 (20:59) and was built on the one-page session and the saved screen. Q19–Q21 got Render on 31 Oct 2026 (19:58), in one instruction, each with its own Build. They follow Q17 (shipped in 3.38; Q20 needs Q16's track-while-recording, shipped in 3.37). Q11–Q17 got Render on 30 Oct 2026 (06:42) and have all shipped. What has shipped is in the table's Status column. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
 
 ## Q07 · Song Clock: Dynamic Sync
 
