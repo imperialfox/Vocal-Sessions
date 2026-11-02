@@ -4,17 +4,19 @@
    inside a session step, and the floating window. render() replaces #app with innerHTML, so the video never lives
    in #app for good: it's parked in a hidden holder on <body> before each redraw and moved into the new screen's
    .cv-slot afterwards (or into the floating window). Moving it within the same task doesn't pause it.
-   Chapters: the video is exercises 1–12 of the course. Where each starts comes from COACH_TIMES in content.js (the
-   YouTube timestamps); an exercise given three times there also has levels. A video whose length isn't within 10 s
-   of COACH_END is treated as a plain video with no chapters.
+   Chapters: the video is exercises 1–12 of the course. Where each level starts comes from COACH_TIMES in content.js
+   (Q25: measured frame by frame); an exercise given one time there has no levels. A jump lands just inside a level's
+   first frame (COACH_IN), so nothing of the one before shows. A video whose length isn't within 10 s of COACH_END is
+   treated as a plain video with no chapters.
    Plain script (not a module): files share one global scope and load in the order listed in index.html. */
 
 /* ===== Chapters ===== */
-// '1:04:30' or '7:15' in seconds (NaN if it isn't a time)
+// '1:04:30.25', '7:17.21', '1:04:30' or '7:15' in seconds (NaN if it isn't a time). Q25: the seconds can have a part
+// after the point (hundredths), rounded to the hundredth so '7:17.21' is exactly 437.21
 const coachSecs = (x) => {
   const p = String(x).trim().split(':');
-  if (p.length < 2 || p.length > 3 || p.some((v) => !/^\d+$/.test(v))) return NaN;
-  return p.reduce((a, v) => a * 60 + +v, 0);
+  if (p.length < 2 || p.length > 3 || p.some((v, i) => !(i === p.length - 1 ? /^\d+(\.\d+)?$/ : /^\d+$/).test(v))) return NaN;
+  return Math.round(p.reduce((a, v) => a * 60 + +v, 0) * 100) / 100;
 };
 // the chapters, numbered in the order they start: COACH_CH[n] is [start] or [Level 1, Level 2, Level 3] in seconds;
 // COACH_MAP[id] is the exercise's number. Built from COACH_TIMES (content.js), skipping anything that doesn't parse.
@@ -40,6 +42,10 @@ const COACH_N = Object.keys(COACH_CH).length; // 12
 const COACH_IDS = Object.keys(COACH_MAP).sort((a, b) => COACH_MAP[a] - COACH_MAP[b]);
 const COACH_END = 4773, // 79:33, the length of the coach video Ivan keeps in Files
   COACH_SLACK = 10;
+// Q25: a jump goes this far past a level's start, so it lands inside the level's first frame. A frame is 1/24 s
+// (0.042 s) and the times are rounded to 0.01 s, so a start is at most 0.005 s either side of its frame
+const COACH_IN = 0.01,
+  COACH_EDGE = 0.005; // at() counts a time this close before a start as that level (seconds)
 // short names for the floating window's slim bar
 const COACH_SHORT = {
   slides: 'Slides',
@@ -133,7 +139,7 @@ const COACH = (() => {
     });
     el.addEventListener('ended', () => {
       if (prefs.loop && meta && meta.chapters && cur) {
-        el.currentTime = cur.s;
+        el.currentTime = cur.s + COACH_IN;
         el.play().catch(() => {});
         return;
       }
@@ -241,11 +247,11 @@ const COACH = (() => {
   // (3, or 1 when only its start is known); s and e are where that level, or the whole exercise, starts and ends
   function at(t) {
     let n = 1;
-    for (let i = 1; i <= COACH_N; i++) if (t >= COACH_CH[i][0] - 0.25) n = i;
+    for (let i = 1; i <= COACH_N; i++) if (t >= COACH_CH[i][0] - COACH_EDGE) n = i;
     const c = COACH_CH[n],
       lv = c.length;
     let l = 1;
-    for (let i = 1; i <= lv; i++) if (t >= c[i - 1] - 0.25) l = i;
+    for (let i = 1; i <= lv; i++) if (t >= c[i - 1] - COACH_EDGE) l = i;
     return { n, id: idOf(n), l, lv, s: c[l - 1], e: l < lv ? c[l] : exEnd(n) };
   }
   const hasLevels = (id) => !!(COACH_MAP[id] && COACH_CH[COACH_MAP[id]].length === 3);
@@ -257,14 +263,6 @@ const COACH = (() => {
   const lvTxt = (a, short) => (a && a.lv === 3 ? (short ? ' · L' : ' · Level ') + a.l : '');
   const now = () => (drag ? drag.t : el && el.readyState >= 1 ? el.currentTime : prefs.t) || 0;
   const here = () => (chapters() ? at(now()) : null);
-  // the level Ivan is on for an exercise: what this session has set, else his latest logged level, else 1
-  function level(id) {
-    const s = X && X.kind !== 'song' && ((X.f && +X.f[id]) || (X.rot && +X.rot[id]));
-    if (s >= 1 && s <= 3) return s;
-    const h = typeof exHistory === 'function' ? exHistory(id) : [];
-    const lv = h.length ? +h[h.length - 1].lv : 0;
-    return lv >= 1 && lv <= 3 ? lv : 1;
-  }
   const exName = (id) => (exById(id) || { name: 'Exercise' }).name;
 
   /* ----- playing ----- */
@@ -295,12 +293,15 @@ const COACH = (() => {
     else paint();
   }
   const skip = (d) => seek(now() + d);
-  // an exercise at a level, playing or not
+  // to the start of a level (or of an exercise without levels): just inside its first frame (Q25)
+  const toStart = (s) => seek(s ? s + COACH_IN : 0);
+  // an exercise at a level (Level 1 unless one is given), playing or not. Q25: opening an exercise, from anywhere,
+  // always starts at Level 1; the level switch picks another. The video's level never changes the level logged
   function cue(id, lv, andPlay) {
     const n = COACH_MAP[id];
     if (!n || !chapters()) return false;
     const c = COACH_CH[n];
-    seek(c.length === 3 ? c[Math.max(1, Math.min(3, lv || level(id))) - 1] : c[0]);
+    toStart(c.length === 3 ? c[Math.max(1, Math.min(3, lv || 1)) - 1] : c[0]);
     if (andPlay) play();
     else pause();
     changed();
@@ -320,7 +321,7 @@ const COACH = (() => {
     if (wraps.length > 30) wraps.shift();
     clearTimeout(wrapT);
     wrapT = 0;
-    el.currentTime = cur.s;
+    el.currentTime = cur.s + COACH_IN; // just inside the level's first frame (Q25)
     prevT = cur.s;
   }
   // crossing the level's end jumps back. True when it did
@@ -543,7 +544,7 @@ const COACH = (() => {
       '">' +
       thumb(true) +
       '<span class="lbl">Play with coach<small>' +
-      (hasLevels(id) ? 'Level ' + level(id) : 'From the start of the exercise') +
+      (hasLevels(id) ? 'From Level 1' : 'From the start of the exercise') +
       '</small></span>' +
       chev +
       '</button></div>'
@@ -834,7 +835,7 @@ const COACH = (() => {
     go(() => {
       U.coachBack = b;
       U.view = 'coach';
-      if (id) cue(id, level(id), true); // before the page is drawn, so it's drawn for this exercise
+      if (id) cue(id, 1, true); // Level 1 (Q25), before the page is drawn, so it's drawn for this exercise
     });
   }
   function back() {
@@ -867,7 +868,7 @@ const COACH = (() => {
     FW.dis.video = false; // the session asks for it, whatever was closed before
     saveDraft();
     const id = stepEx(U.view);
-    if (id) cue(id, level(id), false);
+    if (id) cue(id, 1, false); // Level 1 (Q25)
   }
   function sessShow() {
     U.cvWin = true;
@@ -885,7 +886,7 @@ const COACH = (() => {
     if (!X || !X.cv || !chapters() || !isFlow(was) || !isFlow(U.view) || was === U.view) return;
     if (sessWin()) FW.dis.video = false; // Q19: a new step asks for its window again
     const id = stepEx(U.view);
-    if (id) cue(id, level(id), false);
+    if (id) cue(id, 1, false); // Level 1 (Q25)
     else pause();
   }
   function fullscreen() {
@@ -896,10 +897,11 @@ const COACH = (() => {
       else if (v.webkitEnterFullscreen) v.webkitEnterFullscreen();
     } catch (e) {}
   }
+  // the L1 · L2 · L3 switch: to that level's first frame; the lit level goes back to its start (Q25)
   function setLevel(l) {
     const a = here();
     if (!a) return;
-    if (a.lv === 3) seek(COACH_CH[a.n][l - 1]);
+    if (a.lv === 3) toStart(COACH_CH[a.n][Math.max(1, Math.min(3, l)) - 1]);
   }
   function toggleLoop() {
     prefs.loop = !prefs.loop;
@@ -1109,7 +1111,6 @@ const COACH = (() => {
     has,
     chapters,
     at,
-    level,
     cue,
     play,
     pause,

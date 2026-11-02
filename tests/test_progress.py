@@ -7,7 +7,8 @@ def run(b, t):
     data = with_song_practice()
     pg = t.page(b, data=data)
     sp = pg.evaluate("splitOf(D.sessions.find(s=>s.id==='s2'))")
-    exp_f = (435 + 355 + 380 * 2 / 3 + 355) / 60; exp_r = (520 + 437 / 3) / 60
+    # Q25: the measured lengths (content.js VID)
+    exp_f = (437.2 + 355.5 + 377.2 * 2 / 3 + 354.9) / 60; exp_r = (520.9 + 435.9 / 3) / 60
     k = 30 / (exp_f + exp_r) if exp_f + exp_r > 30 else 1
     ok(sp['mixed'] and abs(sp['f'] - exp_f * k) < 0.01 and abs(sp['f'] + sp['r'] + sp['a'] - 30) < 0.01,
        'an older session is split using the coach video, scaled to its 30 minutes')

@@ -9,6 +9,24 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.43 · 2 Nov 2026
+*Coach video: every tap lands on the exact start of a level (Q25)*
+<!-- area: practice -->
+
+The coach video's chapters are now the 36 level starts measured frame by frame, so a tap never lands in the end of the exercise before.
+
+**Jumps**
+- Every exercise has L1 · L2 · L3 in the player. A tap jumps to that level's first frame; tapping the lit level starts it again.
+- At a level's end it plays on into the next one. With Loop on, it repeats that level, right to the next level's start.
+
+**Level 1 first**
+- Opening an exercise always starts at the top of Level 1: a session step, Play with coach on an exercise page (it now reads "From Level 1") and the exercise list in the player.
+- Pausing and coming back carries on where you were. Only opening an exercise again goes back to Level 1.
+- The video's level switch never changes the level you log.
+
+**Lengths**
+- Each exercise's length in the coach video is now its measured length. Your past session totals don't change; only the step split of sessions filled in at the end shifts slightly, mostly for Vocal flexibility.
+
 ## 3.42 · 1 Nov 2026
 *Session clock: a ring you can read at a glance (Q22)*
 <!-- area: practice -->

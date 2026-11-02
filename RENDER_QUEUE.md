@@ -47,7 +47,7 @@ Every ID with its **Status** (`Awaiting Render`, `Approved — awaiting Build`, 
 | Q22 | Session: Clock Redesign | Shipped 3.42 | Session clock ring prototype, 31 Oct 2026 |
 | Q23 | Interface: Status Bar Glow | Shipped 3.33 | Gradient clipped at the top, 31 Oct 2026 |
 | Q24 | Coach: Video Redesign | Shipped (tooling, no app version) | Coach video redesign, 31 Oct–1 Nov 2026 |
-| Q25 | Coach: Frame-Accurate Chapters | Approved — awaiting Build | Coach timings, level picker, 1 Nov 2026 |
+| Q25 | Coach: Frame-Accurate Chapters | Shipped 3.43 | Coach timings, level picker, 1 Nov 2026 |
 | Q26 | Window: Picture in Picture | Approved — awaiting Build | Floating window picture in picture and audit fixes, 1 Nov 2026 |
 | Q27 | Interface: Landscape Tab Bar Fit | Approved — awaiting Build | "Exerc" cut off on its side, 1 Nov 2026 |
 
@@ -66,28 +66,12 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 
 ## Order (1 Nov 2026)
 
-Next to build: **Q25 → Q26 → Q27** (Render given by Ivan on 1 Nov 2026, 19:59, in one instruction, each with its own Build; Q26 needs Q25 shipped; Q27 can go any time). Then **Q07** (awaiting Render). Q19 shipped in 3.39, Q20 in 3.40, Q21 in 3.41 and Q22 in 3.42. Q22 got Render on 31 Oct 2026 (20:59) and was built on the one-page session and the saved screen. Q19–Q21 got Render on 31 Oct 2026 (19:58), in one instruction, each with its own Build. They follow Q17 (shipped in 3.38; Q20 needs Q16's track-while-recording, shipped in 3.37). Q11–Q17 got Render on 30 Oct 2026 (06:42) and have all shipped. What has shipped is in the table's Status column. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
-
-## Q25 · Coach: Frame-Accurate Chapters
-
-**Status:** Approved — awaiting Build. **Approval:** Render given by Ivan on 1 Nov 2026 (19:59) for the scope below, with all defaults. The build handoff is in Ivan's project notes as `q25_coach_frame_accurate_chapters_handoff.md`.
-**Needs:** 3.42 on `main` (verified 1 Nov 2026).
-
-- **Goal:** a tap jumps the coach video to the exact start of an exercise or level, never into the end of the previous one; every exercise opens at Level 1; L1 · L2 · L3 jumps to or replays any level.
-- **Scope:**
-  - `COACH_TIMES` gets all 36 measured level starts, to the hundredth of a second. The frames are in `tools/coach-video/data/level_frames.json`.
-  - `coachSecs` reads part-seconds.
-  - Opening an exercise (session step, exercise page, player) starts at Level 1, and "Play with coach" reads "From Level 1".
-  - The existing level switch appears for every exercise. A tap jumps to the level's first frame, and tapping the lit level restarts it.
-  - The video's level never changes the level logged.
-  - `VID` gets the measured lengths. Past totals are unchanged; only the split of sessions filled in at the end shifts slightly.
-- **Out of scope:** level buttons in the floating window (Q26); skipping the coach's intro to the first round; the video file; exercises 13–15.
-- **Done when:** a test checks all 36 level taps (±1 frame), Level 1 first everywhere, replay and Loop ends; the full suite passes; changelog headline ends "(Q25)".
+Next to build: **Q26 → Q27** (Render given by Ivan on 1 Nov 2026, 19:59, with Q25, in one instruction, each with its own Build; Q26 needed Q25, shipped in 3.43 (Build 2 Nov 2026); Q27 can go any time). Then **Q07** (awaiting Render). Q19 shipped in 3.39, Q20 in 3.40, Q21 in 3.41 and Q22 in 3.42. Q22 got Render on 31 Oct 2026 (20:59) and was built on the one-page session and the saved screen. Q19–Q21 got Render on 31 Oct 2026 (19:58), in one instruction, each with its own Build. They follow Q17 (shipped in 3.38; Q20 needs Q16's track-while-recording, shipped in 3.37). Q11–Q17 got Render on 30 Oct 2026 (06:42) and have all shipped. What has shipped is in the table's Status column. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
 
 ## Q26 · Window: Picture in Picture
 
 **Status:** Approved — awaiting Build. **Approval:** Render given by Ivan on 1 Nov 2026 (19:59) for the scope below, with all defaults, as one build in four stages. The build handoff is in Ivan's project notes as `q26_window_picture_in_picture_handoff.md`, with the two floating window audits and the wireframes (boards C and D).
-**Needs:** Q25 shipped.
+**Needs:** Q25 shipped (3.43, 2 Nov 2026: check it's at the top of `CHANGELOG.md` on `main`).
 
 - **Goal:** the floating window feels like Apple's picture in picture, and every kind of window reads well, behaves the same and never gets in the way.
 - **Scope:**

@@ -473,7 +473,7 @@ document.addEventListener('click', (e) => {
       COACH.cycleSpeed();
       break;
     case 'coachEx':
-      COACH.cue(k, COACH.level(k), true);
+      COACH.cue(k, 1, true); // Level 1 (Q25)
       break;
     case 'coachX':
     case 'fwX':

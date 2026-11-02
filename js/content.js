@@ -17,41 +17,42 @@ const TARGET = 280,
   WEEK_TARGET = 70;
 
 /* ===== Coach video ===== */
-// VID: how long each exercise runs in the coach video, in seconds (all 3 levels), from its timestamps.
-// Used to split a session's time when it was filled in at the end.
+// VID: how long each exercise runs in the coach video, in seconds (all 3 levels), measured frame by frame (Q25: from
+// its Level 1 to the next exercise's Level 1, so they add up to the video's 79:33). Used to split a session's time
+// when it was filled in at the end.
 const VIDEO = 'https://youtu.be/rG-o10NggDI';
 const VID = {
-  slides: 435,
-  humming: 355,
-  lip: 380,
-  straw: 355,
-  falsetto: 315,
-  upperlower: 120,
-  rung: 520,
-  hinge: 437,
-  half: 493,
-  vertical: 460,
-  nasal: 390,
-  flex: 420,
+  slides: 437.2,
+  humming: 355.5,
+  lip: 377.2,
+  straw: 354.9,
+  falsetto: 314.8,
+  upperlower: 121.4,
+  rung: 520.9,
+  hinge: 435.9,
+  half: 492.8,
+  vertical: 459.6,
+  nasal: 389.2,
+  flex: 513.9,
 };
 
-// COACH_TIMES: where each exercise starts in the coach video on your phone (Settings › Coach video), from the
-// YouTube video's timestamps. Write times as 'm:ss' or 'h:mm:ss'. To jump straight to levels too, give three times
-// instead of one, Level 1 first: falsetto: ['19:30', '21:10', '23:05']. Exercises with three times get the
-// L1 · L2 · L3 picker in the player; the rest start from the top of the exercise.
+// COACH_TIMES: where each level starts in the coach video on your phone (Settings › Coach video), Level 1 first.
+// Q25: measured frame by frame from the video's green flash at each level's start (frame ÷ 24, to the hundredth of a
+// second; the frames are in tools/coach-video/data/level_frames.json). Write times as 'm:ss.ff' or 'h:mm:ss.ff'
+// ('m:ss' and 'h:mm:ss' still work). An exercise given one time instead of three has no L1 · L2 · L3 switch.
 const COACH_TIMES = {
-  slides: ['0:00'],
-  humming: ['7:15'],
-  lip: ['13:10'],
-  falsetto: ['19:30'],
-  upperlower: ['24:45'],
-  straw: ['26:45'],
-  rung: ['32:40'],
-  hinge: ['41:20'],
-  half: ['48:37'],
-  vertical: ['56:50'],
-  nasal: ['1:04:30'],
-  flex: ['1:11:00'],
+  slides: ['0:00.00', '2:02.96', '6:12.67'],
+  humming: ['7:17.21', '9:35.50', '11:19.92'],
+  lip: ['13:12.71', '15:39.75', '17:35.17'],
+  falsetto: ['19:29.96', '21:11.17', '22:59.92'],
+  upperlower: ['24:44.75', '25:34.92', '26:08.33'],
+  straw: ['26:46.17', '28:34.17', '30:29.33'],
+  rung: ['32:41.04', '35:55.25', '38:49.38'],
+  hinge: ['41:21.96', '43:43.33', '45:55.62'],
+  half: ['48:37.88', '51:59.54', '54:35.71'],
+  vertical: ['56:50.62', '1:00:24.50', '1:02:34.96'],
+  nasal: ['1:04:30.25', '1:06:08.62', '1:08:09.83'],
+  flex: ['1:10:59.50', '1:13:37.54', '1:15:39.17'],
 };
 
 /* ===== Exercises ===== */

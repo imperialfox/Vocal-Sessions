@@ -113,7 +113,9 @@ def run(b, t):
     ok(pg.evaluate("weekInfo().mins") == w0 and pg.evaluate(f"D.months['{mk}']||0") == m1, 'song practice leaves weekly and monthly minutes alone')
     ok(pg.evaluate("togglLines(D.songSessions[0])").endswith('#song-practice'), 'song practice is tagged #song-practice in Toggl')
     pg.click('.sheet .xbtn[data-a=close]'); pg.wait_for_timeout(300)
-    ok('This week · 1 session' in pg.inner_text('main'), 'the Song practice card shows its own stats')
+    # the session started 125 minutes ago: just after midnight on a Monday that's last week, so the card has no line
+    this_wk = pg.evaluate("weekStart(new Date(D.songSessions[0].date)).getTime()===weekStart(new Date()).getTime()")
+    ok(('This week · 1 session' in pg.inner_text('main')) == this_wk, 'the Song practice card shows its own stats' + ('' if this_wk else ' (started last week: none this week)'))
 
     # the same song practice from several doors
     pg.click('[data-a=tab][data-v=history]'); pg.wait_for_timeout(200)
