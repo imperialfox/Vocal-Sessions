@@ -1,6 +1,7 @@
 /* ===== Motion: the app's shared springs (3.11) =====
    Everything that moves uses these, so the whole app feels made by the same hand.
-   - Springs: gentle (rows, capsules, sheets, fades), nav (card zoom, swiping back), ripple (peeks, small pops).
+   - Springs: gentle (rows, capsules, sheets, fades), nav (card zoom, swiping back), ripple (peeks, small pops), and
+     (Q33) press and release for glass buttons (gestures.js, PRESS).
      Each is a damping ratio and a frequency in Hz, turned into a CSS linear() easing and a duration.
      CSS reads them as --ease-gentle / --dur-gentle and so on; JS uses MOTION.animate().
    - Stagger: words 30 ms apart, rows 45 ms, chart bars 30 ms.
@@ -14,6 +15,10 @@ const MOTION = (() => {
     gentle: { z: 0.82, f: 1.9 },
     nav: { z: 0.86, f: 2.2 },
     ripple: { z: 0.6, f: 2.4 },
+    // Q33 the glass press, from iOS 27 measured at 120 fps: press grows quickly with a tiny overshoot; release comes
+    // back through rest with one small dip and no second wobble
+    press: { z: 0.75, f: 4 },
+    release: { z: 0.55, f: 3.6 },
   };
   const STAGGER = { word: 30, row: 45, bar: 30 };
   const BLUR_MAX = 1.5; // px. Ivan chose 1.5 over 2 so far lyrics stay recognisable

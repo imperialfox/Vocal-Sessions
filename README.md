@@ -4,9 +4,9 @@
 
 It's a web app styled like a native iOS app: a single HTML file with no install, no backend and no account, designed to live on your iPhone Home Screen. It runs on its own, with no other apps needed.
 
-![Version 3.48](https://img.shields.io/badge/version-3.48-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
+![Version 3.49](https://img.shields.io/badge/version-3.49-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
 
-**Current version: 3.48 · 2 Nov 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
+**Current version: 3.49 · 2 Nov 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
 
 ---
 
@@ -153,7 +153,7 @@ And **Songs**, for learning a song: paste the lyrics, and they're split into lab
 - **Your voice:** your voice type (Bass to Soprano, tenor to start) and its lowest and highest comfortable notes and falsetto top, which the exercise pages check patterns against, and **Stop at my top note**. In backups.
 - **Pattern player:** the sound, the held note underneath, the chord before each round, the ending (home chord, home note or off), the vowel cue and dots or music notes on the drawing. In backups.
 - **Appearance:** **Gradient background**, the soft moving wash behind Today's header, on unless you switch it off. For this device only, not in backups.
-- **Accessibility:** **Reduce motion** (Match iPhone, On or Off) swaps zooms and slides for short fades; **Slow motion** plays every animation four times slower, for checking how it feels. Both are for this device only and aren't in backups.
+- **Accessibility:** **Reduce motion** (Match iPhone, On or Off) swaps zooms and slides for short fades; **Reduce transparency** makes the glass more solid, so what's on it is easier to read; **Slow motion** plays every animation four times slower, for checking how it feels. All are for this device only and aren't in backups.
 - **Changelog:** every version on a timeline, with a growth chart of improvements by area. It's built from [CHANGELOG.md](CHANGELOG.md).
 - **View on GitHub:** this repo
 - Reset this month, and reset all data. Every reset asks first.
@@ -295,7 +295,7 @@ A small service worker (`sw.js`) keeps a copy of the app on your device. When yo
 
 ## Stack
 
-Vanilla HTML, CSS and JavaScript, with no frameworks or build step: `index.html`, one stylesheet in `css/` and a dozen plain scripts in `js/`. It uses the iOS system font and a CSS imitation of Liquid Glass: rim light, inner glow, a collapsing tab bar, a soft blurred edge under the top bar, sliding glass pickers and springy motion.
+Vanilla HTML, CSS and JavaScript, with no frameworks or build step: `index.html`, one stylesheet in `css/` and a dozen plain scripts in `js/`. It uses the iOS system font and a CSS imitation of Liquid Glass, tuned to numbers measured on iOS 27: a hairline edge with rim light, glass buttons that grow when pressed, a collapsing tab bar, a soft blurred edge under the top bar, sliding glass pickers and springy motion.
 
 The look and motion follow Apple's guidance, with numbers taken (never code) from a few open-source Liquid Glass projects. What came from where is in [DESIGN_REFERENCES.md](DESIGN_REFERENCES.md).
 

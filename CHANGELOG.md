@@ -9,6 +9,27 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.49 · 2 Nov 2026
+*Glass that looks and presses like iOS 27 (Q33)*
+<!-- area: look -->
+
+The app's glass now uses numbers measured against a real iPhone on iOS 27.
+
+**Pressing**
+- Glass buttons grow when you press them, as on the iPhone, instead of shrinking: 17 pt bigger along their longest side (a round button by about 39%, the search circle by about 27%), with a soft white light under the icon. They settle back with one small dip.
+- The session clock pill and the clock's play pill react to a press now too.
+- Buttons that sit on a glass bar (the tabs, the track player's play, back and loop, the floating window's play) no longer shrink. They light up and the bar stays still.
+- Start session, list rows and other solid buttons press as before.
+- With Reduce Motion on, buttons don't grow; the light still fades in and out.
+
+**The glass**
+- Light mode: a lighter blur that lets more of what's behind show through, a slightly brighter tint, a barely-there shadow and a fine edge lit from the top.
+- Dark mode: a thin white layer with gentler colour, lit from the bottom edge, and no shadow.
+- Sheets stay near-solid for reading. They take only the new edge and shadow, and dark mode's gentler colour.
+
+**Reduce transparency**
+- A new switch in Settings › Accessibility makes the glass more solid, so what's on it is easier to read. It's for this iPhone only and never in backups. Safari can't see the iPhone's own setting, so the switch is how to turn it on.
+
 ## 3.48 · 2 Nov 2026
 *Every exercise page explains the exercise and plays it (Q32)*
 <!-- area: practice -->

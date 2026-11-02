@@ -56,7 +56,7 @@ Every ID with its **Status** (`Awaiting Render`, `Approved — awaiting Build`, 
 | Q30 | Atlas: Lightbox Core | Shipped (tooling, no app version) | Visual App Atlas stage 1, Lightbox, 2 Nov 2026 |
 | Q31 | Atlas: Map and Notes | Approved — awaiting Build | Visual App Atlas stage 2, map, notes, export, changes since last scan, 2 Nov 2026; re-scoped onto the Atlas kit, 2 Nov 2026, 19:50 |
 | Q32 | Exercises: Redesign | Shipped 3.48 | Exercise patterns the app plays, Exercise page redesign (both 31 Oct), merged 2 Nov 2026 |
-| Q33 | Interface: Glass Native Tuning | Approved — awaiting Build | Glass tuning Recon and glass inventory, 2 Nov 2026 |
+| Q33 | Interface: Glass Native Tuning | Shipped 3.49 | Glass tuning Recon and glass inventory, 2 Nov 2026 |
 | Q34 | Interface: Native Menus and Controls | Blocked (on hold for the parts kit, 2 Nov 2026) | Component inventory (round 2), worth doing plus smaller wins, 2 Nov 2026 |
 
 Work shipped before this standard (for example Track 1 and Song Clock A1) keeps its version numbers and has no queue ID.
@@ -74,7 +74,7 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 
 ## Order (2 Nov 2026)
 
-**Q32** shipped in 3.48 (Render 2 Nov 2026, 15:56; Build 2 Nov 2026, 19:06). **Q33** is the next app build (Render 2 Nov 2026, 17:41); it follows Q32, since both change `css/app.css`. **Q34** follows Q33 (Render 2 Nov 2026, 18:12); it uses Q33's materials and springs. Q30 shipped as tooling (Build 2 Nov 2026, 17:57; `tools/atlas/`), and **Q31** builds on it (Render 2 Nov 2026, 15:55, in the same instruction as Q30; re-scoped by a fresh Render at 19:50 to put Vocal Sessions on the universal Atlas kit, built after Prototype kit 1.1 and Atlas kit 1.0; its own Build). Both are tooling with no app version, like Q24, so they can be built outside the app queue's order. Q28 shipped in 3.46 and Q29 in 3.47 (Render 2 Nov 2026, 09:29; Build 09:33, in one instruction, built one after the other). **Q07** is still awaiting Render. Q27 shipped in 3.45 (Build 2 Nov 2026). Q25 shipped in 3.43 and Q26 in 3.44 (Build 2 Nov 2026); Q25–Q27 got Render on 1 Nov 2026 (19:59), in one instruction, each with its own Build. Q19 shipped in 3.39, Q20 in 3.40, Q21 in 3.41 and Q22 in 3.42. Q22 got Render on 31 Oct 2026 (20:59) and was built on the one-page session and the saved screen. Q19–Q21 got Render on 31 Oct 2026 (19:58), in one instruction, each with its own Build. They follow Q17 (shipped in 3.38; Q20 needs Q16's track-while-recording, shipped in 3.37). Q11–Q17 got Render on 30 Oct 2026 (06:42) and have all shipped. What has shipped is in the table's Status column. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
+**Q33** shipped in 3.49 (Render 2 Nov 2026, 17:41; Build 2 Nov 2026, 21:17). **Q34** (Render 2 Nov 2026, 18:12) is on hold for the parts kit (Ivan, 2 Nov 2026, 22:11); it uses Q33's materials and springs. **Q32** shipped in 3.48 (Render 2 Nov 2026, 15:56; Build 2 Nov 2026, 19:06). Q30 shipped as tooling (Build 2 Nov 2026, 17:57; `tools/atlas/`), and **Q31** builds on it (Render 2 Nov 2026, 15:55, in the same instruction as Q30; re-scoped by a fresh Render at 19:50 to put Vocal Sessions on the universal Atlas kit, built after Prototype kit 1.1 and Atlas kit 1.0; its own Build). Both are tooling with no app version, like Q24, so they can be built outside the app queue's order. Q28 shipped in 3.46 and Q29 in 3.47 (Render 2 Nov 2026, 09:29; Build 09:33, in one instruction, built one after the other). **Q07** is still awaiting Render. Q27 shipped in 3.45 (Build 2 Nov 2026). Q25 shipped in 3.43 and Q26 in 3.44 (Build 2 Nov 2026); Q25–Q27 got Render on 1 Nov 2026 (19:59), in one instruction, each with its own Build. Q19 shipped in 3.39, Q20 in 3.40, Q21 in 3.41 and Q22 in 3.42. Q22 got Render on 31 Oct 2026 (20:59) and was built on the one-page session and the saved screen. Q19–Q21 got Render on 31 Oct 2026 (19:58), in one instruction, each with its own Build. They follow Q17 (shipped in 3.38; Q20 needs Q16's track-while-recording, shipped in 3.37). Q11–Q17 got Render on 30 Oct 2026 (06:42) and have all shipped. What has shipped is in the table's Status column. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
 
 ## Q07 · Song Clock: Dynamic Sync
 
@@ -114,56 +114,6 @@ Gives the Vocal Sessions Atlas the map, notes Claude can read, export, and what 
   - The report has the screen, marked area, element details and note; the .zip has a picture per note; queue ideas come out text-only in this file's format.
   - A rescan after an app change shows the right new, gone and changed screens, and names the versions released in between.
   - The app's own full test suite still passes.
-
-## Q33 · Interface: Glass Native Tuning
-
-**Status:** Approved — awaiting Build. **Render:** 2 Nov 2026, 17:41. Ivan: "render", for the Blueprint as drafted with every *Default if unanswered* taken. **Build:** awaiting Ivan's instruction.
-
-The app's glass looks and responds like iOS 27, using numbers the Flutter kit `sdegenaar/liquid_glass_widgets` (MIT) measured against a real iPhone. The handoff, the Recon and the measured values are in Ivan's project notes: `q33_interface_glass_native_tuning_handoff.md`, `glass_tuning_recon_2026-11-02.md` and `liquid_glass_widgets_values.md` (+ `_part2.md`). The inventory of every glass part comes from a scan of 20 screens in light and dark mode (his private page "Glass inventory · Vocal Sessions"; scanner `glass_inventory_scan.py`). Ask him to attach them.
-
-- **Scope:**
-  - **Glass buttons grow when pressed** (Ivan chose native after a demo, 2 Nov 2026, 17:29). A button grows by 17 pt along its longest side (scale = 1 + 17 ÷ longest side) from the centre. It's lifted above its neighbours while it's pressed. One shared rule measures each button when it's pressed, not a number per class. It lights up with a white layer under the icon (30% light mode, 14% dark mode, 150 ms in, 60 ms out). Two new `MOTION` springs: `press` (z 0.75, f 4 Hz) and `release` (z 0.55, f 3.6 Hz). This covers:
-    - `.circ` (including `sm`, `tinted`, `sgrbtn`, `mkq`) and `.scirc`
-    - `.shbtn` (`.xbtn`, `.ok`)
-    - `.txtbtn` (including `tinted`, `ckgedit`)
-    - `.cta.glass` (including `opwait`, `sckmain`)
-    - `.tabpill`, `.trkpad` and `.trkpill`
-    - new presses on the session clock pill (`#timer`, once it opens the clock) and the clock play pill (`.pill.mktp`)
-    - Reduce Motion: no growth, the light-up fades only.
-  - **Buttons on a glass bar stop shrinking** and only light up: the tabs (`.tabbar`, `.toptabs`), the track transport (`.trkb`, `.trkpp`) and the floating window's `.fwbtn`.
-  - **Light mode material:**
-    - blur 14 px (was 26), retuned between 12 and 14 on the phone at Debrief
-    - `saturate(210%)` kept, `brightness(1.06)` dropped
-    - tint `rgba(248,248,248,.53)`
-    - shadow `0 7px 12px rgba(0,0,0,.016)` on floating glass only, and no inner glow
-    - a 0.5 pt rim lit from the top
-  - **Dark mode material:** tint white .12, `saturate(140%)`, rim lit from the bottom, no shadow.
-  - **Sheets keep their strength** (`--glass-strong`). They take only the rim, the shadow and dark mode's saturation. `.shead` follows its sheet.
-  - **Every other glass surface** takes the new material, with no change to size or behaviour:
-    - the tab bar (collapsed or not), the iPad top tabs and the side bar
-    - the track and clock controls, and the clock pop-up
-    - toasts, the floating window and long-press menus
-    - the marks sheet, peek and caption
-    - the recording bar, the song search field, the edit tools, the hint capsule, track loading and pull-to-update
-  - **Reduce transparency:** a switch in Settings › Accessibility. It's device-only (localStorage, never in backups), because Safari can't report the iPhone setting. Browsers that can report it are followed too. When it's on, the tint alpha becomes a × 0.5 + 0.4 (kept between 0.4 and 0.8), and the blur stays.
-- **Defaults taken:** the bar buttons only light up (not grow); Start session (`.cta.ink`) is unchanged; blur 14 px; sheets keep their strength; Reduce transparency is included.
-- **Out of scope:**
-  - things that aren't glass: list rows, the backup reminder, the week arch, the track player pills, calendar days, the Settings footer, Start session
-  - the top and bottom soft edges (Scroll Behaviour Pass)
-  - glass appearing and leaving, and the blur ramp for zooms
-  - the floating window's press and drag
-  - the tab bar growing as a whole
-- **Needs:** 3.48 live on `main` (Q32 shipped there first; both change `css/app.css`).
-- **Done when:**
-  - Every glass button above grows to 1 + 17 ÷ its longest side (±0.01) with motion on, is never cut off and is lifted above its neighbours. None shrink, and the bar buttons don't change size.
-  - The light and dark tokens match.
-  - Reduce Motion gives no growth.
-  - Reduce transparency is kept after a reload and is never in a backup.
-  - A rescan finds no glass button that still shrinks.
-  - A new `tests/test_glass.py` passes at 375, 390 and 402 wide and on iPad, and the full suite passes.
-  - Ivan checks on his iPhone: the press feel, dark glass over Today's gradient and the lyrics, the blur strength, no flicker, and the switch.
-
----
 
 ## Q34 · Interface: Native Menus and Controls
 

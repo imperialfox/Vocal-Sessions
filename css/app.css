@@ -34,8 +34,20 @@
   --good: var(--sys-green);
   --done: #8e8e93;
   --on-done: #ffffff;
-  --glass: rgba(255, 255, 255, 0.44);
+  /* Q33 the glass material, from numbers measured against iOS 27 (light): a lighter blur with no brightness boost, a
+     #F8F8F8 tint, a barely-there shadow on floating glass, and a 0.5 pt hairline with a rim light at the top */
+  --glass: rgba(248, 248, 248, 0.53);
+  --glass-blur: 14px;
+  --glass-sat: 210%;
+  --glass-float: 0 7px 12px rgba(0, 0, 0, 0.016);
+  --glass-line: rgba(0, 0, 0, 0.31); /* the hairline across the light's direction (page − 80) */
+  --glass-line-end: rgba(0, 0, 0, 0.062); /* where the light hits it: a fifth as dark */
+  --glass-rim:
+    inset 0 1px 0.5px rgba(255, 255, 255, 0.2), inset 0 3px 3px rgba(255, 255, 255, 0.035),
+    inset 0 -1px 0.5px rgba(255, 255, 255, 0.13), inset 0 -3px 3px rgba(255, 255, 255, 0.023);
+  --lift-max: rgba(255, 255, 255, 0.3); /* Q33 a pressed glass button lights up with this under its icon */
   --glass-strong: rgba(250, 250, 252, 0.86);
+  --shead-sat: 180%;
   --glass-edge: rgba(0, 0, 0, 0.09);
   --glass-hi: rgba(255, 255, 255, 0.95);
   --glass-lo: rgba(0, 0, 0, 0.06);
@@ -146,8 +158,17 @@ body.phone {
     --good: var(--sys-green);
     --done: #636366;
     --on-done: #ffffff;
-    --glass: rgba(58, 58, 64, 0.42);
+    /* Q33 dark glass (iOS 27): a thin white layer with gentler colour, lit from the bottom edge, and no shadow */
+    --glass: rgba(255, 255, 255, 0.12);
+    --glass-sat: 140%;
+    --glass-float: 0 0 0 transparent;
+    --glass-line-end: transparent;
+    --glass-rim:
+      inset 0 -1px 0.5px rgba(255, 255, 255, 0.23), inset 0 -3px 3px rgba(255, 255, 255, 0.04),
+      inset 0 1px 0.5px rgba(255, 255, 255, 0.2), inset 0 3px 3px rgba(255, 255, 255, 0.035);
+    --lift-max: rgba(255, 255, 255, 0.14);
     --glass-strong: rgba(44, 44, 48, 0.86);
+    --shead-sat: 140%;
     --glass-edge: rgba(0, 0, 0, 0.6);
     --glass-hi: rgba(255, 255, 255, 0.2);
     --glass-lo: rgba(0, 0, 0, 0.35);
@@ -264,37 +285,46 @@ svg.i {
 
 .glass {
   background: var(--glass);
-  -webkit-backdrop-filter: blur(26px) saturate(210%) brightness(1.06);
-  backdrop-filter: blur(26px) saturate(210%) brightness(1.06);
-  box-shadow:
-    inset 0 -0.5px 0 var(--glass-lo),
-    inset 0 0 16px var(--glass-glow),
-    0 12px 32px var(--glass-shadow);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  box-shadow: var(--glass-rim), var(--glass-float);
   isolation: isolate;
 }
+/* Q33 Reduce transparency (Settings › Accessibility, or the browser's own setting): the glass tint becomes
+   alpha × 0.5 + 0.4 (kept between 0.4 and 0.8) and the blur stays. Light .53 → .665, dark .12 → .46. The sheets'
+   --glass-strong is already more solid than 0.8, so it stays */
+html.glass-solid {
+  --glass: rgba(248, 248, 248, 0.665);
+}
+@media (prefers-color-scheme: dark) {
+  html.glass-solid {
+    --glass: rgba(255, 255, 255, 0.46);
+  }
+}
+/* Q33 the hairline: 0.5 pt, darkest across the light's direction and fading where the light hits it (top and bottom) */
 .glass::before {
   content: '';
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  padding: 1px;
+  padding: 0.5px;
   z-index: -1;
   pointer-events: none;
-  background: linear-gradient(140deg, var(--rim1), transparent 38%, transparent 62%, var(--rim2));
+  background: linear-gradient(
+    var(--glass-line-end),
+    var(--glass-line) 30%,
+    var(--glass-line) 70%,
+    var(--glass-line-end)
+  );
   -webkit-mask:
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
 }
+/* Q33: iOS 27 glass has no shine of its own (the rim light in --glass-rim stands in for it) */
 .glass::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  z-index: -1;
-  pointer-events: none;
-  background: radial-gradient(120% 70% at 25% 0%, var(--spec), transparent 55%);
+  content: none;
 }
 .glass.tinted {
   background: var(--tint);
@@ -1248,14 +1278,18 @@ html.motion-reduced .tl-item.now .tl-node::after {
 .cal button {
   transition: transform 0.5s cubic-bezier(0.3, 1.7, 0.45, 1);
 }
-.cta:active,
-.circ:active,
+/* Q33: glass buttons grow and buttons on a glass bar light up instead (PRESS in gestures.js); solid ones still shrink */
+.cta:not(.glass):active,
+.circ:not(.glass):active,
 .chip:active,
-.tabbar button:active,
 .calbtn:active,
 .cal button:active {
   transform: scale(0.93);
   transition-duration: 0.12s;
+}
+/* Q33 the press's light-up: a white layer under the icon while PRESS animates --lift (registered in gestures.js) */
+.pressing {
+  background-image: linear-gradient(var(--lift, transparent), var(--lift, transparent)) !important;
 }
 .row:active {
   transform: scale(0.98);
@@ -1391,10 +1425,6 @@ main {
   opacity: 1;
   transform: none;
   pointer-events: auto;
-}
-.dockrow.min .tabpill:active {
-  transform: scale(0.93);
-  transition-duration: 0.12s;
 }
 
 .sw {
@@ -1613,6 +1643,13 @@ main {
   justify-content: center;
   animation: fade 0.2s;
 }
+/* Q33 sheets keep their strength (near-solid, for reading) and their blur; they take only the new rim and shadow, and
+   dark mode's gentler saturation. The session clock is a sheet too */
+.sheet,
+.clock {
+  -webkit-backdrop-filter: blur(26px) saturate(var(--glass-sat)) brightness(1.06);
+  backdrop-filter: blur(26px) saturate(var(--glass-sat)) brightness(1.06);
+}
 .sheet {
   width: 100%;
   max-width: 440px;
@@ -1795,10 +1832,6 @@ main::after {
   background: var(--fill);
   color: var(--accent);
   transition: transform 0.5s cubic-bezier(0.3, 1.7, 0.45, 1);
-}
-.fw .fwbtn:active {
-  transform: scale(0.9);
-  transition-duration: 0.12s;
 }
 .fw .fwbtn svg.i {
   width: 22px;
@@ -2045,7 +2078,7 @@ main::after {
   color: var(--fg);
   transition: transform 0.5s cubic-bezier(0.3, 1.7, 0.45, 1);
 }
-.shbtn:active {
+.shbtn:not(.glass):active {
   transform: scale(0.93);
   transition-duration: 0.12s;
 }
@@ -2622,8 +2655,9 @@ body.wide .side-nav {
   margin: -10px -16px 10px;
   padding: 10px 16px 8px;
   background: var(--glass-strong);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  backdrop-filter: blur(20px) saturate(180%);
+  /* Q33: follows its sheet (dark mode's saturation is gentler) */
+  -webkit-backdrop-filter: blur(20px) saturate(var(--shead-sat));
+  backdrop-filter: blur(20px) saturate(var(--shead-sat));
   border-radius: 34px 34px 0 0;
   touch-action: none;
 }
@@ -2997,7 +3031,7 @@ html.motion-reduced *::after {
   flex-shrink: 0;
   transition: transform 0.5s cubic-bezier(0.3, 1.7, 0.45, 1);
 }
-.txtbtn:active {
+.txtbtn:not(.glass):active {
   transform: scale(0.93);
   transition-duration: 0.12s;
 }
@@ -4010,12 +4044,19 @@ textarea.field.sglyr {
 }
 .sgsplit .sgcol {
   position: sticky;
-  /* 3.17: right under the top bar, so the Songs title sits at the same height as every other main page's */
-  top: calc(56px + env(safe-area-inset-top, 0px));
-  max-height: calc(100vh - 72px - env(safe-area-inset-top, 0px));
+  /* 3.17: right under the top bar, so the Songs title sits at the same height as every other main page's.
+     Q33: 9 pt more room at the top and sides (padding, taken back by the margin, so nothing moves), so a pressed glass
+     button in its header (Edit, +) grows without being cut off by the scrolling column */
+  top: calc(47px + env(safe-area-inset-top, 0px));
+  max-height: calc(100vh - 63px - env(safe-area-inset-top, 0px));
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 0 2px 32px;
+  padding: 9px 11px 32px;
+  margin: -9px -9px 0;
+}
+/* Q33: while one of its buttons is pressed, the column is lifted over the top bar, so the iPad's tabs don't cover it */
+.sgsplit .sgcol:has(.pressing) {
+  z-index: 21;
 }
 .sgsplit .sgcol > .sgph:first-child {
   min-height: 44px;
@@ -5010,9 +5051,10 @@ textarea.field.sglyr {
   width: 28px;
   border-radius: 0 16px 16px 0;
   background: var(--glass-strong);
-  -webkit-backdrop-filter: blur(26px) saturate(210%) brightness(1.06);
-  backdrop-filter: blur(26px) saturate(210%) brightness(1.06);
-  box-shadow: 4px 0 14px var(--glass-shadow);
+  /* Q33 the new glass material */
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  box-shadow: var(--glass-rim), var(--glass-float);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -5024,7 +5066,6 @@ textarea.field.sglyr {
   left: auto;
   right: 0;
   border-radius: 16px 0 0 16px;
-  box-shadow: -4px 0 14px var(--glass-shadow);
 }
 .fwtabin svg.i {
   width: 14px;
@@ -6150,11 +6191,6 @@ body.reg .trkroll {
 .trkpp[data-on='false'] svg.i {
   margin-left: 3px;
 }
-.trkb:active,
-.trkpp:active {
-  transform: scale(0.93);
-  transition-duration: 0.12s;
-}
 .trktile {
   background: var(--trk-loop);
 }
@@ -6238,8 +6274,8 @@ body.reg .trkroll {
 .trkpadpp[data-on='false'] svg.i {
   margin-left: 4px;
 }
-.trkpad:active,
-.trkpill:active {
+.trkpad:not(.glass):active,
+.trkpill:not(.glass):active {
   transform: scale(0.94);
   transition-duration: 0.12s;
 }
@@ -8368,9 +8404,10 @@ html.motion-off .cuebox {
   min-width: 200px;
   border-radius: 14px;
   background: var(--glass-strong);
-  -webkit-backdrop-filter: blur(30px);
-  backdrop-filter: blur(30px);
-  box-shadow: 0 12px 36px var(--glass-shadow);
+  /* Q33 the new glass material */
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  box-shadow: var(--glass-rim), var(--glass-float);
   overflow: hidden;
   transform-origin: top right;
 }
@@ -8404,10 +8441,7 @@ html.motion-off .cuebox {
 .cta.opskip {
   background: var(--glass);
   color: var(--fg2);
-  box-shadow:
-    inset 0 -0.5px 0 var(--glass-lo),
-    inset 0 0 16px var(--glass-glow),
-    0 12px 32px var(--glass-shadow);
+  box-shadow: var(--glass-rim), var(--glass-float); /* Q33 */
 }
 .cta.opskip {
   color: var(--fg);
@@ -9351,9 +9385,8 @@ body.patdock main {
   transition: transform 0.5s cubic-bezier(0.3, 1.7, 0.45, 1);
 }
 .pplay:active,
-.prep:active,
-.pstep button:active,
-.ppill:active {
+.prep:not(.glass):active,
+.ppill:not(.glass):active {
   transform: scale(0.95);
   transition-duration: 0.12s;
 }

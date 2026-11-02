@@ -8,7 +8,8 @@
    - Appearance (3.23, Q08) holds this device's look: Gradient background, the soft moving wash behind Today's header
      (on unless switched off; localStorage 'vocalLook', never in a backup). Later look options join that page.
    - Accessibility holds this device's motion settings: Reduce motion (Match iPhone, On or Off, kept in localStorage
-     'vocalReduce') and Slow motion (MOTION speed 4). Neither is ever in a backup.
+     'vocalReduce') and Slow motion (MOTION speed 4), and (Q33) Reduce transparency ('vocalTransp'). None is ever in a
+     backup.
    Plain script (not a module): files share one global scope and load in the order listed in index.html. */
 
 const SET = (() => {
@@ -90,6 +91,31 @@ const SET = (() => {
     MOTION.publish();
   }
   const slow = () => MOTION.speed() === 4;
+
+  /* ----- Q33 Reduce transparency: the glass tint more solid (alpha × 0.5 + 0.4, between 0.4 and 0.8), the blur kept.
+     localStorage 'vocalTransp' ('on'), this device only, never in backups. Safari can't report the iPhone's own setting,
+     so this switch is how it's turned on there; a browser that does report it is followed too. <html> gets
+     .glass-solid, which app.css follows ----- */
+  const TKEY = 'vocalTransp';
+  const tmq = window.matchMedia ? matchMedia('(prefers-reduced-transparency: reduce)') : null;
+  function transpSet() {
+    try {
+      return localStorage.getItem(TKEY) === 'on';
+    } catch (e) {
+      return false;
+    }
+  }
+  const transpOn = () => transpSet() || !!(tmq && tmq.matches);
+  const transpPublish = () => document.documentElement.classList.toggle('glass-solid', transpOn());
+  function setTransp(on) {
+    try {
+      if (on) localStorage.setItem(TKEY, 'on');
+      else localStorage.removeItem(TKEY);
+    } catch (e) {}
+    transpPublish();
+  }
+  transpPublish();
+  if (tmq && tmq.addEventListener) tmq.addEventListener('change', transpPublish);
 
   /* ----- this device's look (3.23, Q08): localStorage 'vocalLook', an object so later options can join it ----- */
   const LKEY = 'vocalLook';
@@ -439,6 +465,17 @@ const SET = (() => {
       '’s Accessibility settings' +
       (m === 'system' ? ', which is ' + (MOTION.reduced() ? 'on' : 'off') + ' at the moment' : '') +
       '.</p>' +
+      '<div class="hdr">Transparency</div><div class="grp">' +
+      '<button class="row" data-a="setTransp" role="switch" aria-checked="' +
+      transpSet() +
+      '"><span class="lbl">Reduce transparency</span><span class="tgl" aria-checked="' +
+      transpSet() +
+      '" aria-hidden="true"></span></button></div>' +
+      '<p class="foot">Makes the glass more solid, so what’s on it is easier to read. ' +
+      (transpSet() || !(tmq && tmq.matches)
+        ? 'This ' + deviceName() + ' only, never in backups.'
+        : 'On at the moment, because this browser’s own Reduce Transparency setting is on.') +
+      '</p>' +
       '<div class="hdr">Tuning</div><div class="grp">' +
       '<button class="row" data-a="setSlow" role="switch" aria-checked="' +
       slow() +
@@ -496,13 +533,17 @@ const SET = (() => {
       MOTION.setSpeed(slow() ? 1 : 4);
       rerender();
     },
+    setTransp: () => {
+      setTransp(!transpSet());
+      rerender();
+    },
     setGrad: () => {
       setGrad(!gradOn());
       rerender();
     },
   });
 
-  return { main, page, title, open, back, shown, reduceMode, setReduce, sizes, PAGES, gradOn, setGrad, wash };
+  return { main, page, title, open, back, shown, reduceMode, setReduce, sizes, PAGES, gradOn, setGrad, wash, transpOn, setTransp };
 })();
 
 function scrSettings() {
