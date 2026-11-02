@@ -16,7 +16,7 @@ Every queued item has a queue ID and a standard name, used in the queue, in hand
 - **Items:** `Q[##] · [Subsystem]: [Feature Name]`, e.g. `Q02 · Track: Waveform Sections`.
 - **Files** (handoffs, specs, wireframes, prototypes): `q##_[subsystem]_[feature]_[type].[ext]`, lower case with underscores, e.g. `q02_track_waveform_sections_handoff.md`.
 - **Releases:** the shipped version's `CHANGELOG.md` headline ends with the queue ID in brackets, e.g. `*Waveform sections on the track player (Q02)*` under `## 3.23 · 27 Oct 2026` (the `##` line keeps its exact format for the app's Changelog page). That's the bridge from queue ID to version. Q01 shipped as 3.22, headline `*Search, from every tab (Q01)*`; Q08 as 3.23.
-- **New items:** an idea gets its ID when Ivan says **Render** for it, taking the next unused number (the next is **Q34**). IDs are never reused or renumbered, even when the queue is reordered or an item ships.
+- **New items:** an idea gets its ID when Ivan says **Render** for it, taking the next unused number (the next is **Q35**). IDs are never reused or renumbered, even when the queue is reordered or an item ships.
 - **Exception, 30 Oct 2026:** Ivan asked for the six stages of the 30 Oct read-only audit, plus its clean-up list, to get IDs straight away, before Render, most critical first. They are **Q11–Q17**. All seven got Render on 30 Oct 2026 and have shipped (3.29–3.31, 3.34, 3.36, 3.37 and 3.38).
 - **Exception, 31 Oct 2026:** Ivan asked for the status bar fix to be queued with an ID before Render. It is **Q23**; Render and Build followed the same evening (shipped in 3.33).
 
@@ -57,6 +57,7 @@ Every ID with its **Status** (`Awaiting Render`, `Approved — awaiting Build`, 
 | Q31 | Atlas: Map and Notes | Approved — awaiting Build | Visual App Atlas stage 2, map, notes, export, changes since last scan, 2 Nov 2026 |
 | Q32 | Exercises: Redesign | Approved — awaiting Build | Exercise patterns the app plays, Exercise page redesign (both 31 Oct), merged 2 Nov 2026 |
 | Q33 | Interface: Glass Native Tuning | Approved — awaiting Build | Glass tuning Recon and glass inventory, 2 Nov 2026 |
+| Q34 | Interface: Native Menus and Controls | Approved — awaiting Build | Component inventory (round 2), worth doing plus smaller wins, 2 Nov 2026 |
 
 Work shipped before this standard (for example Track 1 and Song Clock A1) keeps its version numbers and has no queue ID.
 
@@ -73,7 +74,7 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 
 ## Order (2 Nov 2026)
 
-**Q32** is the next app build (Render 2 Nov 2026, 15:56), in two stages: the shared pattern player with the Humming page, then the other 11 pages. **Q33** follows Q32 (Render 2 Nov 2026, 17:41); both change `css/app.css`, so they're built one after the other. **Q30**, then **Q31** (Render 2 Nov 2026, 15:55, in one instruction, each with its own Build; Q31 builds on Q30). Both are tooling with no app version, like Q24, so they can be built outside the app queue's order. Q28 shipped in 3.46 and Q29 in 3.47 (Render 2 Nov 2026, 09:29; Build 09:33, in one instruction, built one after the other). **Q07** is still awaiting Render. Q27 shipped in 3.45 (Build 2 Nov 2026). Q25 shipped in 3.43 and Q26 in 3.44 (Build 2 Nov 2026); Q25–Q27 got Render on 1 Nov 2026 (19:59), in one instruction, each with its own Build. Q19 shipped in 3.39, Q20 in 3.40, Q21 in 3.41 and Q22 in 3.42. Q22 got Render on 31 Oct 2026 (20:59) and was built on the one-page session and the saved screen. Q19–Q21 got Render on 31 Oct 2026 (19:58), in one instruction, each with its own Build. They follow Q17 (shipped in 3.38; Q20 needs Q16's track-while-recording, shipped in 3.37). Q11–Q17 got Render on 30 Oct 2026 (06:42) and have all shipped. What has shipped is in the table's Status column. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
+**Q32** is the next app build (Render 2 Nov 2026, 15:56), in two stages: the shared pattern player with the Humming page, then the other 11 pages. **Q33** follows Q32 (Render 2 Nov 2026, 17:41); both change `css/app.css`, so they're built one after the other. **Q34** follows Q33 (Render 2 Nov 2026, 18:12); it uses Q33's materials and springs. **Q30**, then **Q31** (Render 2 Nov 2026, 15:55, in one instruction, each with its own Build; Q31 builds on Q30). Both are tooling with no app version, like Q24, so they can be built outside the app queue's order. Q28 shipped in 3.46 and Q29 in 3.47 (Render 2 Nov 2026, 09:29; Build 09:33, in one instruction, built one after the other). **Q07** is still awaiting Render. Q27 shipped in 3.45 (Build 2 Nov 2026). Q25 shipped in 3.43 and Q26 in 3.44 (Build 2 Nov 2026); Q25–Q27 got Render on 1 Nov 2026 (19:59), in one instruction, each with its own Build. Q19 shipped in 3.39, Q20 in 3.40, Q21 in 3.41 and Q22 in 3.42. Q22 got Render on 31 Oct 2026 (20:59) and was built on the one-page session and the saved screen. Q19–Q21 got Render on 31 Oct 2026 (19:58), in one instruction, each with its own Build. They follow Q17 (shipped in 3.38; Q20 needs Q16's track-while-recording, shipped in 3.37). Q11–Q17 got Render on 30 Oct 2026 (06:42) and have all shipped. What has shipped is in the table's Status column. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
 
 ## Q07 · Song Clock: Dynamic Sync
 
@@ -215,6 +216,62 @@ The app's glass looks and responds like iOS 27, using numbers the Flutter kit `s
   - A rescan finds no glass button that still shrinks.
   - A new `tests/test_glass.py` passes at 375, 390 and 402 wide and on iPad, and the full suite passes.
   - Ivan checks on his iPhone: the press feel, dark glass over Today's gradient and the lyrics, the blur strength, no flicker, and the switch.
+
+---
+
+## Q34 · Interface: Native Menus and Controls
+
+**Status:** Approved — awaiting Build. **Render:** 2 Nov 2026, 18:12. Ivan: "render", for the Blueprint as drafted with every *Default if unanswered* taken, after choosing both the worth-doing items and the smaller wins "for that extra polish" (18:05). **Build:** awaiting Ivan's instruction.
+
+Menus, the top bar's buttons and the small controls move like iOS 27. Where the Flutter kit `sdegenaar/liquid_glass_widgets` (MIT) measured a number against real iPhone recordings, that number is used; otherwise its by-eye numbers are. The handoff and the inventory are in Ivan's project notes: `q34_interface_native_menus_controls_handoff.md` and `component_inventory_2026-11-02.md` (his private page "Component inventory · Vocal Sessions"). The measured values are in `liquid_glass_widgets_values.md` (+ `_part2.md`). Ask him to attach them.
+
+- **Scope, stage 1 (menus and the top bar):**
+  - **Long-press menus** (a song row, `#ctxmenu`; a lyric line in play-along, `#lmenu`), measured:
+    - the menu opens at 700 ms (was 480 ms and `CK_HOLD`)
+    - the row or line lifts to ×1.04 from about 200 ms, and letting go early opens nothing
+    - the dim is 20% (light) / 25% (dark) with no blur, and the row stays sharp above it
+    - it closes in 170 ms
+    - right-click opens it straight away
+  - **One menu style for every menu:** `.ctxmenu` and `.opmenu` become one component, with blur 22 over `#F5F5F7` at 80% (`#252528` in dark), a 0.5 pt border (black 30% / white 20%), the shadow `0 8px 33px rgba(0,0,0,.08)` and radius 18.
+  - **Pull-down menus** (Songs' sort and heading menus, Recall, the session's and Application's sort menus):
+    - they grow out of their button on new `menuOpen` (z 0.73, f 1.74 Hz) and `menuClose` (z 0.74, f 2.25 Hz) springs
+    - no dim
+    - the blur ramps in over 260 ms
+  - **Top bar buttons**, measured. `renderBar()` keeps each slot's circle:
+    - **New icon:** it blurs out (σ 6) and in (σ 3.5), with the circle swelling up to 22%.
+    - **Appearing:** 250 ms, from 1.1 to 1, with the icon sharpening from an 8 px blur.
+    - **Leaving:** 350 ms, with the icon gone by 55%.
+    - It only runs when the bar redraws in place. Push, zoom and swipe back stay as Q08 built them.
+- **Scope, stage 2 (controls), kit numbers by eye:**
+  - **Toasts:** drop in from the top over 500 ms and leave upwards over 350 ms. They stay 3 s (was 1.9 s) unless the caller sets a time.
+  - **Switches (`.tgl`):**
+    - the knob travels over 380 ms (ease-in-out), widening while it moves and within 120 ms of a press
+    - the knob can be dragged: a flick faster than 200 px/s decides it, otherwise whichever side it's past halfway
+    - a tap on the row still toggles
+  - **Segmented controls (`.seg`):**
+    - the settled slide and squish stay for taps
+    - new: the knob can be dragged, and settles on a `segSettle` spring (z 0.85, f 2.86 Hz)
+    - the knob swells by 12 × 8 px while pressed
+  - **Search fields:**
+    - Songs' bottom search field stretches at most about 7 pt lengthwise and 2 pt up and down when dragged (measured)
+    - plain text fields use the solid grey well, 12% light / 24% dark
+  - Reduce Motion: fades only.
+- **Defaults taken:** the 700 ms hold, menu radius 18, the bar morph only on in-place redraws, the segmented control's slide kept for taps, toasts 3 s.
+- **Out of scope:**
+  - Sheets' flick to close and their corners (moved to the Scroll Behaviour Pass draft).
+  - Submenus, and the drag shrink for sheets that grow out of a button (the app has neither).
+  - Swipe actions on rows, and the tab bar's highlight and dragging.
+  - Waveform scrubbers (no knob). The kit's ×1.35 knob suits Q32's speed slider, but it isn't part of Q32 without its own Render.
+  - Haptics.
+- **Build order:** two stages in one build, with quick tests after each.
+- **Needs:** Q33 built first (its materials and the `release` spring), and Q32 before that.
+- **Done when:**
+  - The hold, lift, dim and close timings above are met. Every menu shares one style.
+  - Pull-down menus grow out of their button. Top bar circles morph, appear and leave with the measured timings, with labels and actions always right.
+  - Toasts, switches, segmented controls and the search field behave as above. Taps work as before.
+  - Reduce Motion gives fades only.
+  - A new `tests/test_menus.py` (with a `controls` part) and a `morph` part in `test_native.py` pass at 375, 390 and 402 wide and on iPad. The fuzzer finds no menu left open, and the full suite passes.
+  - Ivan checks on his iPhone: the 700 ms hold, the Songs sort menu, the gear and Back morph, dragging a switch and the Progress range control, and the 3 s toast.
 
 ---
 
