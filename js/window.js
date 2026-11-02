@@ -155,7 +155,6 @@ const FW_KINDS = [
         FW.ring = '';
       }
       el.classList.toggle('paused', !i.on);
-      el.classList.remove('hasx');
       el.querySelector('.fwopen').setAttribute('aria-label', i.open + '. ' + i.k + ', ' + i.t);
       el.querySelector('.fwk').textContent = i.k;
       const t = el.querySelector('.fwt');
@@ -216,7 +215,6 @@ const FW_REC = {
         i.k +
         '</span><span class="fwtm"></span><span class="fwt"></span><span class="fwp"><i></i></span></div>';
     }
-    el.classList.remove('paused', 'hasx');
     el.querySelector('.fwtm').textContent = i.t;
     el.querySelector('.fwt').textContent = i.sub;
     el.querySelector('.fwp i').style.width = (i.p * 100).toFixed(1) + '%';
@@ -391,11 +389,25 @@ function fwEl() {
   fwGestures(el);
   return el;
 }
+// Q26: a kind taking the window over starts from a clean window, so nothing one kind drew (a class such as hasx, an
+// inline size, its markup) carries over to the next. Only what belongs to the window itself is kept
+const FW_KEEP = ['fw', 'glass', 'dragging', 'pressed', 'tucked'];
+function fwClean(el, id) {
+  if (el.querySelector('video') && typeof COACH !== 'undefined') COACH.park(); // the coach video never goes with the old markup
+  [...el.classList].forEach((c) => FW_KEEP.includes(c) || el.classList.remove(c));
+  const tf = el.style.transform;
+  el.removeAttribute('style');
+  if (tf) el.style.transform = tf;
+  Object.keys(el.dataset).forEach((d) => delete el.dataset[d]);
+  el.dataset.kind = id;
+  el.innerHTML = '';
+  FW.build = '';
+}
 function fwDraw(k, i) {
   const el = fwEl(),
     b = k.id + '|' + i.on + '|' + (i.p != null) + '|' + !!k.close;
+  if (el.dataset.kind !== k.id) fwClean(el, k.id);
   el.setAttribute('aria-label', i.label);
-  el.dataset.kind = k.id;
   if (k.draw) return k.draw(el, i); // a kind with its own look (3.16: the coach video holds the real video)
   if (FW.build !== b) {
     FW.build = b;

@@ -1091,7 +1091,6 @@ const COACH = (() => {
           ICON.play +
           '</span></button>';
       }
-      fw.classList.remove('paused', 'hasx');
     },
   };
   FW_KINDS.splice(2, 0, pillKind); // take → video → the Coach pill → session
