@@ -215,6 +215,7 @@ document.addEventListener('click', (e) => {
         const was = U.tab;
         U.exId = k;
         U.exTab = 'summary';
+        U.exLv = U.exMore = null;
         if (was !== 'exercises')
           go(() => {
             U.tab = 'exercises';
@@ -228,6 +229,7 @@ document.addEventListener('click', (e) => {
         U.view = 'ex';
         U.exId = k;
         U.exTab = 'summary';
+        U.exLv = U.exMore = null;
       });
       break;
     case 'openLog':
@@ -297,6 +299,14 @@ document.addEventListener('click', (e) => {
         U.tab = U.prevTab || 'exercises';
       });
       break;
+    case 'exLevel': // Q32: the page shows that level's facts, words and starting notes
+      U.exLv = { id: U.exId, lv: +v };
+      rerender();
+      break;
+    case 'exMore':
+      U.exMore = U.exId;
+      rerender();
+      break;
     case 'exTab':
       segPick(el);
       U.exTab = v;
@@ -353,7 +363,10 @@ document.addEventListener('click', (e) => {
         await putTake(t);
         await refreshTakes();
         rerender();
-        if (t.star) DET.starPop(document.querySelector('#layer .ibtn.star.on[data-k="' + k + '"], .ibtn.star.on[data-k="' + k + '"]'));
+        if (t.star)
+          DET.starPop(
+            document.querySelector('#layer .ibtn.star.on[data-k="' + k + '"], .ibtn.star.on[data-k="' + k + '"]')
+          );
       })();
       break;
     case 'cta':
@@ -879,7 +892,8 @@ document.addEventListener('click', (e) => {
     case 'rescueSave': {
       const c = SAFE.rescued().find((x) => x.key === k);
       if (!c) break;
-      const name = ('Vocal Sessions rescued data · ' + fileDate(new Date(c.at))).replace(/[\/\\:*?"<>|]/g, '-') + '.txt';
+      const name =
+        ('Vocal Sessions rescued data · ' + fileDate(new Date(c.at))).replace(/[\/\\:*?"<>|]/g, '-') + '.txt';
       shareFile(new File([c.text], name, { type: 'text/plain' })).then((r) => {
         if (r !== 'cancelled') toast(r === 'shared' ? 'Rescued copy saved' : 'Rescued copy downloaded');
       });

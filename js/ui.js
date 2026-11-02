@@ -42,7 +42,12 @@ function renderBar() {
       $('barT').classList.add('tabs');
       $('barT').innerHTML = topTabs();
     } else $('barT').textContent = SET.title();
-    $('barL').innerHTML = '<button class="circ glass" data-a="setPgBack" aria-label="Back to Settings">' + ICON.back + '</button>';
+    $('barL').innerHTML =
+      '<button class="circ glass" data-a="setPgBack" aria-label="' +
+      (U.setFrom ? 'Back' : 'Back to Settings') +
+      '">' +
+      ICON.back +
+      '</button>';
     $('barR').innerHTML = '';
   } else if (U.view === 'guide') {
     // Q04 the Marks guide's pages: Back to where the guide was opened (or the guide page before)
@@ -72,6 +77,11 @@ function renderBar() {
     // Q21 the Session saved screen: no buttons, only Done on the page
     $('barT').textContent = 'Session saved';
     $('barL').innerHTML = '';
+    $('barR').innerHTML = '';
+  } else if (U.view === 'pat') {
+    // Q32 the Patterns page: Back shrinks it into the pattern pill
+    $('barT').textContent = 'Patterns';
+    $('barL').innerHTML = '<button class="circ glass" data-a="patBack" aria-label="Back">' + ICON.back + '</button>';
     $('barR').innerHTML = '';
   } else if (U.view === 'ex') {
     const e = exById(U.exId);
@@ -266,6 +276,18 @@ function renderDock1() {
   if (recallOn()) {
     $('dock').innerHTML = hintCapHTML();
     return null;
+  }
+  // Q32 the pattern player's dock on an exercise page; the Patterns page has none (only its tiles scroll)
+  if (U.view === 'pat') {
+    $('dock').innerHTML = '';
+    return null;
+  }
+  if (PAT.onPage()) {
+    const pd = PAT.dock();
+    if (pd) {
+      $('dock').innerHTML = pd;
+      return null;
+    }
   }
   // Q21 the Session saved screen: Done is on the page, and the tab bar comes back with Today
   if (U.view === 'saved') {
@@ -1114,6 +1136,8 @@ function render(keepScroll) {
         ? COACH.page()
       : v === 'ex'
         ? scrEx()
+      : v === 'pat'
+        ? PAT.page() // Q32 the Patterns page (patterns.js)
         : v === 'all'
           ? scrAll()
           : v === 'lyr'
@@ -1148,6 +1172,7 @@ function render(keepScroll) {
     v === 'ckCheck' ||
     v === 'trk' ||
     v === 'saved' ||
+    v === 'pat' ||
     (v === 'ex' && !split())
       ? ' narrow'
       : '');
@@ -1170,6 +1195,7 @@ function render(keepScroll) {
   OP.after(); // Q19 the one-page session: the coach video cued, the pull put back
   APPL.after(); // Q20 Application: the page dims around its card while it records
   SCLOCK.after(); // Q22: asks about time away once nothing's in the way; the screen kept on while a session runs
+  PAT.after(); // Q32 the pattern player: stops when its page goes, the playhead carries on after a redraw
   fwUpdate();
   DET.dockSwap(dk);
   DET.play();

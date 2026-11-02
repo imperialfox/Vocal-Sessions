@@ -262,7 +262,7 @@ def run(b, t):
         # Settings
         pg.evaluate("go(()=>{U.tab='settings';U.view=null})"); pg.wait_for_timeout(200)
         keys = pg.evaluate("[...document.querySelectorAll('#app .grp.tiled.setgap')][0].querySelectorAll('.row').length&&[...[...document.querySelectorAll('#app .grp.tiled.setgap')][0].querySelectorAll('.row')].map(r=>r.dataset.v)")
-        ok(keys == ['recall', 'coach', 'home', 'appear', 'access'], f'Settings has a Marks guide row after Coach video ({keys})')
+        ok(keys == ['recall', 'coach', 'home', 'voice', 'player', 'appear', 'access'], f'Settings has a Marks guide row after Coach video ({keys})')
         sr = pg.locator('#app .row[data-a=gdOpen][data-v=home]')
         ok(sr.locator('.tile').count() == 1 and sr.locator('.mut:not([aria-hidden])').count() == 0 and sr.inner_text().strip().startswith('Marks guide'),
            'with its own icon tile and no value')

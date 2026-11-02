@@ -321,3 +321,443 @@ const DESC = {
     ],
   },
 };
+
+/* ===== Exercise pages (Q32) =====
+   What each built-in exercise page shows, beside its write-up (DESC) and the coach video.
+   - how: the "How to do it" steps. where: [the glow spot on the head drawing, "Where you feel it"]. Spots: palate, mask,
+     nose, lips, head, centre.
+   - syl: what you sing (the vowel cue uses these). def: the default pattern (its number in the pattern library, patterns.js).
+     vowels: sung on open vowels, so the vowel cue shows (with scale patterns only). fal: the high notes are in falsetto, so
+     the range check uses your falsetto top.
+   - L: each level: [what you do, the starting notes of each round, a shift in semitones]. The notes are the coach video's,
+     copied from tools/coach-video/data/audio_timeline.json (not re-analysed); the shift moves a level whose pattern starts
+     above its key (Humming 2 on the third, Half squeaky 1 on the fifth, Upper to lower at the top) onto key notes. No
+     notes: no "Hear it" (Vocal slides). Squeaky hinge's notes were never saved, so its route is made up (C3 down to A2,
+     then up to G3).
+   - facts: each level's three facts, [icon, label, value], from the coach video (Q24). Icons are FACT_ICON in config.js. */
+const EX_PAGE = {
+  slides: {
+    syl: 'hee hoo hoe hah hay',
+    where: [
+      'palate',
+      'On the roof of your mouth, the hard palate, all the way up and down the slide. It’s easiest to find on <i>ee</i>.',
+    ],
+    how: [
+      'Hold one steady note on <i>hee</i>, with no vibrato, and feel it on the roof of your mouth.',
+      'Slide from low to high and back on <i>hee</i>, then on <i>hoo</i>, <i>hoe</i>, <i>hah</i> and <i>hay</i>, with the tip of your tongue resting behind your lower front teeth.',
+      'Keep it light and quiet, and let the sound get thinner as it rises.',
+      'Roll your head gently side to side and wiggle your jaw to stay loose.',
+      'On the longest slides, bend forward from the waist as you reach the top, as if you’re falling forward.',
+    ],
+    L: [
+      ['One long note on hee, then short slides.', null],
+      ['Medium slides on hee, hoo, hah, hay.', null],
+      ['Full range slides.', null],
+    ],
+    facts: [
+      [
+        ['arrow', 'Placement', 'Forward'],
+        ['wave', 'Vibrato', 'None'],
+        ['volume', 'Keep it', 'Light and quiet'],
+      ],
+      [
+        ['head', 'Head', 'Tilt slightly, roll side to side'],
+        ['jaw', 'Jaw', 'Wiggle it'],
+        ['up', 'Going higher', 'Light and thin'],
+      ],
+      [
+        ['up', 'High notes', 'Bend forward at the waist and bounce'],
+        ['repeat', 'Bounce', 'Whole body, 3 times'],
+        ['next', 'Each time', 'Release a little higher'],
+      ],
+    ],
+  },
+  humming: {
+    syl: 'hmmm',
+    def: 1,
+    where: [
+      'mask',
+      'A buzz at the front of your face, around your nose and cheekbones (the “mask”), with light vibration on the roof of your mouth.',
+    ],
+    how: [
+      'Close your lips so they only just touch. Don’t press them together.',
+      'Hum <i>hmmm</i> quietly, keeping your jaw and tongue loose inside.',
+      'Follow the pattern, staying relaxed rather than chasing volume.',
+      'If the buzz drops into your throat, hum more quietly until it comes forward again.',
+    ],
+    L: [
+      ['Hum on hmmm.', 'C3 B2 A♯2 A2 G♯2 A2 A♯2 B2 C3 C♯3 D3 D♯3 E3 F3 F♯3 G3 G♯3 A3'],
+      ['Hum through a melodic pattern.', 'E3 D♯3 D3 C♯3 C3 E3 F3 F♯3 G3 G♯3 A3 A♯3 B3 C4 C♯4', -4],
+      ['Hum a longer, more complex pattern.', 'C3 B2 A♯2 B2 C3 C♯3 D3 D♯3 E3 F3 F♯3 G3 G♯3 A3 A♯3'],
+    ],
+    facts: [
+      [
+        ['mouth', 'Lips', 'Loosely touching, not pressed'],
+        ['wave', 'Keep it', 'Quiet and relaxed'],
+        ['target', 'Feel it', 'Roof of mouth, mask'],
+      ],
+      [
+        ['target', 'Feel the buzz', 'Nose and cheekbones'],
+        ['arrow', 'Placement', 'Forward'],
+        ['wave', 'Keep it', 'Relaxed'],
+      ],
+      [
+        ['arrow', 'Placement', 'Forward'],
+        ['target', 'Feel it', 'Roof of mouth, mask'],
+        ['wave', 'Keep it', 'Loose. Don’t chase volume'],
+      ],
+    ],
+  },
+  lip: {
+    syl: 'brrr',
+    def: 1,
+    where: [
+      'lips',
+      'A tickle in your lips and across the front of your face. Your neck and jaw should feel nothing at all.',
+    ],
+    how: [
+      'Blow air through loose, closed lips so they flutter: <i>brrr</i>.',
+      'If they won’t flutter, press your fingertips into your cheeks, pushing them in, up and forward.',
+      'Keep the air steady but not forced. Too much air tightens your neck.',
+      'Sigh into the high notes and let them go, rather than bracing for them.',
+    ],
+    L: [
+      ['Motorboat your lips across your range.', 'C3 B2 A♯2 A2 A♯2 B2 C3 C♯3 D3 D♯3 E3 F3 F♯3 G3 G♯3 A3 A♯3 B3 C4'],
+      ['Lip bubble through a scale pattern.', 'C3 B2 A♯2 A2 G♯2 C3 C♯3 D3 D♯3 E3 F3 F♯3 G3 G♯3 A3'],
+      ['Full range lip bubbles.', 'C3 B2 A♯2 A2 G♯2 A2 A♯2 B2 C3 C♯3 D3 D♯3 E3 F3 F♯3'],
+    ],
+    facts: [
+      [
+        ['up', 'High notes', 'Sigh into them'],
+        ['stop', 'Don’t', 'Push'],
+        ['hand', 'Lips stop?', 'Press cheeks in and forward'],
+      ],
+      [
+        ['link', 'Keep smooth', 'Chest, mix and head'],
+        ['up', 'High notes', 'Don’t tense up for them'],
+        ['wave', 'Stay', 'Energised but relaxed'],
+      ],
+      [
+        ['link', 'Pass through', 'Chest, mixed and head voice, smoothly'],
+        ['stop', 'Larynx', 'Never grab at it'],
+        ['wave', 'Whole range', 'Effortless'],
+      ],
+    ],
+  },
+  straw: {
+    syl: 'hmmm',
+    def: 1,
+    where: [
+      'lips',
+      'Gentle pressure at your lips and a steady push from your belly. Your throat should feel soothed, not worked.',
+    ],
+    how: [
+      'Start with a wide straw in a bottle or cup with a little water.',
+      'Breathe in and blow steady bubbles, letting your belly muscles do the work.',
+      'Now hum through the straw while the bubbles keep going.',
+      'Add the pattern to the hum, keeping the bubbles flowing all the way through.',
+      'If it feels like hard work, switch to a wider straw or use less water.',
+    ],
+    L: [
+      ['Blow bubbles through a straw into water.', 'C3 B2 A♯2 A2 G♯2 C3 C♯3 D3 D♯3 E3 F3 F♯3 G3 G♯3 A3'],
+      ['Hum a melodic pattern through the straw.', 'C3 B2 A♯2 A2 A♯2 B2 C3 C♯3 D3 D♯3 E3 F3 F♯3 G3 G♯3 A3 A♯3 B3 C4'],
+      ['Sing a longer pattern through the straw.', 'C♯3 C3 B2 A♯2 A2 A♯2 B2 C3 C♯3 D3 D♯3 E3 F3 F♯3 G3 G♯3 A3 A♯3'],
+    ],
+    facts: [
+      [
+        ['breath', 'Breath', 'Abdominals support it'],
+        ['straw', 'Straw', 'Start with a wide one'],
+        ['wave', 'Feel', 'Effortless and soothing'],
+      ],
+      [
+        ['breath', 'Air', 'Keep it flowing forward'],
+        ['spark', 'Water resistance', 'Builds breath-support muscle memory'],
+      ],
+      [
+        ['straw', 'As you progress', 'Try smaller straws'],
+        ['next', 'Afterwards', 'A whole song through the straw'],
+      ],
+    ],
+  },
+  falsetto: {
+    syl: 'hoo hee hoh',
+    def: 2,
+    vowels: true,
+    fal: true,
+    where: ['head', 'High and light in your head, breathy and free. Nothing should grip in your throat.'],
+    how: [
+      'Tilt your head down slightly and sing <i>hoo</i> lightly in your upper voice.',
+      'Keep your teeth about half an inch apart and your jaw loose. Two fingers between your teeth can help.',
+      'Let the pattern roll like waves, rolling your head gently side to side.',
+      'Sing at whatever volume feels comfortable. Don’t try to control it yet.',
+      'Keep the tip of your tongue behind your lower front teeth.',
+    ],
+    L: [
+      ['Sing on hoo, rolling like waves.', 'D♯4 E4 F4 F♯4 G4 F♯4 F4 E4 D♯4 D4 C♯4'],
+      ['Sing hee in falsetto through a scale.', 'F4 F♯4 G4 G♯4 A4 A♯4 B4 G4 F♯4 F4 E4 D♯4 D4'],
+      ['Alternate hoh and wah/woh in falsetto, wider intervals.', 'D♯4 E4 F4 F♯4 F4 E4 D♯4 D4 C♯4 C4'],
+    ],
+    facts: [
+      [
+        ['mouth', 'Teeth', 'Half an inch apart'],
+        ['volume', 'Volume', 'Comfortable. Don’t control it yet'],
+        ['wave', 'Keep it', 'Loose'],
+      ],
+      [
+        ['jaw', 'Jaw', 'Open'],
+        ['wave', 'Stay', 'Relaxed'],
+        ['volume', 'Once comfortable', 'Practise soft to loud'],
+      ],
+      [
+        ['target', 'Feel', 'Free and disconnected'],
+        ['stop', 'Don’t', 'Force a chest connection'],
+      ],
+    ],
+  },
+  upperlower: {
+    syl: 'woh woo wee wah',
+    def: 6,
+    vowels: true,
+    fal: true,
+    where: [
+      'head',
+      'It starts light and high in your head and settles lower as you come down, with no bump on the way.',
+    ],
+    how: [
+      'Start high, in your upper voice, on <i>woh</i>.',
+      'Come down slowly, as if in slow motion, joining every note to the next.',
+      'Keep the volume low and your lips and tongue relaxed.',
+      'Listen for the place where your voice changes gear, and keep the tone the same through it.',
+      'For a change, do it on a lip trill or through a straw instead of a vowel.',
+    ],
+    L: [
+      ['Descend from upper to lower voice on woh.', 'G♯4 G4 F♯4 F4 E4 D♯4 D4', -7],
+      ['Sing we-we-we descending.', 'A♯4 A4 G♯4 G4', -7],
+      ['Alternate wah and way descending.', 'A♯4 A4 G♯4 G4', -7],
+    ],
+    facts: [
+      [
+        ['speed', 'Speed', 'Slow motion, legato'],
+        ['volume', 'Volume', 'Low'],
+        ['mouth', 'Keep', 'Lips and tongue relaxed, open'],
+      ],
+      [
+        ['link', 'Transition', 'Smooth, no noticeable break'],
+        ['straw', 'Instead of a vowel', 'Lip bubbles or a straw'],
+      ],
+      [
+        ['link', 'Registers', 'Blend seamlessly'],
+        ['note', 'Tone', 'No change from one register to the next'],
+      ],
+    ],
+  },
+  rung: {
+    syl: 'runnng',
+    def: 3,
+    where: [
+      'nose',
+      'The <i>ng</i> buzzing up behind your nose and at the front of your face, with your jaw hanging open and loose.',
+    ],
+    how: [
+      'Sing <i>rung</i>, like the rung of a ladder, holding the <i>ng</i>: <i>runnng</i>.',
+      'Drop your jaw open vertically as far as is comfortable. A mirror helps.',
+      'Keep the tip of your tongue behind your lower front teeth.',
+      'Keep it light and fairly quiet, even through the middle of your range.',
+    ],
+    L: [
+      [
+        'Sing runnng to blend registers through the mix.',
+        'C♯3 C3 B2 A♯2 A2 A♯2 B2 C3 C♯3 D3 D♯3 E3 F3 F♯3 G3 G♯3 A3 A♯3 B3 C4 C♯4 D4',
+      ],
+      ['Runnng through a longer scale.', 'C3 B2 A♯2 B2 C3 C♯3 D3 D♯3 E3 F3 F♯3 G3 G♯3 A3 A♯3 B3 C4'],
+      ['Runnng through a wide-range pattern.', 'C♯3 C3 B2 A♯2 B2 C3 C♯3 D3 D♯3 E3 F3 F♯3 G3 G♯3'],
+    ],
+    facts: [
+      [
+        ['jaw', 'Jaw', 'Drop open vertically'],
+        ['mouth', 'Tongue', 'Tip behind lower front teeth'],
+        ['volume', 'Volume', 'Light, moderately quiet'],
+      ],
+      [
+        ['jaw', 'Jaw', 'Dropping freely throughout'],
+        ['spark', 'Builds', 'Open-jaw muscle memory'],
+        ['stop', 'Breaks', 'The habit of singing tight'],
+      ],
+      [
+        ['jaw', 'Jaw', 'Open'],
+        ['mouth', 'Tongue', 'Relaxed'],
+        ['note', 'Free jaw', 'Free tone'],
+      ],
+    ],
+  },
+  hinge: {
+    syl: 'hmmm',
+    def: 4,
+    fal: true,
+    where: ['centre', 'Right in the centre of your head. Done right, it feels effortless, even on your top notes.'],
+    how: [
+      'Hum <i>hmmm</i> and make the sound of a squeaky door hinge.',
+      'Imagine the sound being made right in the centre of your head, not at the back of your throat.',
+      'Aim high even on the low notes, so you’re already in place when the high notes come.',
+      'Think thinner and narrower as you go up, and sing quieter rather than pushing.',
+      'If it tightens, raise your arms and drop them on the high notes, like a sigh.',
+    ],
+    L: [
+      ['Make a squeaky door hinge sound.', 'C3 B2 A♯2 A2 A♯2 B2 C3 C♯3 D3 D♯3 E3 F3 F♯3 G3'],
+      ['Squeaky hinge through a scale, with glissandos.', 'C3 B2 A♯2 A2 A♯2 B2 C3 C♯3 D3 D♯3 E3 F3 F♯3 G3'],
+      ['Extended squeaky hinge pattern.', 'C3 B2 A♯2 A2 A♯2 B2 C3 C♯3 D3 D♯3 E3 F3 F♯3 G3'],
+    ],
+    facts: [
+      [
+        ['target', 'Focus', 'Centre of your head'],
+        ['up', 'Going higher', 'Thinner and lighter'],
+        ['wave', 'Effort', 'None at all'],
+      ],
+      [
+        ['wave', 'Stay', 'Loose'],
+        ['breath', 'Strain', 'None, when placement and breath are right'],
+      ],
+      [
+        ['up', 'Highest range', 'Let the voice in freely'],
+        ['spark', 'For some', 'A way into the whistle register'],
+      ],
+    ],
+  },
+  half: {
+    syl: 'wah bow way',
+    def: 2,
+    vowels: true,
+    where: ['mask', 'The hinge’s focus at the front of your face, carried into your normal singing voice.'],
+    how: [
+      'Start with the squeaky hinge sound to find the placement.',
+      'Sing <i>wah</i> with your jaw dropped fully open, mixing the squeak with your normal tone.',
+      'Keep the hinge’s forward buzz as your normal tone comes in.',
+      'If the squeak disappears completely, go back to more squeak and blend in again gradually.',
+    ],
+    L: [
+      [
+        'Sing wah, bridging from squeaky to natural.',
+        'G3 F♯3 F3 E3 D♯3 E3 F3 F♯3 G3 G♯3 A3 A♯3 B3 C4 C♯4 D4 D♯4 E4 F4',
+        -7,
+      ],
+      ['Sing bow-bow with squeaky hinge glissandos.', 'D♯3 D3 C♯3 C3 B2 D♯3 E3 F3 F♯3 G3 G♯3 A3 A♯3 B3 C4 C♯4 D4 D♯4'],
+      ['Sing way, half squeaky, half normal.', 'C♯3 C3 B2 A♯2 A2 G♯2 C3 C♯3 D3 D♯3 E3 F3 F♯3 G3 G♯3'],
+    ],
+    facts: [
+      [
+        ['target', 'Placement', 'Squeaky hinge'],
+        ['note', 'Tone', 'Normal singing'],
+        ['jaw', 'Jaw', 'Fully open'],
+      ],
+      [
+        ['arrow', 'Placement', 'Keep it forward'],
+        ['link', 'Bridges', 'Squeaky hinge to your normal voice'],
+      ],
+      [
+        ['wave', 'Feel', 'Flowing 6/8'],
+        ['link', 'Carry', 'Hinge placement into real singing'],
+      ],
+    ],
+  },
+  vertical: {
+    syl: 'mum lum yum',
+    def: 2,
+    vowels: true,
+    where: [
+      'palate',
+      'Space at the back of your mouth and an open throat. The tone feels warmer, and your neck stays loose.',
+    ],
+    how: [
+      'Shape your mouth into a relaxed, slightly vertical oval, not a wide smile.',
+      'Sing <i>mum-mum</i>, keeping that oval on every note.',
+      'Check in a mirror that the corners of your mouth aren’t spreading.',
+      'If your jaw starts to ache, it’s open too far. Ease off a little.',
+    ],
+    L: [
+      [
+        'Sing mum-mum with a slightly vertical mouth.',
+        'C3 B2 A♯2 A2 C3 C♯3 D3 D♯3 E3 F3 F♯3 G3 G♯3 A3 A♯3 B3 C4 C♯4 D4',
+      ],
+      ['Sing lum-lum through a scale.', 'C3 B2 A♯2 A2 G♯2 C3 C♯3 D3 D♯3 E3 F3 F♯3 G3 G♯3 A3'],
+      ['Sing yum-yum through a 6/8 pattern.', 'C♯3 C3 B2 A♯2 A2 G♯2 C3 C♯3 D3 D♯3 E3 F3 F♯3'],
+    ],
+    facts: [
+      [
+        ['stop', 'Avoid', 'Spreading it wide'],
+        ['head', 'Spread mouth', 'Tenses the neck'],
+        ['note', 'Vertical feels', 'Warmer and freer'],
+      ],
+      [
+        ['jaw', 'Mouth', 'Vertical throughout'],
+        ['stop', 'Breaks', 'Smiling while singing'],
+      ],
+      [
+        ['jaw', 'Mouth', 'Vertical'],
+        ['ear', 'Listen for', 'Freedom and warmth in the tone'],
+      ],
+    ],
+  },
+  nasal: {
+    syl: 'may me nay',
+    def: 1,
+    vowels: true,
+    where: ['nose', 'Forward, in and around your nose and the front of your face, never at the back of your throat.'],
+    how: [
+      'Sing <i>may-may-may</i>, placing the sound right at the front, almost in your nose.',
+      'Keep your head forward and your face relaxed.',
+      'Don’t worry that it sounds nasal. That’s what the exercise is for.',
+      'On the low notes, keep the sound just as far forward so they stay clear.',
+    ],
+    L: [
+      ['Sing may-may-may.', 'C3 B2 A♯2 A2 A♯2 B2 C3 C♯3 D3 D♯3 E3 F3 F♯3 G3 G♯3 A3'],
+      ['Sing me-me-me through a scale.', 'C3 B2 A♯2 A2 G♯2 C3 C♯3 D3 D♯3 E3 F3 F♯3 G3 G♯3 A3'],
+      ['Sing nay-yay-yay through a 6/8 pattern.', 'B2 A♯2 A2 G♯2 G2 G♯2 A2 A♯2 B2 C3 C♯3 D3 D♯3 E3 F3 F♯3 G3'],
+    ],
+    facts: [
+      [
+        ['arrow', 'Placement', 'Forward, nasal'],
+        ['stop', 'Not', 'Back of throat'],
+        ['ear', 'Sounds nasal?', 'Fine. It’s healthily forward'],
+      ],
+      [
+        ['arrow', 'Keep it', 'Bright and forward'],
+        ['spark', 'Low notes', 'Gain clarity and strength'],
+      ],
+      [
+        ['arrow', 'Placement', 'Forward, nasal'],
+        ['link', 'Also', 'A route into your mixed middle range'],
+      ],
+    ],
+  },
+  flex: {
+    syl: 'woo wah he',
+    def: 5,
+    vowels: true,
+    where: ['mask', 'Forward and light at the front of your face, so each note of the run stays distinct.'],
+    how: [
+      'Learn the pattern slowly on <i>woo</i>, making sure every note is clean and in tune.',
+      'Keep each note light and separate, so they don’t blur together.',
+      'Speed up only once it’s accurate, and stay at each speed until it is.',
+      'Once you know it well, try it without the notes playing.',
+    ],
+    L: [
+      ['Sing woo through a pentatonic scale.', 'C3 B2 A♯2 A2 C3 C♯3 D3 D♯3 E3 F3 F♯3 G3 G♯3 A3 A♯3 B3 C4 C♯4'],
+      ['Alternate woo and wah through a longer pattern.', 'C3 B2 A♯2 A2 C3 C♯3 D3 D♯3 E3 F3 F♯3 G3'],
+      ['Sing he through a fast 12/8 pattern.', 'D3 C♯3 C3 B2 C3 C♯3 D3 D♯3 E3 F3 F♯3 G3 G♯3'],
+    ],
+    facts: [
+      [
+        ['speed', 'Speed', 'Slow first, then build'],
+        ['spark', 'Builds', 'Runs, riffs and improvisation'],
+      ],
+      [
+        ['speed', 'Order', 'Accuracy, then speed'],
+        ['next', 'Once you know it', 'Try it a cappella'],
+      ],
+      [
+        ['spark', 'Builds', 'Agility and riffs'],
+        ['speed', 'Once notes are clean', 'Go faster than the recording'],
+      ],
+    ],
+  },
+};

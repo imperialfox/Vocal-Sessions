@@ -268,7 +268,9 @@ def doors(b, t):
     ok(pg.locator('#app [data-a=openCoach]').count() == 0, 'your own exercises (not in the video) have no Play with coach row')
     pg.evaluate("go(()=>{U.view='ex';U.exId='rung'})"); pg.wait_for_timeout(200)
     pg.click('#app [data-a=openCoach][data-k=rung]'); pg.wait_for_timeout(600)
-    ok(pg.evaluate("U.view") == 'coach' and near(pg, CH[7][0], 0.5) and pg.evaluate("COACH.here().l") == 1 and not pg.evaluate(PAUSED),
+    # (Q32: 1.5 s, not 0.5 s: the video plays on for the 600 ms wait, which left under 0.05 s to spare on a busy machine;
+    # Level 2 starts minutes later, so this still proves it's Level 1's start)
+    ok(pg.evaluate("U.view") == 'coach' and near(pg, CH[7][0], 1.5) and pg.evaluate("COACH.here().l") == 1 and not pg.evaluate(PAUSED),
        'it opens the player playing the rung from Level 1')
     pg.click('#barL [data-a=coachBack]'); pg.wait_for_timeout(300)
     ok(pg.evaluate("U.view") == 'ex' and pg.evaluate("U.exId") == 'rung', 'Back goes back to the exercise page')

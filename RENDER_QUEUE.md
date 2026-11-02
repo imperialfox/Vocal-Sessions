@@ -1,6 +1,6 @@
 # Render queue
 
-App work Ivan has queued, in the order he wants it built. Each item is one build, in a fresh chat, started from a handoff (see [HANDOFF.md](HANDOFF.md)). Last checked against `main` at **3.42** (1 Nov 2026). **Shipped:** Q01 · Search: Global Find in 3.22; Q08 · Interface: Native iOS Polish in 3.23; Q02 · Track: Waveform Sections in 3.24; Q09 · Track: Waveform Sections Follow-up in 3.25; Q10 · Interface: HIG Foundations Pass in 3.26; Q03 · Marks: Layered Annotations in 3.27; Q05 · Song Clock: Tap Re-Anchor in 3.28; Q11 · Data: Save Safety in 3.29; Q12 · Song Clock: Timing Integrity in 3.30; Q13 · Interface: Keyboard Guards in 3.31; Q04 · Marks: Practice Guide in 3.32; Q23 · Interface: Status Bar Glow in 3.33; Q14 · Playback: Smooth Frames in 3.34; Q18 · Tests: GitHub Match in 3.35; Q15 · Marks: Register-Ready Data in 3.36; Q16 · Audio: Voice Analysis Foundations in 3.37; Q17 · Hygiene: Dead Code Sweep in 3.38; Q19 · Session: One-Page Flow in 3.39; Q20 · Session: Application Redesign in 3.40; Q21 · Session: Saved Screen in 3.41; Q22 · Session: Clock Redesign in 3.42; Q24 · Coach: Video Redesign (tooling, no app version: the render kit is in `tools/coach-video/`); Q30 · Atlas: Lightbox Core (tooling, no app version: the Atlas is in `tools/atlas/`).
+App work Ivan has queued, in the order he wants it built. Each item is one build, in a fresh chat, started from a handoff (see [HANDOFF.md](HANDOFF.md)). Last checked against `main` at **3.42** (1 Nov 2026). **Shipped:** Q01 · Search: Global Find in 3.22; Q08 · Interface: Native iOS Polish in 3.23; Q02 · Track: Waveform Sections in 3.24; Q09 · Track: Waveform Sections Follow-up in 3.25; Q10 · Interface: HIG Foundations Pass in 3.26; Q03 · Marks: Layered Annotations in 3.27; Q05 · Song Clock: Tap Re-Anchor in 3.28; Q11 · Data: Save Safety in 3.29; Q12 · Song Clock: Timing Integrity in 3.30; Q13 · Interface: Keyboard Guards in 3.31; Q04 · Marks: Practice Guide in 3.32; Q23 · Interface: Status Bar Glow in 3.33; Q14 · Playback: Smooth Frames in 3.34; Q18 · Tests: GitHub Match in 3.35; Q15 · Marks: Register-Ready Data in 3.36; Q16 · Audio: Voice Analysis Foundations in 3.37; Q17 · Hygiene: Dead Code Sweep in 3.38; Q19 · Session: One-Page Flow in 3.39; Q20 · Session: Application Redesign in 3.40; Q21 · Session: Saved Screen in 3.41; Q22 · Session: Clock Redesign in 3.42; Q24 · Coach: Video Redesign (tooling, no app version: the render kit is in `tools/coach-video/`); Q30 · Atlas: Lightbox Core (tooling, no app version: the Atlas is in `tools/atlas/`); Q32 · Exercises: Redesign in 3.48.
 
 - **Every item has two separate gates.** `Awaiting Render` means it is not approved. Ivan's **Render** approves only the named item's exact scope and moves it to `Approved — awaiting Build`; it does not start work or authorize a push. A separate **Build** instruction starts implementation for that approved item. Do not treat approval of one item as approval of the whole queue.
 - **The code wins on what's built.** This is a summary, not a spec. Check each note against the code before relying on it.
@@ -55,7 +55,7 @@ Every ID with its **Status** (`Awaiting Render`, `Approved — awaiting Build`, 
 | Q29 | Session: Song Rating Removal | Shipped 3.47 | Remove "Rate the song", 2 Nov 2026 |
 | Q30 | Atlas: Lightbox Core | Shipped (tooling, no app version) | Visual App Atlas stage 1, Lightbox, 2 Nov 2026 |
 | Q31 | Atlas: Map and Notes | Approved — awaiting Build | Visual App Atlas stage 2, map, notes, export, changes since last scan, 2 Nov 2026; re-scoped onto the Atlas kit, 2 Nov 2026, 19:50 |
-| Q32 | Exercises: Redesign | Approved — awaiting Build | Exercise patterns the app plays, Exercise page redesign (both 31 Oct), merged 2 Nov 2026 |
+| Q32 | Exercises: Redesign | Shipped 3.48 | Exercise patterns the app plays, Exercise page redesign (both 31 Oct), merged 2 Nov 2026 |
 | Q33 | Interface: Glass Native Tuning | Approved — awaiting Build | Glass tuning Recon and glass inventory, 2 Nov 2026 |
 | Q34 | Interface: Native Menus and Controls | Approved — awaiting Build | Component inventory (round 2), worth doing plus smaller wins, 2 Nov 2026 |
 
@@ -74,7 +74,7 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 
 ## Order (2 Nov 2026)
 
-**Q32** is the next app build (Render 2 Nov 2026, 15:56), in two stages: the shared pattern player with the Humming page, then the other 11 pages. **Q33** follows Q32 (Render 2 Nov 2026, 17:41); both change `css/app.css`, so they're built one after the other. **Q34** follows Q33 (Render 2 Nov 2026, 18:12); it uses Q33's materials and springs. Q30 shipped as tooling (Build 2 Nov 2026, 17:57; `tools/atlas/`), and **Q31** builds on it (Render 2 Nov 2026, 15:55, in the same instruction as Q30; re-scoped by a fresh Render at 19:50 to put Vocal Sessions on the universal Atlas kit, built after Prototype kit 1.1 and Atlas kit 1.0; its own Build). Both are tooling with no app version, like Q24, so they can be built outside the app queue's order. Q28 shipped in 3.46 and Q29 in 3.47 (Render 2 Nov 2026, 09:29; Build 09:33, in one instruction, built one after the other). **Q07** is still awaiting Render. Q27 shipped in 3.45 (Build 2 Nov 2026). Q25 shipped in 3.43 and Q26 in 3.44 (Build 2 Nov 2026); Q25–Q27 got Render on 1 Nov 2026 (19:59), in one instruction, each with its own Build. Q19 shipped in 3.39, Q20 in 3.40, Q21 in 3.41 and Q22 in 3.42. Q22 got Render on 31 Oct 2026 (20:59) and was built on the one-page session and the saved screen. Q19–Q21 got Render on 31 Oct 2026 (19:58), in one instruction, each with its own Build. They follow Q17 (shipped in 3.38; Q20 needs Q16's track-while-recording, shipped in 3.37). Q11–Q17 got Render on 30 Oct 2026 (06:42) and have all shipped. What has shipped is in the table's Status column. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
+**Q32** shipped in 3.48 (Render 2 Nov 2026, 15:56; Build 2 Nov 2026, 19:06). **Q33** is the next app build (Render 2 Nov 2026, 17:41); it follows Q32, since both change `css/app.css`. **Q34** follows Q33 (Render 2 Nov 2026, 18:12); it uses Q33's materials and springs. Q30 shipped as tooling (Build 2 Nov 2026, 17:57; `tools/atlas/`), and **Q31** builds on it (Render 2 Nov 2026, 15:55, in the same instruction as Q30; re-scoped by a fresh Render at 19:50 to put Vocal Sessions on the universal Atlas kit, built after Prototype kit 1.1 and Atlas kit 1.0; its own Build). Both are tooling with no app version, like Q24, so they can be built outside the app queue's order. Q28 shipped in 3.46 and Q29 in 3.47 (Render 2 Nov 2026, 09:29; Build 09:33, in one instruction, built one after the other). **Q07** is still awaiting Render. Q27 shipped in 3.45 (Build 2 Nov 2026). Q25 shipped in 3.43 and Q26 in 3.44 (Build 2 Nov 2026); Q25–Q27 got Render on 1 Nov 2026 (19:59), in one instruction, each with its own Build. Q19 shipped in 3.39, Q20 in 3.40, Q21 in 3.41 and Q22 in 3.42. Q22 got Render on 31 Oct 2026 (20:59) and was built on the one-page session and the saved screen. Q19–Q21 got Render on 31 Oct 2026 (19:58), in one instruction, each with its own Build. They follow Q17 (shipped in 3.38; Q20 needs Q16's track-while-recording, shipped in 3.37). Q11–Q17 got Render on 30 Oct 2026 (06:42) and have all shipped. What has shipped is in the table's Status column. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
 
 ## Q07 · Song Clock: Dynamic Sync
 
@@ -115,36 +115,6 @@ Gives the Vocal Sessions Atlas the map, notes Claude can read, export, and what 
   - A rescan after an app change shows the right new, gone and changed screens, and names the versions released in between.
   - The app's own full test suite still passes.
 
-## Q32 · Exercises: Redesign
-
-**Status:** Approved — awaiting Build. **Render:** 2 Nov 2026, 15:56. Ivan: "sure, render", after the scope below was settled in the Blueprint chat (2 Nov 2026), the sound prototype (versions 1–19) and a check against [What it's for](README.md#what-its-for). **Build:** awaiting Ivan's instruction.
-
-Each exercise page explains the exercise and plays it: piano-like notes the app makes itself, from a library of practice patterns. The full design (pattern tables with notes and sources, defaults per exercise, page text, the 60 "what it trains" lines) is in Ivan's project notes: `exercises_redesign_blueprint.md`, `exercises_redesign_page_content_draft.md` and `exercises_redesign_pattern_lines_draft.md`. Ask him to attach them.
-
-- **Scope:**
-  - **One shared pattern player, its own file in `js/` with its own tests.** It owns the sound, the pattern library, the drawing with its playhead, the dock and pills, the Patterns page, the speed slider, the range check, the vowel cue, the round chords and the home ending. A page passes in only a route (key notes, or none), a default pattern and its syllables. The exercise page is its first user, so other places can reuse it later.
-  - **Sound:** made with Web Audio, no recordings. A small sound library where each sound is one entry: Soft tone (default), Piano-ish, Electric piano. Plays with the silent switch on. Starts through `NOW.start()`. Stop fades out over about a third of a second.
-  - **Rounds:** the starting notes and route come from the coach video's note data already in `tools/coach-video/data/audio_timeline.json` (copied, not re-analysed); the tune in each round is a library pattern, not the coach's. A chord before each round (on by default, minor for minor patterns), a held note underneath (on by default) and a home ending: Home chord (default), Home note or Off.
-  - **Pattern library, 60 patterns:** Warm-ups (8), Agility (7), Riffs and runs (33, in four families: Short riffs; Turns and slingshots; Long runs; Minor, blues and gospel) and Flips (12). Patterns can hold some notes longer and mark quick touches (drawn smaller and played lighter). Each exercise opens on its default; the choice is remembered per exercise, with Back to default.
-  - **Favourites:** a star on every pattern; ★ is the first group. It starts with 8 riffs in Bruno Mars's style.
-  - **The Patterns page:** a full page opened from the pattern pill with the app's card zoom (`data-zk` through `go()`, swipe back included). A fixed window at the top plays the pattern exactly like the exercise drawing (playhead, lit dot, ripples) and never highlights itself. Only the tiles scroll. **Press and hold a tile** to fade its steps into one line on what it trains (VoiceOver reads it as the hint); a tap picks and plays.
-  - **Practice controls:** a starting-note stepper and Play in the dock; Stay on this key (repeats the current round); a speed slider like Control Centre's with 12 stops from 0.5× to 2× and Speed up each round (one stop a round, up to 2×, saved speed unchanged); each pattern remembers its speed.
-  - **Your voice:** voice type and range in Settings (tenor G♯2 · A4 · falsetto top D5), range warnings on the card, the stepper and the drawing, and "Stop at my top note" (off by default). Flips, and the falsetto exercises, check against the falsetto top.
-  - **The screen stays awake while playing** (Screen Wake Lock).
-  - **The page:** the drawing card (vowel cue on open-vowel exercises with scale patterns only; dots by default, music notes as an option), three facts with the coach video's icons, the fix tip, "How to do it", "Where you feel it", level dots, a shorter "Why it helps". Vocal slides has no "Hear it" and shows a still picture instead.
-- **Build order:** two stages: (1) the shared pattern player and the Humming page; (2) the other 11 pages.
-- **Defaults if unanswered:** the "what it trains" lines as drafted (Ivan can change any before Build); the starting note is the coach's for the selected level and is remembered per exercise; the pattern doesn't change with the level; patterns play only on the exercise page, not during a session.
-- **Out of scope:** recording on this page (pinned; see Exercise takes below); Listen then sing, a breathing gap and the other parked pattern ideas; custom patterns; playing patterns in a session or along with the coach video; Today widgets and note lengths and attacks (below); foldable layouts.
-- **The repo is public:** the coach video, its audio and the course notes never go in; only the note data already in `tools/coach-video/data/`.
-- **Needs:** 3.47 live on `main`.
-- **Done when:**
-  - The player has its own tests: routes, the range check, the minor-chord rule, quick touches and held notes, Stay on this key and Speed up each round, Favourites, and the Patterns page opening and closing.
-  - Saved choices (pattern, speed and starting note per exercise, Favourites, voice range, sound and options) survive a reload and a backup round trip, and old backups still load.
-  - Every page works at 375 px and in dark mode; Reduce Motion gives fades; the full suite passes.
-  - Ivan checks on his iPhone: sound with the silent switch on, the screen staying awake, the slider and hold feel, and the card zoom.
-
----
-
 ## Q33 · Interface: Glass Native Tuning
 
 **Status:** Approved — awaiting Build. **Render:** 2 Nov 2026, 17:41. Ivan: "render", for the Blueprint as drafted with every *Default if unanswered* taken. **Build:** awaiting Ivan's instruction.
@@ -183,7 +153,7 @@ The app's glass looks and responds like iOS 27, using numbers the Flutter kit `s
   - glass appearing and leaving, and the blur ramp for zooms
   - the floating window's press and drag
   - the tab bar growing as a whole
-- **Needs:** 3.47 live on `main`, and Q32 built first (both change `css/app.css`).
+- **Needs:** 3.48 live on `main` (Q32 shipped there first; both change `css/app.css`).
 - **Done when:**
   - Every glass button above grows to 1 + 17 ÷ its longest side (±0.01) with motion on, is never cut off and is lifted above its neighbours. None shrink, and the bar buttons don't change size.
   - The light and dark tokens match.

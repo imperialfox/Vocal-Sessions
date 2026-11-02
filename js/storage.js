@@ -17,13 +17,18 @@ function load() {
     // storage itself can't be read: leave it alone rather than save an empty app over it
     if (!SAVE_LOCK)
       afterLaunch(() =>
-        toast('Your saved data couldn’t be opened. It’s been left as it was, and changes won’t be saved this time.', 9000, 'long')
+        toast(
+          'Your saved data couldn’t be opened. It’s been left as it was, and changes won’t be saved this time.',
+          9000,
+          'long'
+        )
       );
     lockSaves('unreadable');
     return {};
   }
   if (raw == null || raw === '' || raw === 'null') return {};
-  let d, out = null;
+  let d,
+    out = null;
   try {
     d = JSON.parse(raw);
   } catch (e) {}
@@ -84,6 +89,12 @@ function cleanData(d) {
     prefs: obj(d.prefs), // settings that travel with backups (3.10.1: Recall's peek length)
   });
   if (out.prefs.peek != null && ![1, 2, 3, 5].includes(+out.prefs.peek)) delete out.prefs.peek;
+  // Q32 the pattern player's saved choices: it checks its own fields (patterns.js) and keeps any it doesn't know
+  if (out.prefs.pat !== undefined && typeof PAT !== 'undefined') {
+    const c = PAT.clean(out.prefs.pat);
+    if (c) out.prefs.pat = c;
+    else delete out.prefs.pat;
+  }
   for (const k in out.months)
     if (!(+out.months[k] >= 0) || !isFinite(+out.months[k])) delete out.months[k];
     else out.months[k] = +out.months[k];

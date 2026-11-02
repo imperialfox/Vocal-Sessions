@@ -79,9 +79,13 @@ function scrToday() {
     Math.round(w.mins) +
     ' of your ' +
     WEEK_TARGET +
-    '-minute goal. Open Progress"><svg viewBox="0 0 300 165" aria-hidden="true"><path d="' + ARC_D + '" fill="none" stroke="var(--fill)" stroke-width="16" stroke-linecap="round"/>' +
+    '-minute goal. Open Progress"><svg viewBox="0 0 300 165" aria-hidden="true"><path d="' +
+    ARC_D +
+    '" fill="none" stroke="var(--fill)" stroke-width="16" stroke-linecap="round"/>' +
     (p > 0
-      ? '<path d="' + ARC_D + '" pathLength="100" stroke-dasharray="' +
+      ? '<path d="' +
+        ARC_D +
+        '" pathLength="100" stroke-dasharray="' +
         p +
         ' 100" fill="none" stroke="' +
         (p >= 100 ? 'var(--good)' : 'var(--accent)') +
@@ -806,11 +810,18 @@ function scrEx() {
   if (!e) return '<div class="grp"><div class="empty">This exercise was removed.</div></div>';
   const d = DESC[e.id];
   const isF = FOUND.some((x) => x.id === e.id);
+  const redesigned = !!(d && EX_PAGE[e.id]);
   let h =
-    tile(e, true) +
-    '<h1>' +
-    esc(e.name) +
-    '</h1><div class="ex-h"><span class="badge">' +
+    (redesigned
+      ? '<div class="exti">' +
+        tile(e, true) +
+        '<div><h1>' +
+        esc(e.name) +
+        '</h1><div class="exsub">' +
+        esc(cap1(lastDone(e.id))) +
+        '</div></div></div>'
+      : tile(e, true) + '<h1>' + esc(e.name) + '</h1>') +
+    '<div class="ex-h"><span class="badge">' +
     (isF ? 'Foundation' : 'Rotation') +
     '</span><span class="badge">' +
     esc(e.focus) +
@@ -826,7 +837,11 @@ function scrEx() {
     '" aria-selected="' +
     (U.exTab === 'history') +
     '">History</button></div>';
-  if (U.exTab === 'summary') {
+  const P = d && EX_PAGE[e.id];
+  if (U.exTab === 'summary' && P) {
+    h += exSummary(e, d, P); // Q32: the redesigned page, with the pattern player
+  } else if (U.exTab === 'summary') {
+    PAT.use(null);
     h +=
       '<div class="hdr exh">Last done</div><div class="grp"><div class="row"><span class="lbl">' +
       lastDone(e.id)
@@ -960,6 +975,168 @@ function scrEx() {
   }
   return h;
 }
+/* ===== The exercise page (Q32) =====
+   The page explains the exercise and plays it: the drawing card and the dock come from the shared pattern player
+   (patterns.js), which this page only tells its route (the coach's starting notes for the level shown), the default
+   pattern and what you sing. Everything else is the page's own: the facts, the fix tip, How to do it, Where you feel
+   it, the level dots, Why it helps, the coach video row and In a song. */
+const cap1 = (s) => String(s).charAt(0).toUpperCase() + String(s).slice(1);
+// the level the page shows: the last one logged, until a level dot is tapped
+function exLevel(id) {
+  if (U.exLv && U.exLv.id === id) return U.exLv.lv;
+  return exLogged(id) || 1;
+}
+function exLogged(id) {
+  const h = exHistory(id);
+  return h.length ? Math.min(3, Math.max(1, +h[h.length - 1].lv || 1)) : 0;
+}
+// a colour dark enough to read on white (4.5:1), for the facts' icons in light mode; dark mode uses the colour as it is
+function exInk(col) {
+  const hex =
+    { 'var(--sys-blue)': '007aff', 'var(--coral)': 'ff3b30' }[col] ||
+    (/^#([0-9a-f]{6})$/i.exec(col) || [])[1] ||
+    '8e8e93';
+  const rgb = (h) => h.match(/\w\w/g).map((x) => parseInt(x, 16));
+  const lum = (h) => {
+    const v = rgb(h).map((x) => ((x /= 255), x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4)));
+    return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2];
+  };
+  const mix = (a, p) =>
+    rgb(a)
+      .map((v) =>
+        Math.round(v * (1 - p))
+          .toString(16)
+          .padStart(2, '0')
+      )
+      .join('');
+  let p = 0.3,
+    k = mix(hex, p);
+  while (1.05 / (lum(k) + 0.05) < 4.5 && p < 0.8) k = mix(hex, (p += 0.02));
+  return '#' + k;
+}
+// Where you feel it: a head in profile with a glow on the spot
+function exHead(spot, col) {
+  const P = { mask: [96, 66], palate: [90, 86], nose: [108, 70], lips: [106, 98], head: [66, 52], centre: [70, 64] }[
+    spot
+  ] || [90, 86];
+  return (
+    '<svg class="exhead" viewBox="0 0 150 150" aria-hidden="true"><path d="M66 16 C38 16 22 38 22 66 C22 88 30 102 42 110 L42 140 L88 140 L90 120 C100 120 108 117 110 108 L112 98 L119 94 L112 88 L114 82 L124 74 L112 64 C112 36 94 16 66 16 Z" class="exhd"/>' +
+    '<circle class="exglow" cx="' +
+    P[0] +
+    '" cy="' +
+    P[1] +
+    '" r="18" fill="' +
+    col +
+    '"/><circle cx="' +
+    P[0] +
+    '" cy="' +
+    P[1] +
+    '" r="5" fill="' +
+    col +
+    '"/></svg>'
+  );
+}
+// Vocal slides has no "Hear it": a still picture of short, medium and full-range slides instead of the player
+function exSlides(col) {
+  const arc = (d) => '<path d="' + d + '" fill="none" stroke="' + col + '" stroke-width="4" stroke-linecap="round"/>';
+  return (
+    '<div class="pcard"><svg class="pdraw" viewBox="0 0 300 118" role="img" aria-label="Short, medium and full-range slides"><line x1="0" y1="96" x2="300" y2="96" class="pbase"/>' +
+    arc('M12 96 C30 96 38 66 52 66 C66 66 74 96 92 96') +
+    arc('M104 96 C124 96 132 42 147 42 C162 42 170 96 190 96') +
+    arc('M202 96 C222 96 230 14 246 14 C262 14 270 96 290 96') +
+    [
+      ['Short', 52],
+      ['Medium', 147],
+      ['Full range', 246],
+    ]
+      .map(([l, x]) => '<text x="' + x + '" y="114" text-anchor="middle" class="plab">' + l + '</text>')
+      .join('') +
+    '</svg><div class="pstat"><b>Follow the coach</b><span>No “Hear it” for slides</span></div></div>'
+  );
+}
+function exSummary(e, d, P) {
+  const lv = exLevel(e.id),
+    L = P.L[lv - 1],
+    col = FOCUS_COL[e.focus] || 'var(--sys-gray)';
+  const route = L[1] ? PAT.notes(L[1], L[2] || 0) : [];
+  PAT.use(
+    route.length
+      ? { key: e.id, name: e.name, col, route, def: P.def, syl: P.syl, vowels: !!P.vowels, fal: !!P.fal }
+      : null
+  );
+  const why = (d.why.match(/[^.!?]+[.!?]+(\s|$)/g) || [d.why]).map((s) => s.trim()),
+    tip = why[why.length - 1],
+    facts = P.facts[lv - 1] || [],
+    logged = exLogged(e.id),
+    more = U.exMore === e.id,
+    ink = exInk(col);
+  return (
+    (route.length ? PAT.card() : exSlides(col)) +
+    '<div class="exfacts" style="--fi:' +
+    ink +
+    ';--fid:' +
+    col +
+    ';grid-template-columns:repeat(' +
+    facts.length +
+    ',minmax(0,1fr))">' +
+    facts
+      .map(
+        (f) =>
+          '<div class="exfact">' +
+          (FACT_ICON[f[0]] ? '<svg viewBox="0 0 24 24" aria-hidden="true">' + FACT_ICON[f[0]] + '</svg>' : '') +
+          '<span class="l">' +
+          esc(f[1]) +
+          '</span><span class="v">' +
+          esc(f[2]) +
+          '</span></div>'
+      )
+      .join('') +
+    '</div>' +
+    '<div class="extip"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.8.8 1 1.6 1 2.5h6c0-.9.2-1.7 1-2.5A6 6 0 0 0 12 3z"/></svg><span>' +
+    tip +
+    '</span></div>' +
+    '<div class="hdr exs">How to do it</div><ol class="exsteps">' +
+    P.how.map((s) => '<li><span>' + s + '</span></li>').join('') +
+    '</ol>' +
+    '<div class="hdr exs">Where you feel it</div><div class="exwhere">' +
+    exHead(P.where[0], col) +
+    '<span>' +
+    P.where[1] +
+    '</span></div>' +
+    '<div class="hdr exs">Levels</div><div class="exlvls" role="radiogroup" aria-label="Level" style="--c:' +
+    col +
+    '">' +
+    [1, 2, 3]
+      .map(
+        (n) =>
+          '<button class="exlvl' +
+          (n === lv ? ' on' : '') +
+          '" role="radio" aria-checked="' +
+          (n === lv) +
+          '" aria-label="Level ' +
+          n +
+          '" data-a="exLevel" data-v="' +
+          n +
+          '">' +
+          n +
+          '</button>'
+      )
+      .join('') +
+    '</div><p class="exlvt">' +
+    esc(L[0]) +
+    '</p>' +
+    (logged ? '<p class="foot exlog">Last logged at level ' + logged + '</p>' : '') +
+    '<div class="hdr exs">Why it helps</div><div class="grp"><div class="prose">' +
+    (more || why.length < 3
+      ? why.slice(0, -1).join(' ') || why[0]
+      : why[0] + ' <button class="exmore" data-a="exMore">More</button>') +
+    '</div></div>' +
+    COACH.exerciseRow(e.id) +
+    '<div class="hdr exs">In a song</div><div class="grp"><div class="prose"><ul>' +
+    d.song.map((x) => '<li><b>' + x[0] + '.</b> ' + x[1] + '</li>').join('') +
+    '</ul></div></div>'
+  );
+}
 // one exercise with its level picker and notes pencil (the Edit session sheet)
 function exBlock(e, a, v, skip, T, src) {
   const n = noteStr((T.xn || {})[e.id]);
@@ -1061,7 +1238,10 @@ function takeRow(t, o) {
 function takesBlock(list, o) {
   if (!list.length) return '';
   const nm = (t) => (o.name ? o.name(t) : 'Take');
-  let h = '<div class="grp tkgrp">' + takeRow(list[0], { fresh: o.fresh, name: nm(list[0]), date: o.date && !sameDay(list[0].created) }) + '</div>';
+  let h =
+    '<div class="grp tkgrp">' +
+    takeRow(list[0], { fresh: o.fresh, name: nm(list[0]), date: o.date && !sameDay(list[0].created) }) +
+    '</div>';
   if (o.prev) h += APPL.cmpHTML(list[0], o.prev, nm(o.prev));
   if (list.length > 1)
     h +=
@@ -1336,10 +1516,18 @@ function flowLine(i) {
   );
 }
 function flowSec(i, cur) {
-  const st = U.fEdit === i && i < cur ? 'reopened' : i < cur ? 'folded' : i === cur ? 'active' : i === cur + 1 ? 'preview' : '';
+  const st =
+    U.fEdit === i && i < cur ? 'reopened' : i < cur ? 'folded' : i === cur ? 'active' : i === cur + 1 ? 'preview' : '';
   if (!st) return '';
   const s = FLOW_STEPS[i];
-  let h = '<section class="osec ' + st + '" data-sec="' + i + '"' + (st === 'preview' ? ' inert aria-hidden="true"' : '') + '>';
+  let h =
+    '<section class="osec ' +
+    st +
+    '" data-sec="' +
+    i +
+    '"' +
+    (st === 'preview' ? ' inert aria-hidden="true"' : '') +
+    '>';
   if (st === 'folded') h += flowLine(i);
   else if (st === 'reopened')
     h +=
@@ -1348,7 +1536,15 @@ function flowSec(i, cur) {
       '</h1><button class="osdone" data-a="flowDone">Done</button></div><p class="note">Change anything, then tap Done.</p>' +
       flowBody(i);
   else if (st === 'preview')
-    h += '<p class="osnext">Coming up · ' + (i + 1) + ' of 3</p><h1>' + s.name + '</h1><p class="note">' + s.desc + '</p>' + flowBody(i);
+    h +=
+      '<p class="osnext">Coming up · ' +
+      (i + 1) +
+      ' of 3</p><h1>' +
+      s.name +
+      '</h1><p class="note">' +
+      s.desc +
+      '</p>' +
+      flowBody(i);
   else h += '<h1>' + s.name + '</h1><p class="note">' + s.desc + '</p>' + flowBody(i);
   return h + '</section>';
 }

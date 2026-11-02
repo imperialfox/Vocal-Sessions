@@ -9,6 +9,31 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.48 · 2 Nov 2026
+*Every exercise page explains the exercise and plays it (Q32)*
+<!-- area: practice -->
+
+Each exercise's page now teaches it and gets you singing straight away, with no video or other app. The app plays the pattern itself, with piano-like notes it makes (no recordings), from a library of 60 practice patterns.
+
+**The page**
+- A drawing of the pattern with a red playhead, three facts for the level with the coach video's icons, a fix tip, **How to do it**, **Where you feel it** (a glow on a head drawing), the level dots on the level you last logged, a shorter Why it helps with More, then the coach video and In a song as before.
+- Vocal slides has a picture of short, medium and full-range slides instead, since the coach video has no notes for it.
+
+**Hear it**
+- Play starts on the coach's notes for the level and moves up a key each round. Before each round the new key's chord plays (minor for minor patterns), a low note holds underneath, and after the last round it goes back to the starting key. Stop fades out gently.
+- The dock has the pattern, its speed, the sound (Soft tone, Piano-ish or Electric piano), the starting note, **Stay on this key** and Play.
+- The speed pill opens a slider like Control Centre's, from 0.5× to 2×. **Speed up each round** goes one step faster every round, up to 2×. Each pattern keeps its own speed.
+- It plays with the silent switch on and keeps the screen awake while it plays.
+
+**Patterns**
+- Tap the pattern to open the Patterns page: Warm-ups, Agility, Riffs and runs, Flips (full voice into falsetto) and ★ Favourites, started with riffs in Bruno Mars's style. A window at the top plays each pattern like the exercise page does.
+- Tap a pattern to choose it and hear it. Press and hold to see what it trains. Each exercise remembers its pattern and starting note, with Back to default.
+
+**Your voice**
+- The card says when a pattern goes above or below your range, and **Settings › Your voice** sets it (tenor to start). Falsetto exercises and Flips check against your falsetto top. **Stop at my top note** ends before going above it.
+- **Settings › Pattern player** has the sound, the held note, the chord before each round, the ending, the vowel cue and dots or music notes on the drawing.
+- Your choices go into backups. Nothing else about your data changes.
+
 ## 3.47 · 2 Nov 2026
 *No more rating the song at the end of a session (Q29)*
 <!-- area: practice -->

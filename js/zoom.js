@@ -67,8 +67,12 @@ const ZOOM = (() => {
   /* ----- measuring ----- */
   const box = (r) => ({ l: r.left, t: r.top, r: r.right, b: r.bottom, w: r.width, h: r.height });
   const rect = (el) => box(el.getBoundingClientRect());
-  const cardEl = (key) =>
-    key ? document.querySelector('#app [data-zk="' + (window.CSS && CSS.escape ? CSS.escape(key) : key) + '"]') : null;
+  // a card on the page, or (Q32) in the dock: the pattern player's pattern pill
+  const cardEl = (key) => {
+    if (!key) return null;
+    const k = window.CSS && CSS.escape ? CSS.escape(key) : key;
+    return document.querySelector('#app [data-zk="' + k + '"]') || document.querySelector('#dock [data-zk="' + k + '"]');
+  };
   // the first line of the card's label (a row's name, not its small print), so the page title starts there
   function labelRect(c) {
     const l = c.querySelector('.lbl, .rtxt b');

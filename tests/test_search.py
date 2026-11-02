@@ -54,7 +54,8 @@ def circle(b, t):
         ok(0 <= lay['gap'] <= 12 and lay['mid'] < 1.5 and lay['h'] >= 44, f'{tab}: beside the tab bar, centred on it ({lay})')
         ok(pg.evaluate("document.documentElement.scrollWidth<=innerWidth"), f'{tab}: nothing scrolls sideways')
     # a pushed page keeps the tab bar, so it keeps the circle too
-    pg.evaluate("go(()=>{U.tab='exercises';U.view='ex';U.exId='rung';U.prevTab='exercises'})"); pg.wait_for_timeout(150)
+    # (Q32: an exercise's Summary has the pattern player's dock instead, so its History tab is checked)
+    pg.evaluate("go(()=>{U.tab='exercises';U.view='ex';U.exId='rung';U.exTab='history';U.prevTab='exercises'})"); pg.wait_for_timeout(150)
     ok(pg.locator('#dock .scirc').count() == 1, 'an exercise page keeps the circle')
     # the tab bar collapsing on scroll (3.23, Q08): a pill at the left edge, the circle stays at the right, the same height
     pg.evaluate("go(()=>{U.tab='exercises';U.view=null})"); pg.wait_for_timeout(150)

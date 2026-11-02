@@ -119,7 +119,8 @@ def interrupt(b, t):
     # tapping another tab mid-zoom just clears it
     pg.click(SUG)
     pg.wait_for_timeout(100)
-    pg.click('#dock [data-a=tab][data-v=today]', force=True)
+    # (Q32: an exercise's Summary has the pattern player where the tab bar was, so the tab's own action is sent)
+    pg.evaluate("(()=>{const b=document.createElement('button');b.dataset.a='tab';b.dataset.v='today';document.body.appendChild(b);b.click();b.remove()})()")
     quiet(pg)
     ok(where(pg) == 'today|' and pg.evaluate(CLEAN), 'switching tabs mid-zoom leaves nothing behind')
     # scrolling mid-zoom finishes it at once

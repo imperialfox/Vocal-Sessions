@@ -60,3 +60,28 @@ const tile = (e, big) =>
   '">' +
   (GLYPH[e.id] || GLYPH.custom) +
   '</span>';
+
+/* The icons on the exercise page's facts (Q32), from the coach video's slides (tools/coach-video/slide.html). Drawn at
+   24 × 24 with a 2 px stroke in the exercise's colour (darkened in light mode until it reads on white) */
+const FACT_ICON = {
+  target: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/>',
+  arrow: '<path d="M5 12h12M13 7l5 5-5 5"/>',
+  wave: '<path d="M3 12c2.5-3 4.5-3 6 0s3.5 3 6 0 4.5-3 6 0"/>',
+  up: '<path d="M12 19V6M6 11l6-6 6 6"/>',
+  stop: '<circle cx="12" cy="12" r="8"/><path d="M8 8l8 8"/>',
+  hand: '<path d="M6 12V7a1.5 1.5 0 0 1 3 0v4M9 11V5.5a1.5 1.5 0 0 1 3 0V11M12 11V6.5a1.5 1.5 0 0 1 3 0V12M15 12V9a1.5 1.5 0 0 1 3 0v4a7 7 0 0 1-7 7h-1a5 5 0 0 1-4-2l-3-4a1.5 1.5 0 0 1 2.3-1.9L6 15"/>',
+  jaw: '<path d="M6.5 9.5c1.6-2.6 9.4-2.6 11 0"/><path d="M6 13c0 4.5 2.8 7.5 6 7.5s6-3 6-7.5"/><path d="M6 13h12"/>',
+  mouth: '<path d="M3.5 12c3.2-4 13.8-4 17 0-3.2 4-13.8 4-17 0z"/><path d="M3.5 12h17"/>',
+  head: '<circle cx="12" cy="8.5" r="4.5"/><path d="M4.5 20.5c1-4 4-6 7.5-6s6.5 2 7.5 6"/>',
+  volume: '<path d="M4 9.5h3.5L12 6v12l-4.5-3.5H4z"/><path d="M15.5 9.5a3.5 3.5 0 0 1 0 5M18 7a7 7 0 0 1 0 10"/>',
+  speed: '<path d="M4 17a8 8 0 1 1 16 0"/><path d="M12 17l4-5"/>',
+  breath: '<path d="M3 9h11a3 3 0 1 0-3-3"/><path d="M3 14h15a3 3 0 1 1-3 3"/>',
+  straw: '<path d="M7 9.5h10L15.5 21h-7z"/><path d="M12 9.5 15 3h4"/>',
+  spark: '<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/>',
+  link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7L12 6.3"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
+  next: '<circle cx="12" cy="12" r="8.5"/><path d="M10.5 8.5 14 12l-3.5 3.5"/>',
+  ear: '<path d="M7 9a5 5 0 0 1 10 0c0 3-3 4-3 7a3 3 0 0 1-6 0"/><path d="M10 9a2 2 0 0 1 4 0"/>',
+  repeat:
+    '<path d="M4 11a8 8 0 0 1 14-4l2 2"/><path d="M20 4v5h-5"/><path d="M20 13a8 8 0 0 1-14 4l-2-2"/><path d="M4 20v-5h5"/>',
+  note: '<path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/>',
+};

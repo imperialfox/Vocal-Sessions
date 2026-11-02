@@ -31,6 +31,11 @@ const SET = (() => {
     // Q04 the Marks guide: an open book
     guide:
       '<svg viewBox="0 0 24 24"><path d="M12 6.6c-2.1-1.6-4.9-2.2-8.2-1.8v12.9c3.3-.4 6.1.2 8.2 1.8 2.1-1.6 4.9-2.2 8.2-1.8V4.8c-3.3-.4-6.1.2-8.2 1.8z"/><path d="M12 6.6v12.9"/></svg>',
+    // Q32 Your voice: a microphone with its range; Pattern player: piano keys
+    voice:
+      '<svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.6 11.4a6.4 6.4 0 0 0 12.8 0M12 17.8V21M8.6 21h6.8"/></svg>',
+    player:
+      '<svg viewBox="0 0 24 24"><rect x="3.4" y="4.6" width="17.2" height="14.8" rx="2.6"/><path d="M8.2 4.6v14.8M12 4.6v14.8M15.8 4.6v14.8"/><path d="M8.2 4.6v8.6M15.8 4.6v8.6" stroke-width="3.2"/></svg>',
     code: '<svg viewBox="0 0 24 24"><circle cx="7" cy="5.6" r="2"/><circle cx="7" cy="18.4" r="2"/><circle cx="17" cy="8.6" r="2"/><path d="M7 7.6v8.8M17 10.6c0 3.8-10 1.6-10 5.8"/></svg>',
   };
   const COL = {
@@ -42,6 +47,8 @@ const SET = (() => {
     access: 'var(--sys-blue)',
     log: 'var(--sys-purple)',
     guide: 'var(--sys-pink)',
+    voice: 'var(--sys-teal)',
+    player: 'var(--sys-indigo)',
     code: 'var(--tile-ink)',
   };
   const TITLE = {
@@ -49,11 +56,20 @@ const SET = (() => {
     storage: 'Storage',
     recall: 'Recall',
     coach: 'Coach video',
+    voice: 'Your voice',
+    player: 'Pattern player',
     appear: 'Appearance',
     access: 'Accessibility',
   };
   const PAGES = Object.keys(TITLE);
-  const ico = (k, big) => '<span class="tile' + (big ? ' big' : '') + '" style="background:' + COL[k] + '" aria-hidden="true">' + G[k] + '</span>';
+  const ico = (k, big) =>
+    '<span class="tile' +
+    (big ? ' big' : '') +
+    '" style="background:' +
+    COL[k] +
+    '" aria-hidden="true">' +
+    G[k] +
+    '</span>';
   const out = '<svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 16L16 8M9.5 8H16v6.5"/></svg>';
 
   /* ----- this device's motion settings ----- */
@@ -98,7 +114,9 @@ const SET = (() => {
   // the wash behind Today's header: three soft blobs drifting very slowly, and a faint grain. It scrolls with the
   // page; Reduce motion (and motion off) holds the blobs still
   const wash = () =>
-    gradOn() ? '<div class="tgrad" aria-hidden="true"><i class="tg1"></i><i class="tg2"></i><i class="tg3"></i></div>' : '';
+    gradOn()
+      ? '<div class="tgrad" aria-hidden="true"><i class="tg1"></i><i class="tg2"></i><i class="tg3"></i></div>'
+      : '';
   const REDUCE = [
     ['system', () => 'Match ' + deviceName()],
     ['on', () => 'On'],
@@ -139,6 +157,8 @@ const SET = (() => {
       storage: { t: mb(total()) },
       recall: { t: peekSecs() + ' s' },
       coach: { t: COACH.busy() ? 'Adding…' : COACH.has() ? 'Added' : 'Not added' },
+      voice: { t: PAT.vals().voice },
+      player: { t: PAT.vals().player },
       appear: { t: '' },
       access: { t: { system: 'System', on: 'On', off: 'Off' }[reduceMode()] },
     };
@@ -181,6 +201,8 @@ const SET = (() => {
       '<span class="lbl">Marks guide</span>' +
       chev +
       '</button>' +
+      row('voice', v.voice) + // Q32: your voice range and the pattern player's sound (patterns.js)
+      row('player', v.player) +
       row('appear', v.appear) +
       row('access', v.access) +
       '</div>' +
@@ -318,7 +340,9 @@ const SET = (() => {
       mb(all) +
       ' used</div><div class="setbar" aria-hidden="true">' +
       (all
-        ? shown.map((x) => '<i style="flex:' + Math.max(x.b / all, 0.012).toFixed(4) + ';background:' + x.c + '"></i>').join('')
+        ? shown
+            .map((x) => '<i style="flex:' + Math.max(x.b / all, 0.012).toFixed(4) + ';background:' + x.c + '"></i>')
+            .join('')
         : '<i style="flex:1;background:var(--fill)"></i>') +
       '</div><div class="setkey" aria-hidden="true">' +
       s.map((x) => '<span><i style="background:' + x.c + '"></i>' + x.l + '</span>').join('') +
@@ -428,7 +452,7 @@ const SET = (() => {
   }
 
   function page() {
-    const f = { backup, storage, recall, coach, appear, access }[U.setPg];
+    const f = { backup, storage, recall, coach, appear, access, voice: PAT.voicePage, player: PAT.playerPage }[U.setPg];
     return f ? f() : main();
   }
   const title = () => TITLE[U.setPg] || 'Settings';
@@ -436,17 +460,26 @@ const SET = (() => {
   /* ----- getting around ----- */
   function open(k) {
     if (!PAGES.includes(k)) return;
+    U.setFrom = null;
     go(() => {
       U.tab = 'settings';
       U.view = 'set';
       U.setPg = k;
     });
   }
+  // Back to the main list, or (Q32) to the exercise page Your voice was opened from
   function back() {
+    const f = U.setFrom;
+    U.setFrom = null;
     go(() => {
+      U.setPg = null;
+      if (f) {
+        U.tab = f.tab;
+        U.view = f.view;
+        return;
+      }
       U.tab = 'settings';
       U.view = null;
-      U.setPg = null;
     });
   }
   // Settings is on screen (the main list or one of its pages), so it can be redrawn when something changes
