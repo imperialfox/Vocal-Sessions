@@ -57,7 +57,7 @@ Every ID with its **Status** (`Awaiting Render`, `Approved — awaiting Build`, 
 | Q31 | Atlas: Map and Notes | Approved — awaiting Build | Visual App Atlas stage 2, map, notes, export, changes since last scan, 2 Nov 2026; re-scoped onto the Atlas kit, 2 Nov 2026, 19:50 |
 | Q32 | Exercises: Redesign | Shipped 3.48 | Exercise patterns the app plays, Exercise page redesign (both 31 Oct), merged 2 Nov 2026 |
 | Q33 | Interface: Glass Native Tuning | Approved — awaiting Build | Glass tuning Recon and glass inventory, 2 Nov 2026 |
-| Q34 | Interface: Native Menus and Controls | Approved — awaiting Build | Component inventory (round 2), worth doing plus smaller wins, 2 Nov 2026 |
+| Q34 | Interface: Native Menus and Controls | Blocked (on hold for the parts kit, 2 Nov 2026) | Component inventory (round 2), worth doing plus smaller wins, 2 Nov 2026 |
 
 Work shipped before this standard (for example Track 1 and Song Clock A1) keeps its version numbers and has no queue ID.
 
@@ -167,7 +167,7 @@ The app's glass looks and responds like iOS 27, using numbers the Flutter kit `s
 
 ## Q34 · Interface: Native Menus and Controls
 
-**Status:** Approved — awaiting Build. **Render:** 2 Nov 2026, 18:12. Ivan: "render", for the Blueprint as drafted with every *Default if unanswered* taken, after choosing both the worth-doing items and the smaller wins "for that extra polish" (18:05). **Build:** awaiting Ivan's instruction.
+**Status:** Blocked: on hold for the parts kit (Ivan, 2 Nov 2026, 22:11: "yep hold"). Menus and controls will be built once in the parts kit, a separate kit planned from the Flutter library's parts, and this item gets a fresh Render when Vocal Sessions moves onto it. Do not Build the scope below as written. **Render:** 2 Nov 2026, 18:12. Ivan: "render", for the Blueprint as drafted with every *Default if unanswered* taken, after choosing both the worth-doing items and the smaller wins "for that extra polish" (18:05). **Build:** awaiting Ivan's instruction.
 
 Menus, the top bar's buttons and the small controls move like iOS 27. Where the Flutter kit `sdegenaar/liquid_glass_widgets` (MIT) measured a number against real iPhone recordings, that number is used; otherwise its by-eye numbers are. The handoff and the inventory are in Ivan's project notes: `q34_interface_native_menus_controls_handoff.md` and `component_inventory_2026-11-02.md` (his private page "Component inventory · Vocal Sessions"). The measured values are in `liquid_glass_widgets_values.md` (+ `_part2.md`). Ask him to attach them.
 
