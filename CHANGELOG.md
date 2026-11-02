@@ -9,6 +9,15 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.45 · 2 Nov 2026
+*Every tab label in full with the iPhone on its side (Q27)*
+<!-- area: look -->
+
+With the iPhone on its side, the tab bar shows every tab's name in full beside the search circle. "Exercises" used to read "Exerc".
+
+- When the bar is short of room, the space either side of each tab tightens so every icon and name fits. The names stay the same size.
+- With room to spare, the tabs look exactly as they did. Upright, iPad and Mac are unchanged.
+
 ## 3.44 · 2 Nov 2026
 *The floating window: picture in picture, tuck it away, one look (Q26)*
 <!-- area: practice -->

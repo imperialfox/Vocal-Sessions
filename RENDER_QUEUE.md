@@ -49,7 +49,7 @@ Every ID with its **Status** (`Awaiting Render`, `Approved — awaiting Build`, 
 | Q24 | Coach: Video Redesign | Shipped (tooling, no app version) | Coach video redesign, 31 Oct–1 Nov 2026 |
 | Q25 | Coach: Frame-Accurate Chapters | Shipped 3.43 | Coach timings, level picker, 1 Nov 2026 |
 | Q26 | Window: Picture in Picture | Shipped 3.44 | Floating window picture in picture and audit fixes, 1 Nov 2026 |
-| Q27 | Interface: Landscape Tab Bar Fit | Approved — awaiting Build | "Exerc" cut off on its side, 1 Nov 2026 |
+| Q27 | Interface: Landscape Tab Bar Fit | Shipped 3.45 | "Exerc" cut off on its side, 1 Nov 2026 |
 
 Work shipped before this standard (for example Track 1 and Song Clock A1) keeps its version numbers and has no queue ID.
 
@@ -64,19 +64,9 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 
 ---
 
-## Order (1 Nov 2026)
+## Order (2 Nov 2026)
 
-Next to build: **Q27** (Render given by Ivan on 1 Nov 2026, 19:59, with Q25 and Q26, in one instruction, each with its own Build; it can go any time). Then **Q07** (awaiting Render). Q25 shipped in 3.43 and Q26 in 3.44 (Build 2 Nov 2026). Q19 shipped in 3.39, Q20 in 3.40, Q21 in 3.41 and Q22 in 3.42. Q22 got Render on 31 Oct 2026 (20:59) and was built on the one-page session and the saved screen. Q19–Q21 got Render on 31 Oct 2026 (19:58), in one instruction, each with its own Build. They follow Q17 (shipped in 3.38; Q20 needs Q16's track-while-recording, shipped in 3.37). Q11–Q17 got Render on 30 Oct 2026 (06:42) and have all shipped. What has shipped is in the table's Status column. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
-
-## Q27 · Interface: Landscape Tab Bar Fit
-
-**Status:** Approved — awaiting Build. **Approval:** Render given by Ivan on 1 Nov 2026 (19:59) for the scope below, with the default. The build handoff is in Ivan's project notes as `q27_interface_landscape_tab_bar_fit_handoff.md`.
-**Needs:** nothing in particular; it can be built before or after Q25 and Q26.
-
-- **Goal:** with the iPhone on its side, every tab label shows in full. At 844 × 390 "Exercises" reads "Exerc" under the search circle (found 1 Nov 2026 on 3.42).
-- **Scope:** when the compact tab bar is short of room, the tabs tighten (padding and gap) so every icon and label fits beside the search circle. Label sizes stay the same.
-- **Out of scope:** the upright tab bar; the iPad and Mac tab capsule or sidebar; the floating window.
-- **Done when:** a test checks no tab label is cut off at 844 × 390, 812 × 375 and 667 × 375, in light and dark; the full suite passes; changelog headline ends "(Q27)".
+Next: **Q07** (awaiting Render). Q27 shipped in 3.45 (Build 2 Nov 2026). Q25 shipped in 3.43 and Q26 in 3.44 (Build 2 Nov 2026); Q25–Q27 got Render on 1 Nov 2026 (19:59), in one instruction, each with its own Build. Q19 shipped in 3.39, Q20 in 3.40, Q21 in 3.41 and Q22 in 3.42. Q22 got Render on 31 Oct 2026 (20:59) and was built on the one-page session and the saved screen. Q19–Q21 got Render on 31 Oct 2026 (19:58), in one instruction, each with its own Build. They follow Q17 (shipped in 3.38; Q20 needs Q16's track-while-recording, shipped in 3.37). Q11–Q17 got Render on 30 Oct 2026 (06:42) and have all shipped. What has shipped is in the table's Status column. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
 
 ## Q07 · Song Clock: Dynamic Sync
 

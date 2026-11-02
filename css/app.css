@@ -3064,8 +3064,25 @@ body.land .scirc {
   width: 50px;
   height: 50px;
 }
+/* Q27 iPhone on its side: the dock is 430 pt wide, so with the search circle beside it the tabs can be short of room
+   ("Exercises" read "Exerc" under the circle at 844 × 390). Each tab's side padding is two spacers (14 pt, as
+   before) that may shrink to 3 pt, so a short bar tightens the tabs rather than cutting a label; with room to spare
+   it looks exactly as it did. Icons, labels and the 6 pt between them keep their size */
 body.land .dockrow .tabbar button {
-  flex: 0 0 auto;
+  flex: 0 1 auto;
+  padding: 0;
+  gap: 0;
+}
+body.land .dockrow .tabbar button::before,
+body.land .dockrow .tabbar button::after {
+  content: '';
+  flex: 0 1 auto;
+  width: 14px;
+  min-width: 3px;
+}
+body.land .dockrow .tabbar button svg {
+  flex: none;
+  margin-right: 6px;
 }
 /* 3.22 Search: the circle beside the tab bar, tinted while Search is open */
 .scirc {

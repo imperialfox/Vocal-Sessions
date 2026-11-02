@@ -3,7 +3,8 @@
 when scrolling, Today's gradient and its switch in Settings › Appearance, the native push (slide in from the right)
 for the doors Ivan chose (and the zoom kept everywhere else), and the tab bar's collapse into a pill at the left.
 3.33 Status bar glow (Q23): the page runs behind the status bar, and nothing sits under the clock.
-VS_NATIVE=layout,edge,gradient,push,collapse,status runs only those parts."""
+Q27 Landscape tab bar fit: with the iPhone on its side, every tab's label shows in full beside the search circle.
+VS_NATIVE=layout,edge,gradient,push,collapse,status,landfit runs only those parts."""
 import os
 from harness import with_song_practice, now, iso, fix
 from test_fuzz import TONES
@@ -546,6 +547,65 @@ def status(b, t):
         pg.context.close()
 
 
+# ---------------------------------------------------------------------------------------------------------------------
+# Q27: each tab's label (its text node), icon and box, the bar and the search circle, and the space either side
+FIT = """(()=>{const r=e=>e.getBoundingClientRect();const tb=document.querySelector('#dock .tabbar'),sc=document.querySelector('#dock .scirc');
+  if(!tb||!sc)return null;const bar=r(tb),c=r(sc);
+  return {bar:[bar.left,bar.right],circ:c.left,tabs:[...tb.querySelectorAll('button')].map(b=>{const n=[...b.childNodes].find(x=>x.nodeType===3&&x.textContent.trim());
+    const g=document.createRange();g.selectNodeContents(n);const t=g.getBoundingClientRect(),x=r(b),i=r(b.querySelector('svg'));
+    return {name:n.textContent.trim(),l:x.left,r:x.right,tl:t.left,tr:t.right,il:i.left,size:getComputedStyle(b).fontSize,
+      full:b.scrollWidth<=b.clientWidth+0.5}}),side:document.documentElement.scrollWidth>innerWidth+1}})()"""
+
+
+def fits(m):
+    """What's wrong with the bar in FIT's measurements: a label or icon cut off, or under the circle (empty when all fit)."""
+    bad = []
+    for x in m['tabs']:
+        if not (x['il'] >= x['l'] - 0.5 and x['tl'] >= x['l'] - 0.5 and x['tr'] <= x['r'] + 0.5 and x['full']):
+            bad.append(f'{x["name"]} cut off')
+        if x['tr'] > m['circ'] - 0.5 or x['r'] > m['bar'][1] + 0.5:
+            bad.append(f'{x["name"]} under the circle')
+    if m['bar'][1] > m['circ'] + 0.5: bad.append('the bar runs under the circle')
+    return bad
+
+
+def landfit(b, t):
+    """Q27 · The iPhone on its side: every tab's label in full beside the search circle (at 844 × 390 "Exercises" read
+    "Exerc"). The tabs tighten (their side spacers shrink) only when the bar is short of room; labels keep their size."""
+    ok = t.ok
+    # the label size with room to spare, to compare against
+    pg = t.page(b, 852, 393, data=data())
+    size = pg.evaluate("getComputedStyle(document.querySelector('#dock .tabbar button')).fontSize")
+    # room to spare (the dock widened for the test): the tabs exactly as before Q27, 14 pt either side
+    pg.add_style_tag(content='.dock .in{max-width:760px !important}'); pg.wait_for_timeout(150)
+    m = pg.evaluate(FIT)
+    pads = [round(x['il'] - x['l'], 1) for x in m['tabs']] + [round(x['r'] - x['tr'], 1) for x in m['tabs']]
+    ok(all(abs(p - 14) < 0.6 for p in pads), f'with room to spare the tabs keep their 14 pt either side ({pads})')
+    pg.context.close()
+    for w, h in ((844, 390), (812, 375), (667, 375)):
+        for sc in ('light', 'dark'):
+            pg = t.page(b, w, h, sc, touch=True, data=data())
+            tag = f'{w}×{h} {sc}'
+            ok(pg.evaluate("document.body.classList.contains('land')"), f'{tag}: the iPhone-on-its-side layout')
+            for tab in ('today', 'exercises'):
+                pg.evaluate(f"go(()=>{{U.tab='{tab}';U.view=null}})"); pg.wait_for_timeout(150)
+                m = pg.evaluate(FIT)
+                bad = fits(m)
+                ok(not bad, f'{tag}, on {tab}: every tab\'s icon and label show in full, clear of the search circle {bad or ""}')
+                ok(all(x['size'] == size for x in m['tabs']), f'{tag}, on {tab}: labels keep their size ({size})')
+                gaps = [round(x['il'] - x['l'], 1) for x in m['tabs']]
+                ok(min(gaps) >= 2.9, f'{tag}, on {tab}: at least 3 pt either side of every tab ({gaps})')
+                ok(not m['side'], f'{tag}, on {tab}: nothing scrolls sideways')
+            if w == 844: t.shot(pg, f'landfit-{sc}', clip={'x': 0, 'y': h - 90, 'width': w, 'height': 90})
+            pg.context.close()
+    # a wider font than this machine's (GitHub's runner and the iPhone's differ): still no label cut off
+    pg = t.page(b, 844, 390, touch=True, data=data())
+    pg.add_style_tag(content='#dock .tabbar button{letter-spacing:0.06em !important}'); pg.wait_for_timeout(150)
+    bad = fits(pg.evaluate(FIT))
+    ok(not bad, f'with labels about 10% wider every tab still shows in full {bad or ""}')
+    pg.context.close()
+
+
 def run(b, t):
     if wanted('layout'): layout(b, t)
     if wanted('edge'): edge(b, t)
@@ -553,3 +613,4 @@ def run(b, t):
     if wanted('push'): push(b, t)
     if wanted('collapse'): collapse(b, t)
     if wanted('status'): status(b, t)
+    if wanted('landfit'): landfit(b, t)
