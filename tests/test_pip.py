@@ -1,6 +1,9 @@
 """Q26 · Window: Picture in Picture. The floating window's audit fixes and its picture in picture.
 Stage 1: every kind starts from a clean window (nothing carries over, e.g. the coach video's ✕ jumping to the top left),
 and every ✕ and play button has a 44 pt touch area.
+Stage 2, one look: the name first and the time below (no "Playing ·"), the session's step in the text colour after a
+coloured dot, a readable red recording window, one progress line, one capsule shape, the dark ring track, and long
+names losing their end. Text contrast is checked in light and dark.
 Every fixture is synthetic (tones and a made-up video). No real music, recordings or course media are used."""
 from harness import until
 from test_batch12 import setup_sounds, sounds, PLAYING, LAUNCH_ARGS as B12_ARGS
@@ -70,7 +73,95 @@ def clean(b, t):
     pg.context.close()
 
 
-PARTS = ['clean']
+# ---------------------------------------------------------------- stage 2 · one look (fixes 1, 4, 6–9, 11)
+# the contrast of every piece of text in the window against what's behind it (the window's own background laid over
+# the page's), as WCAG works it out
+CONTRAST = """(()=>{const f=document.getElementById('fw');
+ const rgb=s=>{const m=s.match(/[\\d.]+/g).map(Number);return {r:m[0],g:m[1],b:m[2],a:m.length>3?m[3]:1}};
+ const over=(c,b)=>({r:c.r*c.a+b.r*(1-c.a),g:c.g*c.a+b.g*(1-c.a),b:c.b*c.a+b.b*(1-c.a),a:1});
+ const L=c=>['r','g','b'].map(k=>{const v=c[k]/255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4)}).reduce((s,v,i)=>s+v*[.2126,.7152,.0722][i],0);
+ const page=rgb(getComputedStyle(document.body).backgroundColor),bg=over(rgb(getComputedStyle(f).backgroundColor),page);
+ return [...f.querySelectorAll('.fwk,.fwkn,.fwt,.fwtm')].filter(e=>e.offsetParent!==null&&e.textContent.trim()).map(e=>{
+   const c=over(rgb(getComputedStyle(e).color),bg),a=L(c),b=L(bg);return {t:e.textContent.trim().slice(0,24),c:Math.round((Math.max(a,b)+.05)/(Math.min(a,b)+.05)*100)/100}})})()"""
+# the window's shape and its progress line
+SHAPE = """(()=>{const f=document.getElementById('fw'),r=f.getBoundingClientRect(),cs=getComputedStyle(f),p=f.querySelector('.fwp');
+ let line=null;if(p){const q=p.getBoundingClientRect(),i=p.querySelector('i');line={l:Math.round(q.left-r.left),r:Math.round(r.right-q.right),b:Math.round(r.bottom-q.bottom),h:q.height,
+ col:getComputedStyle(i).backgroundColor}}
+ return {h:Math.round(r.height),rad:cs.borderTopLeftRadius,line,accent:getComputedStyle(document.body).getPropertyValue('--accent').trim(),
+ text:[...f.querySelectorAll('.fwk,.fwt,.fwtm')].map(e=>e.textContent).join(' | ')}})()"""
+REC = """i=>{const el=fwEl();fwClean(el,'rectrack');FW_REC.draw(el,i);el.setAttribute('aria-label',i.label);FW.shown='rectrack';el.hidden=false;fwPlace(true)}"""
+REC_INFO = {'k': 'Track under your take', 't': '1:42', 'p': 0.4, 'on': True, 'label': 'Track under your take, Harbour · Chorus',
+            'sub': 'A much longer song name than fits · Chorus 2'}
+BLUE = {'light': 'rgb(0, 122, 255)', 'dark': 'rgb(10, 132, 255)'}
+
+
+def look(b, t):
+    ok = t.ok
+    import re
+    for sc in ('light', 'dark'):
+        pg, sid = setup_sounds(b, t)
+        pg.emulate_media(color_scheme=sc)
+        pg.evaluate("id=>{songById(id).name='A song with a name much too long to fit in the window';save()}", sid)
+        S = sounds(pg)
+        for k in ['take', 'track', 'clock']:
+            ok(show(pg, k, S[k]), f'{sc} {k}: its window shows')
+            pg.wait_for_timeout(700)  # a take or track shows its window paused only after half a second in
+            for paused in (False, True):
+                if paused: pg.click('#fw [data-a=fwToggle]'); pg.wait_for_timeout(200)
+                st = f'{sc} {k}{" paused" if paused else ""}'
+                c = pg.evaluate(CONTRAST)
+                ok(c and all(x['c'] >= 4.5 for x in c), f'{st}: every piece of text passes 4.5:1 ({c})')
+                s = pg.evaluate(SHAPE)
+                ok(s['h'] == 58 and s['rad'] == '22px', f'{st}: the 58 pt capsule with 22 pt corners ({s["h"]}, {s["rad"]})')
+                ok('Playing' not in s['text'] and 'Paused' not in s['text'], f'{st}: no “Playing ·” or “Paused ·” ({s["text"]})')
+                ok(re.search(r'\| \d+:\d\d$', s['text']), f'{st}: the name first, the time below ({s["text"]})')
+                if k != 'clock':
+                    ln = s['line']
+                    ok(ln and ln['l'] == 0 and ln['r'] == 0 and ln['b'] == 0 and 2 <= ln['h'] <= 3 and ln['col'] == BLUE[sc],
+                       f'{st}: a thin full-width progress line along the bottom edge, in the accent colour ({ln})')
+            if k in ('take', 'track'):
+                long = pg.evaluate("(()=>{const e=document.querySelector('#fw .fwk'),cs=getComputedStyle(e);return {t:e.textContent,o:cs.textOverflow,w:e.scrollWidth>e.clientWidth}})()")
+                ok(long['t'].startswith('A song with a name') and long['o'] == 'ellipsis' and long['w'],
+                   f'{sc} {k}: a long name keeps its start and loses its end ({long})')
+            pg.evaluate("fwClose()")  # ✕, so it doesn't wait in the window
+        # the video's progress line is the same line
+        ok(show(pg, 'video', S['video']), f'{sc} video: its window shows')
+        ln = pg.evaluate(SHAPE)['line']
+        ok(ln and ln['l'] == 0 and ln['r'] == 0 and ln['b'] == 0 and ln['col'] == BLUE[sc], f'{sc} video: the same progress line ({ln})')
+        pg.evaluate("NOW.stop();COACH.dismiss();FW.dis={take:1,track:1,clock:1,video:1}")
+        # the session: the step's name in the text colour after a dot in its colour, the time below
+        pg.evaluate("newSession();X.start=Date.now()-200000;X.fEnd=Date.now()-60000;saveDraft()"); pg.evaluate(AWAY)
+        ok(until(pg, "FW.shown==='session'", 4000), f'{sc} session: its window shows')
+        for paused in (False, True):
+            if paused: pg.evaluate("togglePause()"); pg.wait_for_timeout(150)
+            st = f'{sc} session{" paused" if paused else ""}'
+            c = pg.evaluate(CONTRAST)
+            ok(c and all(x['c'] >= 4.5 for x in c), f'{st}: every piece of text passes 4.5:1 (fix 1: {c})')
+            s = pg.evaluate(SHAPE)
+            ok(re.match(r'^Rotation \| \d+:\d\d$', s['text']) and s['h'] == 58, f'{st}: “Rotation” above its time, in the same capsule ({s["text"]})')
+            d = pg.evaluate("[getComputedStyle(document.querySelector('#fw .fwdot')).backgroundColor,getComputedStyle(document.body).getPropertyValue('--rot').trim()]")
+            ok(pg.evaluate("getComputedStyle(document.querySelector('#fw .fwkn')).color") == pg.evaluate("getComputedStyle(document.body).color"),
+               f'{st}: the step’s name in the text colour')
+        tr = pg.evaluate("getComputedStyle(document.querySelector('#fw .fwring')).getPropertyValue('--sck-track').trim()")
+        ok((tr == 'rgba(150, 150, 160, 0.45)') == (sc == 'dark'), f'{sc}: the ring’s empty track is stronger in dark mode only ({tr})')
+        t.shot(pg, f'session-{sc}')
+        # the recording window (Q20's red track window), drawn as Application draws it
+        pg.evaluate("togglePause();X=null;saveDraft()")
+        pg.evaluate(REC, REC_INFO); pg.wait_for_timeout(150)
+        c = pg.evaluate(CONTRAST)
+        ok(c and all(x['c'] >= 4.5 for x in c), f'{sc} recording: white on the deeper red passes 4.5:1 (fix 4: {c})')
+        s = pg.evaluate(SHAPE)
+        ok(s['h'] == 58 and s['rad'] == '22px', f'{sc} recording: the same capsule, 58 pt with 22 pt corners ({s["h"]}, {s["rad"]})')
+        lab = pg.evaluate("(()=>{const k=document.querySelector('#fw .fwk'),cs=getComputedStyle(k);return {t:k.textContent,tt:cs.textTransform,fs:cs.fontSize,svg:!!k.querySelector('svg')}})()")
+        ok(lab['t'] == 'Track under your take' and lab['tt'] == 'none' and lab['fs'] == '13px' and lab['svg'],
+           f'{sc} recording: “Track under your take” in normal case at 13 pt, with a drawn note ({lab})')
+        ln = s['line']
+        ok(ln and ln['l'] == 0 and ln['r'] == 0 and ln['b'] == 0, f'{sc} recording: the progress line along the bottom edge ({ln})')
+        t.shot(pg, f'recording-{sc}')
+        pg.context.close()
+
+
+PARTS = ['clean', 'look']
 
 
 def run(b, t):

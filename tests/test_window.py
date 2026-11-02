@@ -10,6 +10,7 @@ LAUNCH_ARGS = ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-st
 
 SHOWN = "(()=>{const f=document.getElementById('fw');return !!f&&!f.hidden&&!!FW.shown})()"
 TEXT = "(()=>{const f=document.getElementById('fw');return f?f.querySelector('.fwk').textContent+' | '+f.querySelector('.fwt').textContent:''})()"
+PAUSED_BTN = "!!document.querySelector('#fw [data-a=fwToggle][aria-label=Play]')"
 RECT = "(()=>{const r=document.getElementById('fw').getBoundingClientRect();return {l:r.left,t:r.top,r:r.right,b:r.bottom,w:r.width,h:r.height}})()"
 # where the corner should be, and the room the window has
 SPOT = "c=>{const p=fwCornerXY(c),B=fwBounds();return {x:p.x,y:p.y,B}}"
@@ -67,8 +68,8 @@ def session(b, t):
     pg.evaluate("scrollTo(0,320)"); pg.wait_for_timeout(250)
     pg.evaluate(LEAVE); pg.wait_for_timeout(300)
     ok(pg.evaluate("U.tab") == 'today' and pg.evaluate(SHOWN), 'leaving the session shows the window on Today')
-    ok(pg.evaluate("FW.shown") == 'session' and pg.evaluate(TEXT).startswith('Focused session | Rotation · '),
-       'it says what’s running: Focused session, Rotation · m:ss (Q22: the step’s own time, beside its ring)')
+    ok(pg.evaluate("FW.shown") == 'session' and __import__('re').match(r'^Rotation \| \d+:\d\d$', pg.evaluate(TEXT)),
+       f'Q26: the step first, its own time below, beside its ring ({pg.evaluate(TEXT)})')
     ok(pg.locator('#fw .fwring svg .sl').count() == 3, 'Q22: the clock’s ring, small, in three slices')
     t1 = pg.evaluate(TEXT); pg.wait_for_timeout(2100)
     ok(pg.evaluate(TEXT) != t1, 'its time ticks')
@@ -85,12 +86,13 @@ def session(b, t):
     pg.click('#fw [data-a=fwToggle]'); pg.wait_for_timeout(200)
     ok(pg.evaluate("X.paused") and pg.evaluate("U.tab") == 'songs' and not pg.evaluate("U.view"), 'its button pauses the session and stays on Songs')
     p1 = pg.evaluate(TEXT)
-    ok('| Paused · ' in p1 and pg.locator('#fw [data-a=fwToggle][aria-label=Play]').count() == 1, 'it says Paused, with a play button')
+    ok('Paused' not in p1 and pg.evaluate(PAUSED_BTN) and pg.evaluate("document.getElementById('fw').classList.contains('paused')"),
+       'Q26: no “Paused ·”: the play button and the greyed time show it')
     pg.wait_for_timeout(1300)
     ok(pg.evaluate(TEXT) == p1, 'and the time stops')
     t.shot(pg, 'paused')
     pg.click('#fw [data-a=fwToggle]'); pg.wait_for_timeout(200)
-    ok(not pg.evaluate("X.paused") and 'Paused' not in pg.evaluate(TEXT), 'tapping it again carries on')
+    ok(not pg.evaluate("X.paused") and not pg.evaluate(PAUSED_BTN), 'tapping it again carries on')
 
     # a sheet hides it
     pg.evaluate("go(()=>{U.tab='today';U.view=null})"); pg.wait_for_timeout(200)
@@ -173,17 +175,17 @@ def takes(b, t):
     ok(not pg.evaluate(SHOWN), 'no window on the screen the take is playing from')
     pg.click('#barL [data-a=exit]'); pg.wait_for_timeout(300)
     ok(pg.evaluate("FW.shown") == 'take', 'leaving with a take playing shows the take, not the session')
-    ok(pg.evaluate(TEXT).startswith('Playing · Versace on the Floor · bridge |'), 'it says Playing and the song’s name')
+    ok(pg.evaluate(TEXT).startswith('Versace on the Floor · bridge |'), 'Q26: the song’s name first, no “Playing ·”')
     ok(pg.locator('#fw .fwp').count() == 1, 'with its progress')
     t.shot(pg, 'take')
     pg.click('#fw [data-a=fwToggle]'); pg.wait_for_timeout(250)
     ok(pg.evaluate("player.paused") and pg.evaluate("!!playingId") and pg.evaluate("U.tab") == 'today' and not pg.evaluate("U.view"),
        'its button pauses the take and stays on Today')
-    ok(pg.evaluate(TEXT).startswith('Paused · ') and pg.evaluate("FW.shown") == 'take', 'it says Paused')
+    ok(pg.evaluate(PAUSED_BTN) and pg.evaluate("FW.shown") == 'take', 'paused, it shows play')
     c1 = pg.evaluate("player.currentTime"); pg.wait_for_timeout(500)
     ok(pg.evaluate("player.currentTime") == c1, 'and the take stays where it was')
     pg.click('#fw [data-a=fwToggle]'); pg.wait_for_function("!!player&&!player.paused", timeout=3000)
-    ok(pg.evaluate(TEXT).startswith('Playing · '), 'tapping again plays on')
+    ok(not pg.evaluate(PAUSED_BTN), 'tapping again plays on')
     pg.click('#fw .fwopen'); pg.wait_for_timeout(300)
     ok(pg.evaluate("U.view") == 'song' and pg.evaluate("!!player"), 'tapping it returns to the take, still playing')
     ok(pg.locator('#app [data-a=playTake][data-k="' + pg.evaluate("playingId") + '"] svg path[d^="M8 5"]').count() == 1,
@@ -211,7 +213,7 @@ def takes(b, t):
     ok(not pg.evaluate(SHOWN), 'no window over the takes sheet')
     pg.evaluate("closeSheet()"); pg.wait_for_timeout(300)
     ok(pg.evaluate("!!player&&!player.paused"), 'closing the takes sheet lets the take carry on')
-    ok(pg.evaluate("FW.shown") == 'take' and pg.evaluate(TEXT).startswith('Playing · Verse'), 'with its window on the song, naming the section')
+    ok(pg.evaluate("FW.shown") == 'take' and pg.evaluate(TEXT).startswith('Verse'), 'with its window on the song, naming the section')
     pg.click('[data-a=tab][data-v=today]'); pg.wait_for_timeout(300)
     ok(pg.evaluate("FW.shown") == 'take', 'switching tab, the take’s window shows')
     pg.click('#fw .fwopen'); pg.wait_for_timeout(400)

@@ -1697,7 +1697,7 @@ textarea.field {
   z-index: 35;
   width: 268px;
   max-width: calc(100vw - 32px);
-  min-height: 58px;
+  height: 58px; /* Q26: every capsule is 58 pt high with 22 pt corners (the video and the Coach pill keep their own) */
   border-radius: 22px;
   display: flex;
   align-items: center;
@@ -1731,11 +1731,12 @@ textarea.field {
   text-align: left;
   color: var(--fg);
 }
+/* Q26: the top line is what it is (a section, a song, a step), in the text colour; a long name loses its end */
 .fw .fwk {
   max-width: 100%;
   font-size: var(--t-footnote);
-  font-weight: 500;
-  color: var(--fg2);
+  font-weight: 600;
+  color: var(--fg);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1768,13 +1769,13 @@ textarea.field {
   width: 22px;
   height: 22px;
 }
+/* Q26: one progress line for every kind: thin, full width, along the bottom edge, in the accent colour */
 .fw .fwp {
   position: absolute;
-  left: 17px;
-  right: 58px;
-  bottom: 6px;
+  left: 0;
+  right: 0;
+  bottom: 0;
   height: 3px;
-  border-radius: 2px;
   background: var(--fill);
   overflow: hidden;
   pointer-events: none;
@@ -1784,7 +1785,6 @@ textarea.field {
   height: 100%;
   width: 0;
   background: var(--accent);
-  border-radius: inherit;
 }
 /* Q22: the session's window: the clock's ring, small, beside the step and its time */
 .fw .fwsess {
@@ -1810,9 +1810,28 @@ textarea.field {
   flex-direction: column;
   gap: 1px;
 }
-.fw .fwst {
-  color: var(--sc);
-  font-weight: 600;
+/* Q26: the step's name in the text colour, after a dot in the step's colour */
+.fw .fwsess .fwk {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.fw .fwdot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--sc);
+}
+.fw .fwkn {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+@media (prefers-color-scheme: dark) {
+  .fw .fwring {
+    --sck-track: rgba(150, 150, 160, 0.45); /* Q26: the ring's empty track reads on the dark glass */
+  }
 }
 .fw.paused .fwring {
   opacity: 0.5;
@@ -4789,20 +4808,6 @@ textarea.field.sglyr {
 .fw[data-kind='video'] .fwx {
   display: grid; /* 3.20: ✕ is always there, playing or paused */
 }
-.fw .fwvp {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 2px;
-  pointer-events: none;
-}
-.fw .fwvp i {
-  display: block;
-  height: 100%;
-  width: 0;
-  background: var(--fg);
-}
 @media (max-width: 359px) {
   /* the smallest phones: Loop keeps its icon, so levels, Loop and Speed stay on one line */
   .cvpill .cvlt {
@@ -6044,9 +6049,6 @@ body:has(#dock .trkmd) main {
   width: 15px;
   height: 15px;
   stroke-width: 2.4;
-}
-.fw.hasx .fwp {
-  right: 92px;
 }
 /* a song row's play button: on the right, in line with the name; greyed (still tappable) with no track here */
 .sgplay {
@@ -8206,6 +8208,7 @@ html.motion-off .cuebox {
 /* the floating window's Coach pill (Application, or after the coach window's ✕) */
 .fw[data-kind='coachpill'] {
   width: auto;
+  height: auto;
   min-height: 0;
   padding: 0;
   border-radius: 999px;
@@ -8578,12 +8581,10 @@ body.apprec #dock {
   font-size: var(--t-callout);
 }
 /* the red track window while a take is sung over the track */
+/* Q26: a deeper red, solid, that white text passes 4.5:1 on, in the same capsule as every other window */
 .fw[data-kind='rectrack'] {
-  width: 188px;
-  min-height: 0;
-  padding: 9px 12px 10px;
-  border-radius: 18px;
-  background: color-mix(in srgb, var(--rec) 88%, transparent);
+  padding: 9px 14px 11px;
+  background: #d70015;
   color: #fff;
 }
 .fw .fwrec {
@@ -8595,33 +8596,42 @@ body.apprec #dock {
   min-width: 0;
 }
 .fw[data-kind='rectrack'] .fwk {
-  color: rgba(255, 255, 255, 0.85);
-  font-size: var(--t-caption2);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding-right: 44px;
+  color: #fff;
+  font-size: var(--t-footnote);
+  font-weight: 500;
+}
+.fw[data-kind='rectrack'] .fwk svg.i {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+}
+.fw[data-kind='rectrack'] .fwk span {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .fw .fwtm {
   position: absolute;
   top: 0;
   right: 0;
-  font-size: var(--t-caption2);
+  font-size: var(--t-footnote);
   font-variant-numeric: tabular-nums;
-  color: rgba(255, 255, 255, 0.85);
+  color: #fff;
 }
 .fw[data-kind='rectrack'] .fwt {
   font-size: var(--t-subhead);
+  font-weight: 600;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
 }
+/* the progress line on the red window: white, since red on red can't be seen */
 .fw[data-kind='rectrack'] .fwp {
-  position: relative;
-  left: auto;
-  right: auto;
-  bottom: auto;
-  margin-top: 4px;
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(0, 0, 0, 0.25);
 }
 .fw[data-kind='rectrack'] .fwp i {
   background: #fff;

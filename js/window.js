@@ -64,13 +64,14 @@ function fwTakeInfo() {
     i = t && t.o && hasLyrics(sg) ? occIdx(sg, t.o) : -1;
   const where = i >= 0 ? occLabel(sg, i) : sg ? songTitle(sg) : 'Take';
   const d = isFinite(player.duration) && player.duration > 0 ? player.duration : (t && t.len) || 1;
+  // Q26: the name first (the section, or the song), the time below; the play/pause button shows the state
   return {
-    k: (player.paused ? 'Paused' : 'Playing') + ' · ' + where,
+    k: where,
     t: clk(player.currentTime || 0),
     p: Math.min(1, (player.currentTime || 0) / d),
     on: !player.paused,
     open: 'Back to the take',
-    label: 'Take ' + (player.paused ? 'paused' : 'playing'),
+    label: 'Take, ' + where,
   };
 }
 
@@ -128,22 +129,22 @@ const FW_KINDS = [
     active: () => !!(X && X.start),
     // 3.20: song practice's own screen includes the song's page, where its takes are recorded
     own: () => isFlow(U.view) || !!(isSong() && songShown() && songShown().id === X.song),
-    // Q22: the session clock's ring, small, beside the step and its time ("Rotation · 4:16"), in the step's colour
+    // Q22: the session clock's ring, small, beside the step and its time. Q26: the step's name first, in the text
+    // colour after a dot in the step's colour (the ring keeps its colours), and its time below; no "Paused ·"
     info() {
       const v = fwSessView(),
         m = SCLOCK.model(),
         s = m.steps[m.cur],
-        t = clk(m.song ? m.e : s.secs);
+        name = isSong() ? 'Song practice' : s.name;
       return {
-        k: isSong() ? 'Song practice' : 'Focused session',
-        t: X.paused ? 'Paused · ' + t : m.song ? t : s.name + ' · ' + t,
-        step: X.paused || m.song ? '' : s.name,
+        k: name,
+        t: clk(m.song ? m.e : s.secs),
         col: s.col,
         ring: SCLOCK.mini(),
         p: null,
         on: !X.paused,
         open: 'Back to ' + (isSong() ? 'song practice' : VIEWS[v][0]),
-        label: (isSong() ? 'Song practice' : 'Session') + (X.paused ? ' paused' : ' running'),
+        label: isSong() ? 'Song practice' : 'Focused session, ' + name,
       };
     },
     draw(el, i) {
@@ -151,19 +152,15 @@ const FW_KINDS = [
         FW.build = 'session';
         el.innerHTML =
           '<button class="fwopen fwsess" data-a="fwOpen"><span class="fwring" aria-hidden="true"></span><span class="fwtx">' +
-          '<span class="fwk"></span><span class="fwt"></span></span></button><button class="fwbtn" data-a="fwToggle"></button>';
+          '<span class="fwk"><i class="fwdot" aria-hidden="true"></i><span class="fwkn"></span></span><span class="fwt"></span></span></button>' +
+          '<button class="fwbtn" data-a="fwToggle"></button>';
         FW.ring = '';
       }
       el.classList.toggle('paused', !i.on);
       el.querySelector('.fwopen').setAttribute('aria-label', i.open + '. ' + i.k + ', ' + i.t);
-      el.querySelector('.fwk').textContent = i.k;
-      const t = el.querySelector('.fwt');
-      t.style.setProperty('--sc', 'var(' + i.col + ')');
-      if (i.step) {
-        if (!t.firstElementChild || t.firstElementChild.textContent !== i.step) t.innerHTML = '<b class="fwst"></b><span></span>';
-        t.firstElementChild.textContent = i.step;
-        t.lastElementChild.textContent = i.t.slice(i.step.length);
-      } else t.textContent = i.t;
+      el.querySelector('.fwk').style.setProperty('--sc', 'var(' + i.col + ')');
+      el.querySelector('.fwkn').textContent = i.k;
+      el.querySelector('.fwt').textContent = i.t;
       if (FW.ring !== i.ring) el.querySelector('.fwring').innerHTML = FW.ring = i.ring;
       const b = el.querySelector('.fwbtn'),
         lab = i.on ? 'Pause' : 'Play';
@@ -186,7 +183,8 @@ const FW_KINDS = [
 ];
 // Q20: while Application records over the song's track, the window is the track, in red: what's playing under
 // the take and where it's got to. It's only to see (nothing to tap but the drag), and it's never in FW_KINDS: it's
-// the one window shown during a recording
+// the one window shown during a recording. Q26: a deeper red that white text reads on, "Track under your take" in
+// normal case with a drawn note, and the same capsule and progress line as every other window
 const FW_REC = {
   id: 'rectrack',
   active: () =>
@@ -196,12 +194,12 @@ const FW_REC = {
     const sg = songById(rec.songId),
       st = TRACK.state();
     return {
-      k: '♪ Track',
+      k: 'Track under your take',
       t: mmss(st.t),
       p: Math.min(1, st.t / Math.max(1, st.dur)),
       on: true,
       open: '',
-      label: 'Track playing under your take: ' + (sg ? songTitle(sg) + ' · ' + APPL.secName(sg, rec.o) : 'track'),
+      label: 'Track under your take, ' + (sg ? songTitle(sg) + ' · ' + APPL.secName(sg, rec.o) : 'track'),
       sub: sg ? songTitle(sg) + ' · ' + APPL.secName(sg, rec.o) : '',
     };
   },
@@ -212,8 +210,10 @@ const FW_REC = {
       FW.build = 'rectrack';
       el.innerHTML =
         '<div class="fwrec"><span class="fwk">' +
+        ICON.music +
+        '<span>' +
         i.k +
-        '</span><span class="fwtm"></span><span class="fwt"></span><span class="fwp"><i></i></span></div>';
+        '</span></span><span class="fwtm"></span><span class="fwt"></span></div><span class="fwp" aria-hidden="true"><i></i></span>';
     }
     el.querySelector('.fwtm').textContent = i.t;
     el.querySelector('.fwt').textContent = i.sub;

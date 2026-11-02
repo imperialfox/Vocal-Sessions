@@ -301,8 +301,8 @@ def windows(b, t):
     pg.evaluate("TRACK.seek(12)"); pg.click('#trkPP'); pg.wait_for_timeout(300)
     ok(not pg.evaluate("FW.shown"), 'no floating window on the player itself')
     pg.evaluate("go(()=>{U.view=null;U.tab='today'})"); pg.wait_for_timeout(400)
-    ok(pg.evaluate("FW.shown") == 'track' and 'Playing · Versace on the Floor · bridge' in pg.inner_text('#fw'),
-       'leaving while it plays shows “Playing · song title” in the floating window: ' + pg.inner_text('#fw').replace('\n', ' '))
+    ok(pg.evaluate("FW.shown") == 'track' and pg.inner_text('#fw .fwk') == 'Versace on the Floor · bridge' and pg.locator('#fw .fwp').count() == 1,
+       'leaving while it plays shows the song’s name and its progress in the floating window (Q26): ' + pg.inner_text('#fw').replace('\n', ' '))
     ok(not pg.evaluate("TRACK.el().paused"), 'and it keeps playing')
     pg.click('#fw [data-a=fwToggle]'); pg.wait_for_timeout(200)
     ok(pg.evaluate("TRACK.el().paused") and pg.evaluate("FW.shown") == 'track', 'its button pauses, and the window stays')

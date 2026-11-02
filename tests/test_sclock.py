@@ -391,12 +391,16 @@ def window(b, t):
     pg.evaluate("go(()=>{U.tab='today';U.view=null})")
     ok(until(pg, "FW.shown==='session'"), 'leaving the session shows the floating window')
     ok(pg.locator('#fw .fwring svg .sl').count() == 3 and pg.locator('#fw .fwring .sf').count() == 2, 'with the same ring, small')
-    ok(pg.inner_text('#fw .fwst') == 'Rotation' and pg.inner_text('#fw .fwt').startswith('Rotation · 15:0'), 'beside “Rotation · m:ss”')
-    ok(pg.evaluate("getComputedStyle(document.querySelector('#fw .fwst')).getPropertyValue('color')") ==
-       pg.evaluate("getComputedStyle(document.querySelector('#fw .fwring .sf[data-i=\"1\"]')).getPropertyValue('stroke')"), 'the step in its slice’s colour')
+    ok(pg.inner_text('#fw .fwkn') == 'Rotation' and pg.inner_text('#fw .fwt').startswith('15:0'), 'beside “Rotation” and its time below (Q26)')
+    ok(pg.evaluate("getComputedStyle(document.querySelector('#fw .fwdot')).getPropertyValue('background-color')") ==
+       pg.evaluate("getComputedStyle(document.querySelector('#fw .fwring .sf[data-i=\"1\"]')).getPropertyValue('stroke')"),
+       'Q26: the dot before the step in its slice’s colour')
+    ok(pg.evaluate("getComputedStyle(document.querySelector('#fw .fwkn')).color") == pg.evaluate("getComputedStyle(document.body).color"),
+       'Q26: the step’s name in the text colour')
     t.shot(pg, 'window')
     pg.click('#fw [data-a=fwToggle]')
-    ok(until(pg, "X.paused") and pg.evaluate("U.view") is None and pg.inner_text('#fw .fwt').startswith('Paused · '), 'its button pauses, staying on Today')
+    ok(until(pg, "X.paused") and pg.evaluate("U.view") is None and pg.locator('#fw [data-a=fwToggle][aria-label=Play]').count() == 1,
+       'its button pauses, staying on Today')
     pg.click('#fw [data-a=fwToggle]')
     ok(until(pg, "!X.paused"), 'and carries on')
     pg.click('#fw .fwopen')

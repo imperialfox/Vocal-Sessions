@@ -1733,13 +1733,18 @@ function ckSetLen(sg, v) {
 }
 
 /* ===== Song Clock: the floating window ===== */
-function ckFwText() {
+// Q26: the name first (the section it's at, or the song before its first line), the time below; no "Paused ·"
+function ckFwParts() {
   const sg = ckSong();
-  if (!sg) return '';
+  if (!sg) return { k: '', t: '' };
   const M = ckModelK(sg), // Q14: called every frame while the window shows
     t = ckNow(CK.pc),
     a = ckAt(M.T, t);
-  return (CK.pc.run ? '' : 'Paused · ') + ckFmt(t) + (a >= 0 ? ' · ' + occLabel(sg, M.L[a].k) : '');
+  return { k: a >= 0 ? occLabel(sg, M.L[a].k) : songTitle(sg), t: ckFmt(t) };
+}
+function ckFwText() {
+  const p = ckFwParts();
+  return p.k + ' · ' + p.t;
 }
 const CK_FW = {
   id: 'clock',
@@ -1750,13 +1755,15 @@ const CK_FW = {
     return !!(sg && sg.id === CK.songId);
   },
   info() {
+    const p = ckFwParts(),
+      sg = ckSong();
     return {
-      k: 'Playing along',
-      t: ckFwText(),
+      k: p.k,
+      t: p.t,
       p: null,
       on: CK.pc.run,
       open: 'Back to the song',
-      label: 'Playing along' + (CK.pc.run ? '' : ', paused'),
+      label: 'Playing along, ' + (sg ? songTitle(sg) : 'song'),
     };
   },
   toggle() {

@@ -3014,12 +3014,12 @@ const TRACK = (() => {
       const sg = song(),
         on = playing();
       return {
-        k: (on ? 'Playing' : 'Paused') + ' · ' + (sg ? songTitle(sg) : 'Track'),
+        k: sg ? songTitle(sg) : 'Track', // Q26: the name first, no "Playing ·"
         t: fmt(now()),
         p: Math.min(1, now() / Math.max(1, len())),
         on,
         open: 'Back to the track',
-        label: 'Track ' + (on ? 'playing' : 'paused'),
+        label: 'Song track, ' + (sg ? songTitle(sg) : 'track'),
       };
     },
     toggle: () => toggle(),

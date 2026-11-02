@@ -1065,12 +1065,12 @@ const COACH = (() => {
           '</button></div>' +
           '<button class="fwx" data-a="fwX" aria-label="Close the coach video">' +
           ICON.x +
-          '</button><span class="fwvp" aria-hidden="true"><i></i></span>';
+          '</button><span class="fwp" aria-hidden="true"><i></i></span>';
       }
       fw.classList.toggle('paused', !i.on);
       fw.querySelector('.fwopen').setAttribute('aria-label', i.open + '. ' + i.k + ', ' + i.t);
       fw.querySelector('.fwk').textContent = i.k;
-      const p = fw.querySelector('.fwvp i');
+      const p = fw.querySelector('.fwp i'); // Q26: the same progress line as every window
       if (p) p.style.width = (i.p * 100).toFixed(1) + '%';
     },
   };
