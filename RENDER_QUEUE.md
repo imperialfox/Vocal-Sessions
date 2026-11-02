@@ -16,7 +16,7 @@ Every queued item has a queue ID and a standard name, used in the queue, in hand
 - **Items:** `Q[##] · [Subsystem]: [Feature Name]`, e.g. `Q02 · Track: Waveform Sections`.
 - **Files** (handoffs, specs, wireframes, prototypes): `q##_[subsystem]_[feature]_[type].[ext]`, lower case with underscores, e.g. `q02_track_waveform_sections_handoff.md`.
 - **Releases:** the shipped version's `CHANGELOG.md` headline ends with the queue ID in brackets, e.g. `*Waveform sections on the track player (Q02)*` under `## 3.23 · 27 Oct 2026` (the `##` line keeps its exact format for the app's Changelog page). That's the bridge from queue ID to version. Q01 shipped as 3.22, headline `*Search, from every tab (Q01)*`; Q08 as 3.23.
-- **New items:** an idea gets its ID when Ivan says **Render** for it, taking the next unused number (the next is **Q32**). IDs are never reused or renumbered, even when the queue is reordered or an item ships.
+- **New items:** an idea gets its ID when Ivan says **Render** for it, taking the next unused number (the next is **Q33**). IDs are never reused or renumbered, even when the queue is reordered or an item ships.
 - **Exception, 30 Oct 2026:** Ivan asked for the six stages of the 30 Oct read-only audit, plus its clean-up list, to get IDs straight away, before Render, most critical first. They are **Q11–Q17**. All seven got Render on 30 Oct 2026 and have shipped (3.29–3.31, 3.34, 3.36, 3.37 and 3.38).
 - **Exception, 31 Oct 2026:** Ivan asked for the status bar fix to be queued with an ID before Render. It is **Q23**; Render and Build followed the same evening (shipped in 3.33).
 
@@ -55,6 +55,7 @@ Every ID with its **Status** (`Awaiting Render`, `Approved — awaiting Build`, 
 | Q29 | Session: Song Rating Removal | Shipped 3.47 | Remove "Rate the song", 2 Nov 2026 |
 | Q30 | Atlas: Lightbox Core | Approved — awaiting Build | Visual App Atlas stage 1, Lightbox, 2 Nov 2026 |
 | Q31 | Atlas: Map and Notes | Approved — awaiting Build | Visual App Atlas stage 2, map, notes, export, changes since last scan, 2 Nov 2026 |
+| Q32 | Exercises: Redesign | Approved — awaiting Build | Exercise patterns the app plays, Exercise page redesign (both 31 Oct), merged 2 Nov 2026 |
 
 Work shipped before this standard (for example Track 1 and Song Clock A1) keeps its version numbers and has no queue ID.
 
@@ -71,7 +72,7 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 
 ## Order (2 Nov 2026)
 
-**Q30**, then **Q31** (Render 2 Nov 2026, 15:55, in one instruction, each with its own Build; Q31 builds on Q30). Both are tooling with no app version, like Q24, so they can be built outside the app queue's order. Q28 shipped in 3.46 and Q29 in 3.47 (Render 2 Nov 2026, 09:29; Build 09:33, in one instruction, built one after the other). **Q07** is still awaiting Render. Q27 shipped in 3.45 (Build 2 Nov 2026). Q25 shipped in 3.43 and Q26 in 3.44 (Build 2 Nov 2026); Q25–Q27 got Render on 1 Nov 2026 (19:59), in one instruction, each with its own Build. Q19 shipped in 3.39, Q20 in 3.40, Q21 in 3.41 and Q22 in 3.42. Q22 got Render on 31 Oct 2026 (20:59) and was built on the one-page session and the saved screen. Q19–Q21 got Render on 31 Oct 2026 (19:58), in one instruction, each with its own Build. They follow Q17 (shipped in 3.38; Q20 needs Q16's track-while-recording, shipped in 3.37). Q11–Q17 got Render on 30 Oct 2026 (06:42) and have all shipped. What has shipped is in the table's Status column. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
+**Q32** is the next app build (Render 2 Nov 2026, 15:56), in two stages: the shared pattern player with the Humming page, then the other 11 pages. **Q30**, then **Q31** (Render 2 Nov 2026, 15:55, in one instruction, each with its own Build; Q31 builds on Q30). Both are tooling with no app version, like Q24, so they can be built outside the app queue's order. Q28 shipped in 3.46 and Q29 in 3.47 (Render 2 Nov 2026, 09:29; Build 09:33, in one instruction, built one after the other). **Q07** is still awaiting Render. Q27 shipped in 3.45 (Build 2 Nov 2026). Q25 shipped in 3.43 and Q26 in 3.44 (Build 2 Nov 2026); Q25–Q27 got Render on 1 Nov 2026 (19:59), in one instruction, each with its own Build. Q19 shipped in 3.39, Q20 in 3.40, Q21 in 3.41 and Q22 in 3.42. Q22 got Render on 31 Oct 2026 (20:59) and was built on the one-page session and the saved screen. Q19–Q21 got Render on 31 Oct 2026 (19:58), in one instruction, each with its own Build. They follow Q17 (shipped in 3.38; Q20 needs Q16's track-while-recording, shipped in 3.37). Q11–Q17 got Render on 30 Oct 2026 (06:42) and have all shipped. What has shipped is in the table's Status column. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
 
 ## Q07 · Song Clock: Dynamic Sync
 
@@ -136,6 +137,34 @@ Adds the map, notes Claude can read, export, and what changed since the last sca
   - A rescan after an app change shows the right new, gone and changed screens, and names the versions released in between.
   - The app's own full test suite still passes.
 
+## Q32 · Exercises: Redesign
+
+**Status:** Approved — awaiting Build. **Render:** 2 Nov 2026, 15:56. Ivan: "sure, render", after the scope below was settled in the Blueprint chat (2 Nov 2026), the sound prototype (versions 1–19) and a check against [What it's for](README.md#what-its-for). **Build:** awaiting Ivan's instruction.
+
+Each exercise page explains the exercise and plays it: piano-like notes the app makes itself, from a library of practice patterns. The full design (pattern tables with notes and sources, defaults per exercise, page text, the 60 "what it trains" lines) is in Ivan's project notes: `exercises_redesign_blueprint.md`, `exercises_redesign_page_content_draft.md` and `exercises_redesign_pattern_lines_draft.md`. Ask him to attach them.
+
+- **Scope:**
+  - **One shared pattern player, its own file in `js/` with its own tests.** It owns the sound, the pattern library, the drawing with its playhead, the dock and pills, the Patterns page, the speed slider, the range check, the vowel cue, the round chords and the home ending. A page passes in only a route (key notes, or none), a default pattern and its syllables. The exercise page is its first user, so other places can reuse it later.
+  - **Sound:** made with Web Audio, no recordings. A small sound library where each sound is one entry: Soft tone (default), Piano-ish, Electric piano. Plays with the silent switch on. Starts through `NOW.start()`. Stop fades out over about a third of a second.
+  - **Rounds:** the starting notes and route come from the coach video's note data already in `tools/coach-video/data/audio_timeline.json` (copied, not re-analysed); the tune in each round is a library pattern, not the coach's. A chord before each round (on by default, minor for minor patterns), a held note underneath (on by default) and a home ending: Home chord (default), Home note or Off.
+  - **Pattern library, 60 patterns:** Warm-ups (8), Agility (7), Riffs and runs (33, in four families: Short riffs; Turns and slingshots; Long runs; Minor, blues and gospel) and Flips (12). Patterns can hold some notes longer and mark quick touches (drawn smaller and played lighter). Each exercise opens on its default; the choice is remembered per exercise, with Back to default.
+  - **Favourites:** a star on every pattern; ★ is the first group. It starts with 8 riffs in Bruno Mars's style.
+  - **The Patterns page:** a full page opened from the pattern pill with the app's card zoom (`data-zk` through `go()`, swipe back included). A fixed window at the top plays the pattern exactly like the exercise drawing (playhead, lit dot, ripples) and never highlights itself. Only the tiles scroll. **Press and hold a tile** to fade its steps into one line on what it trains (VoiceOver reads it as the hint); a tap picks and plays.
+  - **Practice controls:** a starting-note stepper and Play in the dock; Stay on this key (repeats the current round); a speed slider like Control Centre's with 12 stops from 0.5× to 2× and Speed up each round (one stop a round, up to 2×, saved speed unchanged); each pattern remembers its speed.
+  - **Your voice:** voice type and range in Settings (tenor G♯2 · A4 · falsetto top D5), range warnings on the card, the stepper and the drawing, and "Stop at my top note" (off by default). Flips, and the falsetto exercises, check against the falsetto top.
+  - **The screen stays awake while playing** (Screen Wake Lock).
+  - **The page:** the drawing card (vowel cue on open-vowel exercises with scale patterns only; dots by default, music notes as an option), three facts with the coach video's icons, the fix tip, "How to do it", "Where you feel it", level dots, a shorter "Why it helps". Vocal slides has no "Hear it" and shows a still picture instead.
+- **Build order:** two stages: (1) the shared pattern player and the Humming page; (2) the other 11 pages.
+- **Defaults if unanswered:** the "what it trains" lines as drafted (Ivan can change any before Build); the starting note is the coach's for the selected level and is remembered per exercise; the pattern doesn't change with the level; patterns play only on the exercise page, not during a session.
+- **Out of scope:** recording on this page (pinned; see Exercise takes below); Listen then sing, a breathing gap and the other parked pattern ideas; custom patterns; playing patterns in a session or along with the coach video; Today widgets and note lengths and attacks (below); foldable layouts.
+- **The repo is public:** the coach video, its audio and the course notes never go in; only the note data already in `tools/coach-video/data/`.
+- **Needs:** 3.47 live on `main`.
+- **Done when:**
+  - The player has its own tests: routes, the range check, the minor-chord rule, quick touches and held notes, Stay on this key and Speed up each round, Favourites, and the Patterns page opening and closing.
+  - Saved choices (pattern, speed and starting note per exercise, Favourites, voice range, sound and options) survive a reload and a backup round trip, and old backups still load.
+  - Every page works at 375 px and in dark mode; Reduce Motion gives fades; the full suite passes.
+  - Ivan checks on his iPhone: sound with the silent switch on, the screen staying awake, the slider and hold feel, and the card zoom.
+
 ---
 
 ## Not scheduled
@@ -155,19 +184,19 @@ Each idea has its priority, the date it was added and a *Why* line. New ideas go
 
 - **Bug: no floating window for a track started during play-along (found while building Q26, 2 Nov 2026; on 3.43 as well).** Starting a song's track (its player or a song row's play button) while Song Clock plays along gives the track no floating window. Play-along's own track pauses a moment later, and that pause closes the track's window (`fwPaused('track')` in window.js) after `NOW.start('track')` opened it. Needs its own Render; `tests/test_pip.py`'s `show()` stops play-along first to step round it.
   *Why:* it breaks practice with a song.
-- **Exercises: Redesign (merged 2 Nov 2026 from "Exercise patterns the app plays" and "Exercise page redesign", both 31 Oct).** Each exercise page explains the exercise and plays it: piano-like notes the app makes itself (no recordings), 23 practice patterns from warm-ups to riffs and runs, the coach's starting notes, a snapping speed slider and voice range warnings. Vocal slides has no "Hear it". The pattern player is built as one shared piece so other places can reuse it. Details: `exercises_redesign_blueprint.md` in Ivan's project notes. A prototype is made; the page content draft and Render are still to do.
-  *Why:* it teaches, and it gets you singing straight from the exercise.
+- **Exercise takes (2 Nov 2026; pinned from Q32 by Ivan).** Record yourself while a pattern plays on an exercise page: the take is kept on that exercise with its pattern, key and speed, and played back in the exercise's History, reusing the app's recorder and takes.
+  *Why:* the recordings are the heart of the app, and this lets you hear your exercises improve, not only your songs.
 
 ### Priority 2 · Helps
 
-- **Today widgets (2 Nov 2026).** Patterns and Song practice as widget cards on Today, with an "Edit Today" step to choose which show. Reuses the shared pattern player from Exercises: Redesign.
+- **Today widgets (2 Nov 2026).** Patterns and Song practice as widget cards on Today, with an "Edit Today" step to choose which show. Reuses the shared pattern player from Q32 · Exercises: Redesign.
   *Why:* more doors to practice, and fewer taps to start singing.
 - **Reusing Chorus 1's timing for Chorus 2.** *Why:* less setting up before you can practise a song.
 - **"Shift all timings" when a re-imported track is a different length.** *Why:* saves redoing timings by hand.
 - **Learning tap lateness.** *Why:* play-along lines up better with less fiddling.
 - **A demo recording on each mark's guide page.** *Why:* it teaches by ear, not only in words.
 - **A shared song-screen dock.** *Why:* the same controls in the same place on every song screen.
-- **Note lengths and attacks in the pattern player (2 Nov 2026).** Notes that can be sustained or short and detached, and different note lengths (rhythms), shown with music notes on the pattern drawing. Builds on the shared pattern player from Exercises: Redesign.
+- **Note lengths and attacks in the pattern player (2 Nov 2026).** Notes that can be sustained or short and detached, and different note lengths (rhythms), shown with music notes on the pattern drawing. Builds on the shared pattern player from Q32 · Exercises: Redesign.
   *Why:* runs are trained detached first, then connected, and rhythm makes patterns closer to real songs.
 
 ### Priority 3 · Polish
