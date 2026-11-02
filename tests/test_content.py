@@ -1,4 +1,4 @@
-"""js/content.js: the exercises, write-ups, words, goals, video timings and Toggl tags fit together.
+"""js/content.js: the exercises, write-ups, words, goals, and video timings fit together.
 Run after editing content:  python tests/run.py content"""
 
 CHECKS = r"""(()=>{const p=[];const all=FOUND.concat(ROT),ids=all.map(e=>e.id);
@@ -24,7 +24,6 @@ CHECKS = r"""(()=>{const p=[];const all=FOUND.concat(ROT),ids=all.map(e=>e.id);
   Object.keys(VID).forEach(k=>{if(!ids.includes(k))p.push('VID has a timing for unknown exercise "'+k+'"')});
   if(!(Number.isInteger(TARGET)&&TARGET>0&&Number.isInteger(WEEK_TARGET)&&WEEK_TARGET>0))p.push('TARGET and WEEK_TARGET should be whole minutes');
   if(!/^https:\/\//.test(VIDEO))p.push('VIDEO should be an https link');
-  ['foundation','rotation','application','song'].forEach(k=>{if(!/^#\S/.test(TOGGL[k]||''))p.push('TOGGL.'+k+' should start with #');});
   return p;})()"""
 
 def run(b, t):
@@ -36,9 +35,3 @@ def run(b, t):
     bad = pg.evaluate("""(()=>{const bad=[];for(const e of FOUND.concat(ROT)){U.view='ex';U.exId=e.id;U.exTab='summary';render();
       const t=document.getElementById('app').innerText;if(!t.includes(e.name)||t.length<200)bad.push(e.id);}U.view=null;render();return bad})()""")
     t.ok(not bad, 'every exercise page shows its write-up' + (': missing ' + ', '.join(bad) if bad else ''))
-    # Toggl text uses the tags from content.js
-    tags = pg.evaluate("TOGGL")
-    pg.evaluate("D.sessions.push({id:'tg',date:new Date().toISOString(),mins:30,f:{slides:2},rot:{rung:3},xn:{},rate:{},takes:[],how:[],howNote:''})")
-    lines = pg.evaluate("togglLines(D.sessions.find(s=>s.id==='tg'))").split('\n')
-    t.ok(lines[0].endswith(tags['foundation']) and lines[1].endswith(tags['rotation'] + ' #resonance') and lines[2].endswith(tags['application']),
-         'Copy for Toggl uses the tags from content.js')

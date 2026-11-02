@@ -1,6 +1,6 @@
 /* Vocal Sessions · content.js
    Everything about your practice that you might want to change: goals, the coach video, the exercises and their
-   write-ups, the quick words, and the Toggl tags. The rest of the app reads these and never needs touching.
+   write-ups and the quick words. The rest of the app reads these and never needs touching.
 
    Safe to change:  any text between quotes, goals in minutes, video timings, adding words to a list,
                     adding a new exercise to FOUND or ROT (with an id, name and focus, and ideally entries below).
@@ -56,7 +56,7 @@ const COACH_TIMES = {
 };
 
 /* ===== Exercises ===== */
-// focus is one of: 'cord-closure', 'register', 'resonance', 'agility', 'blend'. It sets the icon colour and a Toggl tag.
+// focus is one of: 'cord-closure', 'register', 'resonance', 'agility', 'blend'. It sets the icon colour.
 const FOUND = [
   { id: 'slides', name: 'Vocal slides', focus: 'agility' },
   { id: 'humming', name: 'Humming', focus: 'cord-closure' },
@@ -131,15 +131,6 @@ const EX_WHY = {
 };
 const EX_WHY_DEFAULT = ['Cracked at the top', 'Ran out of air'];
 const EX_WHY_ALL = ['Still warming up', 'Voice felt tired', 'Short on time', 'Kept it easy today'];
-
-/* ===== Toggl tags ===== */
-// added to the end of each line of Copy for Toggl; rotation exercises also get #<their focus>
-const TOGGL = {
-  foundation: '#foundation #cord-closure',
-  rotation: '#rotation',
-  application: '#application',
-  song: '#song-practice',
-};
 
 /* ===== Exercise write-ups ===== */
 // shown on each exercise's Summary tab: what it is, why it helps, and where it shows up in songs. n is the order in the coach video.

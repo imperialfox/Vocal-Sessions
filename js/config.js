@@ -1,6 +1,6 @@
 /* Vocal Sessions · config.js
    App settings and fixed design: limits, focus areas and their colours, and the exercise icons.
-   The practice content you might want to change (exercises, write-ups, words, goals, video timings, Toggl tags) is in content.js.
+   The practice content you might want to change (exercises, write-ups, words, goals, video timings) is in content.js.
    Plain script (not a module): files share one global scope and load in the order listed in index.html. */
 
 /* ===== Config ===== */

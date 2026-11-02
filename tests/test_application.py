@@ -235,7 +235,6 @@ def done_and_norec(b, t):
     pg.click('#dock [data-a=cta]'); until(pg, "X===null")
     ss = pg.evaluate("D.sessions[D.sessions.length-1]")
     ok(ss['songName'] == 'Harbour Lights' and ss['takes'] == [] and ss['ext']['app']['noRec'] is True, 'saved: a song practised with no take')
-    ok('Application: Harbour Lights' in pg.evaluate("togglLines(D.sessions[D.sessions.length-1])"), 'Toggl names the song')
     to_app(pg)
     ok(pg.evaluate("APPL.state().id") == sid, 'Carry on picks it up next time')
     pg.context.close()
@@ -249,7 +248,6 @@ def old_answers(b, t):
     ok(pg.evaluate("D.sessions[2].how") == ['In control'], 'an old session keeps its answers')
     pg.evaluate("U.sheet='session';U.sd={k:'s2'};rerender()"); pg.wait_for_timeout(200)
     ok('In control' in pg.inner_text('.sheet') and 'Top felt easier' in pg.inner_text('.sheet'), 'and still shows them')
-    ok('How it went: In control — Top felt easier' in pg.evaluate("togglLines(D.sessions[2])"), 'and in its Toggl lines')
     # over 90 minutes still asks how long, then saves
     pg.evaluate("U.sheet=null;rerender()")
     to_app(pg)

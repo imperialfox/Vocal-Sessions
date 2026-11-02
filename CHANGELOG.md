@@ -9,6 +9,15 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.46 · 2 Nov 2026
+*Copy for Toggl is gone (Q28)*
+<!-- area: practice -->
+
+The app stands on its own now, so the leftover Copy for Toggl has been taken out.
+
+- A session's sheet and a song practice's sheet no longer have the Copy for Toggl button, and song practice's "Toggl tag #song-practice" line is gone. Everything else on them is unchanged.
+- Nothing about Toggl was ever saved, so your sessions and backups are exactly as they were.
+
 ## 3.45 · 2 Nov 2026
 *Every tab label in full with the iPhone on its side (Q27)*
 <!-- area: look -->

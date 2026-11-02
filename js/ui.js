@@ -919,11 +919,6 @@ function sessionBody(ss, mode) {
     '</div></div>' +
     howRow(ss) +
     '</div>' +
-    (done
-      ? '<div style="margin-top:12px"><button class="cta" data-a="copy" data-k="' +
-        ss.id +
-        '">Copy for Toggl</button></div>'
-      : '') +
     '<div class="hdr">Foundation</div><div class="grp">' +
     FOUND.map((e) => {
       const f = ss.f || {};
@@ -961,12 +956,7 @@ function sessionBody(ss, mode) {
         )
         .join('') +
       '</div>';
-  b +=
-    (done
-      ? ''
-      : '<div style="margin-top:16px"><button class="cta" data-a="copy" data-k="' +
-        ss.id +
-        '">Copy for Toggl</button></div>') + (done ? '<button class="ghost" data-a="close">Done</button>' : '');
+  if (done) b += '<button class="ghost" data-a="close">Done</button>';
   if (!done)
     b +=
       '<button class="ghost" data-a="sheet" data-v="delSession" data-k="' +
@@ -1019,11 +1009,7 @@ function songSessionBody(ss, mode) {
       '</div>';
   else if ((ss.takes || []).length) b += '<p class="foot">This practice’s takes are no longer on this phone.</p>';
   b +=
-    '<p class="foot">Toggl tag ' +
-    esc(TOGGL.song) +
-    '. Kept out of your focused goal and streak.</p><div style="margin-top:12px"><button class="cta" data-a="copy" data-k="' +
-    ss.id +
-    '">Copy for Toggl</button></div>' +
+    '<p class="foot">Kept out of your focused goal and streak.</p>' +
     (done ? '<button class="ghost" data-a="close">Done</button>' : '') +
     (done
       ? ''

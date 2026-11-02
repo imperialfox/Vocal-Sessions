@@ -61,57 +61,6 @@ function unstartIfNoTakes(r) {
     saveDraft();
   }
 }
-function togglLines(ss) {
-  const how = howStr(ss);
-  if (ss.kind === 'song') {
-    const n = (ss.takes || []).length;
-    return (
-      'Song practice' +
-      (ss.songName ? ': ' + ss.songName : '') +
-      (n ? ', ' + n + ' take' + (n > 1 ? 's' : '') : '') +
-      (how ? ' — ' + how : '') +
-      ' ' +
-      TOGGL.song
-    );
-  }
-  const L = [],
-    xn = ss.xn || {};
-  L.push(
-    'Foundation: ' +
-      FOUND.map((e) => {
-        const lv = (ss.f || {})[e.id],
-          n = noteStr(xn[e.id]);
-        return e.name + (lv ? ' L' + lv : ' skipped') + (n ? ' (' + n + ')' : '');
-      }).join(', ') +
-      (ss.fNote ? ' — ' + ss.fNote : '') +
-      ' ' +
-      TOGGL.foundation
-  );
-  Object.keys(ss.rot || {}).forEach((id) => {
-    const e = exById(id) || { name: (ss.rotNames || {})[id] || 'Exercise', focus: 'custom' };
-    const n = noteStr(xn[id]);
-    L.push(
-      e.name +
-        ' L' +
-        ss.rot[id] +
-        '/3' +
-        (n ? ' — ' + n : '') +
-        (ss.rNote ? ' — ' + ss.rNote : '') +
-        ' ' +
-        TOGGL.rotation +
-        ' #' +
-        e.focus
-    );
-  });
-  const r = ss.rate || {};
-  const rt = ['Pitch', 'Tone', 'Ease']
-    .filter((x) => r[x])
-    .map((x) => x.toLowerCase() + ' ' + r[x])
-    .join(', ');
-  L.push('Application' + (ss.songName ? ': ' + ss.songName : '') + (rt ? ' — ' + rt : '') + ' ' + TOGGL.application);
-  if (how) L.push('How it went: ' + how);
-  return L.join('\n');
-}
 // Finish: long-session check (over 90 min), then save. Q20: a focused session no longer asks "How did it go?" (its
 // words can still be added on the session's edit sheet); song practice still does
 function startFinish() {
@@ -212,8 +161,8 @@ function finishSession() {
   save();
   X = null;
   saveDraft();
-  // Q21: the Session saved screen, which Done turns into Today (saved.js). The session's own sheet, with Copy for
-  // Toggl, is still a tap away on Today's calendar and in All sessions
+  // Q21: the Session saved screen, which Done turns into Today (saved.js). The session's own sheet is still a tap
+  // away on Today's calendar and in All sessions
   U.view = 'saved';
   U.saved = { k: ss.id };
   U.tab = 'today';

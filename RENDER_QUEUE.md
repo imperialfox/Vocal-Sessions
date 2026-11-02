@@ -51,7 +51,7 @@ Every ID with its **Status** (`Awaiting Render`, `Approved — awaiting Build`, 
 | Q25 | Coach: Frame-Accurate Chapters | Shipped 3.43 | Coach timings, level picker, 1 Nov 2026 |
 | Q26 | Window: Picture in Picture | Shipped 3.44 | Floating window picture in picture and audit fixes, 1 Nov 2026 |
 | Q27 | Interface: Landscape Tab Bar Fit | Shipped 3.45 | "Exerc" cut off on its side, 1 Nov 2026 |
-| Q28 | Hygiene: Toggl Removal | Approved — awaiting Build | Get rid of Copy for Toggl, 2 Nov 2026 |
+| Q28 | Hygiene: Toggl Removal | Shipped 3.46 | Get rid of Copy for Toggl, 2 Nov 2026 |
 | Q29 | Session: Song Rating Removal | Approved — awaiting Build | Remove "Rate the song", 2 Nov 2026 |
 
 Work shipped before this standard (for example Track 1 and Song Clock A1) keeps its version numbers and has no queue ID.
@@ -69,24 +69,7 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 
 ## Order (2 Nov 2026)
 
-Next: **Q28**, then **Q29** (both approved — awaiting Build; Render 2 Nov 2026, 09:29). Q29 follows Q28 because both touch a session's sheet, and Q28 removes the Toggl text that also lists ratings. **Q07** is still awaiting Render. Q27 shipped in 3.45 (Build 2 Nov 2026). Q25 shipped in 3.43 and Q26 in 3.44 (Build 2 Nov 2026); Q25–Q27 got Render on 1 Nov 2026 (19:59), in one instruction, each with its own Build. Q19 shipped in 3.39, Q20 in 3.40, Q21 in 3.41 and Q22 in 3.42. Q22 got Render on 31 Oct 2026 (20:59) and was built on the one-page session and the saved screen. Q19–Q21 got Render on 31 Oct 2026 (19:58), in one instruction, each with its own Build. They follow Q17 (shipped in 3.38; Q20 needs Q16's track-while-recording, shipped in 3.37). Q11–Q17 got Render on 30 Oct 2026 (06:42) and have all shipped. What has shipped is in the table's Status column. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
-
-## Q28 · Hygiene: Toggl Removal
-
-**Status:** Approved — awaiting Build.
-**Render:** 2 Nov 2026, 09:29. Ivan: "get rid of any \"copy for toggl\" in any part of the app: render." Scope below. Build not yet given.
-
-- **Why:** the app no longer depends on Toggl ([README › What it's for](README.md#what-its-for)), so copying a session out for it is leftover.
-- **Scope:** remove Copy for Toggl from every part of the app:
-  - the Copy for Toggl buttons on a session's sheet and a song practice's sheet, and the "Toggl tag #song-practice" line;
-  - the copy action, `togglLines()` and the "Copied for Toggl" toast; `copyText()` too if nothing else uses it;
-  - the `TOGGL` tags in `js/content.js`, and Toggl wording in comments and file headers;
-  - the Toggl checks in `test_content.py`, `test_flows.py` and `test_application.py` (keep what they check that isn't Toggl);
-  - Toggl in `README.md` and `MAINTAINING.md`.
-- **Kept:** each exercise's focus (it still sets the icon colour); old "How did it go?" answers still show in history.
-- **Not changed:** saved data and backups (nothing about Toggl is stored); `tests/fixtures/app-3.6.html`, a frozen old version used by the restore tests.
-- **Done when:** no "Toggl" is left in `js/`, `css/`, `index.html` or the docs outside `CHANGELOG.md`'s history; the full suite passes locally and on GitHub; a normal app version with a changelog headline ending "(Q28)".
-- **Handoff:** `q28_hygiene_toggl_removal_handoff.md` in Ivan's project notes.
+Next: **Q29** (approved; Build given 2 Nov 2026, 09:33, with Q28). Q28 shipped in 3.46 (Render 2 Nov 2026, 09:29; Build 09:33); Q29 follows it because both touch a session's sheet. **Q07** is still awaiting Render. Q27 shipped in 3.45 (Build 2 Nov 2026). Q25 shipped in 3.43 and Q26 in 3.44 (Build 2 Nov 2026); Q25–Q27 got Render on 1 Nov 2026 (19:59), in one instruction, each with its own Build. Q19 shipped in 3.39, Q20 in 3.40, Q21 in 3.41 and Q22 in 3.42. Q22 got Render on 31 Oct 2026 (20:59) and was built on the one-page session and the saved screen. Q19–Q21 got Render on 31 Oct 2026 (19:58), in one instruction, each with its own Build. They follow Q17 (shipped in 3.38; Q20 needs Q16's track-while-recording, shipped in 3.37). Q11–Q17 got Render on 30 Oct 2026 (06:42) and have all shipped. What has shipped is in the table's Status column. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
 
 ## Q29 · Session: Song Rating Removal
 

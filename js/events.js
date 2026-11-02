@@ -845,11 +845,6 @@ document.addEventListener('click', (e) => {
         toast('All data deleted');
       })();
       break;
-    case 'copy': {
-      const ss = findSess(k);
-      if (ss) copyText(togglLines(ss));
-      break;
-    }
     case 'exportPrep':
       prepareExport();
       break;

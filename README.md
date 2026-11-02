@@ -4,9 +4,9 @@
 
 It's a web app styled like a native iOS app: a single HTML file with no install, no backend and no account, designed to live on your iPhone Home Screen. It runs on its own, with no other apps needed.
 
-![Version 3.45](https://img.shields.io/badge/version-3.45-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
+![Version 3.46](https://img.shields.io/badge/version-3.46-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
 
-**Current version: 3.45 · 2 Nov 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
+**Current version: 3.46 · 2 Nov 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
 
 ---
 
@@ -184,7 +184,7 @@ And **Songs**, for learning a song: paste the lyrics, and they're split into lab
   - Drag it to any corner and it snaps there. It remembers the corner on this device.
   - It hides on its own screen, while a sheet is open and while you're recording.
   - Closing a section's takes sheet lets a playing take carry on, so you can listen while you look at the lyrics.
-- **Session saved (3.41):** finishing a session lands on a calm screen that belongs to Today: this week's arch, with only today's minutes drawing in, then "41 min · Sunday · weekly goal reached" (the last part once the goal is reached), the week's circles with today's turning green, and "N-week streak continues" when there's a streak. Nothing counts up. **Done** turns it into Today: the arch, the circles and the streak line move into their places, Done becomes **Start session**, and the rest of Today rises in. With Reduce Motion it fades. The session's details and Copy for Toggl are on its sheet, from the calendar or All sessions.
+- **Session saved (3.41):** finishing a session lands on a calm screen that belongs to Today: this week's arch, with only today's minutes drawing in, then "41 min · Sunday · weekly goal reached" (the last part once the goal is reached), the week's circles with today's turning green, and "N-week streak continues" when there's a streak. Nothing counts up. **Done** turns it into Today: the arch, the circles and the streak line move into their places, Done becomes **Start session**, and the rest of Today rises in. With Reduce Motion it fades. The session's details are on its sheet, from the calendar or All sessions.
 - **How did it go?** After song practice, tap words that fit (or add your own) and an optional note. You can skip it. A focused session no longer asks (3.40); you can still add words on its edit sheet.
 - **Recordings:**
   - Mono AAC at about 96 kbps (about 0.7 MB a minute), with the phone's voice processing off, up to 2 minutes per take

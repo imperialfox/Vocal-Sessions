@@ -1,5 +1,5 @@
 /* Vocal Sessions · backup.js
-   Backups: export, check, restore and undo; Copy for Toggl.
+   Backups: export, check, restore and undo.
    Plain script (not a module): files share one global scope and load in the order listed in index.html. */
 
 /* ===== Backup ===== */
@@ -722,27 +722,4 @@ function undoHTML() {
       fileDate(until) +
       '.</p><button class="cta red" data-a="undoYes">Undo restore</button><button class="ghost" data-a="close">Cancel</button>'
   );
-}
-
-/* ===== Copy ===== */
-function copyText(txt) {
-  const ok = () => toast('Copied for Toggl');
-  const fallback = () => {
-    const ta = document.createElement('textarea');
-    ta.value = txt;
-    ta.setAttribute('readonly', '');
-    ta.style.position = 'fixed';
-    ta.style.opacity = '0';
-    document.body.appendChild(ta);
-    ta.select();
-    ta.setSelectionRange(0, txt.length);
-    let s = false;
-    try {
-      s = document.execCommand('copy');
-    } catch (e) {}
-    ta.remove();
-    s ? ok() : toast('Copy failed. Try again.');
-  };
-  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(ok, fallback);
-  else fallback();
 }

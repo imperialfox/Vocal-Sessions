@@ -1,4 +1,4 @@
-"""A full day of use on iPhone: suggestions, a session with notes, the clock, editing, song practice, Toggl text."""
+"""A full day of use on iPhone: suggestions, a session with notes, the clock, editing, song practice and its sheet."""
 import json, datetime as dt
 from harness import now, OLD_DRAFT, ready, SP, until
 
@@ -72,10 +72,10 @@ def run(b, t):
     t.shot(pg, 'done', full_page=True)
     pg.click('[data-a=savedDone]'); until(pg, "U.view===null&&U.tab==='today'")
     pg.evaluate("U.sheet='session';U.sd={k:D.sessions[D.sessions.length-1].id};rerender()")  # its sheet, as from the calendar
-    tg = pg.evaluate("togglLines(D.sessions[D.sessions.length-1])")
-    ok('Lip bubbling skipped' in tg and '(Lost the buzz, Nose tickle)' in tg and 'How it went' not in tg and '— Low notes clear #rotation' in tg
-       and 'Application: Versace on the Floor · bridge — pitch 2' in tg,
-       'Toggl text includes skips, notes and the song')
+    sh = pg.inner_text('.sheet')
+    ok('Skipped' in sh and 'Lost the buzz, Nose tickle' in sh and 'Low notes clear' in sh and 'Versace on the Floor · bridge' in sh
+       and 'Toggl' not in sh,
+       "the session's sheet shows skips, notes and the song, with no Copy for Toggl (Q28)")
 
     # edit a finished session
     mk = now.strftime('%Y-%m'); m0 = pg.evaluate(f"D.months['{mk}']"); mins0 = ss['mins']
@@ -111,7 +111,8 @@ def run(b, t):
     pg.click('.sheet [data-a=wTog][data-v="Breath ran short"]'); pg.click('[data-a=saveHow]'); pg.wait_for_timeout(600)
     so = pg.evaluate("D.songSessions[0]"); ok(so['mins'] == 30 and so['how'] == ['Breath ran short'], 'song practice saved with 30 minutes')
     ok(pg.evaluate("weekInfo().mins") == w0 and pg.evaluate(f"D.months['{mk}']||0") == m1, 'song practice leaves weekly and monthly minutes alone')
-    ok(pg.evaluate("togglLines(D.songSessions[0])").endswith('#song-practice'), 'song practice is tagged #song-practice in Toggl')
+    ok('Toggl' not in pg.inner_text('.sheet') and 'Kept out of your focused goal and streak.' in pg.inner_text('.sheet'),
+       "song practice's sheet has no Copy for Toggl or Toggl tag (Q28)")
     pg.click('.sheet .xbtn[data-a=close]'); pg.wait_for_timeout(300)
     # the session started 125 minutes ago: just after midnight on a Monday that's last week, so the card has no line
     this_wk = pg.evaluate("weekStart(new Date(D.songSessions[0].date)).getTime()===weekStart(new Date()).getTime()")
