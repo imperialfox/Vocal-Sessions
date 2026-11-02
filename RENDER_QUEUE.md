@@ -48,7 +48,7 @@ Every ID with its **Status** (`Awaiting Render`, `Approved — awaiting Build`, 
 | Q23 | Interface: Status Bar Glow | Shipped 3.33 | Gradient clipped at the top, 31 Oct 2026 |
 | Q24 | Coach: Video Redesign | Shipped (tooling, no app version) | Coach video redesign, 31 Oct–1 Nov 2026 |
 | Q25 | Coach: Frame-Accurate Chapters | Shipped 3.43 | Coach timings, level picker, 1 Nov 2026 |
-| Q26 | Window: Picture in Picture | Approved — awaiting Build | Floating window picture in picture and audit fixes, 1 Nov 2026 |
+| Q26 | Window: Picture in Picture | Shipped 3.44 | Floating window picture in picture and audit fixes, 1 Nov 2026 |
 | Q27 | Interface: Landscape Tab Bar Fit | Approved — awaiting Build | "Exerc" cut off on its side, 1 Nov 2026 |
 
 Work shipped before this standard (for example Track 1 and Song Clock A1) keeps its version numbers and has no queue ID.
@@ -66,35 +66,7 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 
 ## Order (1 Nov 2026)
 
-Next to build: **Q26 → Q27** (Render given by Ivan on 1 Nov 2026, 19:59, with Q25, in one instruction, each with its own Build; Q26 needed Q25, shipped in 3.43 (Build 2 Nov 2026); Q27 can go any time). Then **Q07** (awaiting Render). Q19 shipped in 3.39, Q20 in 3.40, Q21 in 3.41 and Q22 in 3.42. Q22 got Render on 31 Oct 2026 (20:59) and was built on the one-page session and the saved screen. Q19–Q21 got Render on 31 Oct 2026 (19:58), in one instruction, each with its own Build. They follow Q17 (shipped in 3.38; Q20 needs Q16's track-while-recording, shipped in 3.37). Q11–Q17 got Render on 30 Oct 2026 (06:42) and have all shipped. What has shipped is in the table's Status column. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
-
-## Q26 · Window: Picture in Picture
-
-**Status:** Approved — awaiting Build. **Approval:** Render given by Ivan on 1 Nov 2026 (19:59) for the scope below, with all defaults, as one build in four stages. The build handoff is in Ivan's project notes as `q26_window_picture_in_picture_handoff.md`, with the two floating window audits and the wireframes (boards C and D).
-**Needs:** Q25 shipped (3.43, 2 Nov 2026: check it's at the top of `CHANGELOG.md` on `main`).
-
-- **Goal:** the floating window feels like Apple's picture in picture, and every kind of window reads well, behaves the same and never gets in the way.
-- **Scope:**
-  - **Coach video:** a clean picture. One tap shows controls that fade after about 3 s: ✕, open the player, −10 / play-pause / +10, and L1 L2 L3. Pinch or double-tap moves between three sizes (176 pt, 264 pt, full width), and the last size is remembered.
-  - **Tuck at the edge, for every kind:** an arrow tab, with sound and timers carrying on, and a dot while playing.
-  - **The 16 audit fixes:**
-    - the session step name in the text colour, its colour kept on the ring and a dot;
-    - nothing carries over between kinds (the coach video ✕ bug);
-    - 44 pt touch areas;
-    - a readable recording window;
-    - one progress line style;
-    - name first, no "Playing ·";
-    - one capsule shape;
-    - a stronger dark ring track;
-    - room at the bottom of every page;
-    - the end of long names cut, never the start;
-    - a Reduce Motion fade;
-    - a cross-fade between kinds;
-    - a press and a lift when dragged;
-    - a steady VoiceOver label.
-  - **Build stages:** fixes → look → behaviour → picture in picture.
-- **Out of scope:** iPhone's own system picture in picture; pinch for kinds that aren't video; the landscape tab bar (Q27).
-- **Done when:** each fix and both features have a check; light and dark at 390, 375, on its side and iPad; the full suite passes; changelog headline ends "(Q26)".
+Next to build: **Q27** (Render given by Ivan on 1 Nov 2026, 19:59, with Q25 and Q26, in one instruction, each with its own Build; it can go any time). Then **Q07** (awaiting Render). Q25 shipped in 3.43 and Q26 in 3.44 (Build 2 Nov 2026). Q19 shipped in 3.39, Q20 in 3.40, Q21 in 3.41 and Q22 in 3.42. Q22 got Render on 31 Oct 2026 (20:59) and was built on the one-page session and the saved screen. Q19–Q21 got Render on 31 Oct 2026 (19:58), in one instruction, each with its own Build. They follow Q17 (shipped in 3.38; Q20 needs Q16's track-while-recording, shipped in 3.37). Q11–Q17 got Render on 30 Oct 2026 (06:42) and have all shipped. What has shipped is in the table's Status column. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
 
 ## Q27 · Interface: Landscape Tab Bar Fit
 
@@ -129,6 +101,7 @@ Kept so they aren't lost. None are queued; ask Ivan before planning any of them.
   - All sessions' old list fades out before the new rows ripple in.
 - **Exercise patterns the app plays (31 Oct 2026).** The app generates notes itself (no recordings): exercise patterns in any key, a starting note, stepping up a semitone each round, glides for slides and sirens, and an optional held note underneath. A switchable reference sound (Soft tone · Piano-ish · Electric piano), Piano-ish by default, set in Settings and also cycled from a small chip beside "Hear it" on the exercise page; piano sounds are held longer on glides. Ivan heard a demo and judged a recorded piano unnecessary. Build after Q16 (sound plumbing); check the silent switch and speaker loudness on his iPhone.
 - **Exercise page redesign (31 Oct 2026).** Polished mockup for Humming: tile beside the title; a pitch-shape drawing with "Hear it" (dot steps along with a ripple); three at-a-glance facts; the fix tip under the drawing; "How to do it" steps; "Where you feel it" outline with a glow; level dots with the last logged level selected; shorter "Why it helps" with More; quieter small headings for minor sections. Needs per-exercise content drafted from the write-ups and course notes.
+- **Found while building Q26 (2 Nov 2026), a bug on 3.43 as well:** starting a song's track (its player or a song row's play button) while Song Clock plays along gives the track no floating window. Play-along's own track pauses a moment later, and that pause closes the track's window (`fwPaused('track')` in window.js) after `NOW.start('track')` opened it. Needs its own Render; `tests/test_pip.py`'s `show()` stops play-along first to step round it.
 - **Pinned ideas:**
   - Timeline drag and drop.
   - A shared song-screen dock.

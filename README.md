@@ -2,9 +2,9 @@
 
 A mobile-first companion for structured vocal practice, styled like a native iOS app. It's a single HTML file with no install, no backend and no account. It's designed to live on your iPhone Home Screen.
 
-![Version 3.43](https://img.shields.io/badge/version-3.43-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
+![Version 3.44](https://img.shields.io/badge/version-3.44-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
 
-**Current version: 3.43 · 2 Nov 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
+**Current version: 3.44 · 2 Nov 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
 
 ---
 
@@ -153,9 +153,10 @@ And **Songs**, for learning a song: paste the lyrics, and they're split into lab
   - **Recording over the track (3.37):** the one exception. Tap Record while a song's track plays and the app asks first: **Record with headphones** or **Record through the speaker** (the track may be heard in the take). The track keeps playing through the take and after it. Headphones are remembered while the track keeps playing; the speaker asks every time.
   - Every sound's window has a **✕**, playing or paused. It stops the sound and closes the window, and nothing brings it back except playing it again: not switching tabs, a sheet, coming back to the app or a reload. Nothing else pops up in its place on that screen. When a sound finishes, its window goes.
   - A sound's window shows while it plays, and when you paused it from the window (or the lock screen). Paused anywhere else, it doesn't follow you.
-  - A session shows what's running (for example "Focused session · Rotation"), its live time and a pause button. Paused, it says Paused and the time stops.
-  - A take shows "Playing · Chorus 2" (or the song's name for song practice), its time and progress, and a pause button. It goes when the take ends.
-  - A song's track shows "Playing · song title", its time and progress, and a pause button. Pause it on the player itself and it doesn't follow you out.
+  - Every window shows what it is on top (a session's step after a dot in its colour, a take's section, the song's name) and its time below, with a thin progress line along its bottom edge where there is one (3.44). The play/pause button shows whether it's playing; paused, the time greys and stops.
+  - A take goes when it ends. Pause a song's track on the player itself and it doesn't follow you out.
+  - **Tuck it away (3.44):** drag or throw any window off the left or right edge. It leaves a small tab with an arrow, and a blue dot while something plays; sound and timers carry on. Tap the tab or pull it out to bring it back.
+  - In a bottom corner, every page leaves room at its end so the last line scrolls clear of it.
   - If more than one is going, a take wins, then the coach video, the track, play-along and a session, in that order.
   - Tap it to go back to exactly where you were: the same step at the same scroll, or the song with that section's takes open.
   - Drag it to any corner and it snaps there. It remembers the corner on this device.
@@ -237,7 +238,8 @@ Since 3.16 the coach video can play inside the app, from a copy kept on your iPh
 - **Keep the file in Files.** After re-adding the app or moving to a new phone, restore your backup, then add the video again the same way.
 - **Replace or remove it:** Settings › Coach video › Replace video… or Remove video. Reset all data doesn't remove it.
 - **Chapters:** a video the length of the coach video (79:33) gets its 12 exercises, starting at the YouTube timestamps (`COACH_TIMES` in `js/content.js`). Give an exercise three times there (Level 1, 2 and 3) and it gets the L1 · L2 · L3 picker too. Any other video plays as a plain video, without the exercise list.
-- **Where it plays:** the player (Exercises › Coach video), Play with coach on an exercise's page, and the floating window during a session's Foundation and Rotation (Application has a Coach ▸ pill; tapping the window opens the player). Leaving while it plays keeps it going in a small window.
+- **Where it plays:** the player (Exercises › Coach video), Play with coach on an exercise's page, and the floating window during a session's Foundation and Rotation (Application has a Coach ▸ pill). Leaving while it plays keeps it going in a small window.
+- **Picture in picture (3.44):** the small window is just the video. Tap it for its controls (✕, open the player, −10 · play · +10 and L1 L2 L3), which fade after about 3 seconds. Pinch or double-tap for small, medium or the full width; the last size is kept on this device.
 - A Home Screen web app may pause when the phone locks. That's iOS, not the app.
 
 ## Offline

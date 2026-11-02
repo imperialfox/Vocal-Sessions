@@ -9,6 +9,37 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.44 · 2 Nov 2026
+*The floating window: picture in picture, tuck it away, one look (Q26)*
+<!-- area: practice -->
+
+The coach video's window works like Apple's picture in picture, any floating window can be tucked away at the side, and every kind now looks and behaves the same.
+
+**Coach video, picture in picture**
+- The window is just the video now; the bar under it is gone.
+- Tap it to show its controls over the dimmed video: ✕, open the player, −10 · play · +10, and L1 L2 L3 (as in the player: a tap jumps to that level's start, and the lit level starts again). They fade after about 3 seconds; tap again to hide them sooner.
+- Three sizes: small, medium and the full width. Pinch, or double-tap for the next. The last size is kept on this device.
+
+**Tuck it away**
+- Drag or throw any floating window off the left or right edge. It slides away and leaves a small tab with an arrow.
+- Sound and timers carry on; a blue dot on the tab shows something is playing.
+- Tap the tab, or pull it out, to bring the window back.
+
+**One look**
+- The top line says what it is (the section, song or step) and the time is below it. "Playing ·" and "Paused ·" are gone: the play/pause button shows that.
+- The session's step name is in the normal text colour, after a dot in the step's colour, so it's easy to read.
+- The red window while you record over the track is a deeper red, easier to read, and says "Track under your take".
+- One thin progress line along the bottom edge for every kind (the song track has one now), and the same rounded shape for every capsule.
+- In dark mode the session ring's empty track shows more clearly.
+- A long name loses its end, never its start.
+
+**Behaviour**
+- In a bottom corner, every page leaves room at its end so the last line scrolls clear of the window.
+- The window presses down slightly when tapped, and lifts while you drag it.
+- Swapping from one kind to another cross-fades while it changes size in the same corner. With Reduce Motion, it fades in and out.
+- Every ✕ and play button is easier to hit (44 pt), and the coach video's ✕ no longer jumps to the wrong corner.
+- VoiceOver reads a steady name (e.g. "Focused session, Rotation"), and the time only when you ask, not every second.
+
 ## 3.43 · 2 Nov 2026
 *Coach video: every tap lands on the exact start of a level (Q25)*
 <!-- area: practice -->
