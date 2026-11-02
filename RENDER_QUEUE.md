@@ -125,6 +125,8 @@ Each idea has its priority, the date it was added and a *Why* line. New ideas go
 - **Learning tap lateness.** *Why:* play-along lines up better with less fiddling.
 - **A demo recording on each mark's guide page.** *Why:* it teaches by ear, not only in words.
 - **A shared song-screen dock.** *Why:* the same controls in the same place on every song screen.
+- **Note lengths and attacks in the pattern player (2 Nov 2026).** Notes that can be sustained or short and detached, and different note lengths (rhythms), shown with music notes on the pattern drawing. Builds on the shared pattern player from Exercises: Redesign.
+  *Why:* runs are trained detached first, then connected, and rhythm makes patterns closer to real songs.
 
 ### Priority 3 · Polish
 
