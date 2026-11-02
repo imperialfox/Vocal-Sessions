@@ -16,7 +16,7 @@ Every queued item has a queue ID and a standard name, used in the queue, in hand
 - **Items:** `Q[##] · [Subsystem]: [Feature Name]`, e.g. `Q02 · Track: Waveform Sections`.
 - **Files** (handoffs, specs, wireframes, prototypes): `q##_[subsystem]_[feature]_[type].[ext]`, lower case with underscores, e.g. `q02_track_waveform_sections_handoff.md`.
 - **Releases:** the shipped version's `CHANGELOG.md` headline ends with the queue ID in brackets, e.g. `*Waveform sections on the track player (Q02)*` under `## 3.23 · 27 Oct 2026` (the `##` line keeps its exact format for the app's Changelog page). That's the bridge from queue ID to version. Q01 shipped as 3.22, headline `*Search, from every tab (Q01)*`; Q08 as 3.23.
-- **New items:** an idea gets its ID when Ivan says **Render** for it, taking the next unused number (the next is **Q28**). IDs are never reused or renumbered, even when the queue is reordered or an item ships.
+- **New items:** an idea gets its ID when Ivan says **Render** for it, taking the next unused number (the next is **Q30**). IDs are never reused or renumbered, even when the queue is reordered or an item ships.
 - **Exception, 30 Oct 2026:** Ivan asked for the six stages of the 30 Oct read-only audit, plus its clean-up list, to get IDs straight away, before Render, most critical first. They are **Q11–Q17**. All seven got Render on 30 Oct 2026 and have shipped (3.29–3.31, 3.34, 3.36, 3.37 and 3.38).
 - **Exception, 31 Oct 2026:** Ivan asked for the status bar fix to be queued with an ID before Render. It is **Q23**; Render and Build followed the same evening (shipped in 3.33).
 
@@ -51,6 +51,8 @@ Every ID with its **Status** (`Awaiting Render`, `Approved — awaiting Build`, 
 | Q25 | Coach: Frame-Accurate Chapters | Shipped 3.43 | Coach timings, level picker, 1 Nov 2026 |
 | Q26 | Window: Picture in Picture | Shipped 3.44 | Floating window picture in picture and audit fixes, 1 Nov 2026 |
 | Q27 | Interface: Landscape Tab Bar Fit | Shipped 3.45 | "Exerc" cut off on its side, 1 Nov 2026 |
+| Q28 | Hygiene: Toggl Removal | Approved — awaiting Build | Get rid of Copy for Toggl, 2 Nov 2026 |
+| Q29 | Session: Song Rating Removal | Approved — awaiting Build | Remove "Rate the song", 2 Nov 2026 |
 
 Work shipped before this standard (for example Track 1 and Song Clock A1) keeps its version numbers and has no queue ID.
 
@@ -67,7 +69,38 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 
 ## Order (2 Nov 2026)
 
-Next: **Q07** (awaiting Render). Q27 shipped in 3.45 (Build 2 Nov 2026). Q25 shipped in 3.43 and Q26 in 3.44 (Build 2 Nov 2026); Q25–Q27 got Render on 1 Nov 2026 (19:59), in one instruction, each with its own Build. Q19 shipped in 3.39, Q20 in 3.40, Q21 in 3.41 and Q22 in 3.42. Q22 got Render on 31 Oct 2026 (20:59) and was built on the one-page session and the saved screen. Q19–Q21 got Render on 31 Oct 2026 (19:58), in one instruction, each with its own Build. They follow Q17 (shipped in 3.38; Q20 needs Q16's track-while-recording, shipped in 3.37). Q11–Q17 got Render on 30 Oct 2026 (06:42) and have all shipped. What has shipped is in the table's Status column. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
+Next: **Q28**, then **Q29** (both approved — awaiting Build; Render 2 Nov 2026, 09:29). Q29 follows Q28 because both touch a session's sheet, and Q28 removes the Toggl text that also lists ratings. **Q07** is still awaiting Render. Q27 shipped in 3.45 (Build 2 Nov 2026). Q25 shipped in 3.43 and Q26 in 3.44 (Build 2 Nov 2026); Q25–Q27 got Render on 1 Nov 2026 (19:59), in one instruction, each with its own Build. Q19 shipped in 3.39, Q20 in 3.40, Q21 in 3.41 and Q22 in 3.42. Q22 got Render on 31 Oct 2026 (20:59) and was built on the one-page session and the saved screen. Q19–Q21 got Render on 31 Oct 2026 (19:58), in one instruction, each with its own Build. They follow Q17 (shipped in 3.38; Q20 needs Q16's track-while-recording, shipped in 3.37). Q11–Q17 got Render on 30 Oct 2026 (06:42) and have all shipped. What has shipped is in the table's Status column. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
+
+## Q28 · Hygiene: Toggl Removal
+
+**Status:** Approved — awaiting Build.
+**Render:** 2 Nov 2026, 09:29. Ivan: "get rid of any \"copy for toggl\" in any part of the app: render." Scope below. Build not yet given.
+
+- **Why:** the app no longer depends on Toggl ([README › What it's for](README.md#what-its-for)), so copying a session out for it is leftover.
+- **Scope:** remove Copy for Toggl from every part of the app:
+  - the Copy for Toggl buttons on a session's sheet and a song practice's sheet, and the "Toggl tag #song-practice" line;
+  - the copy action, `togglLines()` and the "Copied for Toggl" toast; `copyText()` too if nothing else uses it;
+  - the `TOGGL` tags in `js/content.js`, and Toggl wording in comments and file headers;
+  - the Toggl checks in `test_content.py`, `test_flows.py` and `test_application.py` (keep what they check that isn't Toggl);
+  - Toggl in `README.md` and `MAINTAINING.md`.
+- **Kept:** each exercise's focus (it still sets the icon colour); old "How did it go?" answers still show in history.
+- **Not changed:** saved data and backups (nothing about Toggl is stored); `tests/fixtures/app-3.6.html`, a frozen old version used by the restore tests.
+- **Done when:** no "Toggl" is left in `js/`, `css/`, `index.html` or the docs outside `CHANGELOG.md`'s history; the full suite passes locally and on GitHub; a normal app version with a changelog headline ending "(Q28)".
+- **Handoff:** `q28_hygiene_toggl_removal_handoff.md` in Ivan's project notes.
+
+## Q29 · Session: Song Rating Removal
+
+**Status:** Approved — awaiting Build.
+**Render:** 2 Nov 2026, 09:29. Ivan: "the application rate the song can also go since I always seem to skip that at the end any ways: render - approved." Scope below. Build not yet given. Build after Q28.
+
+- **Why:** the app isn't a grader ([README › What it's for](README.md#what-its-for)), and Ivan always skips the rating.
+- **Scope:**
+  - remove "Rate the song" (Pitch · Tone · Ease) from a session's Application step;
+  - remove the Pitch · Tone · Ease rows from a session's edit sheet.
+- **Default if unanswered:** old ratings stop showing on a session's sheet as well, so no scores show anywhere. They stay in the saved data.
+- **Not changed:** saved data and backups. The `rate` field stays, per [rules that keep old data working](MAINTAINING.md#rules-that-keep-old-data-working), and old backups still restore. Song practice's "How did it go?" words (words, not scores) and Star on takes stay.
+- **Done when:** no Pitch · Tone · Ease rating can be given or seen; sessions with old ratings still open, edit and restore; the full suite passes locally and on GitHub; a normal app version with a changelog headline ending "(Q29)".
+- **Handoff:** `q29_session_song_rating_removal_handoff.md` in Ivan's project notes.
 
 ## Q07 · Song Clock: Dynamic Sync
 
