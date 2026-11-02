@@ -90,6 +90,7 @@ Copy this into the new chat. Fill in what applies and delete what doesn't.
 **Queue item:** <Q## from RENDER_QUEUE.md, or none>
 
 **Goal:** <what this work is for, in a line or two>
+**Purpose check:** <how it makes practice easier ([README › What it's for](README.md#what-its-for))>
 **Current task:** <the part this chat does>
 
 **Status:** <what's agreed, prototyped, built or pushed so far>

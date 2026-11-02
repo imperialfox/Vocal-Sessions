@@ -1,10 +1,32 @@
 # Vocal Sessions
 
-A mobile-first companion for structured vocal practice, styled like a native iOS app. It's a single HTML file with no install, no backend and no account. It's designed to live on your iPhone Home Screen.
+**A practice room in your pocket. It coaches you through your warm-up, helps you learn your songs, and keeps every take so you can hear your voice improve.**
+
+It's a web app styled like a native iOS app: a single HTML file with no install, no backend and no account, designed to live on your iPhone Home Screen. It runs on its own, with no other apps needed.
 
 ![Version 3.45](https://img.shields.io/badge/version-3.45-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
 
 **Current version: 3.45 · 2 Nov 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
+
+---
+
+## What it's for
+
+The goal is a better voice overall: range, control and tone. A good session is one where you hear that you sound better.
+
+- **The recordings are the heart of it.** They're proof you're improving, honest feedback and a record of the journey, and they can't be replaced. Everything else could be rebuilt.
+- **Exercises and songs are equal halves** of the same practice. Neither is just the warm-up or just the reward.
+- **It connects everything.** Takes belong to songs, sections and exercises, so nothing sits on its own.
+- **It teaches.** It explains how each exercise goes and why, as well as running it.
+
+What it isn't:
+- **Not a grader.** It never scores or judges your singing.
+- **Not a karaoke app.** Singing along is training, not for fun or sharing.
+- **Not a habit tracker.** Streaks and minutes are a side benefit, not the point.
+
+**The first test for any new idea: does it make practice easier?** Does it get you singing sooner, with less fuss?
+
+Earlier versions were a logbook alongside a time tracker and a YouTube video. Since then the app has grown to cover the whole practice.
 
 ---
 
@@ -237,7 +259,7 @@ Since 3.16 the coach video can play inside the app, from a copy kept on your iPh
 - **Add it:** Settings › Coach video › Add coach video… and pick the video from Files (about 57 MB). It's stored on this device only. It isn't put online, and it isn't in your backups.
 - **Keep the file in Files.** After re-adding the app or moving to a new phone, restore your backup, then add the video again the same way.
 - **Replace or remove it:** Settings › Coach video › Replace video… or Remove video. Reset all data doesn't remove it.
-- **Chapters:** a video the length of the coach video (79:33) gets its 12 exercises, starting at the YouTube timestamps (`COACH_TIMES` in `js/content.js`). Give an exercise three times there (Level 1, 2 and 3) and it gets the L1 · L2 · L3 picker too. Any other video plays as a plain video, without the exercise list.
+- **Chapters:** a video the length of the coach video (79:33) gets its 12 exercises, starting at times measured frame by frame from the video itself (3.43, `COACH_TIMES` in `js/content.js`). Give an exercise three times there (Level 1, 2 and 3) and it gets the L1 · L2 · L3 picker too. Any other video plays as a plain video, without the exercise list.
 - **Where it plays:** the player (Exercises › Coach video), Play with coach on an exercise's page, and the floating window during a session's Foundation and Rotation (Application has a Coach ▸ pill). Leaving while it plays keeps it going in a small window.
 - **Picture in picture (3.44):** the small window is just the video. Tap it for its controls (✕, open the player, −10 · play · +10 and L1 L2 L3), which fade after about 3 seconds. Pinch or double-tap for small, medium or the full width; the last size is kept on this device.
 - A Home Screen web app may pause when the phone locks. That's iOS, not the app.
