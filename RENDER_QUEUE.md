@@ -115,7 +115,35 @@ Next: **Q28**, then **Q29** (both approved — awaiting Build; Render 2 Nov 2026
 
 ## Not scheduled
 
-Kept so they aren't lost. None are queued; ask Ivan before planning any of them.
+Ideas kept so they aren't lost. None are queued; ask Ivan before planning any of them.
+
+**How they're ranked.** Every idea is checked against the README's [What it's for](README.md#what-its-for), starting with its first test: *does it make practice easier, getting you singing faster with less fuss?*
+
+- **Priority 1 · Core:** a bug that gets in the way of practice, or an idea that clearly serves the recordings, both halves of practice, connecting everything, or teaching.
+- **Priority 2 · Helps:** makes practice smoother or easier to reach; practice works without it.
+- **Priority 3 · Polish:** feel and finish only.
+- **Parked · Doesn't fit:** clashes with what the app isn't (a grader, karaoke, a habit tracker). Kept with its reason so it isn't suggested again.
+
+Each idea has its priority, the date it was added and a *Why* line. New ideas go into the right tier; within a tier, newest last. This section stays at the bottom of the file. Ivan can move anything.
+
+### Priority 1 · Core
+
+- **Bug: no floating window for a track started during play-along (found while building Q26, 2 Nov 2026; on 3.43 as well).** Starting a song's track (its player or a song row's play button) while Song Clock plays along gives the track no floating window. Play-along's own track pauses a moment later, and that pause closes the track's window (`fwPaused('track')` in window.js) after `NOW.start('track')` opened it. Needs its own Render; `tests/test_pip.py`'s `show()` stops play-along first to step round it.
+  *Why:* it breaks practice with a song.
+- **Exercises: Redesign (merged 2 Nov 2026 from "Exercise patterns the app plays" and "Exercise page redesign", both 31 Oct).** Each exercise page explains the exercise and plays it: piano-like notes the app makes itself (no recordings), 23 practice patterns from warm-ups to riffs and runs, the coach's starting notes, a snapping speed slider and voice range warnings. Vocal slides has no "Hear it". The pattern player is built as one shared piece so other places can reuse it. Details: `exercises_redesign_blueprint.md` in Ivan's project notes. A prototype is made; the page content draft and Render are still to do.
+  *Why:* it teaches, and it gets you singing straight from the exercise.
+
+### Priority 2 · Helps
+
+- **Today widgets (2 Nov 2026).** Patterns and Song practice as widget cards on Today, with an "Edit Today" step to choose which show. Reuses the shared pattern player from Exercises: Redesign.
+  *Why:* more doors to practice, and fewer taps to start singing.
+- **Reusing Chorus 1's timing for Chorus 2.** *Why:* less setting up before you can practise a song.
+- **"Shift all timings" when a re-imported track is a different length.** *Why:* saves redoing timings by hand.
+- **Learning tap lateness.** *Why:* play-along lines up better with less fiddling.
+- **A demo recording on each mark's guide page.** *Why:* it teaches by ear, not only in words.
+- **A shared song-screen dock.** *Why:* the same controls in the same place on every song screen.
+
+### Priority 3 · Polish
 
 - **Motion leftovers (was 4d).** Optional; Ivan decides whether they're worth a build:
   - Holding a section in Annotate lifts it while the others ripple aside.
@@ -123,16 +151,12 @@ Kept so they aren't lost. None are queued; ask Ivan before planning any of them.
   - The recording bar rises, and Stop turns it into the takes sheet.
   - A session's progress dashes fill, and its step pill moves onto the shared springs.
   - All sessions' old list fades out before the new rows ripple in.
-- **Exercise patterns the app plays (31 Oct 2026).** The app generates notes itself (no recordings): exercise patterns in any key, a starting note, stepping up a semitone each round, glides for slides and sirens, and an optional held note underneath. A switchable reference sound (Soft tone · Piano-ish · Electric piano), Piano-ish by default, set in Settings and also cycled from a small chip beside "Hear it" on the exercise page; piano sounds are held longer on glides. Ivan heard a demo and judged a recorded piano unnecessary. Build after Q16 (sound plumbing); check the silent switch and speaker loudness on his iPhone.
-- **Exercise page redesign (31 Oct 2026).** Polished mockup for Humming: tile beside the title; a pitch-shape drawing with "Hear it" (dot steps along with a ripple); three at-a-glance facts; the fix tip under the drawing; "How to do it" steps; "Where you feel it" outline with a glow; level dots with the last logged level selected; shorter "Why it helps" with More; quieter small headings for minor sections. Needs per-exercise content drafted from the write-ups and course notes.
-- **Found while building Q26 (2 Nov 2026), a bug on 3.43 as well:** starting a song's track (its player or a song row's play button) while Song Clock plays along gives the track no floating window. Play-along's own track pauses a moment later, and that pause closes the track's window (`fwPaused('track')` in window.js) after `NOW.start('track')` opened it. Needs its own Render; `tests/test_pip.py`'s `show()` stops play-along first to step round it.
-- **Pinned ideas:**
-  - Timeline drag and drop.
-  - A shared song-screen dock.
-  - Learning tap lateness.
-  - Reusing Chorus 1's timing for Chorus 2.
-  - A wide Timeline on iPad.
-  - Delivery marks for one repeat only.
-  - A demo recording on each mark's guide page.
-  - Mark selections across a line break.
-  - "Shift all timings" when a re-imported track is a different length.
+  *Why:* feel only; practice works the same without them.
+- **Timeline drag and drop.** *Why:* nicer editing; the current way works.
+- **A wide Timeline on iPad.** *Why:* iPad only.
+- **Delivery marks for one repeat only.** *Why:* a rare case.
+- **Mark selections across a line break.** *Why:* a rare case.
+
+### Parked · Doesn't fit
+
+None yet.
