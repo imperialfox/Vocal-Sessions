@@ -1717,6 +1717,41 @@ textarea.field {
 .fw.dragging {
   cursor: grabbing;
 }
+/* Q26: the whole window presses down slightly when tapped (fix 14), and lifts while it's held to drag (fix 15):
+   a little bigger with a deeper shadow, settling when let go. `scale` leaves the transform (its place) alone */
+.fw {
+  transition:
+    scale var(--dur-ripple) var(--ease-ripple),
+    box-shadow var(--dur-gentle) var(--ease-gentle);
+}
+.fw.pressed {
+  scale: 0.97;
+  transition-duration: calc(var(--dur-ripple) * 0.2);
+}
+.fw.dragging {
+  scale: 1.06;
+  box-shadow:
+    inset 0 -0.5px 0 var(--glass-lo),
+    inset 0 0 16px var(--glass-glow),
+    0 22px 48px var(--glass-shadow),
+    0 6px 16px var(--glass-shadow);
+  transition-duration: var(--dur-gentle);
+}
+/* Q26 (fix 13): the still copy of the window a new kind takes over from, fading out on top */
+.fw.fwghost {
+  pointer-events: none;
+}
+.fw .fwvblack {
+  position: absolute;
+  inset: 0;
+  background: #000;
+}
+/* Q26 (fix 10): room at the end of every page for the window in a bottom corner (window.js fwRoom) */
+main::after {
+  content: '';
+  display: block;
+  height: var(--fwroom, 0px);
+}
 .fw .fwopen {
   flex: 1;
   min-width: 0;

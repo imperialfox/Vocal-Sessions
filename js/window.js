@@ -157,7 +157,7 @@ const FW_KINDS = [
         FW.ring = '';
       }
       el.classList.toggle('paused', !i.on);
-      el.querySelector('.fwopen').setAttribute('aria-label', i.open + '. ' + i.k + ', ' + i.t);
+      fwOpenLabel(el, i);
       el.querySelector('.fwk').style.setProperty('--sc', 'var(' + i.col + ')');
       el.querySelector('.fwkn').textContent = i.k;
       el.querySelector('.fwt').textContent = i.t;
@@ -403,11 +403,27 @@ function fwClean(el, id) {
   el.innerHTML = '';
   FW.build = '';
 }
+// Q26 (fix 16): only change an attribute that's really changed, so VoiceOver isn't told about it every second
+function fwAttr(e, a, v) {
+  if (e && e.getAttribute(a) !== v) e.setAttribute(a, v);
+}
+// Q26: the open button's steady label (where it goes and what it is); its time (#fwT) is its description, read when
+// VoiceOver lands on it rather than every time it ticks
+function fwOpenLabel(el, i) {
+  const o = el.querySelector('.fwopen');
+  if (!o) return;
+  fwAttr(o, 'aria-label', i.open ? i.open + '. ' + i.label : i.label);
+  const t = el.querySelector('.fwt');
+  if (t) {
+    t.id = 'fwT';
+    fwAttr(o, 'aria-describedby', 'fwT');
+  }
+}
 function fwDraw(k, i) {
   const el = fwEl(),
     b = k.id + '|' + i.on + '|' + (i.p != null) + '|' + !!k.close;
   if (el.dataset.kind !== k.id) fwClean(el, k.id);
-  el.setAttribute('aria-label', i.label);
+  fwAttr(el, 'aria-label', i.label);
   if (k.draw) return k.draw(el, i); // a kind with its own look (3.16: the coach video holds the real video)
   if (FW.build !== b) {
     FW.build = b;
@@ -423,7 +439,7 @@ function fwDraw(k, i) {
   }
   el.classList.toggle('paused', !i.on);
   el.classList.toggle('hasx', !!k.close);
-  el.querySelector('.fwopen').setAttribute('aria-label', i.open + '. ' + i.k + ', ' + i.t);
+  fwOpenLabel(el, i);
   el.querySelector('.fwk').textContent = i.k;
   el.querySelector('.fwt').textContent = i.t;
   const p = el.querySelector('.fwp i');
@@ -440,12 +456,23 @@ function fwPickAndDraw() {
   else if (isFlow(U.view) && (!FW.sess || FW.sess.view !== U.view)) FW.sess = { view: U.view, y: window.scrollY };
   const k = fwPick();
   if (!k) return fwHide();
-  fwDraw(k, k.info());
   const was = FW.shown;
+  // Q26: another kind takes over. A sound replacing another usually hides the window for a moment first (the old
+  // sound stops before the new one plays), so a kind showing within FW_SWAP_GAP of another hiding counts too
+  let snap = was && was !== k.id && FW.el && !FW.el.hidden ? fwSnap() : null;
+  const gone = FW.gone;
+  FW.gone = null;
+  if (!was && gone && gone.kind !== k.id && Date.now() - gone.at < FW_SWAP_GAP) snap = gone.snap;
+  fwDraw(k, k.info());
   FW.shown = k.id;
-  if (!was) fwShow();
-  else fwPlace();
+  if (!was && !snap) fwShow();
+  else {
+    if (!was) fwUnhide();
+    fwPlace();
+    if (snap) fwSwap(snap);
+  }
 }
+const FW_SWAP_GAP = 400; // ms
 // the clock and the take's progress, without rebuilding anything
 function fwTick() {
   const k = fwKindNow();
@@ -453,7 +480,8 @@ function fwTick() {
   if (!k.active()) return fwUpdate();
   fwDraw(k, k.info());
 }
-function fwShow() {
+// back on screen at once, any fade out stopped
+function fwUnhide() {
   const el = FW.el;
   if (FW.hideAnim) {
     FW.hideAnim.cancel();
@@ -461,7 +489,12 @@ function fwShow() {
   }
   clearTimeout(FW.hideTimer);
   el.hidden = false;
+}
+function fwShow() {
+  const el = FW.el;
+  fwUnhide();
   fwPlace(true);
+  if (fwFades()) return el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: FW_FADE, easing: 'ease-out' }); // Q26
   const base = el.style.transform;
   MOTION.animate(
     el,
@@ -472,6 +505,10 @@ function fwShow() {
     { spring: 'gentle' }
   );
 }
+// Q26 (fix 12): with Reduce Motion the window fades in and out (0.2 s) instead of just appearing; with motion off
+// (the tests' speed 0) it still just appears
+const FW_FADE = 200;
+const fwFades = () => MOTION.reduced() && MOTION.speed() > 0;
 function fwHide() {
   const el = FW.el;
   if (!FW.shown) {
@@ -479,25 +516,31 @@ function fwHide() {
     if (el && !el.hidden && !FW.hideAnim) el.hidden = true;
     return;
   }
+  // Q26: remembered for a moment, in case another kind takes the window straight back (fwPickAndDraw)
+  FW.gone = el && !el.hidden ? { kind: FW.shown, at: Date.now(), snap: fwSnap() } : null;
   FW.shown = null;
   FW.drag = null;
   if (FW.stopSpring) FW.stopSpring();
   FW.stopSpring = null;
-  el.classList.remove('dragging');
-  if (!MOTION.on()) {
+  el.classList.remove('dragging', 'pressed');
+  fwSwapEnd();
+  fwRoom();
+  if (!MOTION.on() && !fwFades()) {
     el.hidden = true;
     return;
   }
-  // shrinks and fades out, quicker than it came in
+  // shrinks and fades out, quicker than it came in (Q26: with Reduce Motion, a short fade)
   const base = el.style.transform;
-  const a = MOTION.animate(
-    el,
-    [
-      { opacity: 1, transform: base },
-      { opacity: 0, transform: base + ' scale(.86)' },
-    ],
-    { ms: Math.round((MOTION.dur('gentle') / MOTION.speed()) * 0.45), easing: MOTION.ease('gentle'), fill: 'forwards' }
-  );
+  const a = fwFades()
+    ? el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: FW_FADE, easing: 'ease-out', fill: 'forwards' })
+    : MOTION.animate(
+        el,
+        [
+          { opacity: 1, transform: base },
+          { opacity: 0, transform: base + ' scale(.86)' },
+        ],
+        { ms: Math.round((MOTION.dur('gentle') / MOTION.speed()) * 0.45), easing: MOTION.ease('gentle'), fill: 'forwards' }
+      );
   FW.hideAnim = a;
   if (!a) {
     el.hidden = true;
@@ -554,7 +597,88 @@ function fwSet(p) {
 function fwPlace(force) {
   if (!FW.shown && !force) return;
   if (FW.drag || FW.stopSpring) return;
+  if (FW.swap) return void (FW.swap.again = true); // Q26: placed once the change of kind has settled
   fwSet(fwCornerXY(FW.corner));
+  fwRoom();
+}
+// Q26 (fix 10): while the window sits in a bottom corner, every page gets room at its end for the window and its gap,
+// so the last line can scroll clear of it (main::after in app.css)
+function fwRoom() {
+  const h = FW.shown && FW.el && !FW.el.hidden && FW.corner[0] === 'b' && !FW.tuck ? FW.el.offsetHeight + 12 : 0,
+    v = h + 'px';
+  if (FW.room !== v) document.documentElement.style.setProperty('--fwroom', (FW.room = v));
+}
+
+/* ===== Q26 (fix 13): one kind giving way to another =====
+   A still copy of the old window (no ids or actions, the video as a dark box) fades out over the new one, while the
+   window springs from the old size to the new in the same corner. With Reduce Motion, only the cross-fade */
+function fwSnap() {
+  const el = FW.el;
+  if (!MOTION.on() && !fwFades()) return null;
+  const g = el.cloneNode(true);
+  g.removeAttribute('id');
+  g.classList.add('fwghost');
+  g.classList.remove('pressed', 'dragging');
+  g.setAttribute('aria-hidden', 'true');
+  g.inert = true;
+  g.querySelectorAll('[id]').forEach((e) => e.removeAttribute('id'));
+  g.querySelectorAll('[data-a]').forEach((e) => e.removeAttribute('data-a'));
+  g.querySelectorAll('video').forEach((v) => v.replaceWith(Object.assign(document.createElement('div'), { className: 'fwvblack' })));
+  return { g, w: el.offsetWidth, h: el.offsetHeight, pos: FW.pos ? { x: FW.pos.x, y: FW.pos.y } : null };
+}
+function fwSwap(s) {
+  const el = FW.el;
+  fwSwapEnd();
+  if (!s.pos || FW.drag || FW.stopSpring || FW.tuck) return;
+  const to = FW.pos,
+    w = el.offsetWidth,
+    h = el.offsetHeight,
+    T = (p) => 'translate3d(' + p.x.toFixed(1) + 'px,' + p.y.toFixed(1) + 'px,0)',
+    fadeOnly = !MOTION.on();
+  s.g.style.transform = T(s.pos);
+  document.body.appendChild(s.g);
+  const ms = Math.round(MOTION.dur('gentle') / Math.max(0.01, MOTION.speed())),
+    fade = fadeOnly ? FW_FADE : Math.min(220, ms);
+  const anims = [
+    s.g.animate([{ opacity: 1 }, { opacity: 0 }], { duration: fade, easing: 'ease-out', fill: 'forwards' }),
+    el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: fade, easing: 'ease-in' }),
+  ];
+  if (!fadeOnly && (s.w !== w || s.h !== h || s.pos.x !== to.x || s.pos.y !== to.y)) {
+    const sp = { duration: ms, easing: MOTION.ease('gentle') };
+    anims.push(
+      el.animate(
+        [
+          { width: s.w + 'px', height: s.h + 'px', transform: T(s.pos) },
+          { width: w + 'px', height: h + 'px', transform: T(to) },
+        ],
+        sp
+      ),
+      s.g.animate(
+        [
+          { transform: T(s.pos), width: s.w + 'px', height: s.h + 'px' },
+          { transform: T(to), width: w + 'px', height: h + 'px' },
+        ],
+        sp
+      )
+    );
+  }
+  FW.swap = { g: s.g, anims, again: false };
+  Promise.all(anims.map((a) => a.finished.catch(() => {}))).then(() => {
+    if (FW.swap && FW.swap.g === s.g) fwSwapEnd();
+  });
+}
+// the change of kind has settled (or was cut short): the copy goes, and the window takes its place
+function fwSwapEnd() {
+  const s = FW.swap;
+  if (!s) return;
+  FW.swap = null;
+  s.anims.forEach((a) => {
+    try {
+      a.cancel();
+    } catch (e) {}
+  });
+  s.g.remove();
+  if (s.again && FW.shown) fwPlace();
 }
 
 /* ===== Dragging to a corner ===== */
@@ -572,8 +696,14 @@ function fwGestures(el) {
     },
     true
   );
+  // Q26 (fix 14): the whole window presses down slightly when tapped, like a list row (its buttons have their own).
+  // Not the coach video: a tap there shows its controls, and a scaled <video> loses a mouse's click in Chromium
+  const unpress = () => el.classList.remove('pressed');
   el.addEventListener('pointerdown', (e) => {
     if (e.button > 0 || !FW.pos) return;
+    fwSwapEnd(); // Q26: picked up mid-change: the change finishes at once
+    const b = e.target.closest && e.target.closest('button, [role=button]');
+    if ((!b || b.classList.contains('fwopen')) && FW.shown !== 'video') el.classList.add('pressed');
     if (FW.stopSpring) {
       FW.stopSpring();
       FW.stopSpring = null;
@@ -599,7 +729,8 @@ function fwGestures(el) {
       try {
         el.setPointerCapture(e.pointerId);
       } catch (x) {}
-      el.classList.add('dragging');
+      el.classList.remove('pressed');
+      el.classList.add('dragging'); // Q26 (fix 15): lifted while held
     }
     d.pts.push({ x: e.clientX, y: e.clientY, t: e.timeStamp });
     while (d.pts.length > 2 && e.timeStamp - d.pts[0].t > 100) d.pts.shift();
@@ -611,6 +742,7 @@ function fwGestures(el) {
     });
   });
   const end = (e) => {
+    unpress();
     const d = FW.drag;
     if (!d || e.pointerId !== d.id) return;
     FW.drag = null;
@@ -627,6 +759,7 @@ function fwGestures(el) {
   };
   el.addEventListener('pointerup', end);
   el.addEventListener('pointercancel', end);
+  el.addEventListener('pointerleave', unpress);
 }
 // pick the corner it's thrown towards (where it is, plus where its speed would carry it), then spring there
 function fwThrow(v) {

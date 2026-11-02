@@ -4,6 +4,8 @@ and every ✕ and play button has a 44 pt touch area.
 Stage 2, one look: the name first and the time below (no "Playing ·"), the session's step in the text colour after a
 coloured dot, a readable red recording window, one progress line, one capsule shape, the dark ring track, and long
 names losing their end. Text contrast is checked in light and dark.
+Stage 3, behaviour: room at the end of every page for the window in a bottom corner, a fade with Reduce Motion, a
+cross-fade between kinds, the press, the lift while dragging, and a steady VoiceOver label.
 Every fixture is synthetic (tones and a made-up video). No real music, recordings or course media are used."""
 from harness import until
 from test_batch12 import setup_sounds, sounds, PLAYING, LAUNCH_ARGS as B12_ARGS
@@ -161,7 +163,139 @@ def look(b, t):
         pg.context.close()
 
 
-PARTS = ['clean', 'look']
+# ---------------------------------------------------------------- stage 3 · behaviour (fixes 10, 12–16)
+# the last line of text on the page, scrolled to the very bottom, against the window
+LAST = """(()=>{scrollTo(0,document.documentElement.scrollHeight);const w=document.createTreeWalker(document.getElementById('app'),NodeFilter.SHOW_TEXT);
+ let last=null,n;while(n=w.nextNode()){if(!n.textContent.trim())continue;const p=n.parentElement;if(!p||p.closest('[hidden],.zm,#fw'))continue;
+ const cs=getComputedStyle(p);if(cs.visibility==='hidden'||cs.display==='none'||p.offsetParent===null)continue;const r=document.createRange();r.selectNodeContents(n);
+ const q=r.getBoundingClientRect();if(q.height&&(!last||q.bottom>=last.b))last={b:q.bottom,t:n.textContent.trim().slice(0,30)}}
+ const f=document.getElementById('fw').getBoundingClientRect();return {last,top:f.top,room:getComputedStyle(document.documentElement).getPropertyValue('--fwroom').trim()}})()"""
+RUNNING = "newSession();X.start=Date.now()-200000;saveDraft()"
+MOTION_ON = "try{localStorage.setItem('vocalMotion','1')}catch(e){}"
+REDUCED = "try{localStorage.setItem('vocalMotion','1');localStorage.setItem('vocalReduce','on')}catch(e){}"
+ANIMS = """(()=>document.getElementById('fw').getAnimations().filter(a=>!(a instanceof CSSTransition)).map(a=>{const k=a.effect.getKeyframes();return {props:[...new Set(k.flatMap(f=>Object.keys(f).filter(p=>!['offset','easing','composite','computedOffset'].includes(p))))].sort().join(','),d:+a.effect.getTiming().duration}}))()"""
+
+
+def room(b, t):
+    ok = t.ok
+    pg = t.page(b, touch=True)
+    pg.evaluate(RUNNING)
+    for name, tab in [('Today', 'today'), ('Songs', 'songs'), ('Exercises', 'exercises'), ('Progress', 'history')]:
+        pg.evaluate("t=>go(()=>{U.view=null;U.tab=t})", tab)
+        ok(until(pg, "FW.shown==='session'", 4000), f'{name}: the session’s window shows')
+        r = pg.evaluate(LAST)
+        h = pg.evaluate("document.getElementById('fw').offsetHeight")
+        ok(r['room'] == f'{h + 12}px', f'{name}: room at the end of the page for the window and its gap ({r["room"]})')
+        ok(r['last'] and r['last']['b'] <= r['top'], f'{name}: scrolled to the bottom, the last line clears the window ({r})')
+        if tab == 'history': t.shot(pg, 'room-progress')
+    pg.evaluate("FW.corner='tr';fwPlace()")
+    ok(pg.evaluate("getComputedStyle(document.documentElement).getPropertyValue('--fwroom').trim()") == '0px', 'in a top corner, no extra room')
+    pg.evaluate("FW.corner='br';fwPlace();X=null;saveDraft();rerender()")
+    ok(until(pg, "!FW.shown") and pg.evaluate("getComputedStyle(document.documentElement).getPropertyValue('--fwroom').trim()") == '0px',
+       'with no window, no extra room')
+    pg.context.close()
+
+
+def reduced(b, t):
+    ok = t.ok
+    pg = t.page(b, touch=True, init=REDUCED)
+    pg.evaluate(RUNNING); pg.evaluate(AWAY)
+    ok(until(pg, "FW.shown==='session'", 4000), 'Reduce Motion: the window shows')
+    a = pg.evaluate(ANIMS)
+    ok(a == [{'props': 'opacity', 'd': 200}], f'Reduce Motion: it fades in over 0.2 s, nothing moving (fix 12: {a})')
+    pg.wait_for_timeout(300)
+    pg.evaluate("go(()=>{U.view='rot'})")
+    a = pg.evaluate(ANIMS)
+    ok(a == [{'props': 'opacity', 'd': 200}], f'Reduce Motion: and fades out over 0.2 s ({a})')
+    ok(until(pg, "document.getElementById('fw').hidden", 1000), 'and is gone once it has faded')
+    pg.context.close()
+
+
+def swap(b, t):
+    ok = t.ok
+    for mode, init in (('motion', MOTION_ON), ('Reduce Motion', REDUCED)):
+        pg, sid = setup_sounds(b, t) if False else (None, None)
+        pg = t.page(b, touch=True, init=init, ctx_args={'permissions': ['microphone']})
+        from test_batch12 import lyric_song, add_track, wav_take, SONG
+        from test_coach import add as add_video, LONG
+        sid = lyric_song(pg)
+        pg.evaluate(wav_take(30), ['w1', sid, None, 1])
+        add_video(pg, LONG)
+        pg.evaluate(LEAVE)
+        pg.evaluate("playTake('w1')"); until(pg, PLAYING['take'], 6000); pg.evaluate(AWAY)
+        ok(until(pg, "FW.shown==='take'&&!document.getElementById('fw').getAnimations().length", 4000), f'{mode}: the take’s window')
+        before = pg.evaluate("(()=>{const r=document.getElementById('fw').getBoundingClientRect();return [r.right,r.bottom]})()")
+        pg.evaluate("COACH.play()")
+        ok(until(pg, "FW.shown==='video'", 4000), f'{mode}: the coach video takes the window over')
+        g = pg.evaluate("(()=>{const g=document.querySelector('.fwghost');return g?{n:document.querySelectorAll('.fwghost').length,v:g.querySelectorAll('video').length,ids:g.querySelectorAll('[id],[data-a]').length,aria:g.getAttribute('aria-hidden')}:null})()")
+        ok(g and g['n'] == 1 and g['v'] == 0 and g['ids'] == 0 and g['aria'] == 'true',
+           f'{mode}: a still copy of the take’s window fades out over it (no video, ids or actions in it: {g})')
+        a = pg.evaluate(ANIMS)
+        props = sorted(x['props'] for x in a)
+        if mode == 'motion':
+            ok('height,transform,width' in props and 'opacity' in props, f'motion: it cross-fades while it springs to its new size (fix 13: {a})')
+        else:
+            ok(props == ['opacity'], f'Reduce Motion: a cross-fade only, nothing moving ({a})')
+        ok(until(pg, "!document.querySelector('.fwghost')&&!document.getElementById('fw').getAnimations().length", 3000), f'{mode}: then the copy goes')
+        after = pg.evaluate("(()=>{const r=document.getElementById('fw').getBoundingClientRect();return [r.right,r.bottom,r.width]})()")
+        ok(abs(after[0] - before[0]) < 1.5 and abs(after[1] - before[1]) < 1.5 and pg.evaluate("FW.corner") == 'br',
+           f'{mode}: the new size sits in the same corner ({before} → {after})')
+        ok(pg.evaluate("document.querySelectorAll('video').length") == 1, f'{mode}: still only one video on the page')
+        pg.context.close()
+
+
+def touch(b, t):
+    ok = t.ok
+    from test_window import drag
+    pg = t.page(b, touch=True)
+    pg.evaluate(RUNNING); pg.evaluate(AWAY)
+    ok(until(pg, "FW.shown==='session'", 4000), 'the session’s window')
+    r = pg.evaluate("(()=>{const r=document.querySelector('#fw .fwring').getBoundingClientRect();return [r.left+r.width/2,r.top+r.height/2]})()")
+    cdp = pg.context.new_cdp_session(pg)
+    cdp.send('Input.dispatchTouchEvent', {'type': 'touchStart', 'touchPoints': [{'x': r[0], 'y': r[1]}]}); pg.wait_for_timeout(80)
+    s = pg.evaluate("[document.getElementById('fw').classList.contains('pressed'),getComputedStyle(document.getElementById('fw')).scale]")
+    ok(s[0] and s[1] == '0.97', f'holding the window presses it down slightly, like a list row (fix 14: {s})')
+    cdp.send('Input.dispatchTouchEvent', {'type': 'touchEnd', 'touchPoints': []}); pg.wait_for_timeout(150)
+    ok(not pg.evaluate("document.getElementById('fw').classList.contains('pressed')"), 'letting go, it comes back up')
+    pg.tap('#fw .fwopen')  # (touches sent this way don't make a click; a real tap does)
+    ok(until(pg, "U.view==='rot'||U.view==='found'", 2000), 'and a tap still goes back to the session')
+    pg.evaluate(AWAY); until(pg, "FW.shown==='session'", 4000)
+    b2 = pg.evaluate("(()=>{const r=document.querySelector('#fw .fwbtn').getBoundingClientRect();return [r.left+r.width/2,r.top+r.height/2]})()")
+    cdp.send('Input.dispatchTouchEvent', {'type': 'touchStart', 'touchPoints': [{'x': b2[0], 'y': b2[1]}]}); pg.wait_for_timeout(80)
+    ok(not pg.evaluate("document.getElementById('fw').classList.contains('pressed')"), 'holding its play button presses only the button')
+    cdp.send('Input.dispatchTouchEvent', {'type': 'touchEnd', 'touchPoints': []}); pg.wait_for_timeout(200)
+    if pg.evaluate("X.paused"): pg.evaluate("togglePause()")
+    # the lift: held mid-drag
+    c = pg.evaluate("(()=>{const r=document.getElementById('fw').getBoundingClientRect();return [r.left+40,r.top+29]})()")
+    cdp.send('Input.dispatchTouchEvent', {'type': 'touchStart', 'touchPoints': [{'x': c[0], 'y': c[1]}]})
+    for i in range(1, 6):
+        cdp.send('Input.dispatchTouchEvent', {'type': 'touchMove', 'touchPoints': [{'x': c[0] - i * 8, 'y': c[1] - i * 20}]}); pg.wait_for_timeout(16)
+    s = pg.evaluate("(()=>{const f=document.getElementById('fw'),cs=getComputedStyle(f);return [f.classList.contains('dragging'),cs.scale,cs.boxShadow.split('rgba').length-1,f.classList.contains('pressed')]})()")
+    ok(s[0] and s[1] == '1.06' and s[2] >= 4 and not s[3], f'dragging, it lifts: a little bigger, with a deeper shadow, and not pressed (fix 15: {s})')
+    cdp.send('Input.dispatchTouchEvent', {'type': 'touchEnd', 'touchPoints': []}); pg.wait_for_timeout(400)
+    s = pg.evaluate("(()=>{const f=document.getElementById('fw');return [f.classList.contains('dragging'),getComputedStyle(f).scale]})()")
+    ok(not s[0] and s[1] in ('none', '1'), f'let go, it settles ({s})')
+    cdp.detach()
+    pg.context.close()
+
+
+def voiceover(b, t):
+    ok = t.ok
+    pg = t.page(b)
+    pg.evaluate(RUNNING); pg.evaluate("X.fEnd=Date.now()-60000;saveDraft()"); pg.evaluate(AWAY)
+    ok(until(pg, "FW.shown==='session'", 4000), 'the session’s window')
+    L = "(()=>{const f=document.getElementById('fw'),o=f.querySelector('.fwopen');return {g:f.getAttribute('aria-label'),o:o.getAttribute('aria-label'),d:o.getAttribute('aria-describedby'),t:document.getElementById(o.getAttribute('aria-describedby')||'x')?.textContent}})()"
+    pg.evaluate("window.__lab=0;new MutationObserver(m=>{window.__lab+=m.length}).observe(document.getElementById('fw'),{attributes:true,subtree:true,attributeFilter:['aria-label','aria-describedby']})")
+    a = pg.evaluate(L); pg.wait_for_timeout(2300); z = pg.evaluate(L)
+    ok(a['g'] == 'Focused session, Rotation', f'the window’s label says what it is: “Focused session, Rotation” (fix 16: {a["g"]})')
+    ok(a['o'] == 'Back to Rotation. Focused session, Rotation' and a['d'] == 'fwT', f'its button: where it goes, with the time as its description ({a})')
+    ok(a['t'] != z['t'], f'the time ticks ({a["t"]} → {z["t"]})')
+    ok(a['g'] == z['g'] and a['o'] == z['o'] and pg.evaluate("window.__lab") == 0,
+       f'but no label is rewritten while it ticks, so VoiceOver doesn’t re-read it every second ({pg.evaluate("window.__lab")} changes)')
+    pg.context.close()
+
+
+PARTS = ['clean', 'look', 'room', 'reduced', 'swap', 'touch', 'voiceover']
 
 
 def run(b, t):
