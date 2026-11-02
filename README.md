@@ -292,6 +292,8 @@ A small service worker (`sw.js`) keeps a copy of the app on your device. When yo
 
 Vanilla HTML, CSS and JavaScript, with no frameworks or build step: `index.html`, one stylesheet in `css/` and a dozen plain scripts in `js/`. It uses the iOS system font and a CSS imitation of Liquid Glass: rim light, inner glow, a collapsing tab bar, a soft blurred edge under the top bar, sliding glass pickers and springy motion.
 
+The look and motion follow Apple's guidance, with numbers taken (never code) from a few open-source Liquid Glass projects. What came from where is in [DESIGN_REFERENCES.md](DESIGN_REFERENCES.md).
+
 ---
 
 ## Development
