@@ -302,6 +302,7 @@ See [MAINTAINING.md](MAINTAINING.md) for how the app is built, where data lives,
 
 - `python tests/run.py` runs the full test suite in Chromium, several files side by side: every screen at every size, a full practice session, songs, backups (including real ones from earlier versions), recording, and thousands of random taps. GitHub runs it after every push. `python tests/run.py quick` skips the slow layout and random-tap checks while building.
 - `python tools/release.py 3.7` sets a new version number everywhere at once.
+- `python3 tools/atlas/atlas.py` scans the app with sample data and shows every screen as saved screenshots, side by side (the Visual App Atlas; see [MAINTAINING.md](MAINTAINING.md#visual-app-atlas-q30)).
 
 ---
 

@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Atlas · Vocal Sessions</title>
+<style>
+/* Visual App Atlas · Lightbox (Q30). One file: reads atlas.json and shots/ next to it (tools/atlas/atlas.py puts it there).
+   The map, notes, export and changes since the last scan come in Q31. */
+:root{
+  --bg:#151517;--bg2:#18181b;--bar:#1b1b1e;--card:#1e1e21;--raise:#232327;--field:#26262a;
+  --line:#2c2c30;--line2:#3a3a3e;--ink:#f2f2f7;--ink2:#c7c7cc;--mute:#a1a1a6;--mute2:#8e8e93;
+  --accent:#2f6feb;--sel:#4c8dff;--link:#7fb0ff;
+  --amber:#f5b13d;--amberB:#5a4520;--red:#ff8a80;--redB:#5c2c2a;--green:#7ed9a0;--greenB:#285a3b;
+  --thumb:150px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);font:13px/1.4 Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button,input{font:inherit;color:inherit}
+a{color:var(--link)}a:hover{color:#a9c9ff}
+:focus-visible{outline:2px solid var(--sel);outline-offset:2px}
+.app{display:flex;flex-direction:column;height:100%}
+header{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--bar)}
+.brand{display:flex;align-items:center;gap:10px;min-width:190px}
+.logo{width:26px;height:26px;border-radius:7px;background:var(--accent);display:grid;place-items:center;flex:0 0 auto}
+.brand strong{font-size:14px;display:block}.brand span{font-size:11px;color:var(--mute)}
+.seg{display:flex;padding:3px;border-radius:9px;background:var(--field)}
+.seg button{height:28px;padding:0 12px;border:0;border-radius:7px;background:transparent;color:var(--ink2);font-weight:500;font-size:12px;cursor:pointer}
+.seg button[aria-pressed=true]{background:#3a3a40;color:#fff;font-weight:600}
+.search{flex:1 1 220px;display:flex;align-items:center;gap:8px;height:34px;padding:0 10px;border-radius:8px;background:var(--field);color:var(--mute)}
+.search input{flex:1;min-width:0;border:0;background:transparent;color:var(--ink);font-size:13px;outline:none}
+.kbd{font-size:11px;border:1px solid var(--line2);border-radius:4px;padding:0 5px;color:var(--mute)}
+.size{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--mute)}
+.size input{width:90px;accent-color:#e5e5ea}
+.stamp{font-size:12px;color:var(--mute);margin-left:auto}
+.btn{height:32px;padding:0 12px;border-radius:8px;border:1px solid var(--line2);background:var(--field);color:var(--ink);font-weight:600;font-size:12px;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;text-decoration:none}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+.body{flex:1;display:flex;min-height:0;position:relative}
+nav.side{flex:0 0 236px;padding:14px 10px;border-right:1px solid var(--line);background:var(--bg2);overflow:auto;display:flex;flex-direction:column;gap:18px}
+.h{font-size:11px;font-weight:700;letter-spacing:.06em;color:var(--mute2);padding:0 10px 6px;text-transform:uppercase}
+.navrow{display:flex;justify-content:space-between;align-items:center;width:100%;height:30px;padding:0 10px;border:0;border-radius:7px;background:transparent;color:#d1d1d6;font-size:13px;cursor:pointer;text-align:left}
+.navrow:hover{background:#222226}.navrow[aria-pressed=true]{background:#2a2a30;color:#fff}
+.navrow .n{color:var(--mute2);font-size:12px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;padding:0 10px}
+.chip{display:inline-flex;align-items:center;gap:5px;height:26px;padding:0 10px;border-radius:13px;font-size:11px;font-weight:600;border:1px solid var(--line2);color:var(--ink2);background:#1f1f22;cursor:pointer;white-space:nowrap}
+.chip[aria-pressed=true]{background:var(--ink)!important;color:#151517!important;border-color:var(--ink)!important}
+.chip.fail{color:var(--red);border-color:var(--redB)}.chip.unc{border-style:dashed}
+.toggle{display:flex;align-items:center;gap:8px;padding:0 10px;font-size:12px;color:var(--ink2);cursor:pointer}
+.toggle input{accent-color:var(--accent)}
+main{flex:999 1 560px;min-width:0;overflow:auto;padding:18px 22px 40px}
+.group{margin-bottom:26px}
+.ghead{display:flex;align-items:baseline;gap:10px;margin:0 0 12px}
+.ghead h2{margin:0;font-size:15px}.ghead span{font-size:12px;color:var(--mute2)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--thumb),1fr));gap:16px}
+.card{display:flex;flex-direction:column;gap:8px;padding:8px;border-radius:12px;background:var(--card);border:1px solid var(--line);cursor:pointer;text-align:left;min-width:0;position:relative}
+.card:hover{border-color:#45454b}
+.card[aria-current=true]{border:2px solid var(--sel);padding:7px}
+.th{aspect-ratio:var(--ar,402/874);border-radius:10px;overflow:hidden;background:#e6e6ea;position:relative}
+.th img{width:100%;height:100%;object-fit:cover;object-position:top;display:block}
+.th.unc,.th.gone{background:transparent;border:1.5px dashed #48484e;display:grid;place-items:center;color:var(--mute);font-size:11px;text-align:center;padding:8px}
+.th.fail{background:repeating-linear-gradient(45deg,#2a1e1e,#2a1e1e 8px,#241a1a 8px,#241a1a 16px);border:1px dashed #6b3430;display:grid;place-items:center;color:var(--red);font-size:11px;font-weight:600;text-align:center;padding:8px}
+.meta{display:flex;flex-direction:column;gap:2px;padding:0 2px;min-width:0}
+.meta b{font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.meta span{font-size:11px;color:var(--mute2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.badges{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.badge{font-size:10px;font-weight:600;padding:2px 7px;border-radius:9px;border:1px solid var(--line2);color:var(--mute);white-space:nowrap}
+.badge.fail{color:var(--red);border-color:var(--redB)}.badge.unc{border-style:dashed}.badge.warn{color:var(--amber);border-color:var(--amberB)}
+.empty{padding:40px;text-align:center;color:var(--mute)}
+aside.det{flex:0 0 440px;max-width:46vw;border-left:1px solid var(--line);background:#1a1a1d;overflow:auto;display:none;flex-direction:column}
+aside.det.open{display:flex}
+.dtop{position:sticky;top:0;z-index:2;display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line);background:#1a1a1d}
+.ib{width:32px;height:32px;border-radius:8px;border:1px solid var(--line2);background:var(--field);color:var(--ink);cursor:pointer;display:grid;place-items:center;flex:0 0 auto}
+.ib:disabled{opacity:.4;cursor:default}
+.dtitle{display:flex;flex-direction:column;min-width:0;margin-left:4px}
+.dtitle strong{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.dtitle span{font-size:11px;color:var(--mute2)}
+.dbody{padding:14px;display:flex;flex-direction:column;gap:16px}
+.dhero{display:flex;gap:14px;align-items:flex-start}
+.dshot{flex:0 0 168px;border-radius:14px;overflow:hidden;background:#e6e6ea;cursor:zoom-in;border:0;padding:0;position:relative}
+.dshot img{width:100%;display:block}
+.dshot .live{display:block;padding:5px 0 6px;font-size:10px;font-weight:600;text-align:center;background:var(--raise);color:var(--mute)}
+.kv{display:flex;flex-direction:column;gap:9px;font-size:12px;min-width:0;margin:0}
+.kv div{display:flex;flex-direction:column;gap:1px}.kv dt{font-size:11px;color:var(--mute2)}.kv dd{margin:0;word-break:break-word}
+.code{font:11px/1.45 ui-monospace,Menlo,monospace;color:var(--ink2);word-break:break-word}
+.acts{display:flex;flex-wrap:wrap;gap:8px}
+.sect .h{padding:0 0 6px}
+.lrow{display:flex;align-items:center;gap:10px;width:100%;min-height:36px;padding:7px 10px;border-radius:8px;background:var(--raise);border:0;color:var(--ink);font-size:12px;text-align:left;margin-bottom:5px}
+button.lrow{cursor:pointer}button.lrow:hover{background:#2a2a2f}
+.lrow .lt{flex:1;min-width:0}.lrow .lt small{display:block;color:var(--mute2);font-size:11px}
+.tag{font-size:10px;font-weight:600;padding:2px 7px;border-radius:9px;border:1px solid var(--line2);color:var(--mute);white-space:nowrap}
+.tag.nt{border-style:dotted}.tag.bad{color:var(--red);border-color:var(--redB)}.tag.ok{color:var(--green);border-color:var(--greenB)}.tag.force{color:var(--amber);border-color:var(--amberB)}
+.tags{display:flex;flex-direction:column;align-items:flex-end;gap:3px}
+.more{border:0;background:none;color:var(--link);font-size:12px;cursor:pointer;padding:2px 0}
+.note{font-size:11px;color:var(--mute2);line-height:1.5}
+.err{font:11px/1.45 ui-monospace,Menlo,monospace;color:var(--red);background:#241a1a;border-radius:8px;padding:8px;word-break:break-word}
+footer{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;padding:7px 16px;border-top:1px solid var(--line);background:var(--bar);font-size:11px;color:var(--mute)}
+footer .r{margin-left:auto}
+#foot2{display:none}
+.overlay{position:fixed;inset:0;z-index:20;background:rgba(8,8,10,.92);display:none;flex-direction:column}
+.overlay.open{display:flex}
+.otop{display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:12px 16px;color:var(--ink)}
+.fsc{flex:1;overflow:auto;display:flex;justify-content:center;padding:0 16px 30px}
+.fsc img{width:min(402px,92vw);height:auto;border-radius:18px;align-self:flex-start}
+.pop{position:fixed;z-index:30;right:16px;top:56px;width:310px;max-width:calc(100vw - 32px);padding:14px;border-radius:12px;background:var(--raise);border:1px solid var(--line2);box-shadow:0 18px 40px rgba(0,0,0,.45);display:none;font-size:12px;line-height:1.5}
+.pop.open{display:block}
+.pop code{font:12px ui-monospace,Menlo,monospace;background:#151517;padding:2px 6px;border-radius:5px}
+.mchips{display:none}
+@media (max-width:760px){
+  header{padding:10px 12px;gap:8px}.brand{min-width:0;flex:1}.size,.stamp,.kbd{display:none}
+  .search{order:5;flex-basis:100%}
+  nav.side{display:none}
+  .mchips{display:flex;gap:6px;overflow-x:auto;padding:8px 12px;border-bottom:1px solid var(--line);background:var(--bg2)}
+  .mchips .chip{height:32px;padding:0 12px;font-size:12px}
+  main{padding:12px}
+  .grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+  .meta span{display:none}
+  aside.det{position:fixed;inset:0;z-index:15;max-width:none;border:0}
+  .dhero{flex-direction:column}.dshot{flex-basis:auto;width:min(220px,60vw)}
+  footer .r,#foot1{display:none}
+  #foot2{display:inline}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <div class="logo" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></div>
+      <div><strong>Atlas</strong><span id="appv">Vocal Sessions</span></div>
+    </div>
+    <div class="seg" role="group" aria-label="View"><button aria-pressed="true">Lightbox</button></div>
+    <label class="search"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+      <input id="q" type="search" placeholder="Search screens and buttons" aria-label="Search screens and buttons"><span class="kbd">/</span></label>
+    <label class="size">S<input id="size" type="range" min="100" max="280" step="10" aria-label="Card size">L</label>
+    <span class="stamp" id="stamp"></span>
+    <button class="btn" id="rescan" aria-haspopup="dialog" aria-expanded="false">Rescan</button>
+  </header>
+  <div class="mchips" id="mchips" role="group" aria-label="Filters"></div>
+  <div class="body">
+    <nav class="side" id="side" aria-label="Filters"></nav>
+    <main id="main" aria-live="polite"></main>
+    <aside class="det" id="det" aria-label="Details"></aside>
+  </div>
+  <footer><span id="foot1"></span><span id="foot2"></span><span class="r">/ search · arrows move · Enter open · Esc close · F full length</span></footer>
+</div>
+
+<div class="overlay" id="full" role="dialog" aria-modal="true" aria-label="Full-length screenshot">
+  <div class="otop"><strong id="ftitle"></strong><span class="note" id="fsub"></span><button class="ib" style="margin-left:auto" id="fclose" aria-label="Close full length">✕</button></div>
+  <div class="fsc"><img id="fimg" alt=""></div>
+</div>
+<div class="pop" id="pop" role="dialog" aria-label="How to rescan">
+  <strong>Rescanning</strong><br>These are saved screenshots: this page can’t run the app itself. To refresh it:
+  <ul style="margin:6px 0;padding-left:18px"><li>in a Claude chat, say <code>rescan the Atlas</code></li><li>on your Mac: <code>python3 tools/atlas/atlas.py</code></li></ul>
+  <span class="note">Your filters and card size are kept.</span>
+</div>
+
+<script>
+'use strict';
+const STATUS = {captured:'✓ Captured', failed:'▲ Failed', uncaptured:'Not captured yet', gone:'– Gone from the code'};
+const HOW = {seen:['✓ Seen working','ok'], stays:['Changes this screen',''], 'not-tested':['Not tested','nt'], broken:['✕ Broken','bad']};
+const KINDS = ['Tab','Screen','Sub-page','Sheet','State'];
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const store = {get(k,d){try{const v=localStorage.getItem('atlas.'+k);return v==null?d:JSON.parse(v)}catch(e){return d}}, set(k,v){try{localStorage.setItem('atlas.'+k,JSON.stringify(v))}catch(e){}}};
+
+let A = null, byId = {}, AREAS = [];
+const S = Object.assign({area:null, status:null, kind:null, group:'area', q:'', showCode:false, size:150, open:null, sel:null, tabbar:false, stays:false},
+  store.get('view', {}), {open:null});
+
+function fmtWhen(iso){ const d=new Date(iso); if (isNaN(d)) return ''; return d.toLocaleDateString('en-GB',{day:'numeric',month:'short'})+' '+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}); }
+function save(){ const {area,status,kind,group,showCode,size,tabbar,stays} = S; store.set('view',{area,status,kind,group,showCode,size,tabbar,stays}); }
+const hidden = s => (s.status==='uncaptured'||s.status==='gone') && !S.showCode && S.status!==s.status;
+function visible(){
+  const q = S.q.trim().toLowerCase();
+  return A.screens.filter(s => {
+    if (hidden(s)) return false;
+    if (S.area && s.area!==S.area) return false;
+    if (S.status && s.status!==S.status) return false;
+    if (S.kind && s.kind!==S.kind) return false;
+    if (q){
+      const hay = [s.title,s.area,s.kind,s.id,s.key,...s.links.map(l=>l.label)].join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+}
+function groups(list){
+  const key = S.group==='kind' ? s=>s.kind : S.group==='status' ? s=>STATUS[s.status] : s=>s.area;
+  const order = S.group==='kind' ? KINDS : S.group==='status' ? Object.values(STATUS) : AREAS;
+  const m = new Map(); order.forEach(k=>m.set(k,[]));
+  list.forEach(s=>{const k=key(s); if(!m.has(k)) m.set(k,[]); m.get(k).push(s)});
+  return [...m].filter(([,v])=>v.length);
+}
+function counts(f){ const c={}; A.screens.forEach(s=>{ if((s.status==='uncaptured'||s.status==='gone')&&!S.showCode&&f!=='status') return; const k=s[f]; c[k]=(c[k]||0)+1 }); return c; }
+function badges(s){
+  const b = [];
+  if (s.status==='failed') b.push('<span class="badge fail">▲ Failed</span>');
+  else if (s.status==='uncaptured') b.push('<span class="badge unc">Not captured yet</span>');
+  else if (s.status==='gone') b.push('<span class="badge unc">– Gone from the code</span>');
+  else {
+    const broken = s.links.filter(l=>l.how==='broken').length;
+    if (s.errors.length) b.push('<span class="badge warn">◆ '+s.errors.length+' error'+(s.errors.length>1?'s':'')+'</span>');
+    if (broken) b.push('<span class="badge fail">✕ '+broken+' broken</span>');
+    if (!b.length) b.push('<span class="badge">✓ Captured</span>');
+  }
+  return '<div class="badges">'+b.join('')+'</div>';
+}
+function thumb(s){
+  if (s.status==='captured') return '<div class="th"><img loading="lazy" decoding="async" src="'+esc(s.shot)+'" alt=""></div>';
+  if (s.status==='failed') return '<div class="th fail">Didn’t capture<br>see details</div>';
+  if (s.status==='gone') return '<div class="th gone">'+esc(s.title)+'<br>no longer in the code</div>';
+  return '<div class="th unc">'+esc(s.title)+'<br>found in code</div>';
+}
+function card(s){
+  const n = s.links.length;
+  return '<button class="card" data-id="'+esc(s.id)+'" aria-current="'+(S.sel===s.id)+'" aria-label="'+esc(s.title+', '+s.kind+', '+STATUS[s.status])+'">'+thumb(s)+
+    '<div class="meta"><b>'+esc(s.title)+'</b><span>'+esc(s.kind)+(S.group!=='area'?' · '+esc(s.area):'')+(n?' · '+n+' button'+(n>1?'s':''):'')+'</span>'+badges(s)+'</div></button>';
+}
+
+// ---------- side, grid ----------
+function renderSide(){
+  const ca = counts('area'), cs = counts('status'), ck = counts('kind');
+  const total = A.screens.filter(s=>S.showCode||(s.status!=='uncaptured'&&s.status!=='gone')).length;
+  const areaBtns = '<button class="navrow" data-f="area" data-v="" aria-pressed="'+(!S.area)+'"><span>All screens</span><span class="n">'+total+'</span></button>'+
+    AREAS.filter(a=>ca[a]).map(a=>'<button class="navrow" data-f="area" data-v="'+esc(a)+'" aria-pressed="'+(S.area===a)+'"><span>'+esc(a)+'</span><span class="n">'+ca[a]+'</span></button>').join('');
+  const st = ['captured','failed','uncaptured','gone'].filter(k=>k!=='gone'||cs.gone).map(k=>'<button class="chip '+(k==='failed'?'fail':k==='uncaptured'||k==='gone'?'unc':'')+'" data-f="status" data-v="'+k+'" aria-pressed="'+(S.status===k)+'">'+STATUS[k]+' '+(cs[k]||0)+'</button>').join('');
+  const kd = KINDS.filter(k=>ck[k]).map(k=>'<button class="chip" data-f="kind" data-v="'+k+'" aria-pressed="'+(S.kind===k)+'">'+k+' '+ck[k]+'</button>').join('');
+  const gb = ['area','kind','status'].map(g=>'<button data-g="'+g+'" aria-pressed="'+(S.group===g)+'">'+g[0].toUpperCase()+g.slice(1)+'</button>').join('');
+  const nc = A.screens.filter(s=>s.status==='uncaptured'||s.status==='gone').length;
+  const cc = A.scan.codeChanges;
+  $('side').innerHTML =
+    '<div><div class="h">Areas</div>'+areaBtns+'</div>'+
+    '<div><div class="h">Status</div><div class="chips">'+st+'</div></div>'+
+    '<div><div class="h">Kind</div><div class="chips">'+kd+'</div></div>'+
+    '<div><div class="h">Group by</div><div class="seg" style="margin:0 10px" role="group" aria-label="Group by">'+gb+'</div></div>'+
+    '<label class="toggle"><input type="checkbox" id="showCode" '+(S.showCode?'checked':'')+'> Show screens found only in code ('+nc+')</label>'+
+    '<p class="note" style="padding:0 10px;margin:0">Saved screenshots from a scan of the app with sample data, not live. “Found in code” means the code can show it, but no button the scan tapped opened it.'+
+    (cc&&(cc.added.length||cc.gone.length)?' Since the scan before ('+esc(cc.sinceVersion)+'), the code has '+cc.added.length+' new and '+cc.gone.length+' gone.':'')+'</p>';
+  $('mchips').innerHTML = '<button class="chip" data-f="area" data-v="" aria-pressed="'+(!S.area&&!S.status)+'">All '+total+'</button>'+
+    AREAS.filter(a=>ca[a]&&a!=='Not captured yet'&&a!=='No longer in the code').map(a=>'<button class="chip" data-f="area" data-v="'+esc(a)+'" aria-pressed="'+(S.area===a)+'">'+esc(a)+'</button>').join('')+
+    '<button class="chip fail" data-f="status" data-v="failed" aria-pressed="'+(S.status==='failed')+'">▲ Failed '+(cs.failed||0)+'</button>'+
+    '<button class="chip unc" data-f="status" data-v="uncaptured" aria-pressed="'+(S.status==='uncaptured')+'">In code only '+(cs.uncaptured||0)+'</button>';
+}
+function renderMain(){
+  const list = visible();
+  if (!list.length){ $('main').innerHTML = '<div class="empty">No screens match. <button class="more" id="clearf">Clear filters</button></div>'; return; }
+  $('main').innerHTML = groups(list).map(([g,v])=>'<section class="group"><div class="ghead"><h2>'+esc(g)+'</h2><span>'+v.length+' screen'+(v.length>1?'s':'')+'</span></div><div class="grid">'+v.map(card).join('')+'</div></section>').join('');
+}
+
+// ---------- details ----------
+function linkRow(l){
+  const t = byId[l.to];
+  const [lab, cls] = HOW[l.how] || [l.how,''];
+  const dest = l.how==='seen' ? (t ? esc(t.title)+(l.family?' <small>'+esc(l.family)+' (same page layout)</small>':'') : esc(l.toLabel||'somewhere not in this scan'))
+    : l.how==='stays' ? 'stays here' : '';
+  const why = l.why ? '<small>'+esc(l.why)+'</small>' : '';
+  const tags = '<span class="tags"><span class="tag '+cls+'">'+lab+'</span>'+(l.forced?'<span class="tag force" title="Another layer covered it, so the scan tapped the button itself">Forced tap</span>':'')+'</span>';
+  const inner = '<span class="lt">'+esc(l.label)+(dest?' <span style="color:var(--mute2)">→</span> '+dest:'')+why+'</span>'+tags;
+  return t ? '<button class="lrow" data-go="'+esc(t.id)+'" title="Open '+esc(t.title)+'">'+inner+'</button>' : '<div class="lrow">'+inner+'</div>';
+}
+function renderDet(){
+  const d = $('det');
+  const s = byId[S.open];
+  if (!s){ d.classList.remove('open'); d.innerHTML=''; return; }
+  d.classList.add('open');
+  const list = visible(), i = list.findIndex(x=>x.id===s.id);
+  const own = s.linksOf && byId[s.linksOf];
+  const L = s.links;
+  const main = L.filter(l=>l.kind!=='Tab bar' && l.how!=='stays');
+  const tabbar = L.filter(l=>l.kind==='Tab bar'), stays = L.filter(l=>l.how==='stays' && l.kind!=='Tab bar');
+  const from = (s.from||[]).filter((f,j,a)=>a.findIndex(x=>x.from===f.from)===j && byId[f.from]);
+  const vp = A.scan.viewport;
+  const shot = s.status==='captured' ? '<button class="dshot" id="dfull" aria-label="Show full length"><img src="'+esc(s.shot)+'" alt="'+esc(s.title)+' screenshot"><span class="live">Saved screenshot, not live</span></button>'
+    : '<div class="th '+(s.status==='failed'?'fail':s.status==='gone'?'gone':'unc')+'" style="flex:0 0 150px">'+(s.status==='failed'?'Didn’t capture':s.status==='gone'?'No longer in the code':'Not captured yet')+'</div>';
+  const docs = (s.docs||[]).map(x=>'<a href="'+esc(x.url)+'" target="_blank" rel="noopener">'+esc(x.file.replace('.md',''))+' › '+esc(x.heading)+'</a>').join('<br>') || '<span class="note">No section found</span>';
+  const m = s.mention ? '<a href="'+esc(s.mention.url)+'" target="_blank" rel="noopener">'+esc(s.mention.version)+(s.mention.q?' ('+esc(s.mention.q)+')':'')+'</a> · '+esc(s.mention.title.replace(/\s*\(Q\d+\)\s*$/,'')) : '<span class="note">Not in any changelog headline</span>';
+  const via = s.via && byId[s.via.from] ? 'Tapping “'+esc(s.via.label)+'” on <button class="more" data-go="'+esc(s.via.from)+'">'+esc(byId[s.via.from].title)+'</button>' : s.found==='Root' ? 'A starting screen of the scan' : '';
+  d.innerHTML =
+    '<div class="dtop"><button class="ib" data-step="-1" aria-label="Previous screen" '+(i<=0?'disabled':'')+'>‹</button><button class="ib" data-step="1" aria-label="Next screen" '+(i<0||i>=list.length-1?'disabled':'')+'>›</button>'+
+    '<div class="dtitle"><strong>'+esc(s.title)+'</strong><span>'+esc(s.kind)+' · '+esc(s.area)+(i>=0?' · '+(i+1)+' of '+list.length:'')+'</span></div>'+
+    '<button class="ib" style="margin-left:auto" id="dclose" aria-label="Close details">✕</button></div>'+
+    '<div class="dbody">'+
+      '<div class="dhero">'+shot+'<dl class="kv">'+
+        '<div><dt>Status</dt><dd>'+STATUS[s.status]+(s.why?'<br><span class="note">'+esc(s.why)+'</span>':'')+'</dd></div>'+
+        (s.status==='captured'?'<div><dt>Saved screenshot</dt><dd>'+fmtWhen(A.scan.at)+' · '+esc(vp.name)+' '+vp.w+' × '+vp.h+(s.fullHeight>vp.h?' · full length '+s.fullHeight+' px':'')+'<br><span class="note">Not live: from the scan of '+esc(A.scan.version)+'</span></dd></div>':'')+
+        (via?'<div><dt>Found by</dt><dd>'+via+'</dd></div>':'')+
+        (s.setup&&s.setup.length?'<div><dt>Set up with</dt><dd>'+esc(s.setup.join(', '))+'</dd></div>':'')+
+        '<div><dt>Explained in</dt><dd>'+docs+'</dd></div>'+
+        '<div><dt>Last mentioned in changelog</dt><dd>'+m+'</dd></div>'+
+        '<div><dt>Errors on this screen</dt><dd>'+(s.errors.length?s.errors.length:'None')+'</dd></div>'+
+      '</dl></div>'+
+      (s.errors.length?'<div class="err">'+s.errors.map(esc).join('<br>')+'</div>':'')+
+      '<div class="acts">'+(s.status==='captured'?'<button class="btn pri" id="dfull2">Full length · F</button>':'')+
+        '<a class="btn" href="'+esc(A.app.url)+'" target="_blank" rel="noopener">Open the live app</a></div>'+
+      (own?'<div class="sect"><div class="h">Buttons</div><p class="note">The same screen in another state: its buttons are listed on <button class="more" data-go="'+esc(own.id)+'">'+esc(own.title)+'</button>.</p></div>':'')+
+      (L.length?'<div class="sect"><div class="h">Leads to · '+main.length+'</div>'+(main.length?main.map(linkRow).join(''):'<p class="note">Only the tab bar and buttons that change this screen.</p>')+
+        (stays.length?'<button class="more" data-t="stays">'+(S.stays?'Hide':'Show')+' '+stays.length+' that change this screen</button>'+(S.stays?stays.map(linkRow).join(''):''):'')+
+        (tabbar.length?'<br><button class="more" data-t="tabbar">'+(S.tabbar?'Hide':'Show')+' tab bar ('+tabbar.length+')</button>'+(S.tabbar?tabbar.map(linkRow).join(''):''):'')+'</div>':'')+
+      '<div class="sect"><div class="h">Comes from · '+from.length+'</div>'+(from.length?from.map(f=>{const o=byId[f.from];return '<button class="lrow" data-go="'+esc(f.from)+'"><span class="lt">'+esc(o.title)+' <small>'+esc(f.label)+'</small></span><span class="tag '+(HOW[f.how]||['',''])[1]+'">'+(HOW[f.how]||[f.how])[0]+'</span></button>'}).join('')
+        : '<p class="note">'+(s.status==='uncaptured'?'No button the scan tapped leads here yet.':s.status==='gone'?'Gone from the code.':'No button in this scan leads here: it’s a starting screen, or it opens only from somewhere not scanned.')+'</p>')+'</div>'+
+      (s.how?'<div class="sect"><div class="h">How the scan opened it</div><div class="code">'+esc(s.how)+'</div></div>':'')+
+      (s.key?'<div class="sect"><div class="h">In the code</div><div class="code">'+esc(s.key)+(s.sig?' · state '+esc(s.sig):'')+'</div></div>':'')+
+    '</div>';
+}
+
+function render(){ renderSide(); renderMain(); renderDet(); save(); }
+function openFull(){
+  const s = byId[S.open]; if (!s || s.status!=='captured') return;
+  $('fimg').src = s.full; $('fimg').alt = s.title+' full length'; $('ftitle').textContent = s.title;
+  $('fsub').textContent = 'Full length · saved screenshot from '+fmtWhen(A.scan.at)+', not live'; $('full').classList.add('open'); $('fclose').focus();
+}
+function closeFull(){ $('full').classList.remove('open'); const c = document.querySelector('.card[data-id="'+CSS.escape(S.sel||'')+'"]'); if (c) c.focus({preventScroll:true}); }
+function select(id, open){
+  S.sel = id; if (open) S.open = id;
+  if (id) { try { history.replaceState(null,'','#s-'+id) } catch(e) {} }
+  renderMain(); renderDet();
+  const c = document.querySelector('.card[data-id="'+CSS.escape(id)+'"]'); if (c) { c.focus({preventScroll:true}); c.scrollIntoView({block:'nearest'}); }
+}
+function closeDet(){ S.open=null; renderDet(); try{history.replaceState(null,'',location.pathname+location.search)}catch(e){} if (S.sel) select(S.sel,false); }
+
+document.addEventListener('click', e => {
+  const t = e.target.closest('button'); if (!t) { if (!e.target.closest('.pop')) { $('pop').classList.remove('open'); $('rescan').setAttribute('aria-expanded','false'); } return; }
+  if (t.id==='rescan') { const o = $('pop').classList.toggle('open'); t.setAttribute('aria-expanded', String(o)); return; }
+  if (t.dataset.f) { const f=t.dataset.f, v=t.dataset.v||null; if (f==='area'&&!v) {S.area=null;S.status=null;} else S[f] = S[f]===v ? null : v; render(); return; }
+  if (t.dataset.g) { S.group = t.dataset.g; render(); return; }
+  if (t.classList.contains('card')) { select(t.dataset.id, true); return; }
+  if (t.dataset.go) { select(t.dataset.go, true); $('det').scrollTop = 0; return; }
+  if (t.dataset.step) { const l=visible(), i=l.findIndex(x=>x.id===S.open)+(+t.dataset.step); if (l[i]) select(l[i].id, true); return; }
+  if (t.dataset.t) { S[t.dataset.t] = !S[t.dataset.t]; renderDet(); save(); return; }
+  if (t.id==='dclose') { closeDet(); return; }
+  if (t.id==='dfull'||t.id==='dfull2') { openFull(); return; }
+  if (t.id==='fclose') { closeFull(); return; }
+  if (t.id==='clearf') { Object.assign(S,{area:null,status:null,kind:null,q:''}); $('q').value=''; render(); return; }
+});
+document.addEventListener('change', e => {
+  if (e.target.id==='showCode') { S.showCode = e.target.checked; if(!S.showCode&&(S.status==='uncaptured'||S.status==='gone')) S.status=null; render(); }
+});
+$('q').addEventListener('input', e => { S.q = e.target.value; renderMain(); renderDet(); });
+$('size').addEventListener('input', e => { S.size = +e.target.value; document.documentElement.style.setProperty('--thumb', S.size+'px'); save(); });
+document.addEventListener('keydown', e => {
+  const ae = document.activeElement, typing = /INPUT|TEXTAREA|SELECT/.test(ae.tagName) && !/checkbox|range/.test(ae.type);
+  if (e.key==='Escape') {
+    if ($('full').classList.contains('open')) closeFull();
+    else if ($('pop').classList.contains('open')) { $('pop').classList.remove('open'); $('rescan').setAttribute('aria-expanded','false'); }
+    else if (typing) ae.blur(); else if (S.open) closeDet();
+    return; }
+  if (typing || e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.key==='/') { e.preventDefault(); $('q').focus(); return; }
+  if ((e.key==='f'||e.key==='F') && S.open) { e.preventDefault(); openFull(); return; }
+  if ($('full').classList.contains('open')) return;
+  const l = visible(); if (!l.length) return;
+  const onCard = ae && ae.classList && ae.classList.contains('card');
+  let i = l.findIndex(x=>x.id===(onCard ? ae.dataset.id : (S.sel||S.open)));
+  if (['ArrowRight','ArrowLeft','ArrowDown','ArrowUp'].includes(e.key)) {
+    e.preventDefault(); let step = 1;
+    if (e.key==='ArrowDown'||e.key==='ArrowUp') { const c = document.querySelector('.card[data-id="'+CSS.escape(l[Math.max(i,0)].id)+'"]'), g = c && c.parentElement; step = g ? getComputedStyle(g).gridTemplateColumns.split(' ').length : 1; }
+    if (e.key==='ArrowLeft'||e.key==='ArrowUp') step = -step;
+    i = i<0 ? 0 : Math.max(0, Math.min(l.length-1, i+step)); select(l[i].id, !!S.open);
+  }
+  if (e.key==='Enter' && onCard) { e.preventDefault(); select(ae.dataset.id, true); }
+});
+
+fetch('atlas.json').then(r => { if (!r.ok) throw new Error('HTTP '+r.status); return r.json(); }).then(data => {
+  A = data; const vp = A.scan.viewport;
+  document.documentElement.style.setProperty('--ar', vp.w+'/'+vp.h);
+  A.screens.forEach(s => { s.links = s.links||[]; s.errors = s.errors||[]; byId[s.id] = s; });
+  AREAS = [...(A.areas||[])]; A.screens.forEach(s => { if (!AREAS.includes(s.area)) AREAS.push(s.area); });
+  ['Other','Not captured yet','No longer in the code'].forEach(a => { const i = AREAS.indexOf(a); if (i>=0) { AREAS.splice(i,1); AREAS.push(a); } });
+  document.title = 'Atlas · '+A.app.name;
+  $('appv').textContent = A.app.name+' '+A.scan.version+' · '+String(A.scan.commit||'').split(' ')[0];
+  $('stamp').textContent = 'Saved screenshots from '+fmtWhen(A.scan.at)+', not live';
+  const cap = A.screens.filter(s=>s.status==='captured').length, nb = A.screens.reduce((n,s)=>n+s.links.length,0);
+  const seen = A.screens.reduce((n,s)=>n+s.links.filter(l=>l.how==='seen').length,0);
+  $('foot2').textContent = cap+' screens · saved '+fmtWhen(A.scan.at)+', not live';
+  $('foot1').textContent = cap+' captured · '+A.screens.filter(s=>s.status==='failed').length+' failed · '+A.screens.filter(s=>s.status==='uncaptured').length+' found in code only · '+nb+' buttons, '+seen+' seen working · '+vp.name+' · '+A.scan.data+' · scan took '+Math.max(1,Math.round(A.scan.seconds/60))+' min';
+  $('size').value = S.size; document.documentElement.style.setProperty('--thumb', S.size+'px');
+  const h = decodeURIComponent(location.hash.replace(/^#s-/, '')); if (h && byId[h]) { S.sel = S.open = h; }
+  render();
+  window.addEventListener('hashchange', () => { const id = decodeURIComponent(location.hash.replace(/^#s-/, '')); if (byId[id] && id!==S.open) select(id, true); });
+}).catch(err => { $('main').innerHTML = '<div class="empty">Couldn’t load the scan (atlas.json): '+esc(err.message)+'</div>'; });
+</script>
+</body>
+</html>

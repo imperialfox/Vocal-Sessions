@@ -1,6 +1,6 @@
 # Render queue
 
-App work Ivan has queued, in the order he wants it built. Each item is one build, in a fresh chat, started from a handoff (see [HANDOFF.md](HANDOFF.md)). Last checked against `main` at **3.42** (1 Nov 2026). **Shipped:** Q01 · Search: Global Find in 3.22; Q08 · Interface: Native iOS Polish in 3.23; Q02 · Track: Waveform Sections in 3.24; Q09 · Track: Waveform Sections Follow-up in 3.25; Q10 · Interface: HIG Foundations Pass in 3.26; Q03 · Marks: Layered Annotations in 3.27; Q05 · Song Clock: Tap Re-Anchor in 3.28; Q11 · Data: Save Safety in 3.29; Q12 · Song Clock: Timing Integrity in 3.30; Q13 · Interface: Keyboard Guards in 3.31; Q04 · Marks: Practice Guide in 3.32; Q23 · Interface: Status Bar Glow in 3.33; Q14 · Playback: Smooth Frames in 3.34; Q18 · Tests: GitHub Match in 3.35; Q15 · Marks: Register-Ready Data in 3.36; Q16 · Audio: Voice Analysis Foundations in 3.37; Q17 · Hygiene: Dead Code Sweep in 3.38; Q19 · Session: One-Page Flow in 3.39; Q20 · Session: Application Redesign in 3.40; Q21 · Session: Saved Screen in 3.41; Q22 · Session: Clock Redesign in 3.42; Q24 · Coach: Video Redesign (tooling, no app version: the render kit is in `tools/coach-video/`).
+App work Ivan has queued, in the order he wants it built. Each item is one build, in a fresh chat, started from a handoff (see [HANDOFF.md](HANDOFF.md)). Last checked against `main` at **3.42** (1 Nov 2026). **Shipped:** Q01 · Search: Global Find in 3.22; Q08 · Interface: Native iOS Polish in 3.23; Q02 · Track: Waveform Sections in 3.24; Q09 · Track: Waveform Sections Follow-up in 3.25; Q10 · Interface: HIG Foundations Pass in 3.26; Q03 · Marks: Layered Annotations in 3.27; Q05 · Song Clock: Tap Re-Anchor in 3.28; Q11 · Data: Save Safety in 3.29; Q12 · Song Clock: Timing Integrity in 3.30; Q13 · Interface: Keyboard Guards in 3.31; Q04 · Marks: Practice Guide in 3.32; Q23 · Interface: Status Bar Glow in 3.33; Q14 · Playback: Smooth Frames in 3.34; Q18 · Tests: GitHub Match in 3.35; Q15 · Marks: Register-Ready Data in 3.36; Q16 · Audio: Voice Analysis Foundations in 3.37; Q17 · Hygiene: Dead Code Sweep in 3.38; Q19 · Session: One-Page Flow in 3.39; Q20 · Session: Application Redesign in 3.40; Q21 · Session: Saved Screen in 3.41; Q22 · Session: Clock Redesign in 3.42; Q24 · Coach: Video Redesign (tooling, no app version: the render kit is in `tools/coach-video/`); Q30 · Atlas: Lightbox Core (tooling, no app version: the Atlas is in `tools/atlas/`).
 
 - **Every item has two separate gates.** `Awaiting Render` means it is not approved. Ivan's **Render** approves only the named item's exact scope and moves it to `Approved — awaiting Build`; it does not start work or authorize a push. A separate **Build** instruction starts implementation for that approved item. Do not treat approval of one item as approval of the whole queue.
 - **The code wins on what's built.** This is a summary, not a spec. Check each note against the code before relying on it.
@@ -53,7 +53,7 @@ Every ID with its **Status** (`Awaiting Render`, `Approved — awaiting Build`, 
 | Q27 | Interface: Landscape Tab Bar Fit | Shipped 3.45 | "Exerc" cut off on its side, 1 Nov 2026 |
 | Q28 | Hygiene: Toggl Removal | Shipped 3.46 | Get rid of Copy for Toggl, 2 Nov 2026 |
 | Q29 | Session: Song Rating Removal | Shipped 3.47 | Remove "Rate the song", 2 Nov 2026 |
-| Q30 | Atlas: Lightbox Core | Approved — awaiting Build | Visual App Atlas stage 1, Lightbox, 2 Nov 2026 |
+| Q30 | Atlas: Lightbox Core | Shipped (tooling, no app version) | Visual App Atlas stage 1, Lightbox, 2 Nov 2026 |
 | Q31 | Atlas: Map and Notes | Approved — awaiting Build | Visual App Atlas stage 2, map, notes, export, changes since last scan, 2 Nov 2026 |
 | Q32 | Exercises: Redesign | Approved — awaiting Build | Exercise patterns the app plays, Exercise page redesign (both 31 Oct), merged 2 Nov 2026 |
 | Q33 | Interface: Glass Native Tuning | Approved — awaiting Build | Glass tuning Recon and glass inventory, 2 Nov 2026 |
@@ -74,7 +74,7 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 
 ## Order (2 Nov 2026)
 
-**Q32** is the next app build (Render 2 Nov 2026, 15:56), in two stages: the shared pattern player with the Humming page, then the other 11 pages. **Q33** follows Q32 (Render 2 Nov 2026, 17:41); both change `css/app.css`, so they're built one after the other. **Q34** follows Q33 (Render 2 Nov 2026, 18:12); it uses Q33's materials and springs. **Q30**, then **Q31** (Render 2 Nov 2026, 15:55, in one instruction, each with its own Build; Q31 builds on Q30). Both are tooling with no app version, like Q24, so they can be built outside the app queue's order. Q28 shipped in 3.46 and Q29 in 3.47 (Render 2 Nov 2026, 09:29; Build 09:33, in one instruction, built one after the other). **Q07** is still awaiting Render. Q27 shipped in 3.45 (Build 2 Nov 2026). Q25 shipped in 3.43 and Q26 in 3.44 (Build 2 Nov 2026); Q25–Q27 got Render on 1 Nov 2026 (19:59), in one instruction, each with its own Build. Q19 shipped in 3.39, Q20 in 3.40, Q21 in 3.41 and Q22 in 3.42. Q22 got Render on 31 Oct 2026 (20:59) and was built on the one-page session and the saved screen. Q19–Q21 got Render on 31 Oct 2026 (19:58), in one instruction, each with its own Build. They follow Q17 (shipped in 3.38; Q20 needs Q16's track-while-recording, shipped in 3.37). Q11–Q17 got Render on 30 Oct 2026 (06:42) and have all shipped. What has shipped is in the table's Status column. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
+**Q32** is the next app build (Render 2 Nov 2026, 15:56), in two stages: the shared pattern player with the Humming page, then the other 11 pages. **Q33** follows Q32 (Render 2 Nov 2026, 17:41); both change `css/app.css`, so they're built one after the other. **Q34** follows Q33 (Render 2 Nov 2026, 18:12); it uses Q33's materials and springs. Q30 shipped as tooling (Build 2 Nov 2026, 17:57; `tools/atlas/`), and **Q31** builds on it (Render 2 Nov 2026, 15:55, in the same instruction as Q30, with its own Build). Both are tooling with no app version, like Q24, so they can be built outside the app queue's order. Q28 shipped in 3.46 and Q29 in 3.47 (Render 2 Nov 2026, 09:29; Build 09:33, in one instruction, built one after the other). **Q07** is still awaiting Render. Q27 shipped in 3.45 (Build 2 Nov 2026). Q25 shipped in 3.43 and Q26 in 3.44 (Build 2 Nov 2026); Q25–Q27 got Render on 1 Nov 2026 (19:59), in one instruction, each with its own Build. Q19 shipped in 3.39, Q20 in 3.40, Q21 in 3.41 and Q22 in 3.42. Q22 got Render on 31 Oct 2026 (20:59) and was built on the one-page session and the saved screen. Q19–Q21 got Render on 31 Oct 2026 (19:58), in one instruction, each with its own Build. They follow Q17 (shipped in 3.38; Q20 needs Q16's track-while-recording, shipped in 3.37). Q11–Q17 got Render on 30 Oct 2026 (06:42) and have all shipped. What has shipped is in the table's Status column. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
 
 ## Q07 · Song Clock: Dynamic Sync
 
@@ -84,37 +84,6 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 - **Decided:** marks over Recall's pills stay still while words reveal (a test, not new behaviour).
 - **Next action:** confirm dates and scope with Ivan.
 - **Done when:** *Unresolved.*
-
-## Q30 · Atlas: Lightbox Core
-
-**Status:** Approved — awaiting Build. **Render:** 2 Nov 2026, 15:55. Ivan: "render stage one and two. add a Q## with standard naming but seperate them". This is stage one; stage two is Q31. **Build:** awaiting Ivan's instruction.
-
-A developer tool that shows every screen and sheet of Vocal Sessions as real screenshots side by side, from a scan of the app with sample data. Tooling only: the app itself doesn't change and there's no app version (like Q24).
-
-- **Scope:**
-  - A new `tools/atlas/` folder: the scanner and one self-contained viewer page, built from Ivan's working prototype (2 Nov 2026; design notes and prototype source are in his project notes).
-  - **Scanner:** runs the app headless with the tests' sample data plus one song (lyrics, sections, marks, takes, a generated track), reusing `tests/harness.py`. Its screen list comes from the code (every `U.tab`, `U.view`, `U.sheet` and Settings page), with a set-up recipe for each tab, screen and sub-page and for as many sheets as can be opened safely. Captures each at iPhone 17 Pro size, light (top of screen and full length), plus the prototype's extra states (first launch, session running, Today in dark mode), with the clock frozen and motion off. Taps every button on each screen and records where it lands. Lists screens the code can show but the scan didn't open as "Not captured yet".
-  - **Viewer:** the Lightbox grid grouped by area, kind or status; card size; search (screens and button labels); filters; "show screens found only in code"; a details panel (big picture, full length, status, "Explained in" links to `README.md` / `MAINTAINING.md` sections, last changelog mention, errors, Leads to / Comes from with how sure each link is); previous/next; keyboard (/, arrows, Enter, Esc, F); phone layout. Says "saved screenshots, not live" wherever it matters.
-  - **How it's opened:** from a Claude chat ("rescan the Atlas": Claude runs the scan and updates Ivan's private Atlas page) and on the Mac with one command (`python3 tools/atlas/atlas.py`).
-  - **History:** each scan's results are kept so the next one can be compared (the comparison view itself is Q31).
-  - Tests for the scanner and viewer.
-- **Agreed (rules from the prototype):**
-  - Open a screen through its real button whenever that button does set-up (the calendar's month arrows looked broken when it was opened by a shortcut). A shortcut must never produce a "broken" result.
-  - Put the app back exactly as it was before every tap (fresh UI state, saved data and any session restored), or one tap leaks into the next.
-  - A sheet that didn't open is "Failed", never captured as the screen underneath.
-  - Buttons that need a mic, a file or a download, delete something, or only appear after a swipe are "Not tested", with the reason, never "Broken". Buttons covered by another layer get a forced tap, marked as such.
-  - Link statuses: Seen working · Changes this screen · Not tested (with reason) · Broken (tapping threw an error).
-  - Same screen in another state (first launch, session running, dark) shares one entry for links; other exercises and guide pages point to the captured one as "same page layout".
-  - Look: the dark "pro tool" look as prototyped.
-- **Out of scope:** the map, notes, export and changes since the last scan (Q31); compare views, other screen sizes and a dark-mode pass of every screen (not queued); any change to the app.
-- **The repo is public:** screenshots and scan output never go into git (`tools/atlas/data/` is git-ignored); scans use sample data only.
-- **Needs:** nothing in particular; can be built any time.
-- **Done when:**
-  - The scan finds every screen named in `render()` and `renderSheet()`; a test adds a dummy screen and sees it appear, then removes it and sees it reported gone.
-  - A failed capture shows as failed, never as a blank card; no "broken" result comes from how the scan opened a screen.
-  - "Explained in" links land on the right sections.
-  - Nothing under `tools/atlas/data/` is tracked by git; the app's own full test suite still passes.
-  - The viewer works at Mac and iPhone sizes, and the Mac command is documented in `MAINTAINING.md`.
 
 ## Q31 · Atlas: Map and Notes
 
@@ -132,7 +101,7 @@ Adds the map, notes Claude can read, export, and what changed since the last sca
 - **Agreed:** notes have one home (the private Atlas page), so there are never two copies; only notes sent as queue ideas reach the repo, and as text only.
 - **Out of scope:** compare views across screens or sizes (not queued); any change to the app.
 - **The repo is public:** notes, pictures and screenshots never go into git.
-- **Needs:** Q30 built first.
+- **Needs:** Q30 built first (shipped 2 Nov 2026 as tooling: `tools/atlas/`; its README describes `atlas.json`, which keeps each scan's code list and results for comparing).
 - **Done when:**
   - Notes and layout survive a rescan and a reload, on phone and Mac, and Claude can list the notes from a chat.
   - The report has the screen, marked area, element details and note; the .zip has a picture per note; queue ideas come out text-only in this file's format.

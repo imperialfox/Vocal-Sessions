@@ -36,6 +36,7 @@ Notes for whoever works on the app next, whether that's Ivan, a new Claude sessi
 | `.nojekyll` | Tells GitHub Pages to serve files exactly as they are, so `CHANGELOG.md` reaches the app as plain text |
 | `tests/` | The test suite (see below) |
 | `tools/release.py` | Sets the version number everywhere at once |
+| `tools/atlas/` | The Visual App Atlas (Q30): every screen as saved screenshots, side by side (see below). Its scans stay out of git |
 | `.github/workflows/tests.yml` | Runs the tests on GitHub after every push |
 
 ### The code, in load order
@@ -615,6 +616,28 @@ Running side by side, each layout size and each random-tap seed is its own job, 
 - **On GitHub, 2 Nov 2026 (morning):** three runs in a row each failed one different timing check: `test_zoom` › "catching a page mid-open" (a docs push on 3.45), `test_fuzz` › seed 14 "floating window off screen" (3.46; its trace: the coach video's picture in picture, a level tapped, then the window resized to 1440 × 900; seed 14 passed 4 of 4 locally on 3.45 and 3.46, and 3.46 passed on GitHub when re-run once) and `test_pip` › "they fade after about 3 s" (2.5 s, a docs push on 3.46). Q29's local full run failed `test_pip`'s fade (2.4 s), `test_zoom` mid-open, `test_search` › recents and `test_native` › "light exercises: back at the top" once each; all four files passed (886 checks) with `VS_JOBS=2`. The zoom mid-open check uses a fixed 90 ms wait and the fade check reads the clock under load: both want a wait for their condition, as their own queue item.
 
 Tests reach into the app through its globals (`D`, `X`, `U`, `render`…), so the scripts must stay classic `<script>`s, not ES modules. `harness.offline(path)` switches the test web server off for a real "no connection" (Playwright's own offline switch doesn't reach the offline helper).
+
+---
+
+## Visual App Atlas (Q30)
+
+A developer tool that shows every screen and sheet as saved screenshots, side by side, with where each button goes. It scans the app with the tests' sample data (never real data), changes nothing in the app and has no app version. How it works, its rules and its files: [tools/atlas/README.md](tools/atlas/README.md).
+
+**On the Mac, one command** (from the repo folder, with the tests' Playwright installed):
+
+```
+python3 tools/atlas/atlas.py           # scan (about 5–10 minutes), then open the Atlas in the browser
+python3 tools/atlas/atlas.py --view    # open the last scan again
+python3 tools/atlas/test_atlas.py      # the Atlas's own tests (about 2 minutes; not part of tests/run.py)
+```
+
+**From a Claude chat:** say "rescan the Atlas". Claude runs the scan and updates the private Atlas page on claude.ai.
+
+- **Scans stay out of git.** They go in `tools/atlas/data/scans/<date-time>/`, which is git-ignored: the repo is public and GitHub Pages serves everything in it. Every scan is kept, so the next one can be compared with it.
+- **The screen list comes from the code** (`tools/atlas/inventory.py`): `render()`, `renderSheet()` and the functions it hands sheets to, Settings' `TITLE` pages, and every `U.tab`, `U.view` and `U.sheet` set anywhere. A new screen shows up by itself, as "Not captured yet" until a button the scan taps opens it, and a removed one as "Gone from the code".
+- **When you add a screen:** if the scan can't reach it by tapping (it needs set-up the sample data doesn't have), add a starting screen to `ROOTS` in `tools/atlas/screens.py`, opened through real buttons. Add its doc sections to `KEY_DOCS` there; `test_atlas.py` fails if a section it names is renamed or removed.
+- **When you rename a doc section** the Atlas links to ("Explained in"), update `screens.py` too.
+- **Buttons the scan never taps** (microphone, files, sharing, replacing or deleting data) are listed in `SKIP` in `screens.py`, each with the reason the Atlas shows.
 
 ---
 
