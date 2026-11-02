@@ -6,8 +6,12 @@ coloured dot, a readable red recording window, one progress line, one capsule sh
 names losing their end. Text contrast is checked in light and dark.
 Stage 3, behaviour: room at the end of every page for the window in a bottom corner, a fade with Reduce Motion, a
 cross-fade between kinds, the press, the lift while dragging, and a steady VoiceOver label.
+Stage 4: the coach video as picture in picture (a clean picture, controls on a tap that fade after 3 s, L1 L2 L3, three
+sizes by pinch and double-tap, remembered), and tucking every kind of window at either edge.
 Every fixture is synthetic (tones and a made-up video). No real music, recordings or course media are used."""
+import time
 from harness import until
+from test_window import CLEAR
 from test_batch12 import setup_sounds, sounds, PLAYING, LAUNCH_ARGS as B12_ARGS
 
 LAUNCH_ARGS = B12_ARGS
@@ -55,9 +59,11 @@ def clean(b, t):
             ok(show(pg, k, S[k]), f'{a} → {k}: {k}’s window takes over')
             sig.setdefault(k, set()).add(pg.evaluate(SIG))
             if k == 'video':
+                pg.evaluate("fwCtl(true)")  # stage 4: the ✕ is one of the controls a tap shows
                 x = pg.evaluate(VX)
-                ok(x and x['right'] == 0 and x['dy'] == 0 and x['circle'],
-                   f'{a} → video: the video’s ✕ stays at the top right with its dark circle (fix 2: {x})')
+                ok(x and x['dx'] == 4 and x['dy'] == 4 and x['circle'] and x['col'] == 'rgb(255, 255, 255)',
+                   f'{a} → video: the video’s ✕ is where it belongs, white on its circle, never greyed (fix 2: {x})')
+                pg.evaluate("fwCtl(false)")
                 ok('hasx' not in pg.evaluate("document.getElementById('fw').className"), f'{a} → video: no hasx left on the window')
             small = [x for x in pg.evaluate(TOUCH) if x['w'] < 44 or x['h'] < 44]
             ok(not small, f'{k} (after {a}): every button has a 44 pt touch area (fix 3: {small})')
@@ -295,7 +301,219 @@ def voiceover(b, t):
     pg.context.close()
 
 
-PARTS = ['clean', 'look', 'room', 'reduced', 'swap', 'touch', 'voiceover']
+# ---------------------------------------------------------------- stage 4 · picture in picture and tucking
+from test_coach import CH
+VRECT = "(()=>{const r=document.getElementById('fw').getBoundingClientRect();return {l:r.left,t:r.top,r:r.right,b:r.bottom,w:Math.round(r.width),h:Math.round(r.height)}})()"
+CTL = "(()=>{const c=document.querySelector('#fw .fwvc');return !!c&&getComputedStyle(c).visibility==='visible'&&FW.ctl})()"
+# where each control sits in the window
+PARTS_AT = """(()=>{const f=document.getElementById('fw').getBoundingClientRect(),o={};
+ document.querySelectorAll('#fw .fwvc button').forEach(b=>{if(b.offsetParent===null||getComputedStyle(b).display==='none')return;const r=b.getBoundingClientRect();
+  o[(b.dataset.a||'')+(b.dataset.v||'')]={x:Math.round(r.left-f.left),y:Math.round(r.top-f.top),r:Math.round(f.right-r.right),b:Math.round(f.bottom-r.bottom),w:Math.round(r.width),h:Math.round(r.height)}});return o})()"""
+
+
+def two_fingers(pg, c, d0, d1, steps=8):
+    """A real two-finger pinch around c, from d0 to d1 px apart."""
+    cdp = pg.context.new_cdp_session(pg)
+    pts = lambda d: [{'x': c[0] - d / 2, 'y': c[1], 'id': 1}, {'x': c[0] + d / 2, 'y': c[1], 'id': 2}]
+    cdp.send('Input.dispatchTouchEvent', {'type': 'touchStart', 'touchPoints': pts(d0)})
+    for i in range(1, steps + 1):
+        cdp.send('Input.dispatchTouchEvent', {'type': 'touchMove', 'touchPoints': pts(d0 + (d1 - d0) * i / steps)}); pg.wait_for_timeout(16)
+    cdp.send('Input.dispatchTouchEvent', {'type': 'touchEnd', 'touchPoints': []})
+    pg.wait_for_timeout(300)
+    cdp.detach()
+
+
+def video_page(b, t, init=None):
+    from test_coach import add as add_video, LONG
+    pg = t.page(b, touch=True, init=init)
+    add_video(pg, LONG)
+    pg.evaluate(LEAVE); pg.evaluate("COACH.cue('humming',1,true)")
+    until(pg, "!COACH.el().paused", 6000); pg.evaluate(AWAY)
+    return pg
+
+
+def pip(b, t):
+    ok = t.ok
+    pg = video_page(b, t)
+    ok(until(pg, "FW.shown==='video'", 4000), 'the coach video’s window')
+    r = pg.evaluate(VRECT)
+    ok(r['w'] == 176 and r['h'] == 99, f'small: 176 × 99 ({r})')
+    clean = pg.evaluate("(()=>{const f=document.getElementById('fw');return {bar:!!f.querySelector('.fwvb'),txt:[...f.querySelectorAll('*')].filter(e=>e.offsetParent!==null&&getComputedStyle(e).visibility==='visible'&&e.childElementCount===0&&e.textContent.trim()).map(e=>e.textContent)}})()")
+    ok(not clean['bar'] and not clean['txt'] and not pg.evaluate(CTL), f'a clean picture: no bar, no words, no controls showing ({clean})')
+    t.shot(pg, 'pip-clean')
+    pg.tap('#fw .fwvopen')
+    ok(until(pg, CTL, 1000), 'one tap shows the controls over the dimmed picture')
+    at = pg.evaluate(PARTS_AT)
+    ok(at.get('fwX', {}).get('x', 99) <= 6 and at['fwX']['y'] <= 6 and at.get('fwOpen', {}).get('r', 99) <= 6 and at['fwOpen']['y'] <= 6,
+       f'✕ at the top left, open the player at the top right ({at.get("fwX")}, {at.get("fwOpen")})')
+    ok('fwToggle' in at and 'fwSkip-10' not in at and all(f'fwLv{l}' in at for l in (1, 2, 3)),
+       f'small: play/pause along the top, no ±10, and L1 L2 L3 along the bottom ({sorted(at)})')
+    t.shot(pg, 'pip-small-controls')
+    t0 = time.time()
+    ok(until(pg, "!FW.ctl", 5000) and 2.5 < time.time() - t0 < 4.5, f'they fade after about 3 s ({time.time() - t0:.1f} s)')
+    pg.tap('#fw .fwvopen'); until(pg, CTL, 1000)
+    pg.wait_for_timeout(400)
+    r = pg.evaluate(VRECT); pg.touchscreen.tap(r['l'] + 60, r['t'] + 48)  # the dimmed picture, between the buttons
+    ok(until(pg, "!FW.ctl", 1000), 'tapping the dimmed picture again hides them')
+    pg.wait_for_timeout(400)  # (two taps closer than 0.3 s are a double-tap)
+    # the levels, as in the player (Q25)
+    pg.tap('#fw .fwvopen'); until(pg, CTL, 1000); pg.wait_for_timeout(350)
+    hm = CH[2] if pg.evaluate("COACH_MAP.humming") == 2 else [pg.evaluate("COACH_CH[COACH_MAP.humming][%d]" % i) for i in range(3)]
+    pg.tap('#fw [data-a=fwLv][data-v="2"]')
+    ok(until(pg, "COACH.here().l===2", 2000) and abs(pg.evaluate("COACH.el().currentTime") - hm[1]) < 0.5, 'L2 jumps to Level 2’s start')
+    ok(until(pg, "document.querySelector('#fw [data-a=fwLv][data-v=\"2\"]').getAttribute('aria-pressed')==='true'", 2000), 'and L2 is lit')
+    pg.wait_for_timeout(1200); pg.tap('#fw [data-a=fwLv][data-v="2"]')
+    ok(abs(pg.evaluate("COACH.el().currentTime") - hm[1]) < 0.5, 'tapping the lit level starts it again (Q25)')
+    pg.tap('#fw [data-a=fwLv][data-v="1"]')
+    ok(until(pg, "COACH.here().l===1", 2000), 'L1 back to Level 1')
+    ok(pg.evaluate(CTL), 'the controls stay while they’re used')
+    # sizes: double-tap through them
+    pg.evaluate("fwCtl(false)")
+    B = pg.evaluate("(()=>{const B=fwBounds();return B.r-B.l})()")
+    for want, w in (('m', 264), ('l', round(B)), ('s', 176)):
+        pg.dblclick('#fw .fwvopen'); pg.wait_for_timeout(350)
+        r = pg.evaluate(VRECT)
+        ok(pg.evaluate("FW.vsize") == want and abs(r['w'] - w) <= 1 and abs(r['h'] - round(w * 9 / 16)) <= 1 and not pg.evaluate("FW.ctl"),
+           f'double-tap: {want}, {w} pt wide at 16:9, controls as they were ({r}, ctl {pg.evaluate("FW.ctl")})')
+        ok(pg.evaluate(CLEAR) == [], f'{want}: clear of the tab bar and top bar, in its corner')
+    # medium and large: every control 44 pt
+    for s in ('m', 'l'):
+        pg.evaluate("s=>{FW.vsize=s;fwPlace();fwCtl(true)}", s); pg.wait_for_timeout(200)
+        at = pg.evaluate(PARTS_AT)
+        small = {k: v for k, v in at.items() if v['w'] < 44 or v['h'] < 44}
+        ok(len(at) == 8 and not small, f'{s}: ✕, open, −10, play, +10 and L1 L2 L3, every one 44 pt ({len(at)}, {small})')
+        t.shot(pg, f'pip-{s}-controls')
+    t1 = pg.evaluate("COACH.el().currentTime")
+    pg.tap('#fw [data-a=fwSkip][data-v="10"]'); pg.wait_for_timeout(150)
+    ok(abs(pg.evaluate("COACH.el().currentTime") - t1 - 10) < 1, '+10 skips ten seconds on')
+    pg.tap('#fw [data-a=fwSkip][data-v="-10"]'); pg.wait_for_timeout(150)
+    ok(abs(pg.evaluate("COACH.el().currentTime") - t1) < 1, '−10 skips ten seconds back')
+    pg.tap('#fw [data-a=fwToggle]'); pg.wait_for_timeout(200)
+    ok(pg.evaluate("COACH.el().paused") and pg.evaluate("FW.shown") == 'video', 'pause from the controls; the window stays')
+    pg.tap('#fw [data-a=fwToggle]'); pg.wait_for_timeout(200)
+    ok(not pg.evaluate("COACH.el().paused"), 'and play again')
+    # pinch
+    pg.evaluate("FW.vsize='s';fwCtl(false);fwPlace()"); pg.wait_for_timeout(100)
+    r = pg.evaluate(VRECT); c = (r['l'] + r['w'] / 2, r['t'] + r['h'] / 2)
+    two_fingers(pg, c, 60, 90)  # 1.5 × as wide: 264
+    ok(pg.evaluate("FW.vsize") == 'm' and pg.evaluate(VRECT)['w'] == 264, f'pinching out: medium ({pg.evaluate(VRECT)})')
+    r = pg.evaluate(VRECT); c = (r['l'] + r['w'] / 2, r['t'] + r['h'] / 2)
+    two_fingers(pg, c, 60, 140)
+    ok(pg.evaluate("FW.vsize") == 'l', 'pinching out again: large')
+    r = pg.evaluate(VRECT); c = (r['l'] + r['w'] / 2, r['t'] + r['h'] / 2)
+    two_fingers(pg, c, 200, 40)
+    ok(pg.evaluate("FW.vsize") == 's' and pg.evaluate(VRECT)['w'] == 176, 'pinching in all the way: small')
+    ok(pg.evaluate("FW.corner") == 'br' and pg.evaluate(CLEAR) == [], 'it stays in its corner')
+    # remembered on this device
+    r = pg.evaluate(VRECT); c = (r['l'] + r['w'] / 2, r['t'] + r['h'] / 2)
+    two_fingers(pg, c, 60, 90)
+    pg.reload(); from harness import ready; ready(pg)
+    pg.evaluate("COACH.cue('humming',1,true)"); until(pg, "!COACH.el().paused", 6000); pg.evaluate(AWAY)
+    ok(until(pg, "FW.shown==='video'", 4000) and pg.evaluate(VRECT)['w'] == 264, 'after a reload it comes back at medium, the last size used')
+    pg.context.close()
+    # sizes on the iPhone on its side and on iPad: large fits the room it has
+    for name, w, h in (('land', 852, 393), ('ipad', 820, 1180)):
+        from test_coach import add as add_video, LONG
+        pg = t.page(b, w=w, h=h, touch=True)
+        add_video(pg, LONG)
+        pg.evaluate("COACH.cue('humming',1,true)"); until(pg, "!COACH.el().paused", 6000); pg.evaluate(AWAY)
+        until(pg, "FW.shown==='video'", 4000)
+        for s in ('s', 'm', 'l'):
+            pg.evaluate("s=>{FW.vsize=s;fwPlace();fwCtl(true)}", s); pg.wait_for_timeout(150)
+            ok(pg.evaluate(CLEAR) == [], f'{name} {s}: the picture fits, clear of the bars ({pg.evaluate(VRECT)})')
+        t.shot(pg, f'pip-{name}-large')
+        pg.context.close()
+
+
+TUCK_KINDS = ['session', 'take', 'track', 'clock', 'video', 'coachpill', 'rectrack']
+TUCKED = """(()=>{const f=document.getElementById('fw').getBoundingClientRect(),tb=document.getElementById('fwtab'),d=document.querySelector('.dock').getBoundingClientRect();
+ const q=tb&&!tb.hidden?tb.getBoundingClientRect():null;return {tuck:FW.tuck,off:f.right<=0||f.left>=innerWidth,tab:q?{l:Math.round(q.left-d.left),r:Math.round(d.right-q.right)}:null,
+ dot:!!tb&&tb.classList.contains('on')&&getComputedStyle(tb.querySelector('.fwtabdot')).display!=='none',room:getComputedStyle(document.documentElement).getPropertyValue('--fwroom').trim(),
+ label:tb&&tb.getAttribute('aria-label'),inert:document.getElementById('fw').inert}})()"""
+
+
+def tucking(b, t):
+    ok = t.ok
+    from test_window import drag
+    pg, sid = setup_sounds(b, t)
+    pg.context.close()  # (set-up only to warm the fixtures)
+    for side in ('l', 'r'):
+        pg, sid = setup_sounds(b, t)
+        S = sounds(pg)
+        for k in TUCK_KINDS:
+            st = f'{k} ({"left" if side == "l" else "right"})'
+            if k in S:
+                ok(show(pg, k, S[k]), f'{st}: its window')
+            elif k == 'session':
+                pg.evaluate("newSession();X.start=Date.now()-200000;saveDraft()"); pg.evaluate(AWAY)
+                ok(until(pg, "FW.shown==='session'", 4000), f'{st}: its window')
+            elif k == 'coachpill':
+                pg.evaluate("COACH.dismiss();FW.dis={};newSession();X.start=Date.now()-200000;saveDraft();go(()=>{U.view='found'})")
+                until(pg, "FW.shown==='video'", 4000); pg.evaluate("fwClose()")
+                ok(until(pg, "FW.shown==='coachpill'", 4000), f'{st}: the Coach pill')
+            else:  # the red track window, as Application draws it while recording over the track
+                pg.evaluate("X=null;saveDraft();go(()=>{U.view=null;U.tab='history'})")
+                pg.evaluate("i=>{FW_REC.info=()=>i}", REC_INFO); pg.evaluate(REC, REC_INFO)
+            pg.wait_for_timeout(700)
+            # held near the side away from the edge, and pulled all the way to the edge
+            r = pg.evaluate("s=>{const r=document.getElementById('fw').getBoundingClientRect();return [s==='l'?r.right-Math.min(30,r.width/4):r.left+Math.min(30,r.width/4),r.top+r.height/2]}", side)
+            drag(pg, r[0], r[1], 4 if side == 'l' else 386, r[1] - 30, steps=10, stamp=16)
+            s = pg.evaluate(TUCKED)
+            ok(s['tuck'] == side and s['off'] and s['tab'] and s['tab']['l' if side == 'l' else 'r'] <= 1 and s['inert'],
+               f'{st}: dragged off the edge, it tucks away and leaves a tab at that edge ({s})')
+            ok(s['room'] == '0px', f'{st}: no room kept at the bottom of the page while tucked')
+            if k in S:
+                pg.wait_for_timeout(600)
+                ok(pg.evaluate(PLAYING[k]) and s['dot'], f'{st}: it keeps playing, with the blue dot on the tab')
+            elif k == 'session':
+                a = pg.evaluate("Date.now()-X.start"); pg.wait_for_timeout(1100)
+                ok(not pg.evaluate("X.paused") and pg.evaluate("Date.now()-X.start") > a and s['dot'], f'{st}: its clock keeps going, with the dot')
+            if k == 'take' and side == 'l':
+                t.shot(pg, 'tucked-take-left')
+            # bring it back: a tap, or a pull
+            if k in ('session', 'video', 'rectrack'):
+                tb = pg.evaluate("(()=>{const r=document.getElementById('fwtab').getBoundingClientRect();return [r.left+r.width/2,r.top+r.height/2]})()")
+                drag(pg, tb[0], tb[1], tb[0] + (60 if side == 'l' else -60), tb[1], steps=6, stamp=16)
+                how = 'pulled out'
+            else:
+                pg.click('#fwtab'); pg.wait_for_timeout(500)
+                how = 'tapped'
+            s = pg.evaluate(TUCKED)
+            ok(not s['tuck'] and s['tab'] is None and not s['inert'] and pg.evaluate("FW.corner[1]") == side and pg.evaluate(CLEAR) == [],
+               f'{st}: the tab {how}, it comes back to its corner on that side ({s})')
+            if k == 'coachpill':
+                pg.evaluate("COACH.dismiss();FW.dis={};X=null;saveDraft();go(()=>{U.view=null;U.tab='history'})")
+            elif k == 'session':
+                pg.evaluate("X=null;saveDraft();rerender()")
+            elif k == 'rectrack':
+                pg.evaluate("FW.shown=null;fwUpdate()")
+            else:
+                pg.evaluate("fwClose()")
+            pg.wait_for_timeout(300)
+        pg.context.close()
+    # a flick to a corner still goes to the corner; a tucked window stays tucked through a sheet
+    pg = t.page(b, touch=True)
+    pg.evaluate(RUNNING); pg.evaluate(AWAY); until(pg, "FW.shown==='session'", 4000)
+    r = pg.evaluate("(()=>{const r=document.getElementById('fw').getBoundingClientRect();return [r.left+40,r.top+29]})()")
+    drag(pg, r[0], r[1], r[0] - 120, r[1] - 300, steps=6, stamp=16)
+    ok(not pg.evaluate("FW.tuck") and pg.evaluate("FW.corner") == 'tl', 'a flick from its corner still goes to a corner, not off the edge')
+    r = pg.evaluate("(()=>{const r=document.getElementById('fw').getBoundingClientRect();return [r.left+r.width/2,r.top+29]})()")
+    drag(pg, r[0], r[1], r[0] - 80, r[1], steps=3, ms=0, stamp=16)
+    ok(pg.evaluate("FW.tuck") == 'l', 'thrown sideways off the edge, only partly over, it tucks')
+    pg.click('#fwtab'); pg.wait_for_timeout(400)
+    r = pg.evaluate("(()=>{const r=document.getElementById('fw').getBoundingClientRect();return [r.right-30,r.top+29]})()")
+    drag(pg, r[0], r[1], 4, r[1], steps=10, stamp=16)
+    ok(pg.evaluate("FW.tuck") == 'l', 'tucked on the left')
+    pg.evaluate("U.sheet='calendar';rerender()"); pg.wait_for_timeout(250)
+    ok(pg.evaluate("document.getElementById('fwtab').hidden"), 'a sheet hides the tab too')
+    pg.evaluate("closeSheet()"); pg.wait_for_timeout(300)
+    ok(pg.evaluate(TUCKED)['tab'] is not None and pg.evaluate("FW.tuck") == 'l', 'and it comes back still tucked')
+    pg.evaluate("X=null;saveDraft();rerender()"); pg.wait_for_timeout(200)
+    ok(not pg.evaluate("FW.tuck") and pg.evaluate("document.getElementById('fwtab').hidden"), 'with nothing going, the tab goes and the next window starts untucked')
+    pg.context.close()
+
+
+PARTS = ['clean', 'look', 'room', 'reduced', 'swap', 'touch', 'voiceover', 'pip', 'tucking']
 
 
 def run(b, t):

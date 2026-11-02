@@ -1011,7 +1011,8 @@ const COACH = (() => {
           : where && isFlow(where.view) && X && !isSong()
             ? 'Back to ' + VIEWS[fwResumeView()][0]
             : 'Back to the coach video',
-        label: 'Coach video ' + (on ? 'playing' : 'paused'),
+        label: 'Coach video' + (a ? ', ' + (COACH_SHORT[a.id] || exName(a.id)) + lvTxt(a) : ''), // Q26: steady
+        lv: a && a.lv === 3 ? a.l : 0,
       };
     },
     toggle: () => toggle(),
@@ -1052,24 +1053,43 @@ const COACH = (() => {
         U.sd = {};
       }, where && where.view === 'coach' ? where.y : 0);
     },
+    // Q26: picture in picture. Just the picture; a tap shows the controls over it (window.js fwVTap), which fade
+    // after 3 s: ✕ (top left), open the player (top right), −10 · play · +10, and L1 L2 L3 as in the player (Q25)
     draw(fw, i) {
-      const b = 'video|' + i.on;
-      if (FW.build !== b) {
-        FW.build = b;
+      if (FW.build !== 'pip') {
+        FW.build = 'pip';
         fw.innerHTML =
-          '<div class="fwopen fwvopen" data-a="fwOpen" role="button" tabindex="0"><span class="cv-fw"></span></div>' +
-          '<div class="fwvb"><span class="fwk"></span><button class="fwbtn" data-a="fwToggle" aria-label="' +
-          (i.on ? 'Pause' : 'Play') +
-          '">' +
-          (i.on ? ICON.pause : ICON.play) +
-          '</button></div>' +
+          '<div class="fwopen fwvopen" data-a="fwVTap" role="button" tabindex="0" aria-describedby="fwT"><span class="cv-fw"></span></div>' +
+          '<div class="fwvc" data-a="fwVTap" role="group" aria-label="Coach video controls">' +
           '<button class="fwx" data-a="fwX" aria-label="Close the coach video">' +
           ICON.x +
-          '</button><span class="fwp" aria-hidden="true"><i></i></span>';
+          '</button><button class="fwvexp" data-a="fwOpen" aria-label="Open the player">' +
+          ICON.expand +
+          '</button><div class="fwvmid"><button class="fwvskip" data-a="fwSkip" data-v="-10" aria-label="Back 10 seconds">−10</button>' +
+          '<button class="fwbtn" data-a="fwToggle"></button>' +
+          '<button class="fwvskip" data-a="fwSkip" data-v="10" aria-label="Forward 10 seconds">+10</button></div>' +
+          '<div class="fwvlv" role="group" aria-label="Level">' +
+          [1, 2, 3].map((l) => '<button data-a="fwLv" data-v="' + l + '" aria-label="Level ' + l + '">L' + l + '</button>').join('') +
+          '</div></div><span class="fwvt" id="fwT" hidden></span><span class="fwp" aria-hidden="true"><i></i></span>';
       }
+      fwVideoSize();
       fw.classList.toggle('paused', !i.on);
-      fw.querySelector('.fwopen').setAttribute('aria-label', i.open + '. ' + i.k + ', ' + i.t);
-      fw.querySelector('.fwk').textContent = i.k;
+      fwAttr(fw.querySelector('.fwopen'), 'aria-label', i.label + '. Show the controls');
+      const tt = fw.querySelector('.fwvt');
+      if (tt.textContent !== i.t) tt.textContent = i.t;
+      const b = fw.querySelector('.fwvc .fwbtn'),
+        lab = i.on ? 'Pause' : 'Play';
+      if (b.getAttribute('aria-label') !== lab) {
+        b.setAttribute('aria-label', lab);
+        b.innerHTML = i.on ? ICON.pause : ICON.play;
+      }
+      const lv = fw.querySelector('.fwvlv');
+      lv.hidden = !i.lv;
+      lv.querySelectorAll('button').forEach((x) => {
+        const on = +x.dataset.v === i.lv;
+        x.classList.toggle('on', on);
+        fwAttr(x, 'aria-pressed', String(on));
+      });
       const p = fw.querySelector('.fwp i'); // Q26: the same progress line as every window
       if (p) p.style.width = (i.p * 100).toFixed(1) + '%';
     },

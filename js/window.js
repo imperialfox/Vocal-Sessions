@@ -24,14 +24,18 @@ const FW = {
   dis: {},
   // 3.20: after ✕ nothing takes the closed window's place on this screen; cleared by the next change of screen (go())
   shut: false,
+  vsize: 's', // Q26: the coach video's size (s, m or l), remembered on this device
+  ctl: false, // Q26: the coach video's controls are showing
+  tuck: null, // Q26: 'l' or 'r' while the window is tucked at that edge
 };
 try {
-  const c = JSON.parse(localStorage.getItem(FW_KEY) || '{}').corner;
-  if (/^[tb][lr]$/.test(c)) FW.corner = c;
+  const s = JSON.parse(localStorage.getItem(FW_KEY) || '{}');
+  if (/^[tb][lr]$/.test(s.corner)) FW.corner = s.corner;
+  if (/^[sml]$/.test(s.size)) FW.vsize = s.size;
 } catch (e) {}
 function fwSaveCorner() {
   try {
-    localStorage.setItem(FW_KEY, JSON.stringify({ corner: FW.corner }));
+    localStorage.setItem(FW_KEY, JSON.stringify({ corner: FW.corner, size: FW.vsize }));
   } catch (e) {}
 }
 
@@ -402,6 +406,7 @@ function fwClean(el, id) {
   el.dataset.kind = id;
   el.innerHTML = '';
   FW.build = '';
+  fwCtl(false);
 }
 // Q26 (fix 16): only change an attribute that's really changed, so VoiceOver isn't told about it every second
 function fwAttr(e, a, v) {
@@ -455,7 +460,11 @@ function fwPickAndDraw() {
   if (!X) FW.sess = null;
   else if (isFlow(U.view) && (!FW.sess || FW.sess.view !== U.view)) FW.sess = { view: U.view, y: window.scrollY };
   const k = fwPick();
-  if (!k) return fwHide();
+  if (!k) {
+    // Q26: nothing going at all (not just hidden by a sheet or a recording): the next window starts untucked
+    if (FW.tuck && !rec && !FW_KINDS.some((x) => x.active())) fwTuckOff();
+    return fwHide();
+  }
   const was = FW.shown;
   // Q26: another kind takes over. A sound replacing another usually hides the window for a moment first (the old
   // sound stops before the new one plays), so a kind showing within FW_SWAP_GAP of another hiding counts too
@@ -465,7 +474,11 @@ function fwPickAndDraw() {
   if (!was && gone && gone.kind !== k.id && Date.now() - gone.at < FW_SWAP_GAP) snap = gone.snap;
   fwDraw(k, k.info());
   FW.shown = k.id;
-  if (!was && !snap) fwShow();
+  if (!was && FW.tuck) {
+    fwUnhide(); // Q26: tucked, it comes back as its tab
+    fwPlace();
+    fwTabShow(true);
+  } else if (!was && !snap) fwShow();
   else {
     if (!was) fwUnhide();
     fwPlace();
@@ -478,7 +491,9 @@ function fwTick() {
   const k = fwKindNow();
   if (!k) return;
   if (!k.active()) return fwUpdate();
-  fwDraw(k, k.info());
+  const i = k.info();
+  fwDraw(k, i);
+  if (FW.tuck) fwTabPaint(i);
 }
 // back on screen at once, any fade out stopped
 function fwUnhide() {
@@ -524,6 +539,9 @@ function fwHide() {
   FW.stopSpring = null;
   el.classList.remove('dragging', 'pressed');
   fwSwapEnd();
+  fwCtl(false);
+  FW.pinch = null;
+  fwTabShow(false);
   fwRoom();
   if (!MOTION.on() && !fwFades()) {
     el.hidden = true;
@@ -598,7 +616,9 @@ function fwPlace(force) {
   if (!FW.shown && !force) return;
   if (FW.drag || FW.stopSpring) return;
   if (FW.swap) return void (FW.swap.again = true); // Q26: placed once the change of kind has settled
-  fwSet(fwCornerXY(FW.corner));
+  if (FW.shown === 'video' && !FW.pinch) fwVideoSize();
+  fwSet(FW.tuck ? fwTuckXY() : fwCornerXY(FW.corner));
+  if (FW.tuck) fwTabPlace();
   fwRoom();
 }
 // Q26 (fix 10): while the window sits in a bottom corner, every page gets room at its end for the window and its gap,
@@ -692,7 +712,9 @@ function fwGestures(el) {
       if (Date.now() - FW.moved < 400) {
         e.stopPropagation();
         e.preventDefault();
+        return;
       }
+      fwVTapGuard(e); // Q26
     },
     true
   );
@@ -702,6 +724,17 @@ function fwGestures(el) {
   el.addEventListener('pointerdown', (e) => {
     if (e.button > 0 || !FW.pos) return;
     fwSwapEnd(); // Q26: picked up mid-change: the change finishes at once
+    // Q26: a second finger on the coach video pinches it between its three sizes
+    if (e.isPrimary) FW.pts.clear(); // a first finger: anything left from before (a lift seen elsewhere) is gone
+    FW.pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (FW.pts.size === 2 && FW.shown === 'video' && !FW.tuck) {
+      FW.drag = null;
+      el.classList.remove('dragging', 'pressed');
+      const [a, b] = [...FW.pts.values()];
+      FW.pinch = { d0: Math.max(20, Math.hypot(a.x - b.x, a.y - b.y)), w0: el.offsetWidth, w: el.offsetWidth };
+      return;
+    }
+    if (FW.pinch) return;
     const b = e.target.closest && e.target.closest('button, [role=button]');
     if ((!b || b.classList.contains('fwopen')) && FW.shown !== 'video') el.classList.add('pressed');
     if (FW.stopSpring) {
@@ -719,6 +752,8 @@ function fwGestures(el) {
     };
   });
   el.addEventListener('pointermove', (e) => {
+    if (FW.pts.has(e.pointerId)) FW.pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (FW.pinch) return fwPinchMove();
     const d = FW.drag;
     if (!d || e.pointerId !== d.id) return;
     const dx = e.clientX - d.sx,
@@ -734,15 +769,20 @@ function fwGestures(el) {
     }
     d.pts.push({ x: e.clientX, y: e.clientY, t: e.timeStamp });
     while (d.pts.length > 2 && e.timeStamp - d.pts[0].t > 100) d.pts.shift();
-    // follows the finger, kept on screen
+    // follows the finger, kept on screen (Q26: up to three quarters off either side, to tuck it there)
     const vw = document.documentElement.clientWidth;
     fwSet({
-      x: Math.max(4 - el.offsetWidth / 2, Math.min(vw - el.offsetWidth / 2 - 4, d.x0 + dx)),
+      x: Math.max(-el.offsetWidth * 0.75, Math.min(vw - el.offsetWidth * 0.25, d.x0 + dx)),
       y: Math.max(0, Math.min(window.innerHeight - el.offsetHeight / 2, d.y0 + dy)),
     });
   });
   const end = (e) => {
     unpress();
+    FW.pts.delete(e.pointerId);
+    if (FW.pinch) {
+      if (!FW.pts.size) fwPinchEnd();
+      return;
+    }
     const d = FW.drag;
     if (!d || e.pointerId !== d.id) return;
     FW.drag = null;
@@ -760,16 +800,35 @@ function fwGestures(el) {
   el.addEventListener('pointerup', end);
   el.addEventListener('pointercancel', end);
   el.addEventListener('pointerleave', unpress);
+  // the coach video's picture is a button: Enter or Space shows its controls, as a tap does
+  el.addEventListener('keydown', (e) => {
+    if ((e.key === 'Enter' || e.key === ' ') && e.target.matches && e.target.matches('[role=button]')) {
+      e.preventDefault();
+      e.target.click();
+    }
+  });
 }
-// pick the corner it's thrown towards (where it is, plus where its speed would carry it), then spring there
+// pick the corner it's thrown towards (where it is, plus where its speed would carry it), then spring there.
+// Q26: dragged well off the left or right edge, or thrown off it once partly over, it tucks there instead
 function fwThrow(v) {
   const B = fwBounds(),
     w = FW.el.offsetWidth,
     h = FW.el.offsetHeight,
+    vw = document.documentElement.clientWidth,
     cx = FW.pos.x + w / 2 + v.x * 0.2,
-    cy = FW.pos.y + h / 2 + v.y * 0.2;
-  FW.corner = (cy < (B.t + B.b) / 2 ? 't' : 'b') + (cx < (B.l + B.r) / 2 ? 'l' : 'r');
+    cy = FW.pos.y + h / 2 + v.y * 0.2,
+    offL = Math.max(0, -FW.pos.x) / w,
+    offR = Math.max(0, FW.pos.x + w - vw) / w,
+    flat = Math.abs(v.x) > 2 * Math.abs(v.y), // a throw off the side is mostly sideways; a diagonal flick goes to a corner
+    side =
+      offL > FW_TUCK_OFF || (offL > 0.1 && flat && v.x < -FW_TUCK_V)
+        ? 'l'
+        : offR > FW_TUCK_OFF || (offR > 0.1 && flat && v.x > FW_TUCK_V)
+          ? 'r'
+          : null;
+  FW.corner = (cy < (B.t + B.b) / 2 ? 't' : 'b') + (side || (cx < (B.l + B.r) / 2 ? 'l' : 'r'));
   fwSaveCorner();
+  if (side) return fwTuckOn(side, v);
   FW.stopSpring = MOTION.spring(FW.pos, fwCornerXY(FW.corner), v, {
     spring: 'nav',
     frame: fwSet,
@@ -780,11 +839,246 @@ function fwThrow(v) {
   });
 }
 
+/* ===== Q26: tucked at the edge =====
+   Dragged or thrown off the left or right edge, the window slides off and leaves a tab with an arrow at that edge.
+   Its sound and timers carry on (a blue dot on the tab while something plays). Tapping the tab or pulling it out
+   brings the window back to its corner on that side. Every kind can be tucked. */
+const FW_TUCK_OFF = 0.35, // dragged this much of its width off the edge, it tucks when let go
+  FW_TUCK_V = 600; // or thrown sideways off the edge this fast (px/s) once partly over
+function fwTuckXY() {
+  const p = fwCornerXY(FW.corner),
+    vw = document.documentElement.clientWidth;
+  return { x: FW.tuck === 'l' ? -FW.el.offsetWidth - 16 : vw + 16, y: p.y };
+}
+function fwTuckOn(side, v) {
+  const el = FW.el;
+  FW.tuck = side;
+  fwCtl(false);
+  el.classList.add('tucked');
+  el.inert = true;
+  el.setAttribute('aria-hidden', 'true');
+  fwRoom();
+  fwTabShow(true);
+  FW.stopSpring = MOTION.spring(FW.pos, fwTuckXY(), v || { x: 0, y: 0 }, {
+    spring: 'nav',
+    frame: fwSet,
+    done: () => {
+      FW.stopSpring = null;
+      fwPlace();
+    },
+  });
+}
+// back out to its corner on the side it was tucked, at the finger's speed if it was pulled out
+function fwTuckOut(v) {
+  if (!FW.tuck || !FW.shown) return;
+  const el = FW.el;
+  fwTuckOff();
+  if (FW.stopSpring) FW.stopSpring();
+  FW.stopSpring = MOTION.spring(FW.pos, fwCornerXY(FW.corner), v || { x: 0, y: 0 }, {
+    spring: 'nav',
+    frame: fwSet,
+    done: () => {
+      FW.stopSpring = null;
+      fwPlace();
+    },
+  });
+  // the tab has gone, so the keyboard (and VoiceOver) moves into the window it brought back
+  const f = el.querySelector('button, [role=button]');
+  if (f && FW.tab && FW.tab.contains(document.activeElement)) f.focus({ preventScroll: true });
+}
+function fwTuckOff() {
+  const el = FW.el;
+  FW.tuck = null;
+  if (el) {
+    el.classList.remove('tucked');
+    el.inert = false;
+    el.removeAttribute('aria-hidden');
+  }
+  fwTabShow(false);
+  fwRoom();
+}
+// the tab: made once, on <body> beside the window
+function fwTab() {
+  if (FW.tab) return FW.tab;
+  const t = document.createElement('button');
+  t.id = 'fwtab';
+  t.className = 'fwtab';
+  t.dataset.a = 'fwTab';
+  t.hidden = true;
+  t.innerHTML = '<span class="fwtabin" aria-hidden="true">' + ICON.fwd + '<i class="fwtabdot"></i></span>';
+  document.body.appendChild(t);
+  FW.tab = t;
+  // pulled out: once the finger has moved inwards a little, the window comes out at its speed
+  let p = null;
+  t.addEventListener('pointerdown', (e) => {
+    if (e.button > 0) return;
+    p = { id: e.pointerId, x: e.clientX, t: e.timeStamp, done: false };
+  });
+  t.addEventListener('pointermove', (e) => {
+    if (!p || p.done || e.pointerId !== p.id) return;
+    const dx = (e.clientX - p.x) * (FW.tuck === 'r' ? -1 : 1);
+    if (dx < 12) return;
+    p.done = true;
+    FW.moved = Date.now();
+    const vx = ((e.clientX - p.x) / Math.max(16, e.timeStamp - p.t)) * 1000;
+    fwTuckOut({ x: vx, y: 0 });
+  });
+  const up = () => (p = null);
+  t.addEventListener('pointerup', up);
+  t.addEventListener('pointercancel', up);
+  t.addEventListener(
+    'click',
+    (e) => {
+      if (Date.now() - FW.moved < 400) {
+        e.stopPropagation();
+        e.preventDefault();
+      }
+    },
+    true
+  );
+  ['touchstart', 'touchmove'].forEach((n) => t.addEventListener(n, (e) => e.stopPropagation(), { passive: true }));
+  return t;
+}
+function fwTabShow(on) {
+  const t = on ? fwTab() : FW.tab;
+  if (!t) return;
+  if (!on) return void (t.hidden = true);
+  const was = t.hidden;
+  t.hidden = false;
+  fwTabPlace();
+  const k = fwKindNow();
+  if (k) fwTabPaint(k.info());
+  if (was) MOTION.animate(t, [{ opacity: 0 }, { opacity: 1 }], { spring: 'gentle', fade: true });
+}
+// at the window's edge, level with where the window would be
+function fwTabPlace() {
+  const t = FW.tab;
+  if (!t || t.hidden || !FW.el) return;
+  const dk = document.querySelector('.dock').getBoundingClientRect(),
+    p = fwCornerXY(FW.corner),
+    y = p.y + FW.el.offsetHeight / 2 - t.offsetHeight / 2;
+  t.classList.toggle('r', FW.tuck === 'r');
+  t.style.transform =
+    'translate3d(' + (FW.tuck === 'r' ? dk.right - t.offsetWidth : dk.left).toFixed(1) + 'px,' + y.toFixed(1) + 'px,0)';
+}
+// its label says what it brings back; the blue dot shows while something plays
+function fwTabPaint(i) {
+  const t = FW.tab;
+  if (!t) return;
+  fwAttr(t, 'aria-label', 'Bring back the floating window: ' + i.label + (i.on ? ', playing' : ''));
+  t.classList.toggle('on', !!i.on);
+}
+
+/* ===== Q26: the coach video, as picture in picture =====
+   Just the picture. A tap shows its controls over the dimmed video (✕, open the player, −10 · play · +10 and
+   L1 L2 L3), which fade after FW_CTL_MS; tapping again hides them. Three sizes: pinch between them, or double-tap
+   for the next. The size is kept on this device. */
+const FW_CTL_MS = 3000,
+  FW_DTAP = 300, // ms between two taps that make a double-tap
+  FW_VSIZES = ['s', 'm', 'l'];
+// the width and height of a size: 176 pt, 264 pt, or the full width inside the margins (all 16:9, and never taller
+// than the room it has)
+function fwVideoDims(s) {
+  const B = fwBounds(),
+    room = Math.max(176, B.r - B.l),
+    tall = Math.max(99, B.b - B.t);
+  let w = s === 'l' ? room : s === 'm' ? 264 : 176;
+  w = Math.min(w, room, (tall * 16) / 9);
+  return { w: Math.round(w), h: Math.round((w * 9) / 16) };
+}
+function fwVideoSize() {
+  const el = FW.el,
+    d = fwVideoDims(FW.vsize);
+  el.dataset.size = FW.vsize;
+  if (el.style.width !== d.w + 'px') el.style.width = d.w + 'px';
+  if (el.style.height !== d.h + 'px') el.style.height = d.h + 'px';
+}
+// to another size, springing from the size it is now in its corner
+function fwVideoTo(s) {
+  const el = FW.el;
+  if (!el || FW.shown !== 'video') return;
+  const from = { w: el.offsetWidth, h: el.offsetHeight, x: FW.pos.x, y: FW.pos.y };
+  FW.vsize = s;
+  fwSaveCorner();
+  fwPlace();
+  const to = { w: el.offsetWidth, h: el.offsetHeight, x: FW.pos.x, y: FW.pos.y },
+    T = (p) => 'translate3d(' + p.x.toFixed(1) + 'px,' + p.y.toFixed(1) + 'px,0)';
+  MOTION.animate(
+    el,
+    [
+      { width: from.w + 'px', height: from.h + 'px', transform: T(from) },
+      { width: to.w + 'px', height: to.h + 'px', transform: T(to) },
+    ],
+    { spring: 'gentle' }
+  );
+}
+function fwPinchMove() {
+  const [a, b] = [...FW.pts.values()];
+  if (!a || !b) return;
+  const P = FW.pinch,
+    r = Math.hypot(a.x - b.x, a.y - b.y) / P.d0,
+    lo = fwVideoDims('s').w,
+    hi = fwVideoDims('l').w;
+  P.w = Math.max(lo * 0.85, Math.min(hi * 1.05, P.w0 * r));
+  const el = FW.el;
+  el.style.width = P.w.toFixed(1) + 'px';
+  el.style.height = ((P.w * 9) / 16).toFixed(1) + 'px';
+  fwSet(fwCornerXY(FW.corner)); // grows from its corner
+}
+// let go: the nearest of the three sizes
+function fwPinchEnd() {
+  const P = FW.pinch;
+  FW.pinch = null;
+  FW.moved = Date.now();
+  let best = FW.vsize,
+    gap = Infinity;
+  FW_VSIZES.forEach((s) => {
+    const g = Math.abs(fwVideoDims(s).w - P.w);
+    if (g < gap) (gap = g), (best = s);
+  });
+  fwVideoTo(best);
+}
+// the picture's tap: shows or hides the controls; a second tap straight after goes to the next size instead
+function fwVTap() {
+  const now = Date.now();
+  if (now - (FW.vtap || 0) < FW_DTAP) {
+    FW.vtap = 0;
+    fwCtl(FW.vtapCtl);
+    return fwVideoTo(FW_VSIZES[(FW_VSIZES.indexOf(FW.vsize) + 1) % 3]);
+  }
+  FW.vtap = now;
+  FW.vtapCtl = FW.ctl;
+  fwCtl(!FW.ctl);
+}
+// a second tap straight after the first shows the controls lands on whatever control is under the finger (play, in
+// the middle of the bigger sizes): it's the double-tap, not that control
+function fwVTapGuard(e) {
+  if (FW.shown !== 'video' || !FW.vtap || Date.now() - FW.vtap >= FW_DTAP) return;
+  const b = e.target.closest && e.target.closest('.fwvc button');
+  if (!b) return;
+  e.stopPropagation();
+  e.preventDefault();
+  fwVTap();
+}
+// the controls: shown (and the fade timer started again) or hidden. They stay while the keyboard or VoiceOver is in them
+function fwCtl(on) {
+  clearTimeout(FW.ctlTimer);
+  FW.ctl = !!on && FW.shown === 'video';
+  if (FW.el) FW.el.classList.toggle('ctl', FW.ctl);
+  if (FW.ctl) FW.ctlTimer = setTimeout(fwCtlFade, FW_CTL_MS);
+}
+function fwCtlFade() {
+  const a = document.activeElement;
+  if (FW.el && a && FW.el.contains(a) && a.closest('.fwvc')) return void (FW.ctlTimer = setTimeout(fwCtlFade, FW_CTL_MS));
+  fwCtl(false);
+}
+
 /* ===== Keeping it current ===== */
 setInterval(() => {
   if (FW.shown === 'session') fwTick();
 }, 1000);
 window.addEventListener('resize', () => fwPlace());
+FW.pts = new Map(); // Q26: the fingers on the window, for the pinch
 window.addEventListener(
   'scroll',
   () => {

@@ -4746,7 +4746,8 @@ textarea.field.sglyr {
   fill: var(--accent);
   flex-shrink: 0;
 }
-/* the floating window holding the coach video */
+/* the floating window holding the coach video. Q26: picture in picture: just the picture at three sizes (its width
+   and height are set by window.js fwVideoSize), with controls over the dimmed picture after a tap */
 .fw[data-kind='video'] {
   display: block;
   width: 176px;
@@ -4755,6 +4756,12 @@ textarea.field.sglyr {
   padding: 0;
   border-radius: 14px;
   background: #000;
+}
+.fw[data-kind='video'][data-size='m'] {
+  border-radius: 15px;
+}
+.fw[data-kind='video'][data-size='l'] {
+  border-radius: 16px;
 }
 .fw[data-kind='video'] .fwvopen {
   position: absolute;
@@ -4771,77 +4778,254 @@ textarea.field.sglyr {
 .fw .cv-fw #cv {
   object-fit: cover;
 }
-.fw .fwvb {
+/* the ✕ of the capsules (3.20) is drawn by .hasx below; here it only starts hidden and centred */
+.fw .fwx {
+  display: none;
+  place-items: center;
+}
+.fw .fwvc {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: rgba(0, 0, 0, 0.42);
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity var(--dur-gentle) var(--ease-gentle),
+    visibility 0s linear var(--dur-gentle);
+}
+.fw.ctl .fwvc {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity var(--dur-gentle) var(--ease-gentle);
+}
+.fw .fwvc button {
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  -webkit-tap-highlight-color: transparent;
+}
+.fw .fwvc .fwx,
+.fw .fwvc .fwvexp {
+  top: 6px;
+}
+.fw .fwvc .fwx {
+  left: 6px;
+}
+.fw .fwvc .fwvexp {
+  right: 6px;
+}
+.fw .fwvc .fwx::before,
+.fw .fwvc .fwvexp::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.22);
+}
+.fw .fwvc .fwx svg.i,
+.fw .fwvc .fwvexp svg.i {
+  position: relative;
+  width: 16px;
+  height: 16px;
+  stroke-width: 2.4;
+}
+.fw .fwvmid {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 0;
-  height: 32px;
+  top: 50%;
+  translate: 0 -50%;
   display: flex;
+  justify-content: center;
   align-items: center;
-  padding: 0 0 0 10px;
-  background: var(--glass-strong);
-  -webkit-backdrop-filter: blur(16px) saturate(180%);
-  backdrop-filter: blur(16px) saturate(180%);
+  gap: 24px;
+  pointer-events: none;
 }
-.fw .fwvb .fwk {
-  flex: 1;
-  font-size: var(--t-caption2);
+.fw .fwvmid button {
+  position: relative;
+  pointer-events: auto;
+}
+.fw .fwvskip {
+  font-size: var(--t-subhead);
   font-weight: 600;
-  color: var(--fg);
+  font-variant-numeric: tabular-nums;
 }
-.fw .fwvb .fwbtn {
-  position: relative;
-  align-self: flex-end;
-  width: 44px; /* Q26: a 44 pt touch area (was 40 × 32), reaching up over the picture */
-  height: 44px;
-  border-radius: 0;
-  background: none;
-  color: var(--bg);
-}
-.fw .fwvb .fwbtn::before {
-  content: '';
-  position: absolute;
-  top: 16px;
-  left: 10px;
-  width: 24px;
-  height: 24px;
+.fw .fwvc .fwbtn {
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
-  background: var(--fg);
-}
-.fw .fwvb .fwbtn svg.i {
-  position: relative;
-  top: 6px;
-  width: 12px;
-  height: 12px;
-  stroke-width: 3;
-}
-.fw .fwx {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 44px; /* Q26: a 44 pt touch area (was 36) */
-  height: 44px;
-  display: none;
-  place-items: center;
+  background: none;
   color: #fff;
 }
-.fw .fwx::before {
+.fw .fwvc .fwbtn svg.i {
+  width: 30px;
+  height: 30px;
+}
+.fw .fwvc .fwbtn svg.i path[d^='M8 5'] {
+  stroke-width: 3.4;
+}
+/* L1 L2 L3: the player's level switch (Q25), white on the glass, the level playing lit */
+.fw .fwvlv {
+  position: absolute;
+  left: 50%;
+  bottom: 8px;
+  translate: -50% 0;
+  width: 192px;
+  max-width: calc(100% - 16px);
+  height: 44px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+  display: flex;
+}
+.fw .fwvlv[hidden] {
+  display: none;
+}
+.fw .fwvlv button {
+  position: relative;
+  isolation: isolate;
+  flex: 1;
+  width: auto;
+  height: 100%; /* each level is 44 pt to the touch; the lit one is drawn inside it */
+  border-radius: 999px;
+  font-size: var(--t-subhead);
+  font-weight: 600;
+}
+.fw .fwvlv button.on {
+  color: #000;
+}
+.fw .fwvlv button.on::before {
   content: '';
   position: absolute;
-  inset: 9px;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.55);
+  inset: 3px;
+  z-index: -1;
+  border-radius: 999px;
+  background: #fff;
 }
-.fw .fwx svg.i {
-  position: relative;
+/* small: tight, as Apple's is. Play joins ✕ and open along the top, no ±10, smaller levels */
+.fw[data-size='s'] .fwvc button {
+  width: 32px;
+  height: 32px;
+}
+.fw[data-size='s'] .fwvc .fwx,
+.fw[data-size='s'] .fwvc .fwvexp {
+  top: 4px;
+}
+.fw[data-size='s'] .fwvc .fwx {
+  left: 4px;
+}
+.fw[data-size='s'] .fwvc .fwvexp {
+  right: 4px;
+}
+.fw[data-size='s'] .fwvc .fwx::before,
+.fw[data-size='s'] .fwvc .fwvexp::before {
+  inset: 2px;
+}
+.fw[data-size='s'] .fwvc .fwx svg.i,
+.fw[data-size='s'] .fwvc .fwvexp svg.i {
   width: 13px;
   height: 13px;
-  stroke-width: 2.6;
 }
-.fw.paused .fwx,
-.fw[data-kind='video'] .fwx {
-  display: grid; /* 3.20: ✕ is always there, playing or paused */
+.fw[data-size='s'] .fwvmid {
+  top: 4px;
+  translate: none;
+}
+.fw[data-size='s'] .fwvskip {
+  display: none;
+}
+.fw[data-size='s'] .fwvc .fwbtn svg.i {
+  width: 20px;
+  height: 20px;
+}
+.fw[data-size='s'] .fwvlv {
+  left: 8px;
+  right: 8px;
+  width: auto;
+  max-width: none;
+  translate: none;
+  bottom: 6px;
+  height: 34px;
+}
+.fw[data-size='s'] .fwvlv button {
+  font-size: var(--t-footnote);
+}
+.fw[data-size='s'] .fwvlv button.on::before {
+  inset: 2px;
+}
+.fw[data-size='l'] .fwvmid {
+  gap: 32px;
+}
+/* the picture's progress line sits over the video, under the controls */
+.fw[data-kind='video'] .fwp {
+  z-index: 2;
+  background: rgba(255, 255, 255, 0.25);
+}
+/* Q26: tucked at the edge: the window has slid off, leaving this tab (window.js fwTab) */
+.fw.tucked {
+  pointer-events: none;
+}
+.fwtab {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 35;
+  width: 44px;
+  height: 58px;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.fwtab[hidden] {
+  display: none;
+}
+.fwtabin {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 28px;
+  border-radius: 0 16px 16px 0;
+  background: var(--glass-strong);
+  -webkit-backdrop-filter: blur(26px) saturate(210%) brightness(1.06);
+  backdrop-filter: blur(26px) saturate(210%) brightness(1.06);
+  box-shadow: 4px 0 14px var(--glass-shadow);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: var(--fg2);
+}
+.fwtab.r .fwtabin {
+  left: auto;
+  right: 0;
+  border-radius: 16px 0 0 16px;
+  box-shadow: -4px 0 14px var(--glass-shadow);
+}
+.fwtabin svg.i {
+  width: 14px;
+  height: 14px;
+  stroke-width: 3;
+}
+.fwtab.r .fwtabin svg.i {
+  rotate: 180deg;
+}
+.fwtabdot {
+  display: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--sys-blue);
+}
+.fwtab.on .fwtabdot {
+  display: block;
 }
 @media (max-width: 359px) {
   /* the smallest phones: Loop keeps its icon, so levels, Loop and Speed stay on one line */

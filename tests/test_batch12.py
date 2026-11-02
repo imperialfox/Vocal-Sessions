@@ -9,7 +9,7 @@ from harness import OUT, ready, until
 from test_track import track, F, loaded, NIDB, LYRICS, tones
 from test_clock import LYR, ADD, SPREAD
 from test_layout import FITS
-from test_coach import add as add_video, LONG
+from test_coach import add as add_video, LONG, vclick, vshow
 
 LAUNCH_ARGS = ['--autoplay-policy=no-user-gesture-required', '--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream']
 SONG = "id=>go(()=>{U.tab='songs';U.view='lyr';U.songId=id})"
@@ -335,10 +335,10 @@ def x_closes(b, t):
             pg.evaluate(S[k]); pg.wait_for_function(PLAYING[k], timeout=8000); pg.wait_for_timeout(150)
             pg.evaluate("go(()=>{U.view=null;U.tab='history'})"); pg.wait_for_timeout(300)
             if paused:
-                pg.click('#fw [data-a=fwToggle]'); pg.wait_for_timeout(250)
-            ok(pg.evaluate("FW.shown") == k and pg.locator('#fw [data-a=fwX]').is_visible(),
+                vclick(pg, '#fw [data-a=fwToggle]'); pg.wait_for_timeout(250)
+            ok(pg.evaluate("FW.shown") == k and (vshow(pg) or pg.locator('#fw [data-a=fwX]').is_visible()),
                f'{k} {"paused" if paused else "playing"}: its window has a ✕')
-            pg.click('#fw [data-a=fwX]'); pg.wait_for_timeout(600)
+            vclick(pg, '#fw [data-a=fwX]'); pg.wait_for_timeout(600)
             ok(pg.evaluate(GONE) and not pg.evaluate(PLAYING[k]), f'{k}: ✕ stops it and closes the window')
             ok(pg.evaluate("FW.shown") != 'session', f'{k}: the waiting session doesn’t pop up in its place')
             # nothing brings it back but an explicit play
@@ -355,7 +355,7 @@ def x_closes(b, t):
     pg.evaluate(S['track']); pg.wait_for_function(PLAYING['track'], timeout=5000); pg.wait_for_timeout(250)
     ok(pg.evaluate("FW.shown") == 'track', 'an explicit play brings its window back')
     # a reload: nothing comes back
-    pg.click('#fw [data-a=fwX]'); pg.wait_for_timeout(400)
+    vclick(pg, '#fw [data-a=fwX]'); pg.wait_for_timeout(400)
     pg.reload(); ready(pg); pg.wait_for_timeout(400)
     ok(pg.evaluate("FW.shown") in (None, 'session'), 'after a reload, no sound’s window comes back')
     pg.evaluate("X=null;saveDraft();rerender()")

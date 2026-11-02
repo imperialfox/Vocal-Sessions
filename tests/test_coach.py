@@ -34,6 +34,20 @@ WAV_TAKE = """async(id)=>{const n=8000*4,b=new ArrayBuffer(44+n*2),v=new DataVie
  await refreshTakes();rerender();}"""
 
 
+# Q26: the coach video's window is just the picture: its controls show after a tap. These show them first, then tap
+VNAME = "document.getElementById('fw').getAttribute('aria-label').replace(/^Coach video, /,'')"
+
+
+def vshow(pg):
+    pg.evaluate("FW.shown==='video'&&!FW.ctl&&fwCtl(true)")
+    return False
+
+
+def vclick(pg, sel):
+    vshow(pg)
+    pg.click(sel)
+
+
 def add(pg, f=LONG):
     pg.set_input_files('#coachIn', f)
     pg.wait_for_function("COACH.has()&&!COACH.busy()", timeout=15000)
@@ -267,16 +281,16 @@ def doors(b, t):
        'Foundation shows the coach video in the floating window, not on the page')
     ok(pg.evaluate(PAUSED) and near(pg, CH[1][0], 0.1) and pg.evaluate("COACH.here().l") == 1, 'Q25: cued to Vocal slides at Level 1 (not your Level 3), paused')
     ok(pg.evaluate("X.cv===true") and pg.evaluate("JSON.parse(localStorage.getItem('vocalDraft')).cv===true"), 'cued once for this session (saved on the draft)')
-    ok(pg.inner_text('#fw .fwk').startswith('Vocal slides') or pg.inner_text('#fw .fwk').startswith('Slides'), 'the window names the exercise')
-    pg.click('#fw [data-a=fwToggle]'); pg.wait_for_timeout(400)
+    ok(pg.evaluate(VNAME).startswith('Vocal slides') or pg.evaluate(VNAME).startswith('Slides'), 'the window names the exercise')
+    vclick(pg, '#fw [data-a=fwToggle]'); pg.wait_for_timeout(400)
     ok(not pg.evaluate(PAUSED) and pg.evaluate("FW.shown") == 'video', 'its button plays it, in the window')
     pg.evaluate("rerender()"); pg.wait_for_timeout(300)
     ok(not pg.evaluate(PAUSED) and pg.evaluate(IN_FW), 'a redraw of the page doesn’t stop it')
     ok(pg.evaluate("X.start>0") and pg.evaluate("!X.paused"), 'the session timer carries on separately')
-    pg.click('#fw [data-a=fwX]'); pg.wait_for_timeout(400)
+    vclick(pg, '#fw [data-a=fwX]'); pg.wait_for_timeout(400)
     ok(pg.evaluate("FW.shown") == 'coachpill' and pg.evaluate(PAUSED) and pg.locator('#fw .fwpill').count() == 1,
        '✕ tucks it into a Coach pill, paused')
-    pg.click('#fw [data-a=fwOpen]'); pg.wait_for_timeout(400)
+    vclick(pg, '#fw [data-a=fwOpen]'); pg.wait_for_timeout(400)
     ok(pg.evaluate("FW.shown") == 'video' and pg.evaluate(IN_FW), 'tapping the pill brings the video back')
 
     # Log foundation: Rotation is cued, paused
@@ -286,7 +300,7 @@ def doors(b, t):
     want = pg.evaluate("(()=>{const id=COACH.stepEx('rot');return COACH_CH[COACH_MAP[id]][0]})()")
     ok(pg.evaluate("U.view") == 'rot' and pg.evaluate("FW.shown") == 'video' and pg.evaluate(IN_FW), 'on Rotation the window stays')
     ok(pg.evaluate(PAUSED) and near(pg, want, 0.1) and pg.evaluate("COACH.here().l") == 1, 'cued to Rotation’s first exercise at Level 1, paused')
-    pg.click('#fw [data-a=fwOpen]'); pg.wait_for_timeout(400)
+    vclick(pg, '#fw [data-a=fwOpen]'); pg.wait_for_timeout(400)
     ok(pg.evaluate("U.view") == 'coach' and pg.evaluate(IN_SLOT), 'tapping the window opens the full player')
     # Q25: the video's level switch never changes the level logged, and pausing then coming back resumes there
     logged = pg.evaluate("JSON.stringify([X.f,X.rot||{}])")
@@ -302,7 +316,7 @@ def doors(b, t):
     ok(pg.evaluate("U.view") == 'app' and pg.evaluate(PAUSED) and pg.evaluate("FW.shown") == 'coachpill',
        'Application has no chapter: the video pauses and a Coach pill shows instead')
     t.shot(pg, 'app-step')
-    pg.click('#fw [data-a=fwOpen]'); pg.wait_for_timeout(400)
+    vclick(pg, '#fw [data-a=fwOpen]'); pg.wait_for_timeout(400)
     ok(pg.evaluate("FW.shown") == 'video' and pg.evaluate(PAUSED), 'the pill brings the video back in Application, paused')
     t.shot(pg, 'app-step')
     pg.context.close()
@@ -397,12 +411,12 @@ def single(b, t):
 
     pg.evaluate("go(()=>{U.tab='today';U.view=null})"); pg.wait_for_timeout(150)
     pg.click('[data-a=start]'); pg.wait_for_timeout(400)
-    r = pg.inner_text('#fw .fwk')
+    r = pg.evaluate(VNAME)
     ok(pg.evaluate("FW.shown") == 'video' and 'L' not in r.replace('Vocal slides', '').replace('Slides', ''), 'the session’s window names the exercise, no level')
     ok(near(pg, 0, 0.8) and pg.evaluate(PAUSED), 'cued to Vocal slides from 0:00')
     pg.evaluate("COACH.cue('humming',1,true)"); pg.wait_for_timeout(400)
     pg.evaluate(LEAVE); pg.wait_for_timeout(400)
-    ok(pg.inner_text('#fw .fwk') == 'Humming', 'the window says Humming')
+    ok(pg.evaluate(VNAME) == 'Humming', 'the window says Humming')
     pg.context.close()
 
 
@@ -418,7 +432,7 @@ def window(b, t):
     ok(pg.evaluate("FW.shown") == 'video' and pg.evaluate(IN_FW), 'leaving while it plays shows the video window, holding the video itself')
     t1 = pg.evaluate(T); pg.wait_for_timeout(700)
     ok(not pg.evaluate(PAUSED) and pg.evaluate(T) > t1, 'and it keeps playing')
-    ok(pg.inner_text('#fw .fwk') == 'Falsetto · L1', 'its bar says Falsetto · L1 (Q25: every exercise has levels)')
+    ok(pg.evaluate(VNAME) == 'Falsetto · Level 1', 'its label says Falsetto · Level 1 (Q25: every exercise has levels; Q26: the picture has no bar)')
     r = pg.evaluate("(()=>{const r=document.getElementById('fw').getBoundingClientRect();return [r.width,r.height]})()")
     ok(abs(r[0] - 176) < 1 and abs(r[1] - 99) < 1, 'it’s a 16:9 window, 176×99')
     t.shot(pg, 'window')
@@ -430,17 +444,17 @@ def window(b, t):
     pg.evaluate("closeSheet()"); pg.wait_for_timeout(300)
     ok(pg.evaluate(IN_FW), 'it comes back when the sheet closes')
 
-    pg.click('#fw [data-a=fwToggle]'); pg.wait_for_timeout(250)
+    vclick(pg, '#fw [data-a=fwToggle]'); pg.wait_for_timeout(250)
     ok(pg.evaluate(PAUSED) and pg.evaluate("FW.shown") == 'video', 'its button pauses, and the window stays')
-    ok(pg.locator('#fw .fwx').is_visible(), 'paused, a small ✕ appears')
-    pg.click('#fw [data-a=fwToggle]'); pg.wait_for_timeout(250)
+    ok(pg.locator('#fw .fwx').is_visible(), 'paused, its controls show the ✕ (Q26: picture in picture)')
+    vclick(pg, '#fw [data-a=fwToggle]'); pg.wait_for_timeout(250)
     ok(not pg.evaluate(PAUSED) and pg.locator('#fw .fwx').is_visible(), 'it plays again from the window, and the ✕ stays (3.20: on every sound, playing or paused)')
-    pg.click('#fw [data-a=fwToggle]'); pg.wait_for_timeout(200)
-    pg.click('#fw [data-a=fwX]'); pg.wait_for_timeout(500)
+    vclick(pg, '#fw [data-a=fwToggle]'); pg.wait_for_timeout(200)
+    vclick(pg, '#fw [data-a=fwX]'); pg.wait_for_timeout(500)
     ok(not pg.evaluate("FW.shown") and pg.evaluate(PAUSED), '✕ dismisses it')
     pg.evaluate("COACH.play()"); pg.wait_for_timeout(400)
     ok(pg.evaluate("FW.shown") == 'video', 'playing again brings it back')
-    pg.click('#fw [data-a=fwOpen]'); pg.wait_for_timeout(400)
+    vclick(pg, '#fw [data-a=fwOpen]'); pg.wait_for_timeout(400)
     ok(pg.evaluate("U.view") == 'coach' and pg.evaluate(IN_SLOT) and not pg.evaluate(PAUSED), 'tapping it goes back to the player, still playing')
     pg.click('#barL [data-a=coachBack]'); pg.wait_for_timeout(300)
     ok(pg.evaluate("U.view") is None, 'Back leaves the player as before')
@@ -457,21 +471,21 @@ def window(b, t):
     # in a session: video → session
     pg.evaluate("COACH.pause()"); pg.evaluate("go(()=>{U.tab='today';U.view=null})"); pg.wait_for_timeout(200)
     pg.click('[data-a=start]'); pg.wait_for_timeout(300)
-    pg.click('#fw [data-a=fwToggle]'); pg.wait_for_timeout(500)
+    vclick(pg, '#fw [data-a=fwToggle]'); pg.wait_for_timeout(500)
     pg.evaluate("scrollTo(0,0)")
     pg.evaluate(LEAVE); pg.wait_for_timeout(400)
     ok(pg.evaluate("FW.shown") == 'video' and pg.evaluate(IN_FW), 'video → session: the playing video has the window over a running session')
-    pg.click('#fw [data-a=fwOpen]'); pg.wait_for_timeout(400)
+    vclick(pg, '#fw [data-a=fwOpen]'); pg.wait_for_timeout(400)
     ok(pg.evaluate("U.view") == 'found' and pg.evaluate(IN_FW) and not pg.evaluate(PAUSED), 'tapping it goes back to the session’s page, still playing in its window')
     pg.evaluate("COACH.pause()"); pg.wait_for_timeout(200)
     ok(pg.evaluate("FW.shown") == 'video' and pg.evaluate(PAUSED), 'Q19: paused over the session’s page, it stays in its window there')
     pg.evaluate(LEAVE); pg.wait_for_timeout(300)
     ok(pg.evaluate("FW.shown") == 'video', 'and, paused in its window, it keeps the window when you leave (3.20)')
-    pg.click('#fw [data-a=fwOpen]'); pg.wait_for_timeout(400)
+    vclick(pg, '#fw [data-a=fwOpen]'); pg.wait_for_timeout(400)
     ok(pg.evaluate("U.view") == 'found', 'tapping it goes back to the session')
     pg.evaluate("COACH.play()"); pg.evaluate(LEAVE); pg.wait_for_timeout(300)
     ok(pg.evaluate("FW.shown") == 'video', 'playing again, the video has the window')
-    pg.click('#fw [data-a=fwX]'); pg.wait_for_timeout(400)
+    vclick(pg, '#fw [data-a=fwX]'); pg.wait_for_timeout(400)
     ok(not pg.evaluate("FW.shown"), '3.20: ✕ closes it, and nothing takes its place on this screen')
     pg.evaluate("go(()=>{U.tab='exercises';U.view=null})"); pg.wait_for_timeout(300)
     ok(pg.evaluate("FW.shown") == 'session', 'on the next screen, the session’s window shows again')
@@ -494,8 +508,8 @@ def dismiss(b, t):
     pg.click('#app [data-a=coachEx][data-k=slides]'); pg.wait_for_timeout(400)
     pg.evaluate(LEAVE); pg.wait_for_timeout(1300)
     ok(pg.evaluate(IN_FW), 'motion on: leaving the player shows the video window')
-    pg.click('#fw [data-a=fwToggle]'); pg.wait_for_timeout(400)
-    pg.click('#fw [data-a=fwX]')
+    vclick(pg, '#fw [data-a=fwToggle]'); pg.wait_for_timeout(400)
+    vclick(pg, '#fw [data-a=fwX]')
     d = pg.evaluate(FADE)
     ok(0 < d < 700, f'✕ fades the window out quickly ({d:.0f} ms)')
     pg.wait_for_timeout(int(d) + 200)
@@ -510,9 +524,9 @@ def dismiss(b, t):
     ok(pg.evaluate(IN_FW) and pg.locator('#fw').is_visible(), 'only Play brings it back, holding the video')
 
     # the fade never finishing (as on iOS): the window still hides once its time is up
-    pg.click('#fw [data-a=fwToggle]'); pg.wait_for_timeout(400)
+    vclick(pg, '#fw [data-a=fwToggle]'); pg.wait_for_timeout(400)
     pg.evaluate("window._ma=MOTION.animate;MOTION.animate=function(){const a=window._ma.apply(this,arguments);if(a)a.pause();return a}")
-    pg.click('#fw [data-a=fwX]')
+    vclick(pg, '#fw [data-a=fwX]')
     d = pg.evaluate(FADE)
     pg.wait_for_timeout(60)
     ok(not pg.evaluate("document.getElementById('fw').hidden"), 'a fade that never finishes leaves the window up at first (the iPhone bug)')

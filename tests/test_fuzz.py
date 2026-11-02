@@ -35,8 +35,12 @@ INV=r"""(()=>{const p=[];const L=document.getElementById('layer');
  const fw=document.getElementById('fw'),ae=document.activeElement,typing=ae&&ae.matches&&ae.matches('input,textarea');
  if(FW.shown){if(U.sheet||L.firstElementChild)p.push('floating window over a sheet');if(rec&&FW.shown!=='rectrack')p.push('floating window while recording');
    if(FW.shown==='session'&&isFlow(U.view))p.push('session window on its own screen');
-   const r=fw.getBoundingClientRect();if(!FW.drag&&!FW.stopSpring&&!fw.getAnimations().length&&(r.left<-1||r.right>innerWidth+1||r.top<-1||r.bottom>innerHeight+1))p.push('floating window off screen');}
+   const r=fw.getBoundingClientRect();if(!FW.drag&&!FW.stopSpring&&!FW.tuck&&!fw.getAnimations().length&&(r.left<-1||r.right>innerWidth+1||r.top<-1||r.bottom>innerHeight+1))p.push('floating window off screen');}
  else if(X&&X.start&&!LAUNCH.busy()&&!FW.shut&&!FW_KINDS.find(k=>k.id==='session').own()&&!U.sheet&&!U.clock&&!L.firstElementChild&&!rec&&!U.sFocus&&!typing)p.push('session running but no floating window');
+ // Q26: tucked at the edge, its tab is always there to bring it back, and never without a window
+ {const tb=document.getElementById('fwtab'),tab=!!tb&&!tb.hidden;if(FW.shown&&FW.tuck&&!tab)p.push('a tucked window with no tab');if(tab&&!(FW.shown&&FW.tuck))p.push('a tab with no tucked window');
+  if(tab){const q=tb.getBoundingClientRect();if(q.left<-1||q.right>innerWidth+1||q.top<-1||q.bottom>innerHeight+1)p.push('the tab off screen')}}
+ if(FW.ctl&&FW.shown!=='video')p.push('picture-in-picture controls on another kind');
  if(FW.shown&&FW.shown!=='session'&&FW.shown!=='coachpill'&&FW.dis[FW.shown])p.push('a closed sound’s window came back without a play');
  if(FW.shown&&FW.shown!=='session'&&FW.shown!=='coachpill'&&FW.shown!=='rectrack'&&!document.querySelector('#fw [data-a=fwX]'))p.push('a sound’s window without its ✕');
  // Q19 the one-page session: the Coach pill only there, never with the video's window; nothing jumped ahead
@@ -104,7 +108,7 @@ HEAVY = ('sgOpen','sgSec','sgTakes','playTake','star','sgMode','sgHint','sgHMenu
          # 3.19 the track player
          'trkOpen','trkPP','trkLoop','trkSet','trkLevel','trkRow','trkToStart','trkSpeed','trkMenu','trkBack',
          # 3.20 songs, takes and markers
-         'sgRowPlay','fwX','tkOpenAll','tkTab','tkTap','tkPlay','tkSkip','tkStar','tkCollapse','tkRename','tkNameDone','tkPost','tkStamp','tkNudge','tkCJump','tkDel','tkReview',
+         'sgRowPlay','fwX','fwVTap','fwSkip','fwLv','fwTab','tkOpenAll','tkTab','tkTap','tkPlay','tkSkip','tkStar','tkCollapse','tkRename','tkNameDone','tkPost','tkStamp','tkNudge','tkCJump','tkDel','tkReview',
          'sgAddMode','sgAddLen','sgLenUnlinkYes','sgLenRelinkYes','ckRelink','trkMkAdd','trkChip','trkChipLoop','trkEndHere','trkMkMove','trkMkDel',
          # 3.22 Search
          'findOpen','findMore','findLyr','findTake','findRecent','findRmRecent','findClear','findCancel',

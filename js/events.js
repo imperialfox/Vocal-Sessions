@@ -484,9 +484,27 @@ document.addEventListener('click', (e) => {
       if (fk) fk.open();
       break;
     }
+    // Q26: the coach video's picture in picture (window.js)
+    case 'fwVTap':
+      fwVTap();
+      break;
+    case 'fwSkip':
+      COACH.skip(+v);
+      fwCtl(true);
+      fwTick();
+      break;
+    case 'fwLv':
+      COACH.setLevel(+v); // as the player's L1 · L2 · L3 (Q25): the lit level starts again
+      fwCtl(true);
+      fwTick();
+      break;
+    case 'fwTab':
+      fwTuckOut();
+      break;
     case 'fwToggle': {
       const fk = fwKindNow();
       if (!fk) break;
+      if (FW.ctl) fwCtl(true); // Q26: the controls stay a while longer
       FW.winAt = Date.now(); // 3.20: paused from the window, so the window stays
       fk.toggle();
       fwUpdate();
