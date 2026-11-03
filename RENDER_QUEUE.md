@@ -16,7 +16,7 @@ Every queued item has a queue ID and a standard name, used in the queue, in hand
 - **Items:** `Q[##] · [Subsystem]: [Feature Name]`, e.g. `Q02 · Track: Waveform Sections`.
 - **Files** (handoffs, specs, wireframes, prototypes): `q##_[subsystem]_[feature]_[type].[ext]`, lower case with underscores, e.g. `q02_track_waveform_sections_handoff.md`.
 - **Releases:** the shipped version's `CHANGELOG.md` headline ends with the queue ID in brackets, e.g. `*Waveform sections on the track player (Q02)*` under `## 3.23 · 27 Oct 2026` (the `##` line keeps its exact format for the app's Changelog page). That's the bridge from queue ID to version. Q01 shipped as 3.22, headline `*Search, from every tab (Q01)*`; Q08 as 3.23.
-- **New items:** an idea gets its ID when Ivan says **Render** for it, taking the next unused number (the next is **Q40**). IDs are never reused or renumbered, even when the queue is reordered or an item ships.
+- **New items:** an idea gets its ID when Ivan says **Render** for it, taking the next unused number (the next is **Q41**). IDs are never reused or renumbered, even when the queue is reordered or an item ships.
 - **Exception, 30 Oct 2026:** Ivan asked for the six stages of the 30 Oct read-only audit, plus its clean-up list, to get IDs straight away, before Render, most critical first. They are **Q11–Q17**. All seven got Render on 30 Oct 2026 and have shipped (3.29–3.31, 3.34, 3.36, 3.37 and 3.38).
 - **Exception, 31 Oct 2026:** Ivan asked for the status bar fix to be queued with an ID before Render. It is **Q23**; Render and Build followed the same evening (shipped in 3.33).
 
@@ -63,6 +63,7 @@ Every ID with its **Status** (`Awaiting Render`, `Approved — awaiting Build`, 
 | Q37 | Session: Song Ladder | Approved — awaiting Build | Song ladder, pitch test page, "Prototype · Song ladder and bridge-aware patterns" (v1–v3), 2 Nov 2026 |
 | Q38 | Exercises: Bridge-Aware Patterns | Approved — awaiting Build | Bridge-aware patterns, Find your bridge, same prototype, 2 Nov 2026 |
 | Q39 | Songs: Key and Scale Lanes | Approved — awaiting Build | Key detection, scale lanes, suggested patterns, same prototype (v2), 2 Nov 2026 |
+| Q40 | Interface: Value Set and Test | Approved — awaiting Build | The value test (consistency audit of 3.49, 2 Nov 2026; called Q35 in early notes before Q35 went to Atlas: Starting States) |
 
 Work shipped before this standard (for example Track 1 and Song Clock A1) keeps its version numbers and has no queue ID.
 
@@ -279,6 +280,21 @@ Menus, the top bar's buttons and the small controls move like iOS 27. Where the 
 - **Out of scope:** chords, moving a song to another key, any score or right/wrong colouring.
 - **Needs:** Q37 shipped. The pattern player opening on a given pattern, note and Stay on this key is part of this item.
 - **Done when:** the key is found and asked or suggested correctly for synthetic melodies; the key sheet saves to the song (and survives a backup); lanes are spelled correctly in sharp and flat keys; suggestions follow the rules above and open the pattern player as described; old data loads unchanged; 375 px and dark mode; the full suite passes; Ivan's iPhone checks.
+
+## Q40 · Interface: Value Set and Test
+
+**Status:** Approved — awaiting Build. **Render:** 3 Nov 2026, 08:08. Ivan: "Render what's currently there", for the value test as planned after the consistency audit of 3.49, with every *Default if unanswered* taken. **Build:** awaiting Ivan's instruction. The build handoff is in Ivan's project notes as `q40_interface_value_set_and_test_handoff.md` (the audit: `consistency_audit_2026-11-02.md`; design decisions D01–D15: `parts_decisions_2026-11-02.md`).
+
+- **Goal:** one named set of look and motion values, and a test that stops new stray values, so the app stops drifting. The audit counted 26 corner sizes, 7 press shrinks, 49 hand-written curves in the stylesheet (7 in code) and 31 durations.
+- **Scope:**
+  - **The named set** beside the text sizes: corners (`--r-small` 10, `--r-medium` 14, `--r-card` 20, `--r-large` 26, `--r-sheet` 34; capsules and circles as now; graphic bits of 6 px and under exempt), `--press` 0.93 for solid buttons, named easings (`--ease-pop`, `--ease-knob`, `--ease-out`, plus the spring variables) and fade timings (`--dur-quick` 120 ms, `--dur-fade` 200 ms).
+  - **Exact matches renamed** to the names, with no visual change.
+  - **A shrinking list:** every other value stays and is written into the test as a known stray; new strays fail, and the list may only get shorter.
+  - **Two small fixes:** the pattern player's speed bar and menu (`.phbar`, `.pmenu`) onto the glass tokens; solid button presses at 0.90, 0.94, 0.95 and 0.97 snapped to 0.93.
+  - **`tests/test_values.py`** (corners, presses, easings and durations in `css/app.css`; `cubic-bezier` in `js/`), and a "Value set (Q40)" part in `MAINTAINING.md`.
+- **Default if unanswered:** the values above; rows and row-like cards keep their 0.98 / 0.96 shrink as known strays (decision D06 replaces them with a highlight at the parts kit move); slow ambient loops exempt; shadows reported, not enforced.
+- **Out of scope:** snapping non-matching values, every decision in D01–D15, sheets (Scroll Behaviour Pass), menus and the rest of Q34 (on hold for the parts kit).
+- **Build:** on its own (it touches `css/app.css` throughout), after a rebase.
 
 ## Not scheduled
 
