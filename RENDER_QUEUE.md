@@ -317,6 +317,8 @@ Each idea has its priority, the date it was added and a *Why* line. New ideas go
   *Why:* it breaks practice with a song.
 - **Exercise takes (2 Nov 2026; pinned from Q32 by Ivan).** Record yourself while a pattern plays on an exercise page: the take is kept on that exercise with its pattern, key and speed, and played back in the exercise's History, reusing the app's recorder and takes.
   *Why:* the recordings are the heart of the app, and this lets you hear your exercises improve, not only your songs.
+- **Song note map (3 Nov 2026).** Map a song's notes, roughly, from its uploaded track, and show them as a faint melody line on Lines and the Track player (VS-010), opened from the Song page (VS-009). Ivan's choice of how it reads the song: if a vocals-only stem is attached to the song (for example exported from Resolve Studio's Music Remixer), run Q37's `PITCH` listener (pitchy) on it; otherwise use a melody finder built for full mixes (Melodia, `PredominantPitchMelodia` in Essentia.js, which is WebAssembly; check its licence and file size first). pitchy alone on a full mix jumps between the singer and the instruments. The note map is small and kept as its own file on the song, in backups, while the track stays out of them. It could feed Q39 (the key from the song itself, not only from takes), the Q37 ladder's target notes and the note buttons. Lines and dots only: a reference, never a score. Needs Q37.
+  *Why:* it helps you learn your songs and teaches pitch by showing where the melody goes.
 
 ### Priority 2 · Helps
 
