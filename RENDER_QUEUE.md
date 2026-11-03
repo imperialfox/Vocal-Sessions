@@ -16,7 +16,7 @@ Every queued item has a queue ID and a standard name, used in the queue, in hand
 - **Items:** `Q[##] · [Subsystem]: [Feature Name]`, e.g. `Q02 · Track: Waveform Sections`.
 - **Files** (handoffs, specs, wireframes, prototypes): `q##_[subsystem]_[feature]_[type].[ext]`, lower case with underscores, e.g. `q02_track_waveform_sections_handoff.md`.
 - **Releases:** the shipped version's `CHANGELOG.md` headline ends with the queue ID in brackets, e.g. `*Waveform sections on the track player (Q02)*` under `## 3.23 · 27 Oct 2026` (the `##` line keeps its exact format for the app's Changelog page). That's the bridge from queue ID to version. Q01 shipped as 3.22, headline `*Search, from every tab (Q01)*`; Q08 as 3.23.
-- **New items:** an idea gets its ID when Ivan says **Render** for it, taking the next unused number (the next is **Q37**). IDs are never reused or renumbered, even when the queue is reordered or an item ships.
+- **New items:** an idea gets its ID when Ivan says **Render** for it, taking the next unused number (the next is **Q40**). IDs are never reused or renumbered, even when the queue is reordered or an item ships.
 - **Exception, 30 Oct 2026:** Ivan asked for the six stages of the 30 Oct read-only audit, plus its clean-up list, to get IDs straight away, before Render, most critical first. They are **Q11–Q17**. All seven got Render on 30 Oct 2026 and have shipped (3.29–3.31, 3.34, 3.36, 3.37 and 3.38).
 - **Exception, 31 Oct 2026:** Ivan asked for the status bar fix to be queued with an ID before Render. It is **Q23**; Render and Build followed the same evening (shipped in 3.33).
 
@@ -60,6 +60,9 @@ Every ID with its **Status** (`Awaiting Render`, `Approved — awaiting Build`, 
 | Q34 | Interface: Native Menus and Controls | Blocked (on hold for the parts kit, 2 Nov 2026) | Component inventory (round 2), worth doing plus smaller wins, 2 Nov 2026 |
 | Q35 | Atlas: Starting States | Approved — awaiting Build | Atlas: more starting states (Not scheduled idea), from the screen-flow canvas update, 3 Nov 2026 |
 | Q36 | Interface: Screen IDs | Approved — awaiting Build | Screen IDs blueprint (permanent IDs for every screen, part names, flows, saved-data list), 3 Nov 2026 |
+| Q37 | Session: Song Ladder | Approved — awaiting Build | Song ladder, pitch test page, "Prototype · Song ladder and bridge-aware patterns" (v1–v3), 2 Nov 2026 |
+| Q38 | Exercises: Bridge-Aware Patterns | Approved — awaiting Build | Bridge-aware patterns, Find your bridge, same prototype, 2 Nov 2026 |
+| Q39 | Songs: Key and Scale Lanes | Approved — awaiting Build | Key detection, scale lanes, suggested patterns, same prototype (v2), 2 Nov 2026 |
 
 Work shipped before this standard (for example Track 1 and Song Clock A1) keeps its version numbers and has no queue ID.
 
@@ -76,7 +79,7 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 
 ## Order (3 Nov 2026)
 
-**Q36** (Render 3 Nov 2026, 08:00) is an app build (next minor version); it can go before or after Atlas kit 1.0 and Q31, and comes before **Q35**, whose flows, captions and doors use its IDs. The same Render added Atlas kit 1.0's addition 14 (Stable IDs). **Q35** (Render 3 Nov 2026, 00:39) comes after Q31, which reshapes the settings file it fills in; tooling with no app version, like Q30 and Q31. The same Render widened **Atlas kit 1.0** with additions 9–13 (in that kit's handoff), which Q31's kit copy brings and Q35 uses. **Q33** shipped in 3.49 (Render 2 Nov 2026, 17:41; Build 2 Nov 2026, 21:17). **Q34** (Render 2 Nov 2026, 18:12) is on hold for the parts kit (Ivan, 2 Nov 2026, 22:11); it uses Q33's materials and springs. **Q32** shipped in 3.48 (Render 2 Nov 2026, 15:56; Build 2 Nov 2026, 19:06). Q30 shipped as tooling (Build 2 Nov 2026, 17:57; `tools/atlas/`), and **Q31** builds on it (Render 2 Nov 2026, 15:55, in the same instruction as Q30; re-scoped by a fresh Render at 19:50 to put Vocal Sessions on the universal Atlas kit, built after Prototype kit 1.1 and Atlas kit 1.0; its own Build). Both are tooling with no app version, like Q24, so they can be built outside the app queue's order. Q28 shipped in 3.46 and Q29 in 3.47 (Render 2 Nov 2026, 09:29; Build 09:33, in one instruction, built one after the other). **Q07** is still awaiting Render. Q27 shipped in 3.45 (Build 2 Nov 2026). Q25 shipped in 3.43 and Q26 in 3.44 (Build 2 Nov 2026); Q25–Q27 got Render on 1 Nov 2026 (19:59), in one instruction, each with its own Build. Q19 shipped in 3.39, Q20 in 3.40, Q21 in 3.41 and Q22 in 3.42. Q22 got Render on 31 Oct 2026 (20:59) and was built on the one-page session and the saved screen. Q19–Q21 got Render on 31 Oct 2026 (19:58), in one instruction, each with its own Build. They follow Q17 (shipped in 3.38; Q20 needs Q16's track-while-recording, shipped in 3.37). Q11–Q17 got Render on 30 Oct 2026 (06:42) and have all shipped. What has shipped is in the table's Status column. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
+**Q37–Q39** (Render 3 Nov 2026, 08:01) are app builds, in that order after Q36, each with its own Build: Q37 brings the shared pitch listener that Q38 and Q39 use. **Q36** (Render 3 Nov 2026, 08:00) is an app build (next minor version); it can go before or after Atlas kit 1.0 and Q31, and comes before **Q35**, whose flows, captions and doors use its IDs. The same Render added Atlas kit 1.0's addition 14 (Stable IDs). **Q35** (Render 3 Nov 2026, 00:39) comes after Q31, which reshapes the settings file it fills in; tooling with no app version, like Q30 and Q31. The same Render widened **Atlas kit 1.0** with additions 9–13 (in that kit's handoff), which Q31's kit copy brings and Q35 uses. **Q33** shipped in 3.49 (Render 2 Nov 2026, 17:41; Build 2 Nov 2026, 21:17). **Q34** (Render 2 Nov 2026, 18:12) is on hold for the parts kit (Ivan, 2 Nov 2026, 22:11); it uses Q33's materials and springs. **Q32** shipped in 3.48 (Render 2 Nov 2026, 15:56; Build 2 Nov 2026, 19:06). Q30 shipped as tooling (Build 2 Nov 2026, 17:57; `tools/atlas/`), and **Q31** builds on it (Render 2 Nov 2026, 15:55, in the same instruction as Q30; re-scoped by a fresh Render at 19:50 to put Vocal Sessions on the universal Atlas kit, built after Prototype kit 1.1 and Atlas kit 1.0; its own Build). Both are tooling with no app version, like Q24, so they can be built outside the app queue's order. Q28 shipped in 3.46 and Q29 in 3.47 (Render 2 Nov 2026, 09:29; Build 09:33, in one instruction, built one after the other). **Q07** is still awaiting Render. Q27 shipped in 3.45 (Build 2 Nov 2026). Q25 shipped in 3.43 and Q26 in 3.44 (Build 2 Nov 2026); Q25–Q27 got Render on 1 Nov 2026 (19:59), in one instruction, each with its own Build. Q19 shipped in 3.39, Q20 in 3.40, Q21 in 3.41 and Q22 in 3.42. Q22 got Render on 31 Oct 2026 (20:59) and was built on the one-page session and the saved screen. Q19–Q21 got Render on 31 Oct 2026 (19:58), in one instruction, each with its own Build. They follow Q17 (shipped in 3.38; Q20 needs Q16's track-while-recording, shipped in 3.37). Q11–Q17 got Render on 30 Oct 2026 (06:42) and have all shipped. What has shipped is in the table's Status column. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
 
 ## Q07 · Song Clock: Dynamic Sync
 
@@ -212,6 +215,70 @@ Menus, the top bar's buttons and the small controls move like iOS 27. Where the 
   - Ivan checks on his iPhone: the 700 ms hold, the Songs sort menu, the gear and Back morph, dragging a switch and the Progress range control, and the 3 s toast.
 
 ---
+
+## Q37 · Session: Song Ladder
+
+**Status:** Approved — awaiting Build. **Render:** 3 Nov 2026, 08:01. Ivan: "Render", choosing "All three, as 3 items" (Q37, Q38, Q39; first numbered Q36–Q38 in this chat, renumbered because Q36 was taken a minute earlier by Interface: Screen IDs), from the prototype "Prototype · Song ladder and bridge-aware patterns" (v3). **Build:** awaiting Ivan's instruction. The build handoff is in Ivan's project notes as `q37_session_song_ladder_handoff.md`.
+
+- **Goal:** help exercises carry over into songs. A section is sung four ways (lip trill, hum, vowels only, words), and the pitch lines show where the words drift from the trill.
+- **Scope:**
+  - **The shared pitch listener** (`PITCH`, its own file in `js/`, reusable by Q38 and Q39): pitchy 4.1.0 (MIT, McLeod method) as a pinned copy in the repo, with its licence. It reads a take's pitch line after recording (10 ms steps, clarity 0.90, blips under 40 ms dropped, octave slips fixed, light smoothing) and listens live through `rec.mic.analyser()` on `AUDIO.frame` (Q16's seam). It also finds sudden jumps (2 semitones or more within 200 ms, steady either side) and held notes.
+  - **Application's card** gets a Straight / Ladder switch. A ladder is four rungs, each a take of the chosen place with its own instruction and lyric view: the words faded for trill and hum, vowel letters picked out for Vowels only, and the words for Words. Any rung can be skipped. Sing over the track and Q16's headphones rule work as now. While recording, the pitch line draws live.
+  - **The rungs fold away:** the sung rungs fold into one row ("2 of 4 sung · Trill · Hum") that opens when tapped, the rungs still to come are one line ("Up next"), and only the current rung stays open.
+  - **Lines** (from two rungs): the rungs' pitch lines overlaid, each switchable. The word or moment where the words (or vowels) part from the trill (or hum) is named, with **Hear both** (the trill, then the words, at that spot, through `NOW`). If they don't part, it says so plainly.
+  - **Notes of the line** (once all four are sung): a row of note buttons from the trill's held notes. Tap to hear one. With **Repeat** on, it keeps playing until tapped again.
+  - Done folds the card to one line. Ladder takes are ordinary takes of the place (Star, Compare, notes and backups as now), named by their rung.
+- **Default if unanswered:**
+  - The switch is on the card (not a link under Sing), remembered per song.
+  - Vowels only picks out the vowel letters of the words (spelling, not sounds).
+  - Note buttons are labelled by note, one per held note of the trill. Words come when timing allows, not in this item.
+  - Pitch lines are worked out when needed and never saved or backed up.
+  - The notes play in the pattern player's sound.
+- **Out of scope:** the bridge band and every bridge feature (Q38); key, scale lanes and suggested patterns (Q39); a ladder door on the song's page; any score, percentage or right/wrong colouring.
+- **Needs:** Q36 shipped (it's built after Q36, on the version Q36 ships in).
+- **Done when:** a ladder can be sung, skipped, folded and finished in Application; pitch lines and the parting spot are right for synthetic test tones; Hear both and the note buttons follow one sound at a time; old data and backups load unchanged; 375 px, dark mode and Reduce Motion; the full suite passes; Ivan's iPhone checks.
+
+## Q38 · Exercises: Bridge-Aware Patterns
+
+**Status:** Approved — awaiting Build. **Render:** 3 Nov 2026, 08:01, in the same instruction as Q37 and Q39. **Build:** awaiting Ivan's instruction. The build handoff is in Ivan's project notes as `q38_exercises_bridge_aware_patterns_handoff.md`.
+
+- **Goal:** help through the register break. The pattern player knows your bridge and guides you through it instead of letting you push.
+- **Scope:**
+  - **Your bridge**, saved with Your voice. **Find your bridge** is a sheet with one slow slide on "ee", the line drawn live with jump markers. It suggests a zone (two semitones below the jump to one above), with From and To steppers, Use this bridge and Try again. With no jump, you set it by feel. Doors: the exercise page and Settings › Your voice.
+  - **The exercise page:**
+    - The bridge band on the drawing, with notes in the zone ringed.
+    - A line ("Bridge E4–G4 · rounds 11–14 cross it. Those notes play softer.") with Change.
+    - The reference notes in the zone play softer.
+    - A cue while a bridge note plays: "Thinner · quieter" on hummed exercises, a narrower vowel (ah → uh) on vowel exercises.
+  - **Stop one past last time:** the route ends one round past the highest top note last sung cleanly. "Last time" moves on quietly only when a higher top is held cleanly while listening.
+  - **Listen while I sing** (off by default): your voice as a dot and short trail on the drawing, with a headphones hint.
+- **Default if unanswered:**
+  - The reference notes in the zone play at 55% volume.
+  - The cue can be switched off in Settings › Pattern player.
+  - Stop one past last time is one setting, next to Stop at my top note; when both are on, the earlier stop wins.
+  - "Last time" is kept per exercise.
+  - Without listening, nothing changes it.
+- **Out of scope:** recording on the exercise page (Exercise takes, Not scheduled); key and scale lanes (Q39); any score or right/wrong colouring.
+- **Needs:** Q37 shipped (the pitch listener).
+- **Done when:** the bridge can be found, changed and saved (and survives a backup); the band, ringed notes, softer notes and cue follow the zone; Stop one past last time and Last time behave as above with synthetic tones; the voice dot follows a test tone; one sound at a time; 375 px, dark mode and Reduce Motion; the full suite passes; Ivan's iPhone checks.
+
+## Q39 · Songs: Key and Scale Lanes
+
+**Status:** Approved — awaiting Build. **Render:** 3 Nov 2026, 08:01, in the same instruction as Q37 and Q38. **Build:** awaiting Ivan's instruction. The build handoff is in Ivan's project notes as `q39_songs_key_and_scale_lanes_handoff.md`.
+
+- **Goal:** sing a song in its key. The app finds the song's key, lays the scale over your pitch lines, and suggests patterns from the library in that key.
+- **Scope:**
+  - **A key per song:** worked out from the song's takes (a 12-note profile of their steady pitch, then Krumhansl–Schmuckler, from musictheoryjs 3.2.2, ISC, as a pinned copy). When the top two keys are close, it asks ("Which key is this song in? F major · D minor · Other…"); otherwise it suggests one. Other… and Change open a key sheet (Major or Minor, and 12 notes, spelled as in each key). Chosen once and saved on the song. Doors: Lines and the song's page.
+  - **Scale lanes** on pitch lines (Lines and the live line): the key's notes as faint lanes, with the home note marked and names spelled from tonal 6.5.1 (MIT, pinned copy). A switch turns them off. Descriptive only.
+  - **Practise in the key:** the note to work on (where the lines part, or else the line's top note), then up to three library patterns that play in the song's key and reach that note. Each shows its range and what it trains, with Play and a door into the pattern player on that note, staying on this key. Q37's note buttons follow the key once it's set.
+- **Default if unanswered:**
+  - One key per song (key changes within a song later).
+  - Suggested patterns start on the key's home note, keep every note in the key and go no lower than A2, one from each group where possible. When nothing reaches the note exactly, patterns that pass through it are offered instead.
+  - Opening one doesn't change the exercise's saved choices.
+  - With lanes on, they replace Q38's bridge band on pitch lines.
+- **Out of scope:** chords, moving a song to another key, any score or right/wrong colouring.
+- **Needs:** Q37 shipped. The pattern player opening on a given pattern, note and Stay on this key is part of this item.
+- **Done when:** the key is found and asked or suggested correctly for synthetic melodies; the key sheet saves to the song (and survives a backup); lanes are spelled correctly in sharp and flat keys; suggestions follow the rules above and open the pattern player as described; old data loads unchanged; 375 px and dark mode; the full suite passes; Ivan's iPhone checks.
 
 ## Not scheduled
 
