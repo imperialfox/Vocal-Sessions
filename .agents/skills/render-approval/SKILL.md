@@ -12,6 +12,7 @@ Use this workflow whenever Ivan explicitly says **Render** for a queued Vocal Se
 1. Read the current `RENDER_QUEUE.md` from the shared GitHub repository and locate the exact item Ivan means (it may still be an idea under **Not scheduled**). If the item is ambiguous, missing, or not ready for approval, stop and ask which item or decision is needed.
 2. Read the matching handoff and spec from the repository or the active project's available notes. Compare them with the scope Ivan just approved. Do not silently broaden, rewrite, or infer approval for unresolved decisions.
 3. Check the current repository branch and review workflow. Do not create a code change or begin implementation.
+4. If the item needs a new queue number, guard against two chats claiming the same one. Pull `main` right before choosing it and take the number after the highest in the queue ID table, the per-item sections and the "next is Q##" line. Also check the project notes for a handoff already using that number (`q##_…_handoff.md`). Pull again just before pushing: if another commit claimed the number first, renumber your own item (queue row, section, Order, handoff name and links) rather than theirs, and say so in the report.
 
 ## Record the approval
 
