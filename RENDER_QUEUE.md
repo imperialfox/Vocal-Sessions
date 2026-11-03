@@ -345,6 +345,8 @@ Each idea has its priority, the date it was added and a *Why* line. New ideas go
 - **A wide Timeline on iPad.** *Why:* iPad only.
 - **Delivery marks for one repeat only.** *Why:* a rare case.
 - **Mark selections across a line break.** *Why:* a rare case.
+- **Spectrogram view (3 Nov 2026).** A spectrogram of a song's track or a take (time across, pitch up, brightness for loudness), like the one in the demucs-rs demo Ivan tried while researching vocal isolation for the Song note map. It could be animated later, for example scrolling live while a take records or plays. Ivan sees it as "just a cool thing to look at". It could also teach one day: a voice's harmonics show as stacked stripes, and a ringing tone shows as a bright band high up. Low priority.
+  *Why:* feel only; practice works the same without it.
 
 ### Parked · Doesn't fit
 
