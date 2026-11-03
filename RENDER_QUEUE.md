@@ -16,7 +16,7 @@ Every queued item has a queue ID and a standard name, used in the queue, in hand
 - **Items:** `Q[##] · [Subsystem]: [Feature Name]`, e.g. `Q02 · Track: Waveform Sections`.
 - **Files** (handoffs, specs, wireframes, prototypes): `q##_[subsystem]_[feature]_[type].[ext]`, lower case with underscores, e.g. `q02_track_waveform_sections_handoff.md`.
 - **Releases:** the shipped version's `CHANGELOG.md` headline ends with the queue ID in brackets, e.g. `*Waveform sections on the track player (Q02)*` under `## 3.23 · 27 Oct 2026` (the `##` line keeps its exact format for the app's Changelog page). That's the bridge from queue ID to version. Q01 shipped as 3.22, headline `*Search, from every tab (Q01)*`; Q08 as 3.23.
-- **New items:** an idea gets its ID when Ivan says **Render** for it, taking the next unused number (the next is **Q36**). IDs are never reused or renumbered, even when the queue is reordered or an item ships.
+- **New items:** an idea gets its ID when Ivan says **Render** for it, taking the next unused number (the next is **Q37**). IDs are never reused or renumbered, even when the queue is reordered or an item ships.
 - **Exception, 30 Oct 2026:** Ivan asked for the six stages of the 30 Oct read-only audit, plus its clean-up list, to get IDs straight away, before Render, most critical first. They are **Q11–Q17**. All seven got Render on 30 Oct 2026 and have shipped (3.29–3.31, 3.34, 3.36, 3.37 and 3.38).
 - **Exception, 31 Oct 2026:** Ivan asked for the status bar fix to be queued with an ID before Render. It is **Q23**; Render and Build followed the same evening (shipped in 3.33).
 
@@ -59,6 +59,7 @@ Every ID with its **Status** (`Awaiting Render`, `Approved — awaiting Build`, 
 | Q33 | Interface: Glass Native Tuning | Shipped 3.49 | Glass tuning Recon and glass inventory, 2 Nov 2026 |
 | Q34 | Interface: Native Menus and Controls | Blocked (on hold for the parts kit, 2 Nov 2026) | Component inventory (round 2), worth doing plus smaller wins, 2 Nov 2026 |
 | Q35 | Atlas: Starting States | Approved — awaiting Build | Atlas: more starting states (Not scheduled idea), from the screen-flow canvas update, 3 Nov 2026 |
+| Q36 | Interface: Screen IDs | Approved — awaiting Build | Screen IDs blueprint (permanent IDs for every screen, part names, flows, saved-data list), 3 Nov 2026 |
 
 Work shipped before this standard (for example Track 1 and Song Clock A1) keeps its version numbers and has no queue ID.
 
@@ -75,7 +76,7 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 
 ## Order (3 Nov 2026)
 
-**Q35** (Render 3 Nov 2026, 00:39) comes after Q31, which reshapes the settings file it fills in; tooling with no app version, like Q30 and Q31. The same Render widened **Atlas kit 1.0** with additions 9–13 (in that kit's handoff), which Q31's kit copy brings and Q35 uses. **Q33** shipped in 3.49 (Render 2 Nov 2026, 17:41; Build 2 Nov 2026, 21:17). **Q34** (Render 2 Nov 2026, 18:12) is on hold for the parts kit (Ivan, 2 Nov 2026, 22:11); it uses Q33's materials and springs. **Q32** shipped in 3.48 (Render 2 Nov 2026, 15:56; Build 2 Nov 2026, 19:06). Q30 shipped as tooling (Build 2 Nov 2026, 17:57; `tools/atlas/`), and **Q31** builds on it (Render 2 Nov 2026, 15:55, in the same instruction as Q30; re-scoped by a fresh Render at 19:50 to put Vocal Sessions on the universal Atlas kit, built after Prototype kit 1.1 and Atlas kit 1.0; its own Build). Both are tooling with no app version, like Q24, so they can be built outside the app queue's order. Q28 shipped in 3.46 and Q29 in 3.47 (Render 2 Nov 2026, 09:29; Build 09:33, in one instruction, built one after the other). **Q07** is still awaiting Render. Q27 shipped in 3.45 (Build 2 Nov 2026). Q25 shipped in 3.43 and Q26 in 3.44 (Build 2 Nov 2026); Q25–Q27 got Render on 1 Nov 2026 (19:59), in one instruction, each with its own Build. Q19 shipped in 3.39, Q20 in 3.40, Q21 in 3.41 and Q22 in 3.42. Q22 got Render on 31 Oct 2026 (20:59) and was built on the one-page session and the saved screen. Q19–Q21 got Render on 31 Oct 2026 (19:58), in one instruction, each with its own Build. They follow Q17 (shipped in 3.38; Q20 needs Q16's track-while-recording, shipped in 3.37). Q11–Q17 got Render on 30 Oct 2026 (06:42) and have all shipped. What has shipped is in the table's Status column. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
+**Q36** (Render 3 Nov 2026, 08:00) is an app build (next minor version); it can go before or after Atlas kit 1.0 and Q31, and comes before **Q35**, whose flows, captions and doors use its IDs. The same Render added Atlas kit 1.0's addition 14 (Stable IDs). **Q35** (Render 3 Nov 2026, 00:39) comes after Q31, which reshapes the settings file it fills in; tooling with no app version, like Q30 and Q31. The same Render widened **Atlas kit 1.0** with additions 9–13 (in that kit's handoff), which Q31's kit copy brings and Q35 uses. **Q33** shipped in 3.49 (Render 2 Nov 2026, 17:41; Build 2 Nov 2026, 21:17). **Q34** (Render 2 Nov 2026, 18:12) is on hold for the parts kit (Ivan, 2 Nov 2026, 22:11); it uses Q33's materials and springs. **Q32** shipped in 3.48 (Render 2 Nov 2026, 15:56; Build 2 Nov 2026, 19:06). Q30 shipped as tooling (Build 2 Nov 2026, 17:57; `tools/atlas/`), and **Q31** builds on it (Render 2 Nov 2026, 15:55, in the same instruction as Q30; re-scoped by a fresh Render at 19:50 to put Vocal Sessions on the universal Atlas kit, built after Prototype kit 1.1 and Atlas kit 1.0; its own Build). Both are tooling with no app version, like Q24, so they can be built outside the app queue's order. Q28 shipped in 3.46 and Q29 in 3.47 (Render 2 Nov 2026, 09:29; Build 09:33, in one instruction, built one after the other). **Q07** is still awaiting Render. Q27 shipped in 3.45 (Build 2 Nov 2026). Q25 shipped in 3.43 and Q26 in 3.44 (Build 2 Nov 2026); Q25–Q27 got Render on 1 Nov 2026 (19:59), in one instruction, each with its own Build. Q19 shipped in 3.39, Q20 in 3.40, Q21 in 3.41 and Q22 in 3.42. Q22 got Render on 31 Oct 2026 (20:59) and was built on the one-page session and the saved screen. Q19–Q21 got Render on 31 Oct 2026 (19:58), in one instruction, each with its own Build. They follow Q17 (shipped in 3.38; Q20 needs Q16's track-while-recording, shipped in 3.37). Q11–Q17 got Render on 30 Oct 2026 (06:42) and have all shipped. What has shipped is in the table's Status column. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
 
 ## Q07 · Song Clock: Dynamic Sync
 
@@ -106,7 +107,7 @@ Gives the Vocal Sessions Atlas the map, notes Claude can read, export, and what 
   - **"Check my notes"** in a Claude chat reads the Atlas page's notes and the notes of the prototypes it lists, in one format ("check my Atlas notes" still works).
   - Tests.
 - **Agreed (defaults taken at Render):** the kit lives in its own public repo, MIT; a pinned copy, not a submodule; the Q30 page is home; prototype notes on a page not published on claude.ai stay on that device; "check my notes" covers both kits; each kit version gets its own Render and Build in that kit's `HANDOFF.md`, with no Q number. Notes have one home (the private Atlas page), so there are never two copies; only notes sent as queue ideas reach the repo, and as text only.
-- **Atlas kit 1.0's additions 9–13** (flows, captions, tags since a chosen version, the map labels switch, hand-written doors; Render 3 Nov 2026, 00:39) come with the kit copy unchanged. Filling in Vocal Sessions' own flows, captions and doors is Q35's, not Q31's.
+- **Atlas kit 1.0's additions 9–14** (flows, captions, tags since a chosen version, the map labels switch, hand-written doors; Render 3 Nov 2026, 00:39; stable IDs, Render 3 Nov 2026, 08:00) come with the kit copy unchanged. Filling in Vocal Sessions' own flows, captions and doors is Q35's, not Q31's.
 - **Out of scope:** compare views across screens or sizes (not queued); wiring up a second app or site; any change to the app.
 - **The repo is public:** notes, pictures and screenshots never go into git.
 - **Needs:** Q30 (shipped 2 Nov 2026 as tooling: `tools/atlas/`); Atlas kit 1.0 built and released.
@@ -116,6 +117,29 @@ Gives the Vocal Sessions Atlas the map, notes Claude can read, export, and what 
   - The report has the screen, marked area, element details and note; the .zip has a picture per note; queue ideas come out text-only in this file's format.
   - A rescan after an app change shows the right new, gone and changed screens, and names the versions released in between.
   - The app's own full test suite still passes.
+
+## Q36 · Interface: Screen IDs
+
+**Status:** Approved — awaiting Build. **Render:** 3 Nov 2026, 08:00. Ivan: "Render", for the Blueprint as drafted (Piece A), with every *Default if unanswered* taken, together with Atlas kit 1.0's addition 14 (Piece B). **Build:** awaiting Ivan's instruction. The plan is `screen_ids_blueprint.md` and the build handoff `q36_interface_screen_ids_handoff.md`, both in Ivan's project notes.
+
+- **Goal:** every screen, sub-page and sheet has a permanent ID (`VS-001` onwards), its main parts have names, its main journeys have flow IDs, and every saved setting is listed, so Ivan and Claude can point at the same thing in a few characters and it survives renames.
+- **Scope:**
+  - **Register `js/screens.js`** (plain data, `const SCREENS`), loaded by the app and read by the Atlas from the page: per screen its ID, name, area, kind, code key (`U.tab` / `U.view` / `U.sheet`), aliases, docs link, status (`Live` / `Retired in <version>`) and named parts; flows in the same file.
+  - **Numbering once:** today's screens and sheets as `VS-001` onwards, grouped by area for this first pass only; then append-only, never reused or renumbered.
+  - **`data-screen`** set by `render()` and `renderSheet()` from the register (one lookup); a screen with no entry gets `VS-???`, a console warning and a failing test.
+  - **Part names:** `data-name` on bar buttons, dock buttons, primary actions and rows or cards that open something; lower case with hyphens, by what the part is.
+  - **Flows:** `F-01 · Focused session`, `F-02 · Song practice`, `F-03 · Add a song`, `F-04 · Time a song`, `F-05 · Back up and restore`, each step a screen ID with the part tapped between.
+  - **"Show screen IDs"** switch in Settings › Appearance (this device only, not backed up): a small grey label with the current screen's (and open sheet's) ID in a corner.
+  - **Saved data:** MAINTAINING's "Where data lives" table gains **Since** and **Backed up** columns, the keys it misses today, and a field table for `D.prefs` and `vocalSongPrefs`.
+  - **Changelog:** a `Screens:` line in each entry from this version on.
+  - **Tests:** register against the code (entries, `data-screen`, named parts, docs links) and the saved-data list against every storage key in the code.
+  - **Docs:** a "Screen IDs" section in MAINTAINING (adding, renaming, retiring), linked from `AGENTS.md`.
+- **Defaults if unanswered (taken):** states of one screen share its ID; the app's Changelog page hides the Screens line unless "Show screen IDs" is on; old changelog entries aren't back-filled; the register is public (names and code keys only).
+- **Out of scope:** renaming anything visible; any Atlas or kit change (Q31, Q35, the kit); the parts kit's part names.
+- **Version:** the next minor version.
+- **Needs:** none beyond `main` at 3.49 or later.
+- **Next action:** after Ivan separately says Build for Q36, implement only this scope in a fresh chat from its handoff.
+- **Done when:** every screen and sheet the Atlas finds has its ID on screen and in the register; the label shows the right ID on every screen in light and dark; the five flows are listed; the saved-data list covers every key; the new tests and the full suite pass.
 
 ## Q35 · Atlas: Starting States
 
@@ -129,7 +153,7 @@ Vocal Sessions' Atlas settings only (`tools/atlas/`, outside the kit copy). Tool
   - Each still opens through its real buttons from its starting state, with a full reset before every tap; a state that doesn't open is "Failed", never a capture.
 - **Default if unanswered:** Q35 also fills in Vocal Sessions' settings for kit 1.0's additions: a one-line caption per screen; the focused session (Foundation to Session saved) and song practice as the first flows; hand-written doors for swipes, holds, timed sheets and file pickers.
 - **Out of scope:** any app change; any change to the kit copy; screens that need a real file chosen by hand (import, export, restore) beyond listing them as hand-written doors.
-- **Needs:** Q31 live (and so Atlas kit 1.0 with additions 9–13).
+- **Needs:** Q31 live (and so Atlas kit 1.0 with additions 9–14), and Q36 live (screen IDs; added at Q36's Render, 3 Nov 2026, 08:00). Its flows, captions and doors use Q36's IDs.
 - **Next action:** after Ivan separately says Build for Q35, check Q31 is on `main`, then implement only this scope in a fresh chat from its handoff.
 - **Done when:** each screen above is captured or honestly "Failed"; the found-in-code-only count drops by those screens; the two flows step through in the viewer; the Atlas tests pass; the app's full suite still passes.
 
