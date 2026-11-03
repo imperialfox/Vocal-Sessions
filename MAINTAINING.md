@@ -36,7 +36,7 @@ Notes for whoever works on the app next, whether that's Ivan, a new Claude sessi
 | `.nojekyll` | Tells GitHub Pages to serve files exactly as they are, so `CHANGELOG.md` reaches the app as plain text |
 | `tests/` | The test suite (see below) |
 | `tools/release.py` | Sets the version number everywhere at once |
-| `tools/atlas/` | The Visual App Atlas (Q30): every screen as saved screenshots, side by side (see below). Its scans stay out of git |
+| `tools/atlas/` | The Visual App Atlas (Q30, on the Atlas kit since Q31): every screen as saved screenshots, the map, notes and changes (see below). Its scans and notes stay out of git |
 | `.github/workflows/tests.yml` | Runs the tests on GitHub after every push |
 
 ### The code, in load order
@@ -691,6 +691,7 @@ Running side by side, each layout size and each random-tap seed is its own job, 
 - **Dates:** tests run with `TZ=Europe/London` and real dates. A test that backdates something, or needs earlier days of this month, can fail on the 1st or just after midnight (3.34's run at 00:14 on 1 Nov: the calendar's song practice dot, and `test_zoom`'s calendar day). Fixed in 3.35 (Q18): those checks go to the right month first. Do the same in new date checks.
 - **Fixed waits on GitHub:** `test_safety` › "a take still waiting is saved when the app comes back to the screen" (GitHub, 31 Oct) read the takes list before the app had read it back, and `test_batch12` › "Rename opens the take with its name field" (GitHub, 3.24 and 3.35) and "Delete removes it" (under load) clicked a hold menu's button too soon. The app ignores any click within 400 ms of letting go of a hold, so the release can't tap the menu it opened, and the tests let go, waited a fixed 250 ms and clicked: about 500 ms in all on Claude's workspace, less on GitHub's quicker runner, so the click was sometimes ignored. Since 3.35.1 `let_go()` waits until 500 ms have passed on the page's own clock before the next tap, as a finger moving to the menu would; the takes check waits for its condition (3.35). The two `test_batch12` checks that failed only under load in 3.30's full run weren't named in the record and didn't come back in Q18's full runs.
 - `test_batch12` › "while playing, a comment pops up above the waveform as the playhead passes it" (and, after it, "jumping past a comment…" and "tapping a dot…") failed 3 times in 8 when eight copies of the takes part ran at once on a 2-processor machine (1 Nov 2026, twice the default load): the take hadn't reached 1 s within 10 s of pressing play. Never seen under the default `VS_JOBS` or on GitHub. Since 3.35.1 a miss fails that check instead of stopping the whole part. Not known whether the machine or the app is slow to start playback; if it shows on GitHub, look at how the take starts playing.
+- `test_patterns` › "press and hold a tile: its steps fade into what it trains" failed once in Q31's full local run (3 Nov 2026, Claude's 2-processor workspace, every part at once) and passed when run again on its own. Q31 changed no app code. If it shows again, look at what the check waits for after the hold.
 - **Playwright's own browser:** Claude's workspace can't download Chromium for Playwright 1.56, so local runs there use 1.56 driving the workspace's newer Chromium (`PLAYWRIGHT_BROWSERS_PATH` pointing at a folder laid out as 1.56 expects). GitHub uses 1.56's own Chromium.
 - `test_native` › "dark exercises: back at the top, the edge goes" failed once in a full side-by-side run while building Q04 (31 Oct 2026, a newer local Chromium), and passed when the file ran on its own and on 3.31. Timing under load; if GitHub shows it, fix it with a wait for the condition rather than re-running.
 - `test_zoom` › "catching a page mid-open: its shadow matches the part-open page" and `test_search` › recents (a click timing out) each failed once in a full side-by-side run on a 2-processor machine while building Q23 (31 Oct 2026, a newer local Chromium), and both passed when their files ran on their own. Timing under load, as above.
@@ -718,23 +719,26 @@ Tests reach into the app through its globals (`D`, `X`, `U`, `render`…), so th
 
 ## Visual App Atlas (Q30)
 
-A developer tool that shows every screen and sheet as saved screenshots, side by side, with where each button goes. It scans the app with the tests' sample data (never real data), changes nothing in the app and has no app version. How it works, its rules and its files: [tools/atlas/README.md](tools/atlas/README.md).
+A developer tool that shows every screen and sheet as saved screenshots, with where each button goes, a map of how they link, notes on any part of a screen that Claude can read, an export for Claude and what changed since the last scan; easy to use on a phone too. It scans the app with the tests' sample data (never real data), changes nothing in the app and has no app version. Since Q31 it runs on the **Atlas kit** (`imperialfox/atlas-kit`, one Atlas for any app): `tools/atlas/` holds Vocal Sessions' settings (`screens.py`) and a pinned, unmodified copy of the kit in `tools/atlas/kit/` (its version is noted in `tools/atlas/README.md`). How it works, its rules and its files: [tools/atlas/README.md](tools/atlas/README.md).
 
 **On the Mac, one command** (from the repo folder, with the tests' Playwright installed):
 
 ```
 python3 tools/atlas/atlas.py           # scan (about 5–10 minutes), then open the Atlas in the browser
 python3 tools/atlas/atlas.py --view    # open the last scan again
-python3 tools/atlas/test_atlas.py      # the Atlas's own tests (about 2 minutes; not part of tests/run.py)
+python3 tools/atlas/test_atlas.py      # the Atlas's own tests (about a minute; not part of tests/run.py)
 ```
 
-**From a Claude chat:** say "rescan the Atlas". Claude runs the scan and updates the private Atlas page on claude.ai.
+**From a Claude chat:** say "rescan the Atlas". Claude runs the scan and updates the private Atlas page on claude.ai. Say "check my notes" and Claude reads the notes left on that page (and on any prototype listed there), in note format v1.
 
-- **Scans stay out of git.** They go in `tools/atlas/data/scans/<date-time>/`, which is git-ignored: the repo is public and GitHub Pages serves everything in it. Every scan is kept, so the next one can be compared with it.
-- **The screen list comes from the code** (`tools/atlas/inventory.py`): `render()`, `renderSheet()` and the functions it hands sheets to, Settings' `TITLE` pages, and every `U.tab`, `U.view` and `U.sheet` set anywhere. A new screen shows up by itself, as "Not captured yet" until a button the scan taps opens it, and a removed one as "Gone from the code".
+- **Scans and notes stay out of git.** Scans go in `tools/atlas/data/scans/<date-time>/`, which is git-ignored: the repo is public and GitHub Pages serves everything in it. Every scan is kept, so the next one can be compared with it. Notes live only on the private Atlas page; "Copy as queue ideas" turns chosen notes into text for RENDER_QUEUE.md › Not scheduled.
+- **Never edit `tools/atlas/kit/`.** Change the kit in its own repo, release it, then copy the release in (`tools/atlas/README.md` › Files says how); `test_atlas.py` fails if the copy differs from `kit.sha256`.
+- **Screens are read once they've settled** (`where()` in `screens.py`): animations finished, loops held, an open sheet steady for three frames. If a rescan of an unchanged app calls a screen "looks different", something on it is still moving when it's read: look there first.
+- **Screens are keyed by their screen IDs** (`js/register.js`, Q36), read off each screen, so notes and the map layout stay put through renames. A screen with no register entry shows as "No ID yet · suggested VS-0xx" (add it to the register in an app build).
+- **The screen list comes from the code** (`inventory()` in `tools/atlas/screens.py`): `render()`, `renderSheet()` and the functions it hands sheets to, Settings' `TITLE` pages, and every `U.tab`, `U.view` and `U.sheet` set anywhere. A new screen shows up by itself, as "Not captured yet" until a button the scan taps opens it, and a removed one as gone from the code.
 - **When you add a screen:** if the scan can't reach it by tapping (it needs set-up the sample data doesn't have), add a starting screen to `ROOTS` in `tools/atlas/screens.py`, opened through real buttons. Add its doc sections to `KEY_DOCS` there; `test_atlas.py` fails if a section it names is renamed or removed.
 - **When you rename a doc section** the Atlas links to ("Explained in"), update `screens.py` too.
-- **Buttons the scan never taps** (microphone, files, sharing, replacing or deleting data) are listed in `SKIP` in `screens.py`, each with the reason the Atlas shows.
+- **Buttons the scan never taps** (microphone, files, sharing, replacing or deleting data) are listed in `SKIP` in `screens.py`, each with the reason the Atlas shows. The kit checks each button's action, value and label against them.
 
 ---
 

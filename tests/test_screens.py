@@ -8,7 +8,8 @@ from test_guide import song, mark_side, hold
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, 'tools', 'atlas'))
-import inventory as INV  # the Atlas's reading of the code (Q30): every screen the code can show
+import screens as INV  # the Atlas's settings (Q31; Q30's inventory.py before): inventory() reads every screen the code can show
+from atlas_kit import docs as ATLAS_DOCS  # the Atlas kit's reading of the docs (tools/atlas/kit, on the path through screens.py)
 
 PART_RE = re.compile(r'^[a-z0-9]+(-[a-z0-9]+)*$')
 KINDS = {'Tab', 'Screen', 'Sub-page', 'Sheet', 'Overlay'}
@@ -103,7 +104,7 @@ def register(b, t):
                 if not re.search(r'id=\\?"' + i + r'\\?"|\.id = \'' + i + "'", allsrc) and i not in ('dock', 'barL', 'app'): nopart.append(s['id'] + ' › ' + p['name'])
     ok(not nopart, f'every named part’s button is still in the code ({nopart})')
     # docs links point at real headings
-    secs = {s['file'] + '#' + s['anchor'] for s in INV.doc_sections(ROOT)}
+    secs = {s['file'] + '#' + s['anchor'] for s in ATLAS_DOCS.doc_sections(ROOT, INV.DOC_FILES)}
     nodoc = [s['id'] + ' ' + s['docs'] for s in S if s['docs'] not in secs]
     ok(not nodoc, f'every docs link points at a real heading in README.md or MAINTAINING.md ({nodoc})')
     pg.context.close()
