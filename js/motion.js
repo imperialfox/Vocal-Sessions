@@ -20,6 +20,9 @@ const MOTION = (() => {
     press: { z: 0.75, f: 4 },
     release: { z: 0.55, f: 3.6 },
   };
+  // Q40 the named easings, the same three as app.css's --ease-pop, --ease-knob and --ease-out (test_values checks
+  // they match): for code that needs a fixed-length move rather than a spring
+  const EASE = { pop: 'cubic-bezier(.3,1.7,.45,1)', knob: 'cubic-bezier(.3,1.35,.5,1)', out: 'cubic-bezier(.2,.8,.2,1)' };
   const STAGGER = { word: 30, row: 45, bar: 30 };
   const BLUR_MAX = 1.5; // px. Ivan chose 1.5 over 2 so far lyrics stay recognisable
   const KEY = 'vocalMotion';
@@ -99,7 +102,7 @@ const MOTION = (() => {
     return el.animate(frames, {
       duration: o.ms ? o.ms * speed : dur(name),
       delay: (o.delay || 0) * speed,
-      easing: o.ms ? o.easing || 'cubic-bezier(.2,.8,.2,1)' : ease(name),
+      easing: o.ms ? o.easing || EASE.out : ease(name),
       fill: o.fill || 'none',
     });
   }
@@ -158,6 +161,7 @@ const MOTION = (() => {
 
   return {
     SPRINGS,
+    EASE,
     STAGGER,
     BLUR_MAX,
     curve,

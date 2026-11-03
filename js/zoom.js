@@ -246,7 +246,7 @@ const ZOOM = (() => {
       a = el.animate(
         [{ [prop]: from }, { [prop]: val }],
         t.ms != null
-          ? { duration: t.ms * sp, delay: (t.delay || 0) * sp, easing: t.easing || 'cubic-bezier(.2,.8,.2,1)', fill: 'backwards' }
+          ? { duration: t.ms * sp, delay: (t.delay || 0) * sp, easing: t.easing || MOTION.EASE.out, fill: 'backwards' }
           : { duration: MOTION.dur(t.spring || 'nav'), delay: (t.delay || 0) * sp, easing: MOTION.ease(t.spring || 'nav'), fill: 'backwards' }
       );
     a.zp = prop;

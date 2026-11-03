@@ -9,6 +9,24 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.51 · 3 Nov 2026
+*One set of corners, presses and motion (Q40)*
+<!-- area: look -->
+
+The app now has one named set of corner sizes, button presses and motion timings, and a check that stops new one-off values creeping in, so it keeps feeling like one app as it grows.
+
+**What you'll notice**
+- The pattern player's speed bar and its pull-up menu (sound, voice type) use the same glass as the pills beside them, a little lighter than before.
+- Solid buttons all press the same amount now: the Song Clock pill and the tiles in Song controls, a song row's play button, the track player's pads, the pattern player's play, repeat and pills, and the session's nudge. Some pressed a little deeper or shallower before.
+
+<!-- area: fixes -->
+**Behind the scenes**
+- Every corner, press, curve and fade timing that already matched the new set now uses its name. Nothing else changes how it looks.
+- The values that don't match yet stay as they are, on a list in the tests that can only get shorter. They move onto the set as their parts move onto the parts kit.
+- A new test fails if a new one-off corner, press, curve or timing is added anywhere, in the stylesheet or the code.
+
+Screens: VS-002, VS-008, VS-009, VS-010, VS-014, VS-016, VS-050
+
 ## 3.50 · 3 Nov 2026
 *Every screen has its own ID (Q36)*
 <!-- area: look -->

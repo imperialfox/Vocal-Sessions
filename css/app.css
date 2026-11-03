@@ -106,6 +106,25 @@
   --t-num-s: 44px;
   --t-num-m: 56px;
   --t-num-l: 68px;
+  /* Q40 the value set: one named set of corners, press and motion, beside the text sizes. tests/test_values.py fails
+     on any other value that isn't on its known list, and that list only shrinks (MAINTAINING.md › Value set (Q40)).
+     Corners: graphic bits of 6 px and under (bars, ticks, meters, waveform parts) follow the drawing; capsules stay
+     999px and circles 50% */
+  --r-small: 10px; /* icon tiles, badges, small inner boxes, the focus ring */
+  --r-medium: 14px; /* fields, banners, inner boxes, menus */
+  --r-card: 20px; /* cards and grouped lists */
+  --r-large: 26px; /* big blocks, pads, the iPad hero */
+  --r-sheet: 34px; /* sheets and the session clock */
+  /* the solid button press (glass buttons grow instead: PRESS in gestures.js, Q33) */
+  --press: 0.93;
+  /* easings the app really uses, beside MOTION's springs (--ease-gentle, -nav, -ripple, -press, -release, published by
+     js/motion.js); code reads the same three as MOTION.EASE */
+  --ease-pop: cubic-bezier(0.3, 1.7, 0.45, 1); /* the solid press settle */
+  --ease-knob: cubic-bezier(0.3, 1.35, 0.5, 1); /* the segmented knob's settle */
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1); /* one settle without a bounce */
+  /* fades and colour changes */
+  --dur-quick: 120ms;
+  --dur-fade: 200ms;
   --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', system-ui, sans-serif;
   /* 3.23 (Q08) the safe areas as variables, so the bars can be placed from them (and tests can stand in an iPhone's) */
   --sat: env(safe-area-inset-top, 0px);
@@ -251,7 +270,7 @@ input:focus-visible,
 textarea:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
-  border-radius: 10px;
+  border-radius: var(--r-small);
 }
 /* Q10 selected text is a light wash of the app's blue, with a blue caret, in the lyrics editor and text fields
    (selection stays off elsewhere) */
@@ -413,7 +432,7 @@ body.sheet-open .wrap {
   font-size: var(--t-body);
   font-weight: 600;
   opacity: 0;
-  transition: opacity 0.2s;
+  transition: opacity var(--dur-fade);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -666,7 +685,7 @@ h1 {
 }
 .tl-card {
   background: var(--surface);
-  border-radius: 20px;
+  border-radius: var(--r-card);
   padding: 14px 16px 6px;
   transition: box-shadow 0.4s;
 }
@@ -837,7 +856,7 @@ h1 {
   transform: none;
   transition:
     opacity 0.5s ease,
-    transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+    transform 0.6s var(--ease-out);
 }
 html.motion-reduced .tl-in {
   opacity: 1;
@@ -956,7 +975,7 @@ html.motion-reduced .tl-item.now .tl-node::after {
 }
 .grp {
   background: var(--surface);
-  border-radius: 20px;
+  border-radius: var(--r-card);
   overflow: hidden;
 }
 .row {
@@ -1036,7 +1055,7 @@ html.motion-reduced .tl-item.now .tl-node::after {
   font-weight: 500;
   color: var(--fg2);
   text-align: center;
-  transition: color 0.2s;
+  transition: color var(--dur-fade);
 }
 .seg button.on {
   color: var(--fg);
@@ -1057,15 +1076,15 @@ html.motion-reduced .tl-item.now .tl-node::after {
     inset 0 0 10px var(--glass-glow),
     0 3px 12px var(--glass-shadow);
   transition:
-    transform 0.45s cubic-bezier(0.3, 1.35, 0.5, 1),
+    transform 0.45s var(--ease-knob),
     width 0.3s,
-    opacity 0.2s;
+    opacity var(--dur-fade);
 }
 .knob.set {
   opacity: 1;
 }
 .knob.squish {
-  animation: squish 0.45s cubic-bezier(0.3, 1.35, 0.5, 1);
+  animation: squish 0.45s var(--ease-knob);
 }
 @keyframes squish {
   0% {
@@ -1120,11 +1139,11 @@ html.motion-reduced .tl-item.now .tl-node::after {
   text-align: center;
   cursor: pointer;
   border-radius: 24px;
-  transition: transform 0.5s cubic-bezier(0.3, 1.7, 0.45, 1);
+  transition: transform 0.5s var(--ease-pop);
 }
 .arch:active {
   transform: scale(0.96);
-  transition-duration: 0.12s;
+  transition-duration: var(--dur-quick);
 }
 .arch:focus-visible {
   outline: 2px solid var(--accent);
@@ -1283,7 +1302,7 @@ html.motion-reduced .tl-item.now .tl-node::after {
 .tabbar button,
 .calbtn,
 .cal button {
-  transition: transform 0.5s cubic-bezier(0.3, 1.7, 0.45, 1);
+  transition: transform 0.5s var(--ease-pop);
 }
 /* Q33: glass buttons grow and buttons on a glass bar light up instead (PRESS in gestures.js); solid ones still shrink */
 .cta:not(.glass):active,
@@ -1291,8 +1310,8 @@ html.motion-reduced .tl-item.now .tl-node::after {
 .chip:active,
 .calbtn:active,
 .cal button:active {
-  transform: scale(0.93);
-  transition-duration: 0.12s;
+  transform: scale(var(--press));
+  transition-duration: var(--dur-quick);
 }
 /* Q33 the press's light-up: a white layer under the icon while PRESS animates --lift (registered in gestures.js) */
 .pressing {
@@ -1300,7 +1319,7 @@ html.motion-reduced .tl-item.now .tl-node::after {
 }
 .row:active {
   transform: scale(0.98);
-  transition-duration: 0.12s;
+  transition-duration: var(--dur-quick);
 }
 .ghost {
   display: block;
@@ -1358,10 +1377,10 @@ main {
   text-align: center;
   overflow: hidden;
   transition:
-    transform 0.5s cubic-bezier(0.3, 1.7, 0.45, 1),
+    transform 0.5s var(--ease-pop),
     max-width 0.45s cubic-bezier(0.3, 1.25, 0.5, 1),
     opacity 0.25s,
-    background 0.2s,
+    background var(--dur-fade),
     height 0.35s;
 }
 .tabbar button.on {
@@ -1468,7 +1487,7 @@ main {
 .tile {
   width: 34px;
   height: 34px;
-  border-radius: 10px;
+  border-radius: var(--r-small);
   display: grid;
   place-items: center;
   color: #fff;
@@ -1565,7 +1584,7 @@ main {
   gap: 4px 0;
   text-align: center;
   background: var(--surface);
-  border-radius: 20px;
+  border-radius: var(--r-card);
   padding: 12px 8px;
 }
 .cal .h {
@@ -1648,7 +1667,7 @@ main {
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  animation: fade 0.2s;
+  animation: fade var(--dur-fade);
 }
 /* Q33 sheets keep their strength (near-solid, for reading) and their blur; they take only the new rim and shadow, and
    dark mode's gentler saturation. The session clock is a sheet too */
@@ -1664,7 +1683,7 @@ main {
   overflow-y: auto;
   overscroll-behavior: contain;
   margin: 0 8px calc(8px + env(safe-area-inset-bottom, 0px));
-  border-radius: 34px;
+  border-radius: var(--r-sheet);
   padding: 10px 16px 16px;
   background: var(--glass-strong);
   animation: up 0.55s cubic-bezier(0.28, 1.35, 0.45, 1);
@@ -1691,7 +1710,7 @@ main {
 .field {
   width: 100%;
   min-height: 48px;
-  border-radius: 14px;
+  border-radius: var(--r-medium);
   background: var(--surface);
   border: 0;
   padding: 12px 14px;
@@ -1838,7 +1857,7 @@ main::after {
   place-items: center;
   background: var(--fill);
   color: var(--accent);
-  transition: transform 0.5s cubic-bezier(0.3, 1.7, 0.45, 1);
+  transition: transform 0.5s var(--ease-pop);
 }
 .fw .fwbtn svg.i {
   width: 22px;
@@ -1938,7 +1957,7 @@ main::after {
   border-radius: 50%;
   background: var(--rec);
   display: inline-block;
-  transition: border-radius 0.2s;
+  transition: border-radius var(--dur-fade);
 }
 .recbtn.on .dot {
   border-radius: 3px;
@@ -1983,11 +2002,11 @@ main::after {
   font-size: var(--t-subhead);
   margin: 12px 0 0;
   text-align: left;
-  transition: transform 0.5s cubic-bezier(0.3, 1.7, 0.45, 1);
+  transition: transform 0.5s var(--ease-pop);
 }
 .nudge:active {
-  transform: scale(0.97);
-  transition-duration: 0.12s;
+  transform: scale(var(--press));
+  transition-duration: var(--dur-quick);
 }
 .nudge b {
   font-weight: 600;
@@ -2083,11 +2102,11 @@ main::after {
   display: grid;
   place-items: center;
   color: var(--fg);
-  transition: transform 0.5s cubic-bezier(0.3, 1.7, 0.45, 1);
+  transition: transform 0.5s var(--ease-pop);
 }
 .shbtn:not(.glass):active {
-  transform: scale(0.93);
-  transition-duration: 0.12s;
+  transform: scale(var(--press));
+  transition-duration: var(--dur-quick);
 }
 .shbtn.ok {
   background: var(--fg);
@@ -2160,7 +2179,7 @@ button.pill {
   width: min(380px, calc(100vw - 24px));
   max-height: calc(100dvh - 18px - var(--sat, 0px) - var(--sab, 0px));
   overflow-y: auto;
-  border-radius: 34px;
+  border-radius: var(--r-sheet);
   background: var(--glass-strong);
   font-variant-numeric: tabular-nums;
   will-change: transform;
@@ -2385,7 +2404,7 @@ html.motion-off .sck.paused .scksl {
   width: 28px;
   height: 28px;
   opacity: 0;
-  transition: opacity 0.2s;
+  transition: opacity var(--dur-fade);
 }
 .spin i {
   position: absolute;
@@ -2497,7 +2516,7 @@ body.reg .bar.tabsmode::after {
   font-size: var(--t-subhead);
   font-weight: 500;
   color: var(--fg);
-  transition: background 0.2s;
+  transition: background var(--dur-fade);
 }
 .toptabs button.on {
   background: var(--fill);
@@ -2517,7 +2536,7 @@ body.reg .dash {
 body.reg .d-hero,
 body.reg .d-week {
   background: var(--surface);
-  border-radius: 26px;
+  border-radius: var(--r-large);
   padding: 22px 22px 24px;
 }
 body.reg .d-hero .arch {
@@ -2605,7 +2624,7 @@ body.wide .side-nav {
   bottom: 10px;
   width: 250px;
   padding: 16px 10px;
-  border-radius: 26px;
+  border-radius: var(--r-large);
 }
 .sbt {
   font-size: var(--t-footnote);
@@ -2665,7 +2684,7 @@ body.wide .side-nav {
   /* Q33: follows its sheet (dark mode's saturation is gentler) */
   -webkit-backdrop-filter: blur(20px) saturate(var(--shead-sat));
   backdrop-filter: blur(20px) saturate(var(--shead-sat));
-  border-radius: 34px 34px 0 0;
+  border-radius: var(--r-sheet) var(--r-sheet) 0 0;
   touch-action: none;
 }
 .shead .grab {
@@ -2742,7 +2761,7 @@ body.reg .shead {
   margin: -56px 0 0 -56px;
   width: 112px;
   height: 112px;
-  border-radius: 26px;
+  border-radius: var(--r-large);
   overflow: hidden;
   box-shadow: 0 10px 30px rgba(226, 36, 64, 0.28);
   transition: transform 0.45s cubic-bezier(0.3, 0.9, 0.4, 1);
@@ -2881,7 +2900,7 @@ body.reg .shead {
   font-family: var(--font);
 }
 .pchart .bar {
-  transition: opacity 0.2s;
+  transition: opacity var(--dur-fade);
 }
 .pchart.picked .bar {
   opacity: 0.3;
@@ -3006,7 +3025,7 @@ html.motion-reduced *,
 html.motion-reduced *::before,
 html.motion-reduced *::after {
   transition-property: opacity, color, background-color, border-color, box-shadow, fill, stroke !important;
-  transition-duration: 0.2s !important;
+  transition-duration: var(--dur-fade) !important;
   transition-delay: 0s !important;
   transition-timing-function: ease-out !important;
 }
@@ -3036,11 +3055,11 @@ html.motion-reduced *::after {
   white-space: nowrap;
   color: var(--fg);
   flex-shrink: 0;
-  transition: transform 0.5s cubic-bezier(0.3, 1.7, 0.45, 1);
+  transition: transform 0.5s var(--ease-pop);
 }
 .txtbtn:not(.glass):active {
-  transform: scale(0.93);
-  transition-duration: 0.12s;
+  transform: scale(var(--press));
+  transition-duration: var(--dur-quick);
 }
 .txtbtn.tinted {
   color: #fff;
@@ -3135,7 +3154,7 @@ body.land .dockrow .tabbar button svg {
   inset: 5px;
   border-radius: 50%;
   background: transparent;
-  transition: background 0.2s;
+  transition: background var(--dur-fade);
 }
 .scirc svg.i {
   position: relative;
@@ -3157,7 +3176,7 @@ body.land .dockrow .tabbar button svg {
   display: grid;
   place-items: center;
   color: var(--fg);
-  transition: background 0.2s;
+  transition: background var(--dur-fade);
 }
 .toptabs .tsr svg.i {
   width: 19px;
@@ -3336,7 +3355,7 @@ body.land .sgbar {
   -webkit-touch-callout: none;
   transition:
     transform 0.35s cubic-bezier(0.3, 1.2, 0.5, 1),
-    box-shadow 0.2s;
+    box-shadow var(--dur-fade);
 }
 .rowc.drag {
   transition: none;
@@ -3654,14 +3673,14 @@ body.wide .etool {
 .sgbanner {
   background: var(--accent-wash);
   color: var(--accent);
-  border-radius: 14px;
+  border-radius: var(--r-medium);
   padding: 10px 14px;
   font-size: var(--t-subhead);
   margin: 8px 0 0;
 }
 .sgsec {
   background: var(--surface);
-  border-radius: 20px;
+  border-radius: var(--r-card);
   padding: 12px 16px 14px;
   margin-top: 12px;
 }
@@ -3848,7 +3867,7 @@ body.wide .etool {
   right: -2px;
   min-width: 20px;
   height: 20px;
-  border-radius: 10px;
+  border-radius: var(--r-small);
   background: var(--star);
   color: #fff;
   font-size: var(--t-caption1);
@@ -3861,7 +3880,7 @@ body.wide .etool {
 /* editing lyrics */
 .lyred {
   background: var(--bg);
-  border-radius: 14px;
+  border-radius: var(--r-medium);
   padding: 10px 12px;
   font-size: var(--t-body);
   line-height: 1.6;
@@ -3917,7 +3936,7 @@ body.wide .etool {
 }
 .crow {
   background: var(--surface);
-  border-radius: 14px;
+  border-radius: var(--r-medium);
   padding: 12px 14px;
   display: flex;
   align-items: center;
@@ -4082,8 +4101,8 @@ textarea.field.sglyr {
 .sgsec.tap {
   cursor: pointer;
   transition:
-    box-shadow 0.2s,
-    background 0.2s;
+    box-shadow var(--dur-fade),
+    background var(--dur-fade);
 }
 .sgsec:focus-visible {
   outline: 2px solid var(--accent);
@@ -4189,7 +4208,7 @@ textarea.field.sglyr {
 /* the takes for a section */
 .newtake {
   background: var(--surface);
-  border-radius: 20px;
+  border-radius: var(--r-card);
   padding: 14px;
   display: flex;
   align-items: center;
@@ -4413,7 +4432,7 @@ textarea.field.sglyr {
    or motion off, --dur-gentle is 0 and there's no blur. The lyrics editor keeps its cards. */
 .sgsong .sgsec {
   background: transparent;
-  border-radius: 14px;
+  border-radius: var(--r-medium);
   padding: 10px 12px 12px;
   margin-top: 12px;
   box-shadow: none;
@@ -4690,7 +4709,7 @@ textarea.field.sglyr {
   border-radius: 50%;
   background: #fff;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
-  transition: transform 0.2s;
+  transition: transform var(--dur-fade);
 }
 .cvscrub.drag .cvthumb2 {
   transform: scale(1.2);
@@ -4722,11 +4741,11 @@ textarea.field.sglyr {
   place-items: center;
   background: var(--fg);
   color: var(--bg);
-  transition: transform 0.5s cubic-bezier(0.3, 1.7, 0.45, 1);
+  transition: transform 0.5s var(--ease-pop);
 }
 .cvpp:active {
-  transform: scale(0.93);
-  transition-duration: 0.12s;
+  transform: scale(var(--press));
+  transition-duration: var(--dur-quick);
 }
 .cvpp svg.i {
   width: 26px;
@@ -4757,11 +4776,11 @@ textarea.field.sglyr {
   font-weight: 500;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
-  transition: transform 0.5s cubic-bezier(0.3, 1.7, 0.45, 1);
+  transition: transform 0.5s var(--ease-pop);
 }
 .cvpill:active {
-  transform: scale(0.93);
-  transition-duration: 0.12s;
+  transform: scale(var(--press));
+  transition-duration: var(--dur-quick);
 }
 .cvpill svg.i {
   width: 16px;
@@ -4819,7 +4838,7 @@ textarea.field.sglyr {
   height: 99px;
   min-height: 0;
   padding: 0;
-  border-radius: 14px;
+  border-radius: var(--r-medium);
   background: #000;
 }
 .fw[data-kind='video'][data-size='m'] {
@@ -5144,7 +5163,7 @@ textarea.field.sglyr {
   place-items: center;
   background: var(--fill);
   color: var(--fg2);
-  transition: transform 0.5s cubic-bezier(0.3, 1.7, 0.45, 1);
+  transition: transform 0.5s var(--ease-pop);
 }
 .ckpi::after {
   content: '';
@@ -5152,8 +5171,8 @@ textarea.field.sglyr {
   inset: -6px;
 }
 .ckpi:active {
-  transform: scale(0.9);
-  transition-duration: 0.12s;
+  transform: scale(var(--press));
+  transition-duration: var(--dur-quick);
 }
 .ckpi svg.i {
   width: 18px;
@@ -5170,7 +5189,7 @@ textarea.field.sglyr {
   color: var(--fg);
   background: var(--bg3); /* Q10: a box inside a card is the darker grey, with no outline */
   border: 0;
-  border-radius: 10px;
+  border-radius: var(--r-small);
   padding: 4px 8px;
   min-width: 0;
   font-size: var(--t-body);
@@ -5233,17 +5252,17 @@ textarea.field.sglyr {
   background: var(--fill);
   color: var(--fg2);
   transition:
-    transform 0.5s cubic-bezier(0.3, 1.7, 0.45, 1),
-    background 0.2s,
-    color 0.2s;
+    transform 0.5s var(--ease-pop),
+    background var(--dur-fade),
+    color var(--dur-fade);
 }
 .ckc svg.i {
   width: 24px;
   height: 24px;
 }
 .cktile:active .ckc {
-  transform: scale(0.9);
-  transition-duration: 0.12s;
+  transform: scale(var(--press));
+  transition-duration: var(--dur-quick);
 }
 .cktile.on .ckc {
   background: var(--accent);
@@ -5346,7 +5365,7 @@ textarea.field.sglyr {
   letter-spacing: -0.01em;
   margin: 0 -10px 26px;
   padding: 0 10px;
-  border-radius: 14px;
+  border-radius: var(--r-medium);
   cursor: pointer;
   transform-origin: left center;
   transition:
@@ -5473,7 +5492,7 @@ html.ckplay body {
 }
 .cknote2 {
   background: var(--hl);
-  border-radius: 14px;
+  border-radius: var(--r-medium);
   padding: 12px 14px;
   font-size: var(--t-subhead);
   margin: 12px 0;
@@ -5768,7 +5787,7 @@ body.reg .trkstrip {
 /* Reduce Motion (and motion off): it still grows, at once, with no transition */
 html.motion-reduced .trkjog,
 html.motion-off .trkjog {
-  transition: background 0.2s;
+  transition: background var(--dur-fade);
 }
 /* Q02 Bottom: a full-width roller under the strip; drag right for later */
 .trkroll {
@@ -5812,7 +5831,7 @@ body.reg .trkroll {
 .trkctx {
   margin-top: 14px;
   padding: 8px 14px;
-  border-radius: 14px;
+  border-radius: var(--r-medium);
   background: var(--surface);
 }
 .trkcl {
@@ -5947,7 +5966,7 @@ body.reg .trkroll {
   border-radius: 18px;
   background: var(--surface);
   box-shadow: inset 0 0 0 2px transparent;
-  transition: box-shadow 0.2s;
+  transition: box-shadow var(--dur-fade);
   -webkit-touch-callout: none;
   user-select: none;
   -webkit-user-select: none;
@@ -5982,7 +6001,7 @@ body.reg .trkroll {
   background: var(--trk-mk-wash);
   color: var(--trk-mkfg);
   font-size: var(--t-footnote);
-  transition: background 0.2s;
+  transition: background var(--dur-fade);
 }
 .trktn {
   max-width: 100%;
@@ -6168,9 +6187,9 @@ body.reg .trkroll {
   background: var(--fill);
   color: var(--fg);
   transition:
-    transform 0.5s cubic-bezier(0.3, 1.7, 0.45, 1),
-    background 0.2s,
-    color 0.2s;
+    transform 0.5s var(--ease-pop),
+    background var(--dur-fade),
+    color var(--dur-fade);
 }
 .trkb svg.i {
   width: 20px;
@@ -6188,7 +6207,7 @@ body.reg .trkroll {
   place-items: center;
   background: var(--fg);
   color: var(--bg);
-  transition: transform 0.5s cubic-bezier(0.3, 1.7, 0.45, 1);
+  transition: transform 0.5s var(--ease-pop);
 }
 .trkpp svg.i {
   width: 24px;
@@ -6231,9 +6250,9 @@ body.reg .trkroll {
   font-size: var(--t-subhead);
   font-weight: 500;
   transition:
-    transform 0.5s cubic-bezier(0.3, 1.7, 0.45, 1),
-    background 0.2s,
-    color 0.2s;
+    transform 0.5s var(--ease-pop),
+    background var(--dur-fade),
+    color var(--dur-fade);
 }
 .trkpill svg.i {
   width: 19px;
@@ -6260,7 +6279,7 @@ body.reg .trkroll {
   display: grid;
   place-items: center;
   color: var(--fg);
-  transition: transform 0.5s cubic-bezier(0.3, 1.7, 0.45, 1);
+  transition: transform 0.5s var(--ease-pop);
 }
 .trkpad svg.i {
   width: 26px;
@@ -6283,8 +6302,8 @@ body.reg .trkroll {
 }
 .trkpad:not(.glass):active,
 .trkpill:not(.glass):active {
-  transform: scale(0.94);
-  transition-duration: 0.12s;
+  transform: scale(var(--press));
+  transition-duration: var(--dur-quick);
 }
 /* the page clears the taller dock */
 body:has(#dock .trkmd) main {
@@ -6340,7 +6359,7 @@ body:has(#dock .trkmd) main {
   place-items: center;
   background: var(--fill);
   color: var(--accent);
-  transition: transform 0.5s cubic-bezier(0.3, 1.7, 0.45, 1);
+  transition: transform 0.5s var(--ease-pop);
 }
 .sgplay svg.i {
   width: 16px;
@@ -6359,8 +6378,8 @@ body:has(#dock .trkmd) main {
   opacity: 0.7;
 }
 .sgplay:active {
-  transform: scale(0.9);
-  transition-duration: 0.12s;
+  transform: scale(var(--press));
+  transition-duration: var(--dur-quick);
 }
 .row.sgtprow {
   cursor: pointer;
@@ -6372,7 +6391,7 @@ body:has(#dock .trkmd) main {
 .sgdrop {
   width: 100%;
   min-height: 150px;
-  border-radius: 20px;
+  border-radius: var(--r-card);
   border: 1.5px dashed var(--sep);
   background: var(--surface);
   display: flex;
@@ -6496,15 +6515,15 @@ button.lnk.off {
   font-size: var(--t-subhead);
   font-weight: 500;
   white-space: nowrap;
-  transition: transform 0.5s cubic-bezier(0.3, 1.7, 0.45, 1);
+  transition: transform 0.5s var(--ease-pop);
 }
 .sgtkb svg.i {
   width: 16px;
   height: 16px;
 }
 .sgtkb:active {
-  transform: scale(0.93);
-  transition-duration: 0.12s;
+  transform: scale(var(--press));
+  transition-duration: var(--dur-quick);
 }
 .sgph .sgtkb {
   margin-left: auto;
@@ -6698,7 +6717,7 @@ button.lnk.off {
   height: 38px;
   padding: 0 10px;
   border: 0;
-  border-radius: 10px;
+  border-radius: var(--r-small);
   background: var(--fill);
   font-size: var(--t-callout);
   outline: none;
@@ -6750,7 +6769,7 @@ button.lnk.off {
   overflow: hidden;
   text-overflow: ellipsis;
   opacity: 0;
-  transition: opacity 0.2s;
+  transition: opacity var(--dur-fade);
 }
 .tkpop.on {
   opacity: 1;
@@ -6825,7 +6844,7 @@ button.lnk.off {
   place-items: center;
   background: var(--fg);
   color: var(--bg);
-  transition: transform 0.5s cubic-bezier(0.3, 1.7, 0.45, 1);
+  transition: transform 0.5s var(--ease-pop);
 }
 .tkbig svg.i {
   width: 22px;
@@ -6837,8 +6856,8 @@ button.lnk.off {
 }
 .tkbig:active,
 .tkb:active {
-  transform: scale(0.93);
-  transition-duration: 0.12s;
+  transform: scale(var(--press));
+  transition-duration: var(--dur-quick);
 }
 .tkcf {
   display: flex;
@@ -6846,7 +6865,7 @@ button.lnk.off {
   gap: 6px;
   min-height: 44px;
   padding: 0 4px 0 10px;
-  border-radius: 14px;
+  border-radius: var(--r-medium);
   background: var(--fill);
 }
 .tkstamp {
@@ -6984,7 +7003,7 @@ body.reg .trkmk {
   border-radius: 999px;
   background: var(--fill);
   box-shadow: inset 0 0 0 1.5px transparent;
-  transition: box-shadow 0.2s;
+  transition: box-shadow var(--dur-fade);
   -webkit-touch-callout: none;
   user-select: none;
   -webkit-user-select: none;
@@ -7117,7 +7136,7 @@ html.motion-reduced .knob.squish {
 /* Backup and Storage open with a hero card: the big icon, the title and what the page is for */
 .sethero {
   background: var(--surface);
-  border-radius: 20px;
+  border-radius: var(--r-card);
   padding: 18px 18px 18px;
   margin-top: 6px;
 }
@@ -7186,11 +7205,11 @@ html.motion-reduced .knob.squish {
   color: var(--fg2);
   font-size: var(--t-footnote);
   font-variant-numeric: tabular-nums;
-  transition: transform 0.5s cubic-bezier(0.3, 1.7, 0.45, 1);
+  transition: transform 0.5s var(--ease-pop);
 }
 .setfoot:active {
   transform: scale(0.96);
-  transition-duration: 0.12s;
+  transition-duration: var(--dur-quick);
 }
 .setfoot img {
   width: 60px;
@@ -7328,7 +7347,7 @@ html.motion-off .tgrad i {
   overflow: hidden;
   text-overflow: ellipsis;
   opacity: 0;
-  transition: opacity 0.12s ease-out;
+  transition: opacity var(--dur-quick) ease-out;
 }
 .hint.show {
   opacity: 1;
@@ -7485,7 +7504,7 @@ html.motion-off .tgrad i {
   }
 }
 html.motion-reduced .mksheet {
-  animation: rmIn 0.2s ease;
+  animation: rmIn var(--dur-fade) ease;
 }
 .mkcap {
   border-radius: 999px;
@@ -7592,7 +7611,7 @@ body.mkcapon main {
 }
 .mkb {
   min-height: 64px;
-  border-radius: 14px;
+  border-radius: var(--r-medium);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -7612,7 +7631,7 @@ body.mkcapon main {
 .mkt {
   width: 34px;
   height: 34px;
-  border-radius: 10px;
+  border-radius: var(--r-small);
   background: var(--surface);
   color: var(--accent);
   font-size: var(--t-body);
@@ -7872,7 +7891,7 @@ button.ckr {
 .sgl.lifted {
   z-index: 1;
   background: var(--surface);
-  border-radius: 10px;
+  border-radius: var(--r-small);
   box-shadow:
     0 0 0 6px var(--surface),
     0 12px 30px var(--glass-shadow);
@@ -7929,7 +7948,7 @@ body.lmopen #app .sgsec .sgrecp {
   width: 34px;
   height: 34px;
   flex: none;
-  border-radius: 10px;
+  border-radius: var(--r-small);
   background: var(--accent-wash);
   color: var(--accent);
   font-size: var(--t-body);
@@ -8100,7 +8119,7 @@ body.lmopen #app .sgsec .sgrecp {
 }
 .mkpeek .gdex {
   background: var(--bg3);
-  border-radius: 14px;
+  border-radius: var(--r-medium);
   padding: 10px 12px;
 }
 .mkpeek .gdex .sgl {
@@ -8168,14 +8187,14 @@ body.lmopen #app .sgsec .sgrecp {
   min-height: 50px;
   padding: 10px 16px;
   margin-bottom: 10px;
-  border-radius: 20px;
+  border-radius: var(--r-card);
   background: var(--surface);
   text-align: left;
-  transition: transform 0.5s cubic-bezier(0.3, 1.7, 0.45, 1);
+  transition: transform 0.5s var(--ease-pop);
 }
 .osum:active {
   transform: scale(0.98);
-  transition-duration: 0.12s;
+  transition-duration: var(--dur-quick);
 }
 .otick {
   width: 24px;
@@ -8343,7 +8362,7 @@ html.motion-off .cuebox {
 }
 .unfold.open .cuebox.waiting {
   opacity: 0.35;
-  transition: opacity 0.2s;
+  transition: opacity var(--dur-fade);
 }
 .cueq {
   font-size: var(--t-footnote);
@@ -8409,7 +8428,7 @@ html.motion-off .cuebox {
   position: absolute;
   z-index: 45;
   min-width: 200px;
-  border-radius: 14px;
+  border-radius: var(--r-medium);
   background: var(--glass-strong);
   /* Q33 the new glass material */
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
@@ -8528,7 +8547,7 @@ body:has(#dock .ophint) .dock .in {
   flex-direction: column;
   gap: 12px;
   padding: 14px 16px;
-  border-radius: 20px;
+  border-radius: var(--r-card);
   background: var(--surface);
   overflow: hidden;
 }
@@ -8587,7 +8606,7 @@ body:has(#dock .ophint) .dock .in {
 .apcard .aptrk {
   min-height: 44px;
   padding: 0 14px;
-  border-radius: 14px;
+  border-radius: var(--r-medium);
   background: var(--fill);
   font-size: var(--t-callout);
   text-align: left;
@@ -8603,7 +8622,7 @@ body:has(#dock .ophint) .dock .in {
   color: #fff;
   font-size: var(--t-body);
   font-weight: 600;
-  transition: transform 0.5s cubic-bezier(0.3, 1.7, 0.45, 1);
+  transition: transform 0.5s var(--ease-pop);
 }
 .apsing .dot {
   background: #fff;
@@ -8613,7 +8632,7 @@ body:has(#dock .ophint) .dock .in {
 .apsoft:active,
 .apstop:active {
   transform: scale(0.96);
-  transition-duration: 0.12s;
+  transition-duration: var(--dur-quick);
 }
 .aplinks {
   display: flex;
@@ -8644,12 +8663,12 @@ body:has(#dock .ophint) .dock .in {
   background: var(--fill);
   font-size: var(--t-callout);
   font-weight: 600;
-  transition: transform 0.5s cubic-bezier(0.3, 1.7, 0.45, 1);
+  transition: transform 0.5s var(--ease-pop);
 }
 /* the takes: the newest on a fill, the older ones plain */
 .apcard .tkgrp {
   background: transparent;
-  border-radius: 14px;
+  border-radius: var(--r-medium);
 }
 .apcard .tkgrp > * + *::before {
   display: none;
@@ -8660,10 +8679,10 @@ body:has(#dock .ophint) .dock .in {
 }
 .apcard .tkgrp:not(.tkolder) .row.tkrow {
   background: var(--fill);
-  border-radius: 14px;
+  border-radius: var(--r-medium);
 }
 .apcard .tkgrp .sw {
-  border-radius: 14px;
+  border-radius: var(--r-medium);
   overflow: hidden;
 }
 .tkrow.playing,
@@ -8829,7 +8848,7 @@ body:has(#dock .ophint) .dock .in {
   background: var(--fill);
   font-size: var(--t-body);
   font-weight: 600;
-  transition: transform 0.5s cubic-bezier(0.3, 1.7, 0.45, 1);
+  transition: transform 0.5s var(--ease-pop);
 }
 .apstop span {
   width: 16px;
@@ -8957,7 +8976,7 @@ body.apprec #dock {
 /* the drawing card */
 .pcard {
   background: var(--bg2);
-  border-radius: 20px;
+  border-radius: var(--r-card);
   padding: 14px 16px 12px;
   margin-top: 12px;
 }
@@ -9112,7 +9131,7 @@ body.apprec #dock {
 }
 .exfact {
   background: var(--bg2);
-  border-radius: 14px;
+  border-radius: var(--r-medium);
   padding: 10px 8px;
   text-align: center;
   min-width: 0;
@@ -9389,13 +9408,13 @@ body.patdock main {
   align-items: center;
   justify-content: center;
   box-shadow: 0 10px 26px var(--glass-shadow);
-  transition: transform 0.5s cubic-bezier(0.3, 1.7, 0.45, 1);
+  transition: transform 0.5s var(--ease-pop);
 }
 .pplay:active,
 .prep:not(.glass):active,
 .ppill:not(.glass):active {
-  transform: scale(0.95);
-  transition-duration: 0.12s;
+  transform: scale(var(--press));
+  transition-duration: var(--dur-quick);
 }
 .pplay svg {
   width: 28px;
@@ -9534,7 +9553,7 @@ body.patdock main {
   flex: 1;
   min-width: 0;
   background: var(--bg2);
-  border-radius: 20px;
+  border-radius: var(--r-card);
   padding: 12px;
   text-align: left;
   position: relative;
@@ -9736,8 +9755,8 @@ body.patdock main {
   opacity: 0;
   transform: translateY(10px) scale(0.8);
   transition:
-    opacity 0.2s,
-    transform 0.45s cubic-bezier(0.3, 1.35, 0.5, 1);
+    opacity var(--dur-fade),
+    transform 0.45s var(--ease-knob);
 }
 .phbub button {
   width: 40px;
@@ -9776,14 +9795,14 @@ body.patdock main {
   border-radius: 30px;
   overflow: hidden;
   background: rgba(120, 120, 128, 0.32);
-  -webkit-backdrop-filter: blur(26px) saturate(180%);
-  backdrop-filter: blur(26px) saturate(180%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
   opacity: 0;
   transform: translateY(24px) scale(0.35);
   transform-origin: 50% 100%;
   transition:
-    opacity 0.2s,
-    transform 0.5s cubic-bezier(0.3, 1.35, 0.5, 1);
+    opacity var(--dur-fade),
+    transform 0.5s var(--ease-knob);
   touch-action: none;
 }
 #pHud.on .phbar,
@@ -9844,7 +9863,7 @@ body.patdock main {
   left: 100%;
   margin-left: 8px;
   opacity: 0;
-  transition: opacity 0.2s;
+  transition: opacity var(--dur-fade);
 }
 #pHud.on .phlabs {
   opacity: 1;
@@ -9872,11 +9891,11 @@ body.patdock main {
   max-width: calc(100vw - 24px);
   border-radius: 16px;
   background: var(--glass-strong);
-  -webkit-backdrop-filter: blur(26px) saturate(180%);
-  backdrop-filter: blur(26px) saturate(180%);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
   box-shadow: 0 12px 40px var(--glass-shadow);
   padding: 6px 0;
-  animation: pmIn 0.35s cubic-bezier(0.3, 1.35, 0.5, 1);
+  animation: pmIn 0.35s var(--ease-knob);
 }
 @keyframes pmIn {
   from {
@@ -9921,7 +9940,7 @@ body.patdock main {
 .pvstep button {
   width: 40px;
   height: 36px;
-  border-radius: 10px;
+  border-radius: var(--r-small);
   background: var(--fill);
   font-size: var(--t-title3);
   color: var(--fg);
@@ -9937,7 +9956,7 @@ body.patdock main {
 }
 html.motion-reduced .pmenu,
 html.motion-reduced .pvowel b.swap {
-  animation: rmIn 0.2s ease-out;
+  animation: rmIn var(--dur-fade) ease-out;
 }
 html.motion-reduced .phbar,
 html.motion-reduced .phbub,

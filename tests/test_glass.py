@@ -224,7 +224,7 @@ def solid(b, t):
     ok = t.ok
     pg = t.page(b)
     o = pg.evaluate("""()=>{const q=s=>document.querySelector(s);const m=(e)=>!!e&&e.matches(PRESS.SEL);
-      const act=[];for(const sh of document.styleSheets)for(const r of sh.cssRules){if(r.selectorText&&r.selectorText.includes(':active')&&/scale\\(0\\.9/.test(r.style.transform||''))act.push(r.selectorText)}
+      const act=[];for(const sh of document.styleSheets)for(const r of sh.cssRules){if(r.selectorText&&r.selectorText.includes(':active')&&/scale\\((0\\.9|var\\(--press\\))/.test(r.style.transform||''))act.push(r.selectorText)}
       return {ink:m(q('#app .cta.ink')),row:m(q('#app .row')),act:act.join(' || ')}}""")
     ok(not o['ink'] and '.cta:not(.glass):active' in o['act'], 'Start session (solid) isn’t part of the glass press and still shrinks')
     ok(not o['row'], 'nor are list rows')

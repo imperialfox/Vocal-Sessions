@@ -64,7 +64,7 @@ Every ID with its **Status** (`Awaiting Render`, `Approved — awaiting Build`, 
 | Q37 | Session: Song Ladder | Approved — awaiting Build | Song ladder, pitch test page, "Prototype · Song ladder and bridge-aware patterns" (v1–v3), 2 Nov 2026 |
 | Q38 | Exercises: Bridge-Aware Patterns | Approved — awaiting Build | Bridge-aware patterns, Find your bridge, same prototype, 2 Nov 2026 |
 | Q39 | Songs: Key and Scale Lanes | Approved — awaiting Build | Key detection, scale lanes, suggested patterns, same prototype (v2), 2 Nov 2026 |
-| Q40 | Interface: Value Set and Test | Approved — awaiting Build | The value test (consistency audit of 3.49, 2 Nov 2026; called Q35 in early notes before Q35 went to Atlas: Starting States) |
+| Q40 | Interface: Value Set and Test | Shipped 3.51 | The value test (consistency audit of 3.49, 2 Nov 2026; called Q35 in early notes before Q35 went to Atlas: Starting States) |
 
 Work shipped before this standard (for example Track 1 and Song Clock A1) keeps its version numbers and has no queue ID.
 
@@ -83,10 +83,9 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 
 Build top to bottom; each still needs its own **Build**. One line per item: `N. Q## — reason`, with "needs Q##" for anything that must ship first. Names live in the table above. The paragraph under Order below is the history behind it.
 
-1. Q40 — touches the whole stylesheet, so first
-2. Q37 — brings the pitch listener
-3. Q38 — needs Q37
-4. Q39 — needs Q37
+1. Q37 — brings the pitch listener
+2. Q38 — needs Q37
+3. Q39 — needs Q37
 
 ### Any time
 
@@ -94,7 +93,7 @@ Build top to bottom; each still needs its own **Build**. One line per item: `N. 
 
 ## Order (3 Nov 2026)
 
-**Q31** shipped on 3 Nov 2026 as tooling (Build 3 Nov 2026, 13:36): Vocal Sessions' Atlas now runs on Atlas kit 1.1.0 (`tools/atlas/kit/`), which its Build made first; its scope is in this file's history and the handoff. **Q37–Q39** (Render 3 Nov 2026, 08:01) are app builds, in that order after Q36, each with its own Build: Q37 brings the shared pitch listener that Q38 and Q39 use. **Q36** shipped in 3.50 (Render 3 Nov 2026, 08:00; Build 3 Nov 2026, 08:15): its register is `js/register.js`, since `js/screens.js` already held the main screens' code. **Q35**'s flows, captions and doors use its IDs. The same Render added Atlas kit 1.0's addition 14 (Stable IDs), still to be built with the kit. **Q35** (Render 3 Nov 2026, 00:39) comes after Q31, which reshapes the settings file it fills in; tooling with no app version, like Q30 and Q31. The same Render widened **Atlas kit 1.0** with additions 9–13 (in that kit's handoff), which Q31's kit copy brings and Q35 uses. **Q33** shipped in 3.49 (Render 2 Nov 2026, 17:41; Build 2 Nov 2026, 21:17). **Q34** (Render 2 Nov 2026, 18:12) is on hold for the parts kit (Ivan, 2 Nov 2026, 22:11); it uses Q33's materials and springs. **Q32** shipped in 3.48 (Render 2 Nov 2026, 15:56; Build 2 Nov 2026, 19:06). Q30 shipped as tooling (Build 2 Nov 2026, 17:57; `tools/atlas/`), and **Q31** builds on it (Render 2 Nov 2026, 15:55, in the same instruction as Q30; re-scoped by a fresh Render at 19:50 to put Vocal Sessions on the universal Atlas kit, built after Prototype kit 1.1 and Atlas kit 1.0; its own Build). Atlas kit 1.0 was built on 3 Nov 2026; Q31 was widened at 11:21 with the Atlas kit 1.1 phone pass, which its Build makes first. Both are tooling with no app version, like Q24, so they can be built outside the app queue's order. Q28 shipped in 3.46 and Q29 in 3.47 (Render 2 Nov 2026, 09:29; Build 09:33, in one instruction, built one after the other). **Q07** is still awaiting Render. Q27 shipped in 3.45 (Build 2 Nov 2026). Q25 shipped in 3.43 and Q26 in 3.44 (Build 2 Nov 2026); Q25–Q27 got Render on 1 Nov 2026 (19:59), in one instruction, each with its own Build. Q19 shipped in 3.39, Q20 in 3.40, Q21 in 3.41 and Q22 in 3.42. Q22 got Render on 31 Oct 2026 (20:59) and was built on the one-page session and the saved screen. Q19–Q21 got Render on 31 Oct 2026 (19:58), in one instruction, each with its own Build. They follow Q17 (shipped in 3.38; Q20 needs Q16's track-while-recording, shipped in 3.37). Q11–Q17 got Render on 30 Oct 2026 (06:42) and have all shipped. What has shipped is in the table's Status column. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
+**Q40** shipped in 3.51 (Render 3 Nov 2026, 08:08; Build 3 Nov 2026, 17:19): the named value set at the top of `css/app.css`, `MOTION.EASE`, and `tests/test_values.py` with its shrinking known list (MAINTAINING › Value set); its scope is in this file's history and the handoff. **Q31** shipped on 3 Nov 2026 as tooling (Build 3 Nov 2026, 13:36): Vocal Sessions' Atlas now runs on Atlas kit 1.1.0 (`tools/atlas/kit/`), which its Build made first; its scope is in this file's history and the handoff. **Q37–Q39** (Render 3 Nov 2026, 08:01) are app builds, in that order after Q36, each with its own Build: Q37 brings the shared pitch listener that Q38 and Q39 use. **Q36** shipped in 3.50 (Render 3 Nov 2026, 08:00; Build 3 Nov 2026, 08:15): its register is `js/register.js`, since `js/screens.js` already held the main screens' code. **Q35**'s flows, captions and doors use its IDs. The same Render added Atlas kit 1.0's addition 14 (Stable IDs), still to be built with the kit. **Q35** (Render 3 Nov 2026, 00:39) comes after Q31, which reshapes the settings file it fills in; tooling with no app version, like Q30 and Q31. The same Render widened **Atlas kit 1.0** with additions 9–13 (in that kit's handoff), which Q31's kit copy brings and Q35 uses. **Q33** shipped in 3.49 (Render 2 Nov 2026, 17:41; Build 2 Nov 2026, 21:17). **Q34** (Render 2 Nov 2026, 18:12) is on hold for the parts kit (Ivan, 2 Nov 2026, 22:11); it uses Q33's materials and springs. **Q32** shipped in 3.48 (Render 2 Nov 2026, 15:56; Build 2 Nov 2026, 19:06). Q30 shipped as tooling (Build 2 Nov 2026, 17:57; `tools/atlas/`), and **Q31** builds on it (Render 2 Nov 2026, 15:55, in the same instruction as Q30; re-scoped by a fresh Render at 19:50 to put Vocal Sessions on the universal Atlas kit, built after Prototype kit 1.1 and Atlas kit 1.0; its own Build). Atlas kit 1.0 was built on 3 Nov 2026; Q31 was widened at 11:21 with the Atlas kit 1.1 phone pass, which its Build makes first. Both are tooling with no app version, like Q24, so they can be built outside the app queue's order. Q28 shipped in 3.46 and Q29 in 3.47 (Render 2 Nov 2026, 09:29; Build 09:33, in one instruction, built one after the other). **Q07** is still awaiting Render. Q27 shipped in 3.45 (Build 2 Nov 2026). Q25 shipped in 3.43 and Q26 in 3.44 (Build 2 Nov 2026); Q25–Q27 got Render on 1 Nov 2026 (19:59), in one instruction, each with its own Build. Q19 shipped in 3.39, Q20 in 3.40, Q21 in 3.41 and Q22 in 3.42. Q22 got Render on 31 Oct 2026 (20:59) and was built on the one-page session and the saved screen. Q19–Q21 got Render on 31 Oct 2026 (19:58), in one instruction, each with its own Build. They follow Q17 (shipped in 3.38; Q20 needs Q16's track-while-recording, shipped in 3.37). Q11–Q17 got Render on 30 Oct 2026 (06:42) and have all shipped. What has shipped is in the table's Status column. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
 
 ## Q07 · Song Clock: Dynamic Sync
 
@@ -240,21 +239,6 @@ Menus, the top bar's buttons and the small controls move like iOS 27. Where the 
 - **Out of scope:** chords, moving a song to another key, any score or right/wrong colouring.
 - **Needs:** Q37 shipped. The pattern player opening on a given pattern, note and Stay on this key is part of this item.
 - **Done when:** the key is found and asked or suggested correctly for synthetic melodies; the key sheet saves to the song (and survives a backup); lanes are spelled correctly in sharp and flat keys; suggestions follow the rules above and open the pattern player as described; old data loads unchanged; 375 px and dark mode; the full suite passes; Ivan's iPhone checks.
-
-## Q40 · Interface: Value Set and Test
-
-**Status:** Approved — awaiting Build. **Render:** 3 Nov 2026, 08:08. Ivan: "Render what's currently there", for the value test as planned after the consistency audit of 3.49, with every *Default if unanswered* taken. **Build:** awaiting Ivan's instruction. The build handoff is in Ivan's project notes as `q40_interface_value_set_and_test_handoff.md` (the audit: `consistency_audit_2026-11-02.md`; design decisions D01–D15: `parts_decisions_2026-11-02.md`).
-
-- **Goal:** one named set of look and motion values, and a test that stops new stray values, so the app stops drifting. The audit counted 26 corner sizes, 7 press shrinks, 49 hand-written curves in the stylesheet (7 in code) and 31 durations.
-- **Scope:**
-  - **The named set** beside the text sizes: corners (`--r-small` 10, `--r-medium` 14, `--r-card` 20, `--r-large` 26, `--r-sheet` 34; capsules and circles as now; graphic bits of 6 px and under exempt), `--press` 0.93 for solid buttons, named easings (`--ease-pop`, `--ease-knob`, `--ease-out`, plus the spring variables) and fade timings (`--dur-quick` 120 ms, `--dur-fade` 200 ms).
-  - **Exact matches renamed** to the names, with no visual change.
-  - **A shrinking list:** every other value stays and is written into the test as a known stray; new strays fail, and the list may only get shorter.
-  - **Two small fixes:** the pattern player's speed bar and menu (`.phbar`, `.pmenu`) onto the glass tokens; solid button presses at 0.90, 0.94, 0.95 and 0.97 snapped to 0.93.
-  - **`tests/test_values.py`** (corners, presses, easings and durations in `css/app.css`; `cubic-bezier` in `js/`), and a "Value set (Q40)" part in `MAINTAINING.md`.
-- **Default if unanswered:** the values above; rows and row-like cards keep their 0.98 / 0.96 shrink as known strays (decision D06 replaces them with a highlight at the parts kit move); slow ambient loops exempt; shadows reported, not enforced.
-- **Out of scope:** snapping non-matching values, every decision in D01–D15, sheets (Scroll Behaviour Pass), menus and the rest of Q34 (on hold for the parts kit).
-- **Build:** on its own (it touches `css/app.css` throughout), after a rebase.
 
 ## Not scheduled
 
