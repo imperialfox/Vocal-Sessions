@@ -7,6 +7,7 @@ App work Ivan has queued, in the order he wants it built. Each item is one build
 - **Detailed design notes live in Ivan's private project notes, not in this repo.** Where an item names one, ask Ivan to paste or attach it. Anything not settled here is marked *Unresolved*.
 - **Check ideas against the app's purpose.** Before planning an item or a Not scheduled idea, ask the first test in [README › What it's for](README.md#what-its-for): does it make practice easier?
 - **Ivan can reorder the queue.** Versions follow build order: each build takes the next minor version when it's built.
+- **[Release order](#release-order) is the order to build in.** Render places the item in it (at the end unless Ivan says where; tooling with no app version goes under *Any time*), with "needs Q##" in its reason for anything that must ship first. The Build that ships an item removes it from the list in the same push. The [Render queues](https://imperialfox.github.io/render-queue/) dashboard reads this list for Up next and Next build.
 - **When an item ships,** remove its section from this file in the same push and set its row in the table below to `Shipped <version>`. Its `CHANGELOG.md` headline (the `*…*` line under the version) ends with its queue ID, e.g. `*Waveform sections on the track player (Q02)*`. The `##` line itself stays `## 3.23 · 27 Oct 2026`, which the app's Changelog page reads.
 
 ## Naming
@@ -77,6 +78,20 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
   - Never commit with Ivan's personal email. Claude commits as `Claude <noreply@anthropic.com>`.
 
 ---
+
+## Release order
+
+Build top to bottom; each still needs its own **Build**. One line per item: `N. Q## — reason`, with "needs Q##" for anything that must ship first. Names live in the table above. The paragraph under Order below is the history behind it.
+
+1. Q40 — touches the whole stylesheet, so first
+2. Q37 — brings the pitch listener
+3. Q38 — needs Q37
+4. Q39 — needs Q37
+
+### Any time
+
+- Q31 — tooling, no app version
+- Q35 — needs Q31
 
 ## Order (3 Nov 2026)
 
