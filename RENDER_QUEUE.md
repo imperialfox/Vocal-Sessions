@@ -275,3 +275,9 @@ Each idea has its priority, the date it was added and a *Why* line. New ideas go
 ### Parked · Doesn't fit
 
 None yet.
+
+## Ivan's to-do
+
+Things for Ivan to look at himself, at some point. Not queue items: nothing here is planned or approved. Tick one off by deleting its line.
+
+- **Parts kit and the prototype kit (3 Nov 2026).** Decision 6 of the parts kit 1.0 Blueprint (`claude/parts_kit_1_0_blueprint.md` in the Singing project): should the prototype kit, and the shared rules file the kits keep identical (`SHARED.md`), change so prototypes load the parts kit? Until he decides, the default stands: parts kit 1.0 changes neither, and joins `SHARED.md` with the first prototype that uses it (Smart file drop's).
