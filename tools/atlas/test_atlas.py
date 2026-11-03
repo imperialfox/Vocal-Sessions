@@ -1,7 +1,7 @@
 """Tests for the Visual App Atlas: Vocal Sessions' settings for the Atlas kit, the kit copy, a scan and the viewer.
 
-    python3 tools/atlas/test_atlas.py            everything (about a minute)
-    python3 tools/atlas/test_atlas.py code docs  only some parts: code, docs, rules, kit, git, scan, viewer
+    python3 tools/atlas/test_atlas.py            everything (about two minutes)
+    python3 tools/atlas/test_atlas.py code docs  only some parts: code, docs, rules, settings, kit, git, scan, viewer, states
 
 Not part of the app's suite (tests/run.py), so GitHub's test run stays as long as it was. Uses the tests' Playwright
 (1.56.0) and TZ=Europe/London, like the app's tests. The kit has its own tests in its own repo; these check what's
@@ -116,7 +116,7 @@ def t_docs():
 # ---------- rules ----------
 def t_rules():
     print('The scan’s rules')
-    ok(all(st[0] == 'tap' for r in S.ROOTS for st in r['steps']), 'every starting screen is opened through real buttons (no shortcuts)')
+    ok(all(real_step(st) for r in S.ROOTS for st in r['steps']), 'every starting screen is opened through real buttons (no shortcuts; Q35 adds only waits and holds)')
     ok(ST.skip_reason('sheet', 'delSession', 'Delete session') is None, 'a button that only opens a confirmation sheet is tapped')
     ok('deletes' in (ST.skip_reason('sgDoDel', '', 'Delete') or ''), 'a button that deletes is never tapped, with its reason')
     ok('microphone' in (ST.skip_reason('rec', '', 'Record') or ''), 'recording: “needs the microphone”')
@@ -138,6 +138,41 @@ def t_rules():
        and S.link_kind({'action': 'openCal', 'toSig': 'today||calendar', 'opensSheet': True}) == 'Opens a sheet', 'map lines: tab bar, back, opens a sheet')
     ok(ST.fixed_time.tzinfo is not None and ST.timezone == 'Europe/London', 'the clock is frozen at a fixed moment, London time')
     ok(ST.ids and ST.ids['prefix'] == 'VS-' and ST.queue == {'file': 'RENDER_QUEUE.md', 'section': 'Not scheduled'}, 'screen IDs from the register; queue ideas go to RENDER_QUEUE.md › Not scheduled')
+
+
+def real_step(st):
+    """A tap, a fixed wait, or Q35's UNTIL (waits for the app) and HOLD (presses a real button): none opens a screen itself."""
+    return st[0] in ('tap', 'wait') or (st[0] == 'js' and (st[1].startswith('async()=>{/*until*/') or st[1].startswith('async()=>{/*hold*/')))
+
+
+# ---------- Q35: starting states, captions, flows and doors (settings only, no browser) ----------
+REG_JS = open(os.path.join(REPO, 'js', 'register.js'), encoding='utf-8').read()
+REG_IDS = set(re.findall(r"id: '(VS-\d+)'", REG_JS))
+REG_FLOWS = dict(re.findall(r"id: '(F-\d+)',\s*name: '([^']+)'", REG_JS))
+Q35_STATES = {'coach-video': 'Screen:coach', 'session-recording': 'Screen:app', 'session-takes': 'Screen:app', 'session-compare': 'Screen:app',
+              'song-how': 'Sheet:how', 'peek-card': 'Screen:lyr', 'check-timing-overlaps': 'Screen:ckCheck', 'track-past-end': 'Sheet:trkPast',
+              'backup-rescued': 'Sub-page:backup', 'rescued-delete': 'Sheet:rescueDel'}
+
+
+def t_settings():
+    print('Q35: starting states, captions, flows and doors in the settings')
+    roots = {r['id']: r for r in S.ROOTS}
+    ok(all(k in roots and roots[k]['key'] == v for k, v in Q35_STATES.items()), f'a starting state for each screen in the handoff ({len(Q35_STATES)})')
+    ok(all(roots[r['state_of']] for r in S.ROOTS if r.get('state_of')), 'every state belongs to a starting screen')
+    ok(all(not st[1].startswith('async()=>{/*until*/') or 'throw new Error("Didn’t open: ' in st[1] for r in S.ROOTS for st in r['steps'] if st[0] == 'js'),
+       'a wait that never ends says why, so the screen is “Failed”, never captured')
+    ok(len(REG_IDS) >= 95 and REG_IDS <= set(S.CAPTIONS), f'every screen in the register has a caption ({len(REG_IDS)})' + (': missing ' + ', '.join(sorted(REG_IDS - set(S.CAPTIONS))) if REG_IDS - set(S.CAPTIONS) else ''))
+    odd = [k for k, v in S.CAPTIONS.items() if k.split('~')[0] not in REG_IDS or not v.strip() or '\n' in v or len(v) > 64]
+    ok(not odd, 'each caption is one short line, on a screen in the register' + (': ' + ', '.join(odd) if odd else ''))
+    ok([f['id'] for f in S.FLOWS] == ['F-01', 'F-02'] and all(REG_FLOWS.get(f['id']) == f['title'] for f in S.FLOWS),
+       'the first flows are the register’s F-01 · Focused session and F-02 · Song practice')
+    ok(all(f['start'] in roots for f in S.FLOWS) and all(s.get('tap') or s.get('js') for f in S.FLOWS for s in f['steps'])
+       and all(s['js'].startswith('async()=>{/*until*/') for f in S.FLOWS for s in f['steps'] if s.get('js')), 'flows start on a starting screen and tap real buttons (their only js waits)')
+    bad = [d for d in S.DOORS if d['from'].split('~')[0] not in REG_IDS or d['to'].split('~')[0] not in REG_IDS or not d.get('how') or not d.get('kind')]
+    ok(S.DOORS and not bad, f'every hand-written door joins two screens in the register, saying how and what kind ({len(S.DOORS)})' + (f': {bad}' if bad else ''))
+    kinds = {d['kind'] for d in S.DOORS}
+    ok({'Swipe', 'Hold', 'Timed', 'File picker'} <= kinds, 'doors for swipes, holds, timed sheets and file pickers')
+    ok(all(any(d['to'] == t for d in S.DOORS) for t in ('VS-083', 'VS-086', 'VS-089')), 'export, check a backup and restore are doors only, never captured')
 
 
 # ---------- the kit copy ----------
@@ -342,7 +377,57 @@ def t_viewer():
     ok('· atlas (' in sect and '· prototype (' in sect, '“check my notes”: the Atlas’s note and a listed prototype’s come back together under VS-001')
 
 
-PARTS = {'code': t_code, 'docs': t_docs, 'rules': t_rules, 'kit': t_kit, 'git': t_git, 'scan': t_scan, 'viewer': t_viewer}
+def t_states():
+    print('Q35: the new starting states, both flows and the viewer (a copy of the app)')
+    from atlas_kit import engine
+    from playwright.sync_api import sync_playwright
+    tmp = tempfile.mkdtemp(prefix='q35-', dir=SCANS.setdefault('tmp', tempfile.mkdtemp(prefix='vs-atlas-test-')))
+    app = app_copy(tmp)   # its own copy: the scan test above changes its copy of the app
+    want = ['today', 'song-page'] + list(Q35_STATES) + ['session-application', 'check-timing', 'settings-backup']
+    sp = settings_for(tmp, app, [dict(r, taps=False) for r in S.ROOTS if r['id'] in want])
+    out = os.path.join(tmp, 'scan-q35'); os.makedirs(out)
+    A = engine.scan(sp, app, out, workers=2, taps=False, say=lambda *a: None, scan_id='T35')
+    by = {s.get('slug', s['id']): s for s in A['screens']}
+    ids = {'coach-video': 'VS-015', 'session-recording': 'VS-004~recording', 'session-takes': 'VS-004~takes', 'session-compare': 'VS-004~compare',
+           'song-how': 'VS-031', 'peek-card': 'VS-095', 'check-timing-overlaps': 'VS-011~overlaps', 'track-past-end': 'VS-072', 'backup-rescued': 'VS-019~rescued-data', 'rescued-delete': 'VS-080'}
+    for k, v in ids.items():
+        s = by.get(k) or {}
+        ok(s.get('status') == 'captured' and s.get('id') == v and s.get('shot') and os.path.exists(os.path.join(out, s['shot'])),
+           f'{k}: captured as {v}' + ('' if s.get('status') == 'captured' else f' ({s.get("status")}: {s.get("why")})'))
+    ok(not any(s['status'] == 'uncaptured' and s['key'] in ('Screen:coach', 'Sheet:how', 'Sheet:trkPast') for s in A['screens']), 'none of them is left as found in code only')
+    ok(by['song-how']['caption'] == S.CAPTIONS['VS-031'] and by['session-takes']['caption'] == S.CAPTIONS['VS-004~takes'], 'captions reach screens and states')
+    ok(any(d['from'] == 'VS-009' and d['to'] == 'VS-095' and d['kind'] == 'Hold' for d in A['doors']), 'hand-written doors are matched to screens (VS-009 › hold › VS-095)')
+    fl = {f['id']: f for f in A['flows']}
+    F1 = [x['screen'] for x in fl.get('F-01', {}).get('steps', [])]
+    F2 = [x['screen'] for x in fl.get('F-02', {}).get('steps', [])]
+    ok(fl.get('F-01', {}).get('status') == 'captured' and F1[:2] == ['VS-001', 'VS-002'] and 'VS-003' in F1 and 'VS-004' in F1 and F1[-2:] == ['VS-005', 'VS-001'],
+       f'F-01 · Focused session steps through Today, Foundation, Rotation, Application, Session saved ({fl.get("F-01", {}).get("why") or F1})')
+    ok(fl.get('F-02', {}).get('status') == 'captured' and F2[:4] == ['VS-001', 'VS-008', 'VS-009', 'VS-012'] and F2[-2:] == ['VS-031', 'VS-044'],
+       f'F-02 · Song practice steps through Songs, the song, Song practice, How did it go?, saved ({fl.get("F-02", {}).get("why") or F2})')
+    ok(all(x.get('shot') and os.path.exists(os.path.join(out, x['shot'])) for f in A['flows'] for x in f['steps']), 'every flow step has its picture')
+    v = Serve(out)
+    try:
+        with sync_playwright() as p:
+            b = p.chromium.launch(); ctx = b.new_context(viewport={'width': 1440, 'height': 900}); pg = ctx.new_page(); errs = []
+            pg.on('pageerror', lambda e: errs.append(str(e)))
+            pg.add_init_script(FAKE_STORE); pg.goto(v.url); pg.wait_for_selector('.card')
+            ok(S.CAPTIONS['VS-015'] in pg.inner_text('.card[data-id="VS-015"]'), 'Mac: captions show on cards')
+            pg.click('[data-view="map"]'); pg.wait_for_timeout(300)
+            ok(pg.locator('#map path.edge.door').count() >= 1, 'Mac: hand-written doors are drawn on the map as dotted lines')
+            pg.click('[data-view="flows"]'); pg.wait_for_selector('.fstage')
+            seen = []
+            for i in range(len(fl['F-01']['steps'])):
+                seen.append(pg.inner_text('.finfo .sid') if pg.locator('.finfo .sid').count() else None)
+                if i < len(fl['F-01']['steps']) - 1: pg.click('[data-fgo="1"]'); pg.wait_for_timeout(60)
+            ok(seen == F1, 'Mac: F-01 steps through in the viewer, each step linked to its screen')
+            ok(not errs, 'Mac: no errors' + (': ' + '; '.join(errs[:2]) if errs else ''))
+            b.close()
+    finally:
+        v.close()
+
+
+PARTS = {'code': t_code, 'docs': t_docs, 'rules': t_rules, 'settings': t_settings, 'kit': t_kit, 'git': t_git, 'scan': t_scan, 'viewer': t_viewer,
+         'states': t_states}
 if __name__ == '__main__':
     try:
         for n in (sys.argv[1:] or list(PARTS)):

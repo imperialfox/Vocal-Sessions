@@ -742,7 +742,7 @@ A developer tool that shows every screen and sheet as saved screenshots, with wh
 ```
 python3 tools/atlas/atlas.py           # scan (about 5–10 minutes), then open the Atlas in the browser
 python3 tools/atlas/atlas.py --view    # open the last scan again
-python3 tools/atlas/test_atlas.py      # the Atlas's own tests (about a minute; not part of tests/run.py)
+python3 tools/atlas/test_atlas.py      # the Atlas's own tests (about two minutes; not part of tests/run.py)
 ```
 
 **From a Claude chat:** say "rescan the Atlas". Claude runs the scan and updates the private Atlas page on claude.ai. Say "check my notes" and Claude reads the notes left on that page (and on any prototype listed there), in note format v1.
@@ -752,7 +752,8 @@ python3 tools/atlas/test_atlas.py      # the Atlas's own tests (about a minute; 
 - **Screens are read once they've settled** (`where()` in `screens.py`): animations finished, loops held, an open sheet steady for three frames. If a rescan of an unchanged app calls a screen "looks different", something on it is still moving when it's read: look there first.
 - **Screens are keyed by their screen IDs** (`js/register.js`, Q36), read off each screen, so notes and the map layout stay put through renames. A screen with no register entry shows as "No ID yet · suggested VS-0xx" (add it to the register in an app build).
 - **The screen list comes from the code** (`inventory()` in `tools/atlas/screens.py`): `render()`, `renderSheet()` and the functions it hands sheets to, Settings' `TITLE` pages, and every `U.tab`, `U.view` and `U.sheet` set anywhere. A new screen shows up by itself, as "Not captured yet" until a button the scan taps opens it, and a removed one as gone from the code.
-- **When you add a screen:** if the scan can't reach it by tapping (it needs set-up the sample data doesn't have), add a starting screen to `ROOTS` in `tools/atlas/screens.py`, opened through real buttons. Add its doc sections to `KEY_DOCS` there; `test_atlas.py` fails if a section it names is renamed or removed.
+- **When you add a screen:** if the scan can't reach it by tapping (it needs set-up the sample data doesn't have), add a starting screen to `ROOTS` in `tools/atlas/screens.py`, opened through real buttons (set-up goes in `load()` or `SETUP_JS`; the only other steps are waits, `UNTIL`, and holds, `HOLD`). Add its doc sections to `KEY_DOCS` there; `test_atlas.py` fails if a section it names is renamed or removed. Give it a one-line caption in `CAPTIONS` (the test fails without one), and if it only opens after a swipe, a hold, a wait or a file picker, a hand-written door in `DOORS`.
+- **Starting states, flows, captions and doors (Q35):** the coach video, recording and takes, How did it go?, the peek card, Check timing's Overlaps, Past the new end and the rescued copy each have a starting state ([tools/atlas/README › Starting states](tools/atlas/README.md#starting-states-flows-captions-and-doors-q35)). `FLOWS` walks the register's F-01 and F-02; when a flow's buttons change in the app, change its steps in `screens.py` in the same build (`test_atlas.py states` walks both).
 - **When you rename a doc section** the Atlas links to ("Explained in"), update `screens.py` too.
 - **Buttons the scan never taps** (microphone, files, sharing, replacing or deleting data) are listed in `SKIP` in `screens.py`, each with the reason the Atlas shows. The kit checks each button's action, value and label against them.
 

@@ -11,9 +11,13 @@ there explains every name below). This file is everything the kit needs to know 
   - the screens the code can show (inventory), read from the code with no browser, so anything the scan missed is
     listed as "Not captured yet";
   - which area each screen belongs to, which doc sections explain it, and which buttons are never tapped;
-  - the screen register from Q36 (IDS), so screens, notes and the map layout are keyed by VS-… IDs.
+  - the screen register from Q36 (IDS), so screens, notes and the map layout are keyed by VS-… IDs;
+  - Q35: starting states for the screens no tap reaches from the tabs (the coach video, recording and takes, How did it
+    go?, the peek card, Check timing's Overlaps, Past the new end, rescued data), a caption for every screen (CAPTIONS),
+    the first flows, F-01 and F-02 from the register (FLOWS), and the doors the scan can't test, written by hand (DOORS).
 """
 import datetime as dt
+import json
 import os
 import re
 import sys
@@ -82,9 +86,17 @@ def _open(pg, harness, app_dir, data):
 
 def load(pg, setup, ctx):
     """A fresh app page with the sample data (none for 'empty'), then the set-up a starting screen asks for."""
-    harness, test_layout, _ = _tests(ctx['app'])
+    harness, test_layout, test_track = _tests(ctx['app'])
     pg.emulate_media(reduced_motion='no-preference')   # the system's Reduce Motion off, as in the tests (motion itself is off)
+    if 'mic' in setup: pg.add_init_script(FAKE_MIC)    # Q35: a made-up microphone (a steady tone), before the app loads
     _open(pg, harness, ctx['app'], None if 'empty' in setup else ctx['seed'])
+    if 'damaged' in setup:  # Q35: saved data cut off part-way (as test_safety does), so the app rescues a copy as it opens
+        pg.evaluate("s=>localStorage.setItem('vocalTracker',s)", json.dumps(ctx['seed'])[:-40])
+        pg.reload(); harness.ready(pg)
+        pg.wait_for_function('()=>SAFE.rescued().length===1', timeout=10000)
+    if 'coach' in setup:  # Q35: the tests' made-up coach video, as Settings › Coach video's file picker would add it
+        pg.set_input_files('#coachIn', harness.fix('coach-chapters.webm'))
+        pg.wait_for_function('()=>COACH.has()&&!COACH.busy()', timeout=20000)
     if 'track' in setup or 'takes' in setup:
         pg.evaluate("id=>go(()=>{U.sheet=null;U.tab='songs';U.view='lyr';U.songId=id})", ctx['song'])
     if 'track' in setup:  # through the song page's real Add track button, with the file picker
@@ -96,14 +108,51 @@ def load(pg, setup, ctx):
         pg.wait_for_function('()=>TAKES.length>=3', timeout=5000)
     for k in setup:
         if k in SETUP_JS: pg.evaluate(SETUP_JS[k])
+    if 'short-track' in setup:  # Q35: the next file picker gets a 20 s track, shorter than the song's timing
+        short = test_track.F('Paper Boats 20.wav', 20)
+        pg.on('filechooser', lambda fc: fc.set_files(short))
 
+
+# Q35: a made-up microphone for the recording states: a steady 220 Hz tone at a low level, never a real voice
+FAKE_MIC = """(()=>{if(!navigator.mediaDevices)return;
+ navigator.mediaDevices.getUserMedia=async()=>{const ac=new AudioContext();try{await ac.resume()}catch(e){}
+  const o=ac.createOscillator(),g=ac.createGain(),d=ac.createMediaStreamDestination();o.frequency.value=220;g.gain.value=0.2;
+  o.connect(g).connect(d);o.start();return d.stream};})();"""
 
 SETUP_JS = {
     'session': "()=>{newSession();render()}",
     # a session part-way through (as the tests set one up): Foundation logged, and for 'rot-done' Rotation too
     'found-done': "()=>{newSession();FOUND.forEach(e=>X.f[e.id]=2);X.start=Date.now()-20*60000;X.fEnd=Date.now();X.fE=elapsedSec()*0.6;saveDraft();render()}",
     'rot-done': "()=>{newSession();FOUND.forEach(e=>X.f[e.id]=2);X.start=Date.now()-30*60000;X.fEnd=Date.now();X.fE=elapsedSec()*0.4;X.rot={rung:2};X.rEnd=Date.now();X.rE=elapsedSec()*0.7;saveDraft();render()}",
+    # Q35 (after 'takes', with the song's page set up): song practice of the sample song, 10 minutes in, with its newest take
+    'song-draft': "()=>{newSong();X.song=U.songId;X.start=Date.now()-6e5;X.takes=['lt3'];saveDraft();render()}",
+    # Q35: every line of the song placed by hand (section k's lines at 20k, 20k+5… s), as test_integrity does
+    'timed': """()=>{const sg=songById(U.songId),M=ckModel(sg),T=M.L.map(l=>[l.k*20+l.li*5,l.k*20+l.li*5+4.5]);
+      ckStore(sg,M.L,T,sg.order.map(()=>true),M.marks);rerender()}""",
+    # Q35: the last section moved above the one before it (the end of a hold-and-drag), so lines overlap. A drag makes
+    # the song page ignore taps for 0.4 s after it (so letting go doesn't also tap); that's cleared, as time would
+    'moved': "()=>{SG.drag={el:true,from:2,to:1};sgEndDrag();sgSuppress=0}",
+    # Q35: markers at 0:10 and 0:40 on the track (the 20 s replacement leaves 0:40 past its end)
+    'late-marker': "()=>{const sg=songById(U.songId);sg.markers=[{id:'m0',t:10},{id:'m1',t:40}];save();rerender()}",
 }
+
+
+# Q35: steps that wait or hold on the way to a screen. They open nothing themselves: the screen still opens through its
+# real buttons. UNTIL waits for the app to be ready (a recording to start, a take to be saved), and if it never is,
+# the screen is "Failed" with that reason, never captured. HOLD presses a real button for about 0.7 s and lets go, as a
+# finger does (a hold isn't a tap, so it can't be a 'tap' step).
+def UNTIL(cond, what, ms=10000):
+    return ('js', 'async()=>{/*until*/const t0=performance.now();while(!(' + cond + ')){if(performance.now()-t0>' + str(ms)
+            + ')throw new Error(' + json.dumps('Didn’t open: ' + what, ensure_ascii=False) + ');await new Promise(r=>setTimeout(r,50))}}')
+
+
+def HOLD(sel, ms=700):
+    return ('js', 'async()=>{/*hold*/const b=document.querySelector(' + json.dumps(sel, ensure_ascii=False) + ');if(!b)throw new Error('
+            + json.dumps('Didn’t open: couldn’t hold ' + sel + ' (not on screen)', ensure_ascii=False) + ');'
+            'const r=b.getBoundingClientRect(),o={bubbles:true,cancelable:true,composed:true,pointerId:7,pointerType:"touch",isPrimary:true,'
+            'clientX:r.left+r.width/2,clientY:r.top+r.height/2};b.dispatchEvent(new PointerEvent("pointerdown",o));'
+            'await new Promise(r=>setTimeout(r,' + str(ms) + '));b.dispatchEvent(new PointerEvent("pointerup",o));'
+            'await new Promise(r=>setTimeout(r,150))}')
 
 
 def version(app_dir):
@@ -115,6 +164,13 @@ def version(app_dir):
 # Steps: ('tap', css) taps a real button; ('js', code) is a shortcut, used only for set-up the app has no button for.
 TAB = lambda v: ('tap', '[data-a="tab"][data-v="' + v + '"]')
 SONG_PAGE = [TAB('songs'), ('tap', '[data-a="sgOpen"][data-k="{song}"]')]  # {song}: the sample song's id
+# Q35: Application with the sample song picked, then Sing, waiting until it records; Stop, waiting for the nth take
+APPL_REC = UNTIL("!!rec&&!!document.querySelector('#apcard.rec')", 'the recording didn’t start')
+APPL_SING = [('tap', '[data-a="resume"]'), ('tap', '#app [data-a="apSong"][data-k="{song}"]'), ('tap', '#apcard [data-a="apSing"]'), APPL_REC]
+APPL_STOP = lambda n: [('wait', 1200), ('tap', '#apcard [data-a="apStop"]'),
+                       UNTIL("!rec&&TAKES.length===" + str(n) + "&&!document.querySelector('#apcard .tkwv.wait')", 'take ' + str(n) + ' wasn’t saved')]
+CHECK_TIMING = SONG_PAGE + [('tap', '#app [data-a="ckGrid"]'), ('tap', '.scrim .sheet [data-a="ckTile"][data-v="check"]')]
+BACKUP = [('tap', '[data-a="openSettings"]'), ('tap', '#app [data-a="setPg"][data-v="backup"]')]
 
 # id, title, area, kind, the code-list key, steps, set-up, docs ((file, section label), ...), and for a state: state_of, state
 ROOTS = [
@@ -136,6 +192,160 @@ ROOTS = [
     dict(id='song-page', title='Song page', area='Songs', kind='Screen', key='Screen:lyr', steps=SONG_PAGE, setup=['track', 'takes']),
     dict(id='song-section', title='Song page · section selected', area='Songs', kind='State', key='Screen:lyr',
          steps=SONG_PAGE + [('tap', '[data-a="sgSec"]')], setup=['track', 'takes'], state_of='song-page', state='section selected', taps=True),
+] + [
+    # ----- Q35 · Atlas: Starting States: screens no tap from the starting screens above can reach -----
+    # VS-015 · Coach video: the player, with the tests' made-up video added (the real door is a file picker)
+    dict(id='coach-video', title='Coach video', area='Exercises', kind='Screen', key='Screen:coach',
+         steps=[TAB('exercises'), ('tap', '#app [data-a="openCoach"]'), UNTIL('COACH.has()&&!COACH.busy()', 'the coach video didn’t load')],
+         setup=['coach'], docs=[('MAINTAINING.md', 'The coach video')]),
+    # VS-004 · Application: recording, its take, and two takes to compare (a made-up microphone; no track, so no Sing over the track)
+    dict(id='session-recording', title='Session · Application · recording', area='Session', kind='State', key='Screen:app',
+         steps=APPL_SING + [('wait', 1000)], setup=['rot-done', 'mic'], state_of='session-application', state='recording'),
+    dict(id='session-takes', title='Session · Application · takes', area='Session', kind='State', key='Screen:app',
+         steps=APPL_SING + APPL_STOP(1), setup=['rot-done', 'mic'], state_of='session-application', state='takes'),
+    dict(id='session-compare', title='Session · Application · compare', area='Session', kind='State', key='Screen:app',
+         steps=APPL_SING + APPL_STOP(1) + [('tap', '#apcard [data-a="apSing"]'), APPL_REC] + APPL_STOP(2),
+         setup=['rot-done', 'mic'], state_of='session-application', state='compare'),
+    # VS-031 · How did it go?: song practice of the sample song with a take, then its real Save button. Its own buttons
+    # (Save, Skip) then open VS-044 · Song practice saved
+    dict(id='song-how', title='How did it go?', area='Songs', kind='Sheet', key='Sheet:how',
+         steps=SONG_PAGE + [('tap', '#app [data-a="sgPractise"]'), ('tap', '#dock [data-a="cta"]')], setup=['takes', 'song-draft']),
+    # VS-095 · Peek card: on the Marks side, tap a word, then hold the Peak mark button
+    dict(id='peek-card', title='Peek card', area='Songs', kind='Overlay', key='Screen:lyr',
+         steps=SONG_PAGE + [('tap', '[data-a="ckPencil"]'), ('tap', '[data-a="ckHeadMarks"]'), ('tap', '#app .w >> nth=1'),
+                            HOLD('#mksheet .mkb[data-v="peak"]'), UNTIL("!!document.getElementById('mkpeek')", 'the peek card didn’t show')],
+         setup=['track', 'takes'], docs=[('MAINTAINING.md', 'Marks guide')]),
+    # VS-011 · Check timing, and its Overlaps state: every line placed by hand, then a timed section moved
+    dict(id='check-timing', title='Check timing', area='Songs', kind='Screen', key='Screen:ckCheck', steps=CHECK_TIMING, setup=['track', 'takes']),
+    dict(id='check-timing-overlaps', title='Check timing · Overlaps', area='Songs', kind='State', key='Screen:ckCheck',
+         steps=CHECK_TIMING, setup=['track', 'takes', 'timed', 'moved'], state_of='check-timing', state='overlaps'),
+    # VS-072 · Past the new end: the track replaced through the track menu with a 20 s file, with lines and a marker past it
+    dict(id='track-past-end', title='Past the new end', area='Songs', kind='Sheet', key='Sheet:trkPast',
+         steps=SONG_PAGE + [('tap', '#app [data-a="trkOpen"]'), ('tap', '[data-a="trkMenu"]'), ('tap', '.scrim .sheet [data-a="trkReplace"]'),
+                            UNTIL("U.sheet==='trkPast'", 'the shorter track didn’t ask about what’s past its end', 20000)],
+         setup=['track', 'timed', 'late-marker', 'short-track']),
+    # VS-019 · Settings › Backup, and with a rescued copy of saved data that couldn't be read; and VS-080 · Delete the
+    # rescued copy from there (its own Delete is never tapped). VS-080 has its own starting state because the copy's
+    # button names the moment it was rescued, which differs in every fresh copy of the app
+    dict(id='settings-backup', title='Settings › Backup', area='Settings', kind='Sub-page', key='Sub-page:backup', steps=BACKUP, setup=[]),
+    dict(id='backup-rescued', title='Settings › Backup · rescued data', area='Settings', kind='State', key='Sub-page:backup',
+         steps=BACKUP, setup=['damaged'], state_of='settings-backup', state='rescued data', taps=True,
+         docs=[('MAINTAINING.md', 'Save safety (3.29, Q11)')]),
+    dict(id='rescued-delete', title='Delete the rescued copy', area='Settings', kind='Sheet', key='Sheet:rescueDel',
+         steps=BACKUP + [('tap', '#app [data-a="sheet"][data-v="rescueDel"]')], setup=['damaged']),
+]
+
+# ---------- captions (Q35): one plain line per screen, by screen ID (a state by its ID, then ~ and the state) ----------
+CAPTIONS = {
+    'VS-001': 'Home tab: weekly goal, streak, start a session', 'VS-001~first-launch': 'The very first open, before any practice',
+    'VS-001~session-running': 'A session in progress: Resume or Discard', 'VS-001~dark-mode': 'Today in dark mode',
+    'VS-002': 'Foundation: tap a row’s level (1, 2, 3, Skip)', 'VS-003': 'Rotation: the suggested exercise and the rest',
+    'VS-004': 'Application: pick a song, sing it, keep the best take', 'VS-004~recording': 'The card records; the page stays still',
+    'VS-004~takes': 'A take saved: play, star, Again or Done', 'VS-004~compare': 'Two takes: switch between them to compare',
+    'VS-005': 'Session saved: the week’s arc; Done goes to Today', 'VS-006': 'Recent sessions and the practice-time chart',
+    'VS-007': 'Every session and song practice, by month', 'VS-008': 'Pinned and recently practised songs, and search',
+    'VS-009': 'One song: practise, recall, perform, record', 'VS-009~section-selected': 'A section picked: record it, its takes, marks',
+    'VS-010': 'The song’s track: waveform, sections, markers, loop', 'VS-011': 'Sections and lines, and whether they’re timed',
+    'VS-011~overlaps': 'A timed section moved: dashed lines, Overlaps flags', 'VS-012': 'Just singing: pick a song and record takes',
+    'VS-013': 'The exercise library and the coach video', 'VS-014': 'One exercise: its pattern, levels and how to do it',
+    'VS-015': 'The coach video player: levels, Loop, every exercise', 'VS-016': 'Every pattern the app can play, by group',
+    'VS-017': 'Search songs, lyrics, exercises and sessions', 'VS-018': 'A list of rows, each opening its own page',
+    'VS-019': 'Export, import and check a backup', 'VS-019~rescued-data': 'Saved data that couldn’t be read: save or delete the copy',
+    'VS-020': 'Space used, and reviewing old takes', 'VS-021': 'How long a peek shows the words', 'VS-022': 'Add, replace or remove the coach video',
+    'VS-023': 'Your voice type and range', 'VS-024': 'The pattern player’s sound, ending and vowel cue', 'VS-025': 'Background and how things look',
+    'VS-026': 'Reduce motion, transparency and slow motion', 'VS-027': 'Every version on a timeline',
+    'VS-028': 'Every mark, and how to mark a song', 'VS-029': 'Four passes to mark a song, and good habits', 'VS-030': 'One mark: what it means and when to use it',
+    'VS-031': 'After song practice: words for how it felt, all optional', 'VS-032': 'A long session: check the minutes before saving',
+    'VS-033': 'Notes on one exercise in this session', 'VS-034': 'Add your own word to the list', 'VS-035': 'Back after a long gap: count the time away?',
+    'VS-036': 'The session is finished', 'VS-037': 'Throw away the session in progress?', 'VS-038': 'Practice calendar: a day opens its sessions',
+    'VS-039': 'One session: levels, notes and time split', 'VS-040': 'Change a session’s date, minutes and levels', 'VS-041': 'Delete this session?',
+    'VS-042': 'One song practice: time, song and takes', 'VS-043': 'Delete this song practice?', 'VS-044': 'Over Today: time, song and takes, saved',
+    'VS-045': 'Pick a song for song practice', 'VS-046': 'Delete this song and its takes?', 'VS-047': 'Recording with the track playing: headphones?',
+    'VS-048': 'Notes on one take', 'VS-049': 'Delete this take?', 'VS-050': 'Timing, Check timing, Key and the song’s switches',
+    'VS-051': 'Add a song: from media, or type it in', 'VS-052': 'Name a section (Verse, Chorus…)', 'VS-053': 'This song’s marks, and the guide',
+    'VS-054': 'Takes for this section, or all of them', 'VS-055': 'A take’s menu: Star, Rename, Delete', 'VS-056': 'Delete this take?',
+    'VS-057': 'Old takes to keep or clear', 'VS-058': 'A comment on a take: edit or delete', 'VS-059': 'Stop the song’s length following its track?',
+    'VS-060': 'Match the song’s length to its track again?', 'VS-061': 'A line on how to sing a section', 'VS-062': 'Stop this section sharing with its copies?',
+    'VS-063': 'Pinned is full: unpin one first', 'VS-064': 'Give the song a new name', 'VS-065': 'Delete this song (or the chosen songs)?',
+    'VS-066': 'Replace or remove the track, jog wheel side', 'VS-067': 'Remove the track from this phone?', 'VS-068': 'A marker’s menu: rename, loop, section start',
+    'VS-069': 'Make this marker a section start', 'VS-070': 'Give the marker a name', 'VS-071': 'Clear every marker?',
+    'VS-072': 'A shorter track: trim what’s past its end, or keep it', 'VS-073': 'A large file: add it anyway?', 'VS-074': 'Add your own exercise',
+    'VS-075': 'Describe what the exercise is', 'VS-076': 'Delete this exercise?', 'VS-077': 'How much space recordings use',
+    'VS-078': 'Delete every recording?', 'VS-079': 'Remove the coach video from this phone?', 'VS-080': 'Delete the rescued copy?',
+    'VS-081': 'Set this month’s minutes back to zero?', 'VS-082': 'Delete everything and start again?', 'VS-083': 'Making the backup file',
+    'VS-084': 'The backup file is ready to save', 'VS-085': 'Ask the phone to keep the app’s data', 'VS-086': 'What a backup file holds, before restoring',
+    'VS-087': 'Where backups go and how to keep them', 'VS-088': 'Every backup made from this phone', 'VS-089': 'Restoring a backup',
+    'VS-090': 'Put things back as they were before the restore?', 'VS-091': 'Undoing the restore', 'VS-092': 'The session clock: each step’s slice, and Pause',
+    'VS-093': 'The floating window for a take, track or video', 'VS-094': 'The launch screen as the app opens', 'VS-095': 'Hold a mark: a quick reminder of it',
+}
+
+# ---------- doors the scan can't test (Q35): swipes, holds, timed sheets and file pickers, written by hand ----------
+DOORS = [
+    # swipes
+    {'from': 'VS-013', 'to': 'VS-076', 'how': 'Swipe your own exercise’s row left, then Delete', 'kind': 'Swipe'},
+    {'from': 'VS-008', 'to': 'VS-065', 'how': 'Swipe a song left, then Delete', 'kind': 'Swipe'},
+    {'from': 'VS-007', 'to': 'VS-043', 'how': 'Swipe a song practice left, then Delete', 'kind': 'Swipe'},
+    {'from': 'VS-054', 'to': 'VS-056', 'how': 'Swipe a take left, then Delete', 'kind': 'Swipe'},
+    # holds
+    {'from': 'VS-008', 'to': 'VS-064', 'how': 'Hold a song, then Rename', 'kind': 'Hold'},
+    {'from': 'VS-008', 'to': 'VS-063', 'how': 'Hold a song, then Pin, with Pinned already full', 'kind': 'Hold'},
+    {'from': 'VS-054', 'to': 'VS-055', 'how': 'Hold a take', 'kind': 'Hold'},
+    {'from': 'VS-054', 'to': 'VS-058', 'how': 'Hold a comment on a take', 'kind': 'Hold'},
+    {'from': 'VS-010', 'to': 'VS-068', 'how': 'Hold a marker', 'kind': 'Hold'},
+    {'from': 'VS-009', 'to': 'VS-095', 'how': 'On the Marks side, tap a word, then hold a mark button (a starting state opens it)', 'kind': 'Hold'},
+    # timed
+    {'from': 'VS-002', 'to': 'VS-035', 'how': 'Come back to a running session after a long gap', 'kind': 'Timed'},
+    {'from': 'VS-083', 'to': 'VS-084', 'how': 'When the backup file is ready', 'kind': 'Timed'},
+    {'from': 'VS-089', 'to': 'VS-001', 'how': 'When the restore is done', 'kind': 'Timed'},
+    {'from': 'VS-091', 'to': 'VS-019', 'how': 'When the undo is done', 'kind': 'Timed'},
+    # file pickers, and import, export and restore (never tapped by the scan)
+    {'from': 'VS-019', 'to': 'VS-083', 'how': 'Export backup: makes a file to save or share', 'kind': 'File'},
+    {'from': 'VS-019', 'to': 'VS-086', 'how': 'Check a backup: choose a backup file', 'kind': 'File picker'},
+    {'from': 'VS-019', 'to': 'VS-089', 'how': 'Import backup: choose a file, then Restore', 'kind': 'File picker'},
+    {'from': 'VS-019', 'to': 'VS-090', 'how': 'Undo last restore (shows after a restore)', 'kind': 'After a restore'},
+    {'from': 'VS-090', 'to': 'VS-091', 'how': 'Undo: puts the data back (never tapped)', 'kind': 'Replaces your data'},
+    {'from': 'VS-022', 'to': 'VS-015', 'how': 'Add coach video: choose a video file (a starting state adds the tests’ one)', 'kind': 'File picker'},
+    {'from': 'VS-009', 'to': 'VS-073', 'how': 'Add track: choose a file over the size limit', 'kind': 'File picker'},
+    {'from': 'VS-066', 'to': 'VS-072', 'how': 'Replace track… with a shorter file (a starting state does this)', 'kind': 'File picker'},
+    {'from': 'VS-004', 'to': 'VS-047', 'how': 'Sing with the song’s track on this phone and Sing over the track on', 'kind': 'Microphone'},
+    {'from': 'VS-094', 'to': 'VS-019~rescued-data', 'how': 'The app opens with saved data it can’t read; the toast leads here', 'kind': 'Timed'},
+]
+
+
+# ---------- flows (Q35): the main journeys from the register (js/register.js), walked through their real buttons ----------
+# Each step taps one button, then the scan takes a picture. Steps with capture=False tap without a picture (several level
+# rings, or Sing before waiting for the recording); a step with only js waits (UNTIL) and then takes the picture.
+_wait = lambda cond, what: UNTIL(cond, what)[1]
+RIVER = ':has-text("River Song")'   # the sample song made in prepare()
+FLOWS = [
+    dict(id='F-01', title='Focused session', start='today', setup=['mic'], start_moment='Today',
+         caption='A whole session on one page: Foundation, Rotation, then a song in Application, saved',
+         steps=[dict(tap='#app [data-a="start"]', moment='Foundation, fresh'),
+                dict(tap='#app [data-a="ring"][data-k="slides"]', capture=False),
+                dict(tap='#app [data-a="ring"][data-k="humming"]', capture=False),
+                dict(tap='#app [data-a="ring"][data-k="lip"]', capture=False),
+                dict(tap='#app [data-a="ring"][data-k="straw"]', label='Tap each row’s level', moment='levels set'),
+                dict(tap='#dock [data-a="cta"]', moment='Rotation'),
+                dict(tap='#dock [data-a="cta"]', moment='Application'),
+                dict(tap='#app [data-a="apSong"]' + RIVER, moment='a song picked'),
+                dict(tap='#apcard [data-a="apSing"]', capture=False),
+                dict(js=_wait("!!rec&&!!document.querySelector('#apcard.rec')", 'the recording didn’t start'), wait=1200, label='Sing', moment='recording'),
+                dict(tap='#apcard [data-a="apStop"]', capture=False),
+                dict(js=_wait("!rec&&TAKES.length===1&&!document.querySelector('#apcard .tkwv.wait')", 'the take wasn’t saved'), label='Stop', moment='takes'),
+                dict(tap='#apcard [data-a="apDone"]', moment='song done'),
+                dict(tap='#dock [data-a="cta"]', moment='Session saved'),
+                dict(tap='#app [data-name="done-button"]', moment='back on Today')]),
+    dict(id='F-02', title='Song practice', start='today', setup=['mic'], start_moment='Today',
+         caption='Pick a song, record a take, say how it went, saved',
+         steps=[dict(tap='#app [data-a="songStart"]', moment='pick a song'),
+                dict(tap='#app [data-a="sgOpen"]' + RIVER, moment='the song'),
+                dict(tap='#app [data-a="sgPractise"]', moment='Song practice'),
+                dict(tap='#app [data-a="rec"]', capture=False),
+                dict(js=_wait('!!rec', 'the recording didn’t start'), wait=1200, label='Record', moment='recording'),
+                dict(tap='#app [data-a="rec"]', capture=False),
+                dict(js=_wait('!rec&&TAKES.length===1', 'the take wasn’t saved'), label='Stop', moment='a take recorded'),
+                dict(tap='#dock [data-a="cta"]', moment='How did it go?'),
+                dict(tap='.scrim .sheet [data-a="saveHow"]', moment='saved')]),
 ]
 
 TAB_AREA = {'today': 'Today', 'history': 'Progress', 'songs': 'Songs', 'exercises': 'Exercises', 'find': 'Search', 'settings': 'Settings'}
@@ -288,7 +498,9 @@ def link_kind(l):
 
 
 # ---------- what the scan sees and taps ----------
-SHEET = '.scrim .sheet'   # a sheet's own buttons are looked for inside it, so a row underneath can't be tapped instead
+# a sheet's own buttons are looked for inside it, so a row underneath can't be tapped instead. The peek card (#mkpeek,
+# VS-095) counts as one too (Q35): it's drawn over the song page with its own ID and buttons, like a sheet
+SHEET = '.scrim .sheet, #mkpeek'
 BUTTONS = '[data-a]'
 TITLE_JS = """()=>{const sh=document.querySelector('.scrim .sheet');if(sh){const h=sh.querySelector('h1,h2,.stitle,.shtitle');
   return (sh.getAttribute('aria-label')||(h&&h.innerText)||'').replace(/\\s+/g,' ').trim()}
