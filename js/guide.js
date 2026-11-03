@@ -608,6 +608,7 @@ const MKG = (() => {
     const tmp = document.createElement('div');
     tmp.innerHTML = peekHTML(t);
     const c = tmp.firstElementChild;
+    SCR.mark(c, 'overlay:peek'); // Q36 its screen ID and part names
     document.body.appendChild(c);
     shown = t;
     placePeek(c);

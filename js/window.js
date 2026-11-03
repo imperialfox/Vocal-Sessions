@@ -388,6 +388,7 @@ function fwEl() {
   el.className = 'fw glass';
   el.setAttribute('role', 'group');
   el.hidden = true;
+  SCR.mark(el, 'overlay:window'); // Q36 its screen ID
   document.body.appendChild(el);
   FW.el = el;
   fwGestures(el);
@@ -404,6 +405,7 @@ function fwClean(el, id) {
   if (tf) el.style.transform = tf;
   Object.keys(el.dataset).forEach((d) => delete el.dataset[d]);
   el.dataset.kind = id;
+  SCR.mark(el, 'overlay:window'); // Q36
   el.innerHTML = '';
   FW.build = '';
   fwCtl(false);

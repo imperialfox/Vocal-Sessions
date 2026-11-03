@@ -58,6 +58,7 @@ bootStep('draft', () => {
   normX();
 });
 bootStep('layout', layout);
+bootStep('launch ID', () => SCR.mark(document.getElementById('splash'), 'overlay:launch')); // Q36
 bootStep('launch', LAUNCH.start); // before the first draw, so the floating window waits for the launch ripple
 const BOOT_DREW = bootStep('first draw', render);
 bootStep('session clock', SCLOCK.boot); // Q22: a session still running carries on, with "Session picked up"

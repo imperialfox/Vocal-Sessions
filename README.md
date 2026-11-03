@@ -4,9 +4,9 @@
 
 It's a web app styled like a native iOS app: a single HTML file with no install, no backend and no account, designed to live on your iPhone Home Screen. It runs on its own, with no other apps needed.
 
-![Version 3.49](https://img.shields.io/badge/version-3.49-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
+![Version 3.50](https://img.shields.io/badge/version-3.50-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
 
-**Current version: 3.49 · 2 Nov 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
+**Current version: 3.50 · 3 Nov 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
 
 ---
 
@@ -152,7 +152,7 @@ And **Songs**, for learning a song: paste the lyrics, and they're split into lab
 - **Coach video:** add, replace or remove it (see Coach video below)
 - **Your voice:** your voice type (Bass to Soprano, tenor to start) and its lowest and highest comfortable notes and falsetto top, which the exercise pages check patterns against, and **Stop at my top note**. In backups.
 - **Pattern player:** the sound, the held note underneath, the chord before each round, the ending (home chord, home note or off), the vowel cue and dots or music notes on the drawing. In backups.
-- **Appearance:** **Gradient background**, the soft moving wash behind Today's header, on unless you switch it off. For this device only, not in backups.
+- **Appearance:** **Gradient background**, the soft moving wash behind Today's header, on unless you switch it off, and (3.50) **Show screen IDs**, a small label in the corner with each screen's permanent ID (such as VS-001 for Today), for pointing at a screen in a note. Both are for this device only, not in backups.
 - **Accessibility:** **Reduce motion** (Match iPhone, On or Off) swaps zooms and slides for short fades; **Reduce transparency** makes the glass more solid, so what's on it is easier to read; **Slow motion** plays every animation four times slower, for checking how it feels. All are for this device only and aren't in backups.
 - **Changelog:** every version on a timeline, with a growth chart of improvements by area. It's built from [CHANGELOG.md](CHANGELOG.md).
 - **View on GitHub:** this repo
@@ -307,6 +307,7 @@ See [MAINTAINING.md](MAINTAINING.md) for how the app is built, where data lives,
 
 - `python tests/run.py` runs the full test suite in Chromium, several files side by side: every screen at every size, a full practice session, songs, backups (including real ones from earlier versions), recording, and thousands of random taps. GitHub runs it after every push. `python tests/run.py quick` skips the slow layout and random-tap checks while building.
 - `python tools/release.py 3.7` sets a new version number everywhere at once.
+- Every screen has a permanent ID (`VS-001` onwards), listed with its named parts and the main journeys in `js/register.js` (see [MAINTAINING.md](MAINTAINING.md#screen-ids)).
 - `python3 tools/atlas/atlas.py` scans the app with sample data and shows every screen as saved screenshots, side by side (the Visual App Atlas; see [MAINTAINING.md](MAINTAINING.md#visual-app-atlas-q30)).
 
 ---

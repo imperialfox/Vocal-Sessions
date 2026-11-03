@@ -6,7 +6,7 @@
      and Storage open with a hero card (big icon, title and a short explanation); the others are plain pages.
    - Every row pushes its page in from the right (data-zk="set:<page>" with data-push, 3.23) and Back slides it away.
    - Appearance (3.23, Q08) holds this device's look: Gradient background, the soft moving wash behind Today's header
-     (on unless switched off; localStorage 'vocalLook', never in a backup). Later look options join that page.
+     (on unless switched off; localStorage 'vocalLook', never in a backup), and (Q36) Show screen IDs. Later look options join that page.
    - Accessibility holds this device's motion settings: Reduce motion (Match iPhone, On or Off, kept in localStorage
      'vocalReduce') and Slow motion (MOTION speed 4), and (Q33) Reduce transparency ('vocalTransp'). None is ever in a
      backup.
@@ -132,6 +132,17 @@ const SET = (() => {
     const o = look();
     if (on) delete o.grad;
     else o.grad = false;
+    try {
+      if (Object.keys(o).length) localStorage.setItem(LKEY, JSON.stringify(o));
+      else localStorage.removeItem(LKEY);
+    } catch (e) {}
+  }
+  // Q36 Show screen IDs: {ids: true} when on (off unless switched on)
+  const idsOn = () => look().ids === true;
+  function setIds(on) {
+    const o = look();
+    if (on) o.ids = true;
+    else delete o.ids;
     try {
       if (Object.keys(o).length) localStorage.setItem(LKEY, JSON.stringify(o));
       else localStorage.removeItem(LKEY);
@@ -436,7 +447,16 @@ const SET = (() => {
       '"><span class="lbl">Gradient background</span><span class="tgl" aria-checked="' +
       g +
       '" aria-hidden="true"></span></button></div>' +
-      '<p class="foot">A soft moving wash behind Today’s header.</p>'
+      '<p class="foot">A soft moving wash behind Today’s header.</p>' +
+      '<div class="grp setgap">' +
+      '<button class="row" data-a="setIds" role="switch" aria-checked="' +
+      idsOn() +
+      '"><span class="lbl">Show screen IDs</span><span class="tgl" aria-checked="' +
+      idsOn() +
+      '" aria-hidden="true"></span></button></div>' +
+      '<p class="foot">A small label in the corner with each screen’s ID, such as VS-001, for pointing at a screen in a note. This ' +
+      deviceName() +
+      ' only, never in backups.</p>'
     );
   }
 
@@ -541,9 +561,31 @@ const SET = (() => {
       setGrad(!gradOn());
       rerender();
     },
+    setIds: () => {
+      setIds(!idsOn());
+      rerender();
+    },
   });
 
-  return { main, page, title, open, back, shown, reduceMode, setReduce, sizes, PAGES, gradOn, setGrad, wash, transpOn, setTransp };
+  return {
+    main,
+    page,
+    title,
+    open,
+    back,
+    shown,
+    reduceMode,
+    setReduce,
+    sizes,
+    PAGES,
+    gradOn,
+    setGrad,
+    idsOn,
+    setIds,
+    wash,
+    transpOn,
+    setTransp,
+  };
 })();
 
 function scrSettings() {

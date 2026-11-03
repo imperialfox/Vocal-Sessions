@@ -9,6 +9,30 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.50 · 3 Nov 2026
+*Every screen has its own ID (Q36)*
+<!-- area: look -->
+
+Every screen, page and sheet now has a permanent ID, like VS-001 for Today, so a note or a request can point at exactly the right screen in a few characters. The ID stays the same when a screen is renamed, moved or redesigned.
+
+**Screen IDs**
+- 95 screens, pages, sheets and overlays are numbered VS-001 to VS-095, by area: Today, the session, Progress, Songs, Exercises, Search, Settings, then sheets and the parts drawn over everything (the session clock, the floating window, the launch screen and the peek card).
+- The main buttons, rows and cards on each screen have names too, such as VS-001 › start-session-button, so a note still points at the right button after a redesign moves it.
+- Five main journeys have their own IDs: F-01 Focused session, F-02 Song practice, F-03 Add a song, F-04 Time a song and F-05 Back up and restore.
+- New screens get the next number. A number is never reused, and a screen that's removed keeps its number, marked retired.
+
+**Show screen IDs**
+- A new switch in Settings › Appearance shows the current screen's ID in a small grey label in the top corner, just below the bar. With a sheet open it shows both, such as VS-009 · VS-050.
+- It's off unless you switch it on, on this device only, and never in backups. Taps go straight through the label.
+- With it on, each version in the Changelog shows which screens it changed.
+
+<!-- area: fixes -->
+**Behind the scenes**
+- The list of everything the app saves now says which version each item arrived in and whether backups carry it, and lists the settings it was missing.
+- The tests check every screen the app can show has an ID, every named part is still there, and the list of saved data matches the code.
+
+Screens: VS-025, VS-027
+
 ## 3.49 · 2 Nov 2026
 *Glass that looks and presses like iOS 27 (Q33)*
 <!-- area: look -->

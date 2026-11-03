@@ -6,7 +6,8 @@
    Each version: "## 3.7 · 15 Oct 2026", then "*Headline*" on the next line.
    "<!-- era: Name · description -->" under an x.0 version names that era.
    "<!-- area: backup -->" on its own line sets the area for the version (right after the headline) or for the next section;
-   at the end of a bullet it sets that bullet's area. Areas: practice, songs, progress, recordings, backup, look, fixes. */
+   at the end of a bullet it sets that bullet's area. Areas: practice, songs, progress, recordings, backup, look, fixes.
+   "Screens: VS-009, VS-050" (Q36) lists the screens the version changed; shown only with Show screen IDs on. */
 const LOG_AREAS = {
   p: ['Practice', 'var(--accent)'],
   s: ['Songs', 'var(--good)'],
@@ -75,6 +76,12 @@ function parseChangelog(md) {
     if ((m = line.match(/^<!--\s*area:\s*([a-z]+)\s*-->$/))) {
       area = code(m[1]);
       if (!sec) e.area = area;
+      continue;
+    }
+    // Q36: "Screens: VS-009, VS-050" (or "Screens: none"), the screens this version changed. The page shows it only
+    // when Show screen IDs is on
+    if ((m = line.match(/^Screens: (.+)$/))) {
+      e.screens = m[1].trim();
       continue;
     }
     if (!e.title && !sec && !e.intro && (m = line.match(/^\*([^*](?:.*[^*])?)\*$/))) {
@@ -372,6 +379,7 @@ function logEntry(e, prev) {
     '<div class="tl-title">' +
     esc(e.title) +
     '</div>' +
+    (e.screens && SET.idsOn() ? '<div class="tl-scr">Screens: ' + esc(e.screens) + '</div>' : '') +
     '<div class="tl-bar" aria-hidden="true">' +
     Object.keys(LOG_AREAS)
       .filter((a) => by[a])

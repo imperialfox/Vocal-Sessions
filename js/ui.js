@@ -743,6 +743,7 @@ function renderSheet() {
   if (open && !document.body.classList.contains('sheet-open'))
     $('app').parentNode.style.transformOrigin = '50% ' + (window.scrollY + 120) + 'px';
   document.body.classList.toggle('sheet-open', open);
+  SCR.sheet(); // Q36 the sheet's screen ID and part names
   if (h) placeKnobs($('layer'));
   if (s === 'addEx')
     setTimeout(() => {
@@ -1200,8 +1201,90 @@ function render(keepScroll) {
   DET.dockSwap(dk);
   DET.play();
   DET.after();
+  SCR.screen(); // Q36 the screen's ID and part names, from the register (register.js)
 }
 const rerender = () => render(true);
+
+/* ===== Screen IDs (Q36) =====
+   Each screen's permanent ID comes from the register (SCREENS, register.js), looked up by its code key. render() and
+   renderSheet() stamp it on the page as data-screen (#app for the screen, the sheet or clock for what's over it), and
+   the parts the register names get data-name. Drawn outside render(): the floating window (window.js), the peek card
+   (guide.js) and the launch screen (index.html, set at boot). A screen missing from the register shows VS-??? and
+   warns once in the console; the tests fail on it. Settings › Appearance › Show screen IDs (vocalLook.ids) puts the
+   IDs in a small grey label in the top corner, below the bar. See MAINTAINING › Screen IDs. */
+const SCR = (() => {
+  const BY = {};
+  SCREENS.screens.forEach((s) => (BY[s.key] = s));
+  const warned = {};
+  // the code key of the screen render() draws: see register.js
+  function viewKey() {
+    const v = U.view;
+    if (!v) return 'tab:' + U.tab;
+    if (v === 'set') return SET.PAGES.includes(U.setPg) ? 'view:set/' + U.setPg : 'tab:settings'; // SET.page() falls back to the main list
+    if (v === 'guide') return 'view:guide/' + (U.gPg === 'how' ? 'how' : MK_DEF[U.gPg] ? 'mark' : 'home');
+    return 'view:' + v;
+  }
+  function entry(key) {
+    const s = BY[key];
+    if (s && s.status === 'Live') return s;
+    if (!warned[key]) {
+      warned[key] = 1;
+      console.warn('No screen ID in js/register.js for ' + key);
+    }
+    return null;
+  }
+  const id = (key) => (entry(key) || { id: 'VS-???' }).id;
+  // data-name on the register's parts for this screen (and the shared ones) inside these elements
+  function name(s, roots) {
+    const parts = SCREENS.shared.concat(s ? s.parts : []);
+    roots.forEach((r) => {
+      if (!r) return;
+      parts.forEach((p) => r.querySelectorAll(p.sel).forEach((el) => (el.dataset.name = p.name)));
+    });
+  }
+  function screen() {
+    const key = viewKey(),
+      s = entry(key);
+    $('app').dataset.screen = s ? s.id : 'VS-???';
+    name(s, [$('app'), $('bar'), $('dock'), $('side')]);
+    label();
+  }
+  // the sheet (or the session clock) over the screen: renderSheet()
+  function sheet() {
+    const el = $('layer').querySelector('.sheet, .clock');
+    if (el) {
+      const s = entry(U.sheet ? 'sheet:' + U.sheet : 'overlay:clock');
+      el.dataset.screen = s ? s.id : 'VS-???';
+      name(s, [el]);
+    }
+    label();
+  }
+  // something drawn outside render(): the floating window, the peek card, the launch screen
+  function mark(el, key) {
+    if (!el) return;
+    const s = entry(key);
+    el.dataset.screen = s ? s.id : 'VS-???';
+    name(s, [el]);
+  }
+  // Settings › Appearance › Show screen IDs: the screen's ID, then the open sheet's
+  function label() {
+    let el = $('scrid');
+    if (!SET.idsOn()) {
+      if (el) el.remove();
+      return;
+    }
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'scrid';
+      el.setAttribute('aria-hidden', 'true');
+      document.body.appendChild(el);
+    }
+    const over = $('layer').querySelector('.sheet[data-screen], .clock[data-screen]');
+    el.textContent = $('app').dataset.screen + (over ? ' · ' + over.dataset.screen : '');
+  }
+  return { viewKey, id, screen, sheet, mark, label, BY };
+})();
+
 function go(fn) {
   const was = U.view,
     z = ZOOM.before(); // 3.15: a card tapped (or Back) zooms between the screens

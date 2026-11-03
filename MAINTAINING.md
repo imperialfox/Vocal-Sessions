@@ -43,7 +43,8 @@ Notes for whoever works on the app next, whether that's Ivan, a new Claude sessi
 
 | File | Holds |
 |---|---|
-| `js/content.js` | **The practice content:** goals, coach video and timings (`VID`, and `COACH_TIMES` for the coach video player), exercises (`FOUND`, `ROT`), write-ups (`DESC`) and quick words. Loaded first |
+| `js/register.js` | **The screen register** (`SCREENS`, Q36): every screen, sub-page, sheet and overlay with its permanent ID (`VS-001` onwards), its named parts, and the flows (`F-01` onwards). Plain data, loaded first. See Screen IDs below |
+| `js/content.js` | **The practice content:** goals, coach video and timings (`VID`, and `COACH_TIMES` for the coach video player), exercises (`FOUND`, `ROT`), write-ups (`DESC`) and quick words |
 | `js/config.js` | App settings and fixed design: limits, focus areas and colours, exercise icons |
 | `js/motion.js` | **The shared springs** (`MOTION`): gentle, nav and ripple springs as CSS `linear()` easings and `--ease-*`/`--dur-*` variables, stagger helpers, Reduce Motion, the speed setting and the distance blur. See Motion below |
 | `js/storage.js` | Loading, checking (`cleanData`) and saving data, data-version upgrades, **the shared IndexedDB helper** (`IDB`, Q11) every database opens through, the safety copies (`SAFE`, Q11) and recordings in IndexedDB. See Save safety below |
@@ -52,7 +53,7 @@ Notes for whoever works on the app next, whether that's Ivan, a new Claude sessi
 | `js/songs.js` | Songs: the list, pasting and labelling lyrics, the lyrics screen, marks and cues, editing, search, pins, and checking saved songs (`cleanSong`) |
 | `js/marks.js` | **Marks** (`MARKS`, 3.27, Q03): what each mark is (`MK_DEF`, `MK_BY`, `MK_LAYERS`), checking saved marks, moving the older Annotate marks across, the older copy kept for 3.26, marks following their words, and drawing a line's marks. See Marks below |
 | `js/changelog.js` | Settings › Changelog, built from CHANGELOG.md |
-| `js/ui.js` | Top bar, tab bar, sidebar, sheets, `render()` and the sliding picker knobs |
+| `js/ui.js` | Top bar, tab bar, sidebar, sheets, `render()`, the sliding picker knobs and (Q36) **stamping screen IDs** (`SCR`: see Screen IDs below) |
 | `js/audio.js` | **The shared audio service** (`AUDIO`, Q16): one AudioContext for everything that listens to the microphone (the mono mix, the level meter, later the voice analysers), woken inside a tap, and one frame clock (`AUDIO.frame`) for anything drawn from it. See Recordings below |
 | `js/onepage.js` | **The one-page session** (`OP`, Q19): tapping exercise rows through their levels, their words, the pinned button, folding and reopening steps, pulling past the bottom and More exercises' sort. See The one-page session below |
 | `js/session.js` | Running a session (steps, clock, finishing, editing, `togglePause()`) and recording and playing takes, and (Q16) recording over the track (`REC_OVER`, `recOverSheet()`) |
@@ -90,22 +91,48 @@ The code is formatted with Prettier (`npx prettier@3.3.3 --write --single-quote 
 
 Everything stays on the device. There is no server.
 
-| Where | Key | Holds |
+Every key, store and setting the app saves (the saved-data list). **Since** is the version it arrived in; **Backed up** says whether a backup carries it. A renamed or retired key stays listed, pointing to what replaced it. The tests check every storage key in the code is in this table (`tests/test_screens.py`).
+
+| Where | Key | Holds | Since | Backed up |
+|---|---|---|---|---|
+| localStorage | `vocalTracker` | All saved data (`D`): sessions, song practice, months, exercises, songs, words, last backup, and settings that travel with backups (`D.prefs`, fields below) | First version | Yes: it is the backup |
+| localStorage | `vocalDraft` | The session in progress (`X`), so it survives closing the app. Song practice only has a `start` (and a draft) once its first take starts recording. Since Q22 it also has `seen` (ms): when the app was last on screen, for "Were you away?" | Before 3.0 | Yes, when a session is running |
+| localStorage | `vocalClock` | The session clock on this device (Q22): `{swap: true}` when the big number shows the step's time first | 3.42 | No |
+| localStorage | `vocalBackupLog` | Backup history for this device (the last 24) | 3.6 | No |
+| localStorage | `vocalSongPrefs` | This device's song and Song Clock choices (fields below) | 3.8 | No |
+| localStorage | `vocalWindow` | The floating window on this device: `{corner: 'br', size: 's'}` (its corner, and since Q26 the coach video's size, `s`, `m` or `l`) | 3.12 | No |
+| localStorage | `vocalLook` | This device's look (Settings › Appearance): `{grad: false}` when Today's gradient is switched off (3.23), `{ids: true}` when Show screen IDs is on (3.50, Q36); absent means everything is on its default | 3.23 | No |
+| localStorage | `vocalMotion` | Motion speed on this device (`MOTION.setSpeed`): `'4'` with Slow motion on, `'0'` for motion off (the tests); absent is normal speed (see Motion) | 3.11 | No |
+| localStorage | `vocalReduce` | Settings › Accessibility › Reduce motion: `'on'` or `'off'`; absent follows the device | 3.21 | No |
+| localStorage | `vocalTransp` | Settings › Accessibility › Reduce transparency: `'on'`; absent follows the browser (Q33) | 3.49 | No |
+| localStorage | `vocalCoach` | The coach video's place, speed and Loop on this device, `{t, speed, loop}` | 3.16 | No |
+| localStorage | `vocalBeforeUpgrade` | **Retired in 3.29 (Q11):** the copy from before the last data upgrade. Since 3.29 it's moved into IndexedDB `vocalSafety` once at launch and cleared from here | 3.7 | No |
+| IndexedDB `vocalTakes` (version 2) | store `takes` | Recordings, with their audio as Blobs | Before 3.0 | Yes, unless Exclude recordings is on |
+| IndexedDB `vocalTakes` | store `undo` | The copy kept for 30 days after a restore | Before 3.0 | No |
+| IndexedDB `vocalTakeExtras` (version 1) | stores `peaks`, `mono` | Each take's waveform peaks, and the both-ears copy of a take with one silent side (see Recordings) | 3.20 | No: made again from the take |
+| IndexedDB `vocalCoach` (version 1) | store `video`, key `v` | The coach video: `{name, size, type, dur, added, blob}`. Reset all data leaves it | 3.16 | No |
+| IndexedDB `vocalSafety` (version 1, Q11) | store `copies`, keyed by name | The safety copies (`SAFE`): `vocalBeforeUpgrade` is `{from, to, at, data}`, the data as it was before the last data upgrade, kept for 30 days; `rescued:<ms>` is `{at, why, text, bytes, appVersion}`, saved data that couldn't be read (`why: 'unreadable'`) or that had a song that couldn't be checked (`'song'`), exactly as it was stored, kept until deleted in Settings › Backup. Restores and Reset all data leave it. Counted in Storage with Sessions and songs | 3.29 | No |
+| IndexedDB `vocalTracks` (version 1) | stores `audio` and `peaks`, key: the song's id | Song tracks (3.19): `audio` is `{name, size, type, dur, added, blob}` (the file as imported), `peaks` is `{p: Uint8Array, rate: 50, dur}`. Restores and Reset all data leave it; deleting a song or Remove track deletes its entries | 3.19 | No |
+
+**`D.prefs`** (in `vocalTracker`, so in backups):
+
+| Field | Holds | Since |
 |---|---|---|
-| localStorage | `vocalTracker` | All saved data (`D`): sessions, song practice, months, exercises, songs, words, last backup, and settings that travel with backups (`D.prefs`: Recall's peek length; since 3.48, Q32, the pattern player's choices in `D.prefs.pat`) |
-| localStorage | `vocalDraft` | The session in progress (`X`), so it survives closing the app. Song practice only has a `start` (and a draft) once its first take starts recording. Since Q22 it also has `seen` (ms): when the app was last on screen, for "Were you away?" |
-| localStorage | `vocalClock` | The session clock on this device (Q22): `{swap: true}` when the big number shows the step's time first (not backed up) |
-| localStorage | `vocalBackupLog` | Backup history for this device |
-| localStorage | `vocalSongPrefs` | This device's song sort order and recent searches, the marks layer shown (`mkLayer`, 3.27), Song Clock's settings: `marksPlaying`, `blurAhead`, `snapping`, `stayAwake`, `pins`, the track player's `trkLevel` (0–3) and `trkSpeed`, Search's recent searches `findRecent` (3.22) and (Q20) Application's Sing over the track, `singOver` (false when switched off) (not backed up) |
-| localStorage | `vocalWindow` | The floating window's corner on this device, `{corner: 'br'}` (not backed up) |
-| localStorage | `vocalLook` | This device's look (3.23, Settings › Appearance): `{grad: false}` when Today's gradient is switched off; absent means everything is on its default (not backed up) |
-| localStorage | `vocalBeforeUpgrade` | Up to 3.28: the copy from before the last data upgrade. Since 3.29 (Q11) it's moved into `vocalSafety` once at launch and cleared from here |
-| IndexedDB `vocalTakes` (version 2) | store `takes` | Recordings, with their audio as Blobs |
-| IndexedDB `vocalTakes` | store `undo` | The copy kept for 30 days after a restore |
-| IndexedDB `vocalCoach` (version 1) | store `video`, key `v` | The coach video: `{name, size, type, dur, added, blob}`. Never in backups; Reset all data leaves it |
-| localStorage | `vocalCoach` | The coach video's place, speed and Loop on this device, `{t, speed, loop}` (not backed up) |
-| IndexedDB `vocalSafety` (version 1, Q11) | store `copies`, keyed by name | The safety copies (`SAFE`): `vocalBeforeUpgrade` is `{from, to, at, data}`, the data as it was before the last data upgrade, kept for 30 days; `rescued:<ms>` is `{at, why, text, bytes, appVersion}`, saved data that couldn't be read (`why: 'unreadable'`) or that had a song that couldn't be checked (`'song'`), exactly as it was stored, kept until deleted in Settings › Backup. Never in backups; restores and Reset all data leave it. Counted in Storage with Sessions and songs |
-| IndexedDB `vocalTracks` (version 1) | stores `audio` and `peaks`, key: the song's id | Song tracks (3.19): `audio` is `{name, size, type, dur, added, blob}` (the file as imported), `peaks` is `{p: Uint8Array, rate: 50, dur}`. Never in backups; restores and Reset all data leave it; deleting a song or Remove track deletes its entries |
+| `peek` | Recall's peek length in seconds: 1, 2, 3 or 5 | 3.10.1 |
+| `pat` | The pattern player's choices (Q32), checked by `PAT.clean()`: `sound`, `drone`, `cue`, `ending`, `vowel`, `notes`, `stopTop`, `ramp`, `voice` (voice type and range), `fav` (favourite patterns), `ex` (each exercise's pattern `p` and key `off`) and `spd` (each exercise's speed) | 3.48 |
+
+**`vocalSongPrefs`** (this device, not backed up; read by `sgp()` in songs.js, which keeps each field below as it was stored for the file that checks it):
+
+| Field | Holds | Since |
+|---|---|---|
+| `sort` | The Songs list's sort order | 3.8 |
+| `recent` | The Songs list's recent searches (up to 5) | 3.8 |
+| `marksPlaying`, `blurAhead`, `snapping`, `stayAwake`, `pins` | Song Clock: Marks while playing, Blur ahead, Snapping, Stay awake and the pinned icons (clock.js) | 3.18 |
+| `trkLevel`, `trkSpeed` | The track player's zoom level (0–3) and speed | 3.19 |
+| `findRecent` | Search's recent searches | 3.22 |
+| `trkJogPos`, `trkSongLyrics`, `trkLvV` | The track player's jog wheel side, Song lyrics, and the levels' layout version (Q02) | 3.24 |
+| `mkLayer` | The marks layer shown | 3.27 |
+| `singOver` | Application's Sing over the track; `false` when switched off | 3.40 |
 
 `cleanData()` checks anything loaded or restored and drops what's malformed, so damaged data can't stop the app starting. Each song is checked on its own: one that makes `cleanSong()` throw is dropped alone and counted in `CLEAN_DROPPED` (Q11). `migrate()` fills in defaults and then runs `upgradeData()`; `normX()` upgrades older drafts.
 
@@ -388,6 +415,7 @@ Settings › Changelog fetches `CHANGELOG.md` and builds the timeline from it (`
 - Areas: `practice`, `songs`, `progress`, `recordings`, `backup`, `look`, `fixes`. Untagged bullets use their section's or version's area, or `fixes` for a patch version and `practice` otherwise.
 - An x.0 version can name its era: `<!-- era: Liquid Glass · Native look, deeper tracking… -->`.
 - The comments are invisible on GitHub.
+- **Screens line (3.50, Q36):** each version from 3.50 on ends with `Screens: VS-009, VS-050` (the screens it changed, by ID) or `Screens: none`. The page shows it under the headline only when Show screen IDs is on. Older versions aren't filled in.
 - `python tests/run.py release` checks every heading, headline and area tag, and the changelog tests check every version appears in the app.
 
 ## Backups
@@ -415,7 +443,8 @@ Settings (3.21, `js/settings.js`, `SET`) works like the iPhone's Settings app: a
 - **Storage** (`SET.sizes()`): recordings (`TAKES`), song tracks (`TRACK.bytes()`), the coach video (`COACH.meta().size`) and the saved data (the `vocalTracker` and `vocalDraft` strings), as one bar in the Progress colours (`--cF`, `--cR`, `--cA`, `--done`) with a key, then the rows from `TAKE.storageRows()`, `TRACK.storageRow()` and `COACH.storageRow()`.
 - **Coach video:** `COACH.settings(true)` draws its rows without their own header. The player's empty state (`coachSettings`) opens this page (`COACH.toSettings()` → `SET.open('coach')`).
 - **Accessibility:** Reduce motion (Match iPhone, On, Off: `SET.setReduce()`, localStorage `vocalReduce`, then `MOTION.publish()`), Reduce transparency (3.49, Q33: see Glass below) and Slow motion (`MOTION.setSpeed(4)` / `1`). All are this device only and never in backups.
-- **Appearance (3.23, Q08):** one switch, Gradient background (`setGrad`, on by default): `SET.gradOn()` / `SET.setGrad(on)`, localStorage `vocalLook` (an object, so later look options join it), this device only and never in backups. `SET.wash()` is the gradient's markup, drawn first on Today (`scrToday()`).
+- **Show screen IDs (3.50, Q36):** the second switch on Appearance (`setIds`, off by default): `SET.idsOn()` / `SET.setIds(on)`, `{ids: true}` in `vocalLook`, this device only. See Screen IDs below.
+- **Appearance (3.23, Q08):** Gradient background (`setGrad`, on by default): `SET.gradOn()` / `SET.setGrad(on)`, localStorage `vocalLook` (an object, so later look options join it), this device only and never in backups. `SET.wash()` is the gradient's markup, drawn first on Today (`scrToday()`).
 - **Redrawing:** anything that changes what Settings shows calls `rerender()` when `SET.shown()` (the main list or one of its pages is on screen).
 - **Undo last restore** returns to Settings › Backup.
 - Tests: `tests/test_settings.py` (the main list, every page in light and dark, what's on each page, Reduce motion and Slow motion, the coach video door, wide layouts); test_zoom zooms into Backup and Accessibility; test_layout checks every page at every size.
@@ -576,6 +605,24 @@ From the 30 Oct 2026 audit's clean-up list (L1–L5). Nothing on screen changed 
 - **Left for later (needs Ivan):** play-along's caption before the first line, “Tap the first line as it’s sung”, dates from tapping along to music on another device; rewording it would change what's on screen, so it stays as it is (the README says the same). `ZOOM.retarget()` has had no caller since Sync by sections was retired. After Remove track with play-along on, the transport stays up until the next redraw.
 - Data step 4 does nothing in practice; Q15 already says so beside it (storage.js) and it stays.
 
+## Screen IDs
+
+Since 3.50 (Q36) every screen, sub-page, sheet and overlay has a permanent ID, `VS-001` onwards, so a note, a test, the Atlas or a request can point at it in a few characters ("VS-009, the button's too low") and still point at the right thing after it's renamed, moved or redesigned. Its main parts have names (`VS-001 › start-session-button`) and the main journeys have flow IDs (`F-01 · Focused session`). The rule comes from Ivan's app workflow (permanent IDs, never reused).
+
+- **The register is `js/register.js`** (`SCREENS`), plain data loaded before everything else. Each screen has: `id`, `name`, `area`, `kind` (Tab, Screen, Sub-page, Sheet, Overlay), `key` (the code key, below), `aliases` (older keys, including the Atlas's), `docs` (the exact `README.md` or `MAINTAINING.md` heading that explains it), `status` (`Live`, or `Retired in <version>`) and `parts`. `shared` holds parts named wherever they show (the tab bar, Search, Settings, Back, a sheet's Close). `flows` holds the journeys: each step is a screen ID, with the part tapped to get to the next (and a `state` where one screen appears at several moments).
+- **Code keys:** `tab:<U.tab>`, `view:<U.view>`, `view:set/<U.setPg>` for a Settings page, `view:guide/home`, `/how` and `/mark` for the Marks guide (every mark's page is one screen), `sheet:<U.sheet>`, and `overlay:clock`, `overlay:window`, `overlay:launch`, `overlay:peek` for what's drawn outside `render()`. `SCR.viewKey()` works out the screen's key.
+- **On the page** (`SCR` in ui.js): `render()` ends with `SCR.screen()`, which sets `data-screen` on `#app` and `data-name` on the register's parts in `#app`, the bar, the dock and the sidebar; `renderSheet()` calls `SCR.sheet()` for the sheet (or the session clock) in `#layer`. The floating window (`fwEl`, `fwClean`), the peek card (`showPeek`) and the launch screen (at boot) call `SCR.mark(el, key)`. The parts are found by their `sel` inside that screen, so the markup only needs its usual `data-a`.
+- **States of one screen share its ID** (first launch, a session running, dark mode, recording): flows and the Atlas name the state beside it (`VS-004 · recording`).
+- **A screen with no entry** gets `data-screen="VS-???"` and one console warning, and the tests fail on it (`test_screens.py`, and the random taps in `test_fuzz.py`).
+- **Show screen IDs** (Settings › Appearance, `vocalLook.ids`, this device only): `SCR.label()` keeps `#scrid`, a small grey label in the top corner just below the bar, showing the screen's ID and then the open sheet's (`VS-009 · VS-050`). Taps go through it, and it never covers the bars or the tab bar.
+- **Adding a screen:** give it the next number at the end of `screens` (whatever its area: the grouping by area was for the first numbering only), with its key, name, area, docs heading and parts. Add it to a flow if it's on one.
+- **Renaming or moving one:** change its `name`, `key` or `docs` on its line, and put the old key in `aliases`. Never change its `id`.
+- **Retiring one:** set `status: 'Retired in 3.xx'` and leave the line. IDs and flow IDs are never reused or renumbered.
+- **Parts:** lower case with hyphens, named by what the part is (`done-button`, not `bottom-right-button`). A part that moves keeps its name; change its `sel`.
+- **The changelog:** each version's `Screens:` line lists the screens it changed (see The Changelog page).
+- The register is public: screen names and code keys only, never personal data.
+- Tests: `tests/test_screens.py` (the register's shape, every screen the code can show has an entry and the right `data-screen`, part names, docs links, flows, the label, the Changelog's Screens line, and the saved-data list against every storage key in the code).
+
 ## Tests
 
 ```
@@ -605,6 +652,7 @@ The tests run with motion off (see Motion above), so nothing waits on a spring. 
 | `test_edge.py` | Every bug from the 3.3.2 audit, so none come back |
 | `test_data.py` | Data version upgrades and the copy kept first (in IndexedDB since 3.29, and 3.28's localStorage copy moving across), backups from a newer version, Storage protection, and opening offline |
 | `test_safety.py` | 3.29 Save safety (Q11): a cut-off `vocalTracker` copied before anything saves over it (and the message, Save and Delete in Settings › Backup), saving waiting for a copy, one bad song dropped on its own, nowhere to copy it (left untouched), the shared IndexedDB helper (a dropped connection, an abort, a blocked open), a take whose save is aborted kept for Retry (and saved on coming back), a draft that can't be saved, and the launch screen going when the first draw or the data throws |
+| `test_screens.py` | Q36 Screen IDs: see Screen IDs above |
 | `test_changelog.py` | The Changelog page shows every version in CHANGELOG.md, the chart, Show all, Every change, and a failed load |
 | `test_songs.py` | Pasting and labelling lyrics, the song screen, Marks and Lyrics editing (marks following their words), unlink, reorder, pins, the list, search, Today's pinned songs, older and damaged songs, backups, and iPad/Mac shortcuts |
 | `test_backup.py` | Export, Check a backup, damaged files, restore comparison, undo, the old-backup fixtures and the exercise-id guard |
@@ -632,7 +680,7 @@ The tests run with motion off (see Motion above), so nothing waits on a spring. 
 | `test_extras.py` | 3.36 Register-ready data (Q15): the next version's backup (`fixtures/backup-next.json`) restores with nothing lost and goes back out unchanged (Q17: except the timing's retired `real`, dropped as it loads); inactive marks kept but never drawn, counted, listed (On these words, held, Key for this song, play-along, the 3.26 copy) or replaced; extra fields kept through re-adding and moving marks, lyric edits, re-timing (and Undo), clearing the length, and checking markers and the loop; the duplicate check with `ext` |
 | `test_patterns.py` | 3.48 Exercises: Redesign (Q32): the pattern library (groups, families, minor patterns, quick touches), every level's route against the coach's note data, the range check (falsetto top, Flips, Stop at my top note), the drawing and the vowel cue, playing (rounds, Stay on this key, Speed up each round, the home ending, one sound at a time, the wake lock, stopping on Back), the Patterns page (groups, Favourites, picking, press and hold, Back to default), the card zoom from the pill and back, swipe back and Reduce Motion, the speed slider (tap, hold and drag), Settings › Your voice and Pattern player, saved choices through a reload and a backup round trip, and every exercise page at 375 and 390 in light and dark, iPad's split view and landscape. `VS_PAT=library,routes,range,drawing,playing,page,zoom,speed,settings,data,sizes` runs only those parts |
 | `test_layout.py` | Every screen on iPhone, iPhone landscape, iPad and Mac, light and dark, plus pull to refresh |
-| `test_fuzz.py` | Thousands of random taps, checking nothing breaks after each one |
+| `test_fuzz.py` | Thousands of random taps, checking nothing breaks after each one (since Q36, also that every screen it reaches has an ID) |
 
 Running side by side, each layout size and each random-tap seed is its own job, every job has its own browser and test web server, and `VS_JOBS` sets how many run at once (default: twice the processor count). Results are shown per job as each one finishes.
 
@@ -650,6 +698,8 @@ Running side by side, each layout size and each random-tap seed is its own job, 
 - `test_search` › "mac: a lyric opens with its section focused" failed once in Q18's third full run (1 Nov 2026). **This one is a real app bug, not the test:** on the Mac or iPad with a mouse or trackpad, clicking a Search result while the search field still has focus rebuilds the results list (the field's focus-out redraw) between the button going down and coming up, so a click held for 20 ms or more doesn't open the result. Playwright's click is nearly instant, so it usually passes; on a busy machine it doesn't. A finger tap on iPhone isn't affected. Left unfixed and the test left as it is, since Q18 can't change the app; it needs its own queue item.
 
 - **Q26's full run (2 Nov 2026, Playwright 1.56 driving a newer local Chromium, default `VS_JOBS` on a 2-processor machine, with the new `test_pip` making it heavier):** `test_sclock` › "Reduce Motion: it fades in" (the fade had already finished when read), `test_coach` › "it opens the player playing the rung from Level 1", `test_zoom` › "catching a page mid-open", `test_search` › "Show all expands it in place" and "mac: a song opens beside the Songs list", and `test_native` › "dark songs: back at the top, the edge goes" each failed once, and all five files passed (943 checks) run again with `VS_JOBS=2`. Timing under load, as above; if one shows on GitHub, fix it with a wait for the condition.
+- **The 3rd to the 9th of a month (`test_details` › "the group eases down to its new height"):** red on GitHub from 3 Nov 2026 (every push after 3.49, queue-only ones included). All sessions groups by month, and the check deletes the newest of `sample()`'s sessions, from 2 days ago: from the 3rd to the 9th that one is alone in this month, so deleting it removes its whole group and nothing eases. Fixed in 3.50 (Q36): the check puts its three sessions in one month (last month). Do the same for any check that needs sessions in one group.
+- `test_search` › "ipad: a lyric opens with its section focused" failed in Q36's quick run and again in its full run (3 Nov 2026, side by side, a 2-processor machine) and passed both times when the file ran on its own. It's the same click timing as "mac: a lyric opens…" above (the real app bug with a mouse or trackpad); left as it is.
 - **Touches sent with CDP (`Input.dispatchTouchEvent`) don't make a click** in Chromium, however short: Q26's press check holds a touch that way, then taps with `pg.tap()` to check the window still opens. Use `pg.tap()` (or `pg.click()`) for anything that needs the click.
 - **Just after midnight (Q25's full run, 2 Nov 2026, 00:20 on a Monday):** `test_flows` › "the Song practice card shows its own stats" failed on `main` as it was too: its song session starts 125 minutes back, which before 02:05 on a Monday is last week, so the card rightly has no "This week" line. Since 3.43 the check expects the line only when the session started this week. `test_saved` › "the line: real minutes, the real weekday and goal reached" failed the same way (its session started 21 minutes back, on the Sunday) and passed once it was past 00:21; left as it is. Both `test_native` checks above failed once more under load in that run and passed on their own.
 - **Q22's full runs (1 Nov 2026, Playwright 1.56, default `VS_JOBS`, a 2-processor machine):** `test_waveform` › "the picker greys the places that would break the order" and `test_search` › "Show all expands it in place" each failed once under load after a fixed wait (250 ms, 150 ms) and passed on their own; both now wait for their condition. `test_coach` › "Q16 0.75×: the level plays right to its end, no further" missed by 0.063 s once (the same kind of miss as the +0.070 s in Q19's run) and passed on its own; left as it is. If it shows on GitHub, look at how the check measures the level's end.
@@ -693,6 +743,8 @@ python3 tools/atlas/test_atlas.py      # the Atlas's own tests (about 2 minutes;
 `python tools/release.py 3.7` updates `APP_VERSION` and `RELEASE_DATE` in `index.html`, the README badge and "Current version" line, and adds a `## 3.7 · date` section to `CHANGELOG.md` with a placeholder headline and note. The release test fails until both are replaced with the real headline and changes.
 
 Version numbers: **major** for a redesign, **minor** for new features, **patch** for fixes.
+
+From 3.50 every version's notes end with a `Screens:` line naming the screens it changed by ID (`Screens: none` for data, tests or behind-the-scenes work). See The Changelog page above and Screen IDs below.
 
 The app checks for a newer `APP_VERSION` on pull to refresh, so a release reaches the phone the next time Ivan pulls down on Today or Progress.
 

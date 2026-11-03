@@ -717,6 +717,13 @@ h1 {
   margin-top: 4px;
   line-height: 1.25;
 }
+/* Q36 the screens a version changed, with Show screen IDs on */
+.tl-scr {
+  margin-top: 2px;
+  font-size: var(--t-caption1);
+  color: var(--fg2);
+  font-variant-numeric: tabular-nums;
+}
 .tl-bar {
   display: flex;
   height: 6px;
@@ -9936,4 +9943,22 @@ html.motion-reduced .phbar,
 html.motion-reduced .phbub,
 html.motion-reduced .pt.held {
   transform: none !important;
+}
+
+/* ===== Screen IDs (Q36): Settings › Appearance › Show screen IDs ===== */
+/* the current screen's ID (and an open sheet's) in a small grey label in the top corner, just below the bar, so it
+   never covers the bars or the tab bar. Taps go through it */
+#scrid {
+  position: fixed;
+  top: calc(var(--sat) + 60px);
+  right: max(8px, env(safe-area-inset-right, 0px));
+  z-index: 70;
+  pointer-events: none;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font: 600 var(--t-caption2) / 1.2 var(--font);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  color: var(--fg2);
+  background: color-mix(in srgb, var(--bg) 78%, transparent);
 }

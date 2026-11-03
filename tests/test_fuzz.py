@@ -19,6 +19,7 @@ INV=r"""(()=>{const p=[];const L=document.getElementById('layer');
  if(U.sheet&&!L.querySelector('.sheet'))p.push('sheet state "'+U.sheet+'" but nothing shown');
  if(!U.sheet&&L.querySelector('.sheet'))p.push('sheet shown without state');
  if(isFlow(U.view)&&!X)p.push('in a session view with no session');
+ if(document.querySelector('[data-screen="VS-???"]'))p.push('a screen with no ID in the register (js/register.js): '+SCR.viewKey()+(U.sheet?' · sheet:'+U.sheet:''));
  if(!U.sheet&&!U.view&&!U.sList&&!document.querySelector('[data-a=tab]'))p.push('no way to switch tabs');
  if(U.view==='lyr'&&!songById(U.songId))p.push('song screen with no song');
  D.songs.forEach(s=>{if(s.order&&s.order.some(x=>!s.sections[x.sid]))p.push('song '+s.id+' points at a missing section');});

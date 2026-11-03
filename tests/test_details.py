@@ -41,7 +41,15 @@ def page(b, t, w=390, h=844, data=None, init=ON, sc='light', ctx_args=None):
 
 def lists(b, t):
     ok = t.ok
-    pg = page(b, t)
+    # All sessions groups by month, so the three sessions are put in one month (last month, 3–5 days after its start):
+    # with sample()'s "2 days ago", from the 3rd to the 9th of a month the newest was alone in its own month and
+    # deleting it removed the whole group instead of shrinking it (failed on GitHub from 3 Nov 2026; fixed in Q36)
+    d = sample()
+    first = (dt.datetime.now().replace(day=1, hour=12, minute=0, second=0, microsecond=0) - dt.timedelta(days=1)).replace(day=1)
+    for i, s in enumerate(d['sessions']):
+        st = first + dt.timedelta(days=3 + i)
+        s['date'], s['end'] = iso(st), iso(st + dt.timedelta(minutes=s['mins']))
+    pg = page(b, t, data=d)
     quiet(pg)
     pg.evaluate("go(()=>{U.tab='history';U.view='all'})")
     quiet(pg)
