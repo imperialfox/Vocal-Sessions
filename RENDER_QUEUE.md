@@ -202,6 +202,8 @@ Each idea has its priority, the date it was added and a *Why* line. New ideas go
 - **A shared song-screen dock.** *Why:* the same controls in the same place on every song screen.
 - **Note lengths and attacks in the pattern player (2 Nov 2026).** Notes that can be sustained or short and detached, and different note lengths (rhythms), shown with music notes on the pattern drawing. Builds on the shared pattern player from Q32 · Exercises: Redesign.
   *Why:* runs are trained detached first, then connected, and rhythm makes patterns closer to real songs.
+- **Atlas: more starting states (3 Nov 2026; agreed by Ivan as its own small item).** Vocal Sessions' Atlas settings only (`tools/atlas/screens.py`), no kit or app change: starting states that let the scan reach screens it now lists as found in code only. The coach video player (the tests' synthetic coach video), recording and takes (a fake microphone), song practice's "How did it go?" and its saved sheet, a mark's peek card (a hold), Check timing after a timed section moves, a shorter replacement track, and the rescued-data warning. The capture script behind the screen-flow canvas (updated to 3.49 on 3 Nov) reached all of these. Default: built after Q31, since Q31 reshapes that settings file.
+  *Why:* the Atlas shows the whole app, so changes are easier to see and talk about; today it misses the recording screens, which are the heart of the app.
 
 ### Priority 3 · Polish
 
