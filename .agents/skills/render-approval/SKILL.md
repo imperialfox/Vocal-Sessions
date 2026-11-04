@@ -17,7 +17,7 @@ Use this workflow whenever Ivan explicitly says **Render** for a queued Vocal Se
 ## Record the approval
 
 1. Update the queue item to `Approved — awaiting Build` and record the Render approval date and exact approved scope. Set the same status in the item's row of the queue ID table (add the row if it's new).
-2. Place the item in `RENDER_QUEUE.md`'s **Release order**: at the end of the numbered list unless Ivan says where (tooling with no app version goes under *Any time*), as `N. Q## — reason`, with "needs Q##" in the reason for anything that must ship first. If the Render changes what another item needs, update that item's line too.
+2. Place the item in `RENDER_QUEUE.md`'s **Release order**: at the end of the numbered list unless Ivan says where (tooling with no app version goes under *Any time*), as `N. Q## — reason`, with "needs Q##" in the reason for anything that must ship first. If the Render changes what another item needs, update that item's line too. End the line with the approval stamp, e.g. `(Ivan, 4 Nov 2026)`, and fill the item's **Size** in the queue ID table with the effort guessed in its handoff: Light, Light to medium, Medium, Medium to heavy or Heavy (the [Render queues](https://imperialfox.github.io/render-queue/) dashboard reads both).
 3. If the item was an idea under **Not scheduled**, move it out of its priority tier into its own `## Q## ·` section, so it appears in the queue once only. Leave the rest of Not scheduled as it is.
 4. Update every accessible handoff or spec that records the approval. Keep wording and scope consistent with the queue, and link the records to each other where possible.
 5. Use the GitHub connector or shared repository workspace available in the current assistant to persist the documentation update to the shared location Claude reads, following the repository's existing branch and review workflow. Do not ask Ivan to pass the approval to another assistant.
@@ -29,7 +29,8 @@ Use this workflow whenever Ivan explicitly says **Render** for a queued Vocal Se
 Before saying Render is recorded, reread the changed files and confirm:
 - the queue and handoff/spec name the same item;
 - the item no longer appears under Not scheduled;
-- the item is in Release order, with "needs" matching its **Needs** line;
+- the item is in Release order, with "needs" matching its **Needs** line and the approval stamp at the end;
+- the item's Size is filled in the queue ID table;
 - the status is `Approved — awaiting Build`;
 - the recorded scope and exclusions agree;
 - the approval date is present; and

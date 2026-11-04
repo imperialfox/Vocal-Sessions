@@ -7,7 +7,7 @@ App work Ivan has queued, in the order he wants it built. Each item is one build
 - **Detailed design notes live in Ivan's private project notes, not in this repo.** Where an item names one, ask Ivan to paste or attach it. Anything not settled here is marked *Unresolved*.
 - **Check ideas against the app's purpose.** Before planning an item or a Not scheduled idea, ask the first test in [README › What it's for](README.md#what-its-for): does it make practice easier?
 - **Ivan can reorder the queue.** Versions follow build order: each build takes the next minor version when it's built.
-- **[Release order](#release-order) is the order to build in.** Render places the item in it (at the end unless Ivan says where; tooling with no app version goes under *Any time*), with "needs Q##" in its reason for anything that must ship first. The Build that ships an item removes it from the list in the same push. The [Render queues](https://imperialfox.github.io/render-queue/) dashboard reads this list for Up next and Next build.
+- **[Release order](#release-order) is the order to build in.** Render places the item in it (at the end unless Ivan says where; tooling with no app version goes under *Any time*), with "needs Q##" in its reason for anything that must ship first. The Build that ships an item removes it from the list in the same push. Render also fills the item's **Size** in the table (Light, Light to medium, Medium, Medium to heavy or Heavy, the effort guessed in its handoff) and ends its Release order line with the approval stamp `(Ivan, 4 Nov 2026)`. The [Render queues](https://imperialfox.github.io/render-queue/) dashboard reads this list for Up next and Next build, and the Size column for each item's size ring.
 - **When an item ships,** remove its section from this file in the same push and set its row in the table below to `Shipped <version>`. Its `CHANGELOG.md` headline (the `*…*` line under the version) ends with its queue ID, e.g. `*Waveform sections on the track player (Q02)*`. The `##` line itself stays `## 3.23 · 27 Oct 2026`, which the app's Changelog page reads.
 
 ## Naming
@@ -23,53 +23,53 @@ Every queued item has a queue ID and a standard name, used in the queue, in hand
 
 Every ID with its **Status** (`Awaiting Render`, `Approved — awaiting Build`, `Building`, `Shipped <version>`, `Blocked`, `Retired`, or `Not scheduled` for an item with an ID that was moved back to the ideas list) and the working names older chats, notes and prototypes use. Render adds the row (or sets it to `Approved — awaiting Build`); the Build that ships it sets `Shipped <version>` in the same push.
 
-| Queue ID | Standard name | Status | Earlier working names |
-|---|---|---|---|
-| Q01 | Search: Global Find | Shipped 3.22 | Render 10, Search, Global Search |
-| Q02 | Track: Waveform Sections | Shipped 3.24 | Track 2, Sections on the waveform |
-| Q03 | Marks: Layered Annotations | Shipped 3.27 | Marks 1, Layered marks |
-| Q04 | Marks: Practice Guide | Shipped 3.32 | Marks 2, Marks help, Marks guide |
-| Q05 | Song Clock: Tap Re-Anchor | Shipped 3.28 | Song Clock A2, Render 6, Line pass and retime |
-| Q06 | Song Clock: Timeline View | Retired → Q05 | Song Clock B, Render 7, Section starts and wheels |
-| Q07 | Song Clock: Dynamic Sync | Not scheduled (Priority 2, ID kept) | Song Clock C, Render 8, Paced Recall |
-| Q08 | Interface: Native iOS Polish | Shipped 3.23 | Native bars, iOS 27 polish |
-| Q09 | Track: Waveform Sections Follow-up | Shipped 3.25 | Giant 3-Pad dock, Q02 follow-up |
-| Q10 | Interface: HIG Foundations Pass | Shipped 3.26 | Vault ideas wireframes |
-| Q11 | Data: Save Safety | Shipped 3.29 | Audit stage 1, data safety |
-| Q12 | Song Clock: Timing Integrity | Shipped 3.30 | Audit stage 2, timing integrity |
-| Q13 | Interface: Keyboard Guards | Shipped 3.31 | Audit stage 3, input hygiene |
-| Q14 | Playback: Smooth Frames | Shipped 3.34 | Audit stage 4, per-frame work |
-| Q15 | Marks: Register-Ready Data | Shipped 3.36 | Audit stage 5, room for register data |
-| Q16 | Audio: Voice Analysis Foundations | Shipped 3.37 | Audit stage 6, Web Audio seam |
-| Q17 | Hygiene: Dead Code Sweep | Shipped 3.38 | Audit clean-up list |
-| Q18 | Tests: GitHub Match | Shipped 3.35 | Workflow review, 31 Oct 2026 |
-| Q19 | Session: One-Page Flow | Shipped 3.39 | One-page session prototype, 31 Oct 2026 |
-| Q20 | Session: Application Redesign | Shipped 3.40 | One-page session prototype, 31 Oct 2026 |
-| Q21 | Session: Saved Screen | Shipped 3.41 | "Session saved" splash, 2+5, 31 Oct 2026 |
-| Q22 | Session: Clock Redesign | Shipped 3.42 | Session clock ring prototype, 31 Oct 2026 |
-| Q23 | Interface: Status Bar Glow | Shipped 3.33 | Gradient clipped at the top, 31 Oct 2026 |
-| Q24 | Coach: Video Redesign | Shipped (tooling, no app version) | Coach video redesign, 31 Oct–1 Nov 2026 |
-| Q25 | Coach: Frame-Accurate Chapters | Shipped 3.43 | Coach timings, level picker, 1 Nov 2026 |
-| Q26 | Window: Picture in Picture | Shipped 3.44 | Floating window picture in picture and audit fixes, 1 Nov 2026 |
-| Q27 | Interface: Landscape Tab Bar Fit | Shipped 3.45 | "Exerc" cut off on its side, 1 Nov 2026 |
-| Q28 | Hygiene: Toggl Removal | Shipped 3.46 | Get rid of Copy for Toggl, 2 Nov 2026 |
-| Q29 | Session: Song Rating Removal | Shipped 3.47 | Remove "Rate the song", 2 Nov 2026 |
-| Q30 | Atlas: Lightbox Core | Shipped (tooling, no app version) | Visual App Atlas stage 1, Lightbox, 2 Nov 2026 |
-| Q31 | Atlas: Map and Notes | Shipped (tooling, no app version) | Visual App Atlas stage 2, map, notes, export, changes since last scan, 2 Nov 2026; re-scoped onto the Atlas kit, 2 Nov 2026, 19:50; widened with the Atlas kit 1.1 phone pass, 3 Nov 2026, 11:21 |
-| Q32 | Exercises: Redesign | Shipped 3.48 | Exercise patterns the app plays, Exercise page redesign (both 31 Oct), merged 2 Nov 2026 |
-| Q33 | Interface: Glass Native Tuning | Shipped 3.49 | Glass tuning Recon and glass inventory, 2 Nov 2026 |
-| Q34 | Interface: Native Menus and Controls | Retired → Q41 | Component inventory (round 2), worth doing plus smaller wins, 2 Nov 2026; on hold for the parts kit from 2 Nov, replaced by Q41 at its Render on 4 Nov 2026 |
-| Q35 | Atlas: Starting States | Shipped (tooling, no app version) | Atlas: more starting states (Not scheduled idea), from the screen-flow canvas update, 3 Nov 2026 |
-| Q36 | Interface: Screen IDs | Shipped 3.50 | Screen IDs blueprint (permanent IDs for every screen, part names, flows, saved-data list), 3 Nov 2026 |
-| Q37 | Session: Song Ladder | Shipped 3.52 | Song ladder, pitch test page, "Prototype · Song ladder and bridge-aware patterns" (v1–v3), 2 Nov 2026 |
-| Q38 | Exercises: Bridge-Aware Patterns | Shipped 3.53 | Bridge-aware patterns, Find your bridge, same prototype, 2 Nov 2026 |
-| Q39 | Songs: Key and Scale Lanes | Shipped 3.54 | Key detection, scale lanes, suggested patterns, same prototype (v2), 2 Nov 2026 |
-| Q40 | Interface: Value Set and Test | Shipped 3.51 | The value test (consistency audit of 3.49, 2 Nov 2026; called Q35 in early notes before Q35 went to Atlas: Starting States) |
-| Q41 | Interface: Parts Kit Move | Shipped 3.55 | The move of Vocal Sessions onto the parts kit (replaces Q34), Blueprint 4 Nov 2026 |
-| Q42 | Songs: Sheet Music Reader and Score | Approved — awaiting Build | Sheet music reader, milestone M1a of the Sheet Music Reader Blueprint (draft 11), 4 Nov 2026; prototype "Sheet music reader · prototype" (v2) |
-| Q43 | Audio: Recorded Piano and Soft Tone | Approved — awaiting Build | Sound test, "Sound test · Vocal Sessions" prototype (v3): options 2 and 4, the pop on Piano-ish, 4 Nov 2026 |
-| Q44 | Interface: Motion Smoothness | Approved — awaiting Build | Motion and performance review of 3.55, fixes 1 to 5 (the nudge, the slow start, Today resting, the hidden corner animation, the exercise glow), 4 Nov 2026 |
-| Q45 | Interface: Kit Top Bar and Search | Approved — awaiting Build | The same review's 5b to 5e: the top blur over the bar's buttons, Today's title on kit part 3, the top bar and soft edge on kit parts 2 and 51, search at the bottom on kit part 6, 4 Nov 2026 |
+| Queue ID | Standard name | Status | Size | Earlier working names |
+|---|---|---|---|---|
+| Q01 | Search: Global Find | Shipped 3.22 | | Render 10, Search, Global Search |
+| Q02 | Track: Waveform Sections | Shipped 3.24 | | Track 2, Sections on the waveform |
+| Q03 | Marks: Layered Annotations | Shipped 3.27 | | Marks 1, Layered marks |
+| Q04 | Marks: Practice Guide | Shipped 3.32 | | Marks 2, Marks help, Marks guide |
+| Q05 | Song Clock: Tap Re-Anchor | Shipped 3.28 | | Song Clock A2, Render 6, Line pass and retime |
+| Q06 | Song Clock: Timeline View | Retired → Q05 | | Song Clock B, Render 7, Section starts and wheels |
+| Q07 | Song Clock: Dynamic Sync | Not scheduled (Priority 2, ID kept) | | Song Clock C, Render 8, Paced Recall |
+| Q08 | Interface: Native iOS Polish | Shipped 3.23 | | Native bars, iOS 27 polish |
+| Q09 | Track: Waveform Sections Follow-up | Shipped 3.25 | | Giant 3-Pad dock, Q02 follow-up |
+| Q10 | Interface: HIG Foundations Pass | Shipped 3.26 | | Vault ideas wireframes |
+| Q11 | Data: Save Safety | Shipped 3.29 | | Audit stage 1, data safety |
+| Q12 | Song Clock: Timing Integrity | Shipped 3.30 | | Audit stage 2, timing integrity |
+| Q13 | Interface: Keyboard Guards | Shipped 3.31 | | Audit stage 3, input hygiene |
+| Q14 | Playback: Smooth Frames | Shipped 3.34 | | Audit stage 4, per-frame work |
+| Q15 | Marks: Register-Ready Data | Shipped 3.36 | | Audit stage 5, room for register data |
+| Q16 | Audio: Voice Analysis Foundations | Shipped 3.37 | | Audit stage 6, Web Audio seam |
+| Q17 | Hygiene: Dead Code Sweep | Shipped 3.38 | | Audit clean-up list |
+| Q18 | Tests: GitHub Match | Shipped 3.35 | | Workflow review, 31 Oct 2026 |
+| Q19 | Session: One-Page Flow | Shipped 3.39 | | One-page session prototype, 31 Oct 2026 |
+| Q20 | Session: Application Redesign | Shipped 3.40 | | One-page session prototype, 31 Oct 2026 |
+| Q21 | Session: Saved Screen | Shipped 3.41 | | "Session saved" splash, 2+5, 31 Oct 2026 |
+| Q22 | Session: Clock Redesign | Shipped 3.42 | | Session clock ring prototype, 31 Oct 2026 |
+| Q23 | Interface: Status Bar Glow | Shipped 3.33 | | Gradient clipped at the top, 31 Oct 2026 |
+| Q24 | Coach: Video Redesign | Shipped (tooling, no app version) | | Coach video redesign, 31 Oct–1 Nov 2026 |
+| Q25 | Coach: Frame-Accurate Chapters | Shipped 3.43 | | Coach timings, level picker, 1 Nov 2026 |
+| Q26 | Window: Picture in Picture | Shipped 3.44 | | Floating window picture in picture and audit fixes, 1 Nov 2026 |
+| Q27 | Interface: Landscape Tab Bar Fit | Shipped 3.45 | | "Exerc" cut off on its side, 1 Nov 2026 |
+| Q28 | Hygiene: Toggl Removal | Shipped 3.46 | | Get rid of Copy for Toggl, 2 Nov 2026 |
+| Q29 | Session: Song Rating Removal | Shipped 3.47 | | Remove "Rate the song", 2 Nov 2026 |
+| Q30 | Atlas: Lightbox Core | Shipped (tooling, no app version) | | Visual App Atlas stage 1, Lightbox, 2 Nov 2026 |
+| Q31 | Atlas: Map and Notes | Shipped (tooling, no app version) | | Visual App Atlas stage 2, map, notes, export, changes since last scan, 2 Nov 2026; re-scoped onto the Atlas kit, 2 Nov 2026, 19:50; widened with the Atlas kit 1.1 phone pass, 3 Nov 2026, 11:21 |
+| Q32 | Exercises: Redesign | Shipped 3.48 | | Exercise patterns the app plays, Exercise page redesign (both 31 Oct), merged 2 Nov 2026 |
+| Q33 | Interface: Glass Native Tuning | Shipped 3.49 | | Glass tuning Recon and glass inventory, 2 Nov 2026 |
+| Q34 | Interface: Native Menus and Controls | Retired → Q41 | | Component inventory (round 2), worth doing plus smaller wins, 2 Nov 2026; on hold for the parts kit from 2 Nov, replaced by Q41 at its Render on 4 Nov 2026 |
+| Q35 | Atlas: Starting States | Shipped (tooling, no app version) | | Atlas: more starting states (Not scheduled idea), from the screen-flow canvas update, 3 Nov 2026 |
+| Q36 | Interface: Screen IDs | Shipped 3.50 | | Screen IDs blueprint (permanent IDs for every screen, part names, flows, saved-data list), 3 Nov 2026 |
+| Q37 | Session: Song Ladder | Shipped 3.52 | | Song ladder, pitch test page, "Prototype · Song ladder and bridge-aware patterns" (v1–v3), 2 Nov 2026 |
+| Q38 | Exercises: Bridge-Aware Patterns | Shipped 3.53 | | Bridge-aware patterns, Find your bridge, same prototype, 2 Nov 2026 |
+| Q39 | Songs: Key and Scale Lanes | Shipped 3.54 | | Key detection, scale lanes, suggested patterns, same prototype (v2), 2 Nov 2026 |
+| Q40 | Interface: Value Set and Test | Shipped 3.51 | | The value test (consistency audit of 3.49, 2 Nov 2026; called Q35 in early notes before Q35 went to Atlas: Starting States) |
+| Q41 | Interface: Parts Kit Move | Shipped 3.55 | | The move of Vocal Sessions onto the parts kit (replaces Q34), Blueprint 4 Nov 2026 |
+| Q42 | Songs: Sheet Music Reader and Score | Approved — awaiting Build | Heavy | Sheet music reader, milestone M1a of the Sheet Music Reader Blueprint (draft 11), 4 Nov 2026; prototype "Sheet music reader · prototype" (v2) |
+| Q43 | Audio: Recorded Piano and Soft Tone | Approved — awaiting Build | Medium | Sound test, "Sound test · Vocal Sessions" prototype (v3): options 2 and 4, the pop on Piano-ish, 4 Nov 2026 |
+| Q44 | Interface: Motion Smoothness | Approved — awaiting Build | Light to medium | Motion and performance review of 3.55, fixes 1 to 5 (the nudge, the slow start, Today resting, the hidden corner animation, the exercise glow), 4 Nov 2026 |
+| Q45 | Interface: Kit Top Bar and Search | Approved — awaiting Build | Medium | The same review's 5b to 5e: the top blur over the bar's buttons, Today's title on kit part 3, the top bar and soft edge on kit parts 2 and 51, search at the bottom on kit part 6, 4 Nov 2026 |
 
 Work shipped before this standard (for example Track 1 and Song Clock A1) keeps its version numbers and has no queue ID.
 
