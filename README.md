@@ -4,9 +4,9 @@
 
 It's a web app styled like a native iOS app: a single HTML file with no install, no backend and no account, designed to live on your iPhone Home Screen. It runs on its own, with no other apps needed.
 
-![Version 3.51](https://img.shields.io/badge/version-3.51-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
+![Version 3.52](https://img.shields.io/badge/version-3.52-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
 
-**Current version: 3.51 · 3 Nov 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
+**Current version: 3.52 · 4 Nov 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
 
 ---
 
@@ -190,6 +190,10 @@ And **Songs**, for learning a song: paste the lyrics, and they're split into lab
   - It hides on its own screen, while a sheet is open and while you're recording.
   - Closing a section's takes sheet lets a playing take carry on, so you can listen while you look at the lyrics.
 - **Session saved (3.41):** finishing a session lands on a calm screen that belongs to Today: this week's arch, with only today's minutes drawing in, then "41 min · Sunday · weekly goal reached" (the last part once the goal is reached), the week's circles with today's turning green, and "N-week streak continues" when there's a streak. Nothing counts up. **Done** turns it into Today: the arch, the circles and the streak line move into their places, Done becomes **Start session**, and the rest of Today rises in. With Reduce Motion it fades. The session's details are on its sheet, from the calendar or All sessions.
+- **Song ladder (3.52):** Application's song card has a **Straight / Ladder** switch, remembered for each song. A ladder sings the section four ways, one take each: **Lip trill**, **Hum**, **Vowels only** and **Words**. Each rung has its own instruction and its own view of the words (faded for the trill and hum, the vowel letters picked out for Vowels only), and any rung can be skipped. While a rung records, its pitch line draws live. The rungs you've sung fold into one row ("2 of 4 sung · Trill · Hum") that opens when tapped; only the rung you're on stays open, and the rest are one "Up next" line.
+  - **Lines** (from two rungs): the rungs' pitch lines on top of each other, each switched on or off, lined up at their first note. It names where the words (or vowels) part from the trill (or hum), by line when the song is timed, otherwise by time, with **Hear both**: the trill there, then the words. If they don't part, it says so.
+  - **Notes of the line** (once all four are sung): one button per note held in your trill, labelled by note. Tap one to hear it in the pattern player's sound; with **Repeat** on it keeps playing until you tap it again.
+  - Ladder takes are ordinary takes of the section ("Ladder · Lip trill" and so on), with Star, Compare, notes and backups as before. Pitch lines are worked out on the phone when needed and never saved. There's no score anywhere: lines, not grades.
 - **How did it go?** After song practice, tap words that fit (or add your own) and an optional note. You can skip it. A focused session no longer asks (3.40); you can still add words on its edit sheet.
 - **Recordings:**
   - Mono AAC at about 96 kbps (about 0.7 MB a minute), with the phone's voice processing off, up to 2 minutes per take
@@ -297,6 +301,8 @@ A small service worker (`sw.js`) keeps a copy of the app on your device. When yo
 
 Vanilla HTML, CSS and JavaScript, with no frameworks or build step: `index.html`, one stylesheet in `css/` and a dozen plain scripts in `js/`. It uses the iOS system font and a CSS imitation of Liquid Glass, tuned to numbers measured on iOS 27: a hairline edge with rim light, glass buttons that grow when pressed, a collapsing tab bar, a soft blurred edge under the top bar, sliding glass pickers and springy motion.
 
+It uses one library, [pitchy](https://github.com/ianprime0509/pitchy) 4.1.0 (with [fft.js](https://github.com/indutny/fft.js)), for reading pitch, kept as a fixed copy in `js/pitchy.js` so the app needs nothing from the internet.
+
 The look and motion follow Apple's guidance, with numbers taken (never code) from a few open-source Liquid Glass projects. What came from where is in [DESIGN_REFERENCES.md](DESIGN_REFERENCES.md).
 
 ---
@@ -315,6 +321,8 @@ See [MAINTAINING.md](MAINTAINING.md) for how the app is built, where data lives,
 ## License
 
 MIT
+
+`js/pitchy.js` is pitchy 4.1.0 (Copyright 2018-2021 Ian Johnson) with fft.js 4.0.4 (Copyright Fedor Indutny, 2017), both under the MIT License; their notices are at the top of the file.
 
 ---
 

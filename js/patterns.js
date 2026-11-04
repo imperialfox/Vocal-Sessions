@@ -678,6 +678,51 @@ const PAT = (() => {
     fn(AC.currentTime + 0.05);
   }
 
+  /* ===== One note (Q37): the song ladder's note buttons =====
+     tone(m, {repeat, onEnd}) plays one note in the player's sound, through NOW like everything that makes sound. With
+     repeat it strikes again every 1.5 s until toneStop() or another sound starts; onEnd is called once it has stopped,
+     however it stopped. */
+  const TONE_EVERY = 1500,
+    TONE_LEN = 1.1;
+  let toneT = 0,
+    toneNow = null; // {m, repeat, onEnd}
+  function tone(m, o) {
+    o = o || {};
+    if (!isFinite(m) || !audio()) return false;
+    toneStop();
+    if (S.playing) end(false, true);
+    stopPreview(true);
+    NOW.start('pattern', 'tone', () => toneStop(true));
+    toneNow = { m, repeat: !!o.repeat, onEnd: o.onEnd };
+    const me = toneNow,
+      strike = () => {
+        if (toneNow !== me) return;
+        newBus();
+        note(m, AC.currentTime + 0.02, TONE_LEN, bus, opt('sound'), 1);
+        me.strikes = (me.strikes || 0) + 1;
+      };
+    strike();
+    if (me.repeat) toneT = setInterval(strike, TONE_EVERY);
+    else toneT = setTimeout(() => toneNow === me && toneStop(), (TONE_LEN + 0.5) * 1000);
+    return true;
+  }
+  // byNow: another sound started (NOW already moved on)
+  function toneStop(byNow) {
+    clearInterval(toneT);
+    clearTimeout(toneT);
+    toneT = 0;
+    const t = toneNow;
+    if (!t) return;
+    toneNow = null;
+    if (AC && bus) bus.gain.setTargetAtTime(0, AC.currentTime, 0.08);
+    if (!byNow) NOW.ended('pattern', 'tone');
+    if (t.onEnd)
+      try {
+        t.onEnd();
+      } catch (e) {}
+  }
+  document.addEventListener('visibilitychange', () => document.hidden && toneStop());
+
   /* ===== The Patterns page's window: previewing one pattern ===== */
   let pvNotes = [],
     pvT = 0;
@@ -2005,6 +2050,9 @@ const PAT = (() => {
     play,
     stop,
     preview,
+    tone,
+    toneStop,
+    toneState: () => (toneNow ? { m: toneNow.m, repeat: toneNow.repeat, strikes: toneNow.strikes || 0 } : null),
     // for the tests
     state: () => ({
       playing: S.playing,

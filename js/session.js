@@ -357,6 +357,7 @@ async function startRec(target, over) {
     over: keep ? over || 'hp' : null, // Q16: recorded over the track ('hp' or 'spk')
     app: !!tg.app, // Q20: sung in Application: its card is the recording, and the take joins the session
     from: keep && tg.from != null ? tg.from : null, // Q20: where the track started
+    rung: tg.app && rungOf(tg.rung) ? tg.rung : null, // Q37: a rung of the song ladder, saved on the take (ext.rung)
   };
   NOW.start('rec', null, () => stopRec(), keep ? 'track' : null);
   // 3.20: a take on any song page starts (or carries on) song practice for that song, timed from its first take
@@ -390,8 +391,10 @@ async function startRec(target, over) {
     if (FW.shown === 'rectrack') fwTick(); // Q20: the red track window's time
     if (rec.t >= MAX_TAKE) stopRec();
   }, 250);
-  if (rec.app) recMeter(rec);
-  else if (rec.o) {
+  if (rec.app) {
+    recMeter(rec);
+    if (rec.rung) APPL.liveLine(rec); // Q37: the live pitch line, from the same microphone
+  } else if (rec.o) {
     recMeter(rec);
     U.sSec = rec.o;
   }
@@ -502,6 +505,7 @@ function stopRec() {
   if (rec.app && rec.over) APPL.quietPause(); // Q20: the track was for this take; it stops with it
   clearInterval(rec.timer);
   if (rec.meterOff) rec.meterOff();
+  if (rec.lineOff) rec.lineOff();
   try {
     rec.mr.stop();
   } catch (e) {
@@ -558,7 +562,8 @@ async function saveRec() {
       star: false,
       blob,
     },
-    r.o ? { o: r.o } : {} // the place in the song it was sung from (an entry in the song's order)
+    r.o ? { o: r.o } : {}, // the place in the song it was sung from (an entry in the song's order)
+    r.rung ? { ext: { rung: r.rung } } : {} // Q37: the ladder's rung (an optional field, so no data step)
   );
   // which practice it belongs to, so a take saved later (Retry) only joins the practice it was recorded in
   const xs = X && X.start;

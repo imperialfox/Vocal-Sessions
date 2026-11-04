@@ -15,6 +15,45 @@ const VID_DEFAULT = 420,
   QUICK_STEP = 120; // own exercises ≈ 7 min; a step under 2 min means the form was filled in at the end
 const FLOW = { found: 1, rot: 1, app: 1, song: 1 };
 const isFlow = (v) => !!FLOW[v];
+/* Q37 the song ladder: a section sung four ways, in this order (application.js). A ladder take keeps its rung's id in
+   ext.rung, so never rename an id. lyr is the lyric view: faint words, the vowel letters picked out, or the words */
+const RUNGS = [
+  {
+    id: 'trill',
+    name: 'Lip trill',
+    short: 'Trill',
+    col: 'var(--sys-indigo)',
+    lyr: 'faint',
+    how: 'Sing the section on a lip trill. Keep it easy and let your lips do the work.',
+  },
+  {
+    id: 'hum',
+    name: 'Hum',
+    short: 'Hum',
+    col: 'var(--sys-teal)',
+    lyr: 'faint',
+    how: 'Now hum it on “ng”, lips lightly closed. Feel the buzz at the front of your face.',
+  },
+  {
+    id: 'vowels',
+    name: 'Vowels only',
+    short: 'Vowels',
+    col: 'var(--sys-orange)',
+    lyr: 'vowels',
+    how: 'Sing just the vowels of the words, joined up. Keep the trill’s easy feeling.',
+  },
+  {
+    id: 'words',
+    name: 'Words',
+    short: 'Words',
+    col: 'var(--sys-pink)',
+    lyr: 'words',
+    how: 'Now the real words. Hold on to what the trill felt like.',
+  },
+];
+const rungOf = (id) => RUNGS.find((r) => r.id === id) || null;
+// a take's rung, if it's a ladder take (an id this version doesn't know is an ordinary take)
+const takeRung = (t) => (t && t.ext && typeof t.ext.rung === 'string' ? rungOf(t.ext.rung) : null);
 
 /* One glyph per exercise; tile colour = focus area */
 const FOCUS_COL = {

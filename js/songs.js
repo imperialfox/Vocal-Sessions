@@ -227,6 +227,15 @@ function cleanSong(x) {
     if (n) s.takeNotes = n;
     else delete s.takeNotes;
   }
+  // Q37 the song's own extras: ext.ladder is true when Application's card sings it as a ladder. Fields this version
+  // doesn't know are kept as they are
+  if ('ext' in s) {
+    if (!s.ext || typeof s.ext !== 'object' || Array.isArray(s.ext)) delete s.ext;
+    else {
+      s.ext = Object.assign({}, s.ext);
+      if ('ladder' in s.ext && s.ext.ladder !== true) delete s.ext.ladder;
+    }
+  }
   return s;
 }
 function cleanLyrics(secs, order) {

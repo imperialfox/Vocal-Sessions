@@ -234,8 +234,9 @@ const TAKE = (() => {
   }
   function defName(sg, t) {
     const n = songTakes(t.songId).indexOf(t) + 1,
-      w = where(sg, t);
-    return 'Take ' + (n || 1) + (w ? ' · ' + w : '');
+      w = where(sg, t),
+      r = takeRung(t); // Q37: a ladder take is named by its rung
+    return (r ? 'Ladder · ' + r.name : 'Take ' + (n || 1)) + (w ? ' · ' + w : '');
   }
   const nameOf = (sg, t) => (noteOf(sg, t.id) || {}).name || defName(sg, t);
   const fmt = (s) => {
@@ -1399,12 +1400,14 @@ const TAKE = (() => {
       const t = TAKES.find((x) => x.id === id);
       return t ? nameOf(songById(t.songId), t) : '';
     },
-    // Q20: its name if it has one, else "Take N" (its number in the song), for rows under a section's heading
+    // Q20: its name if it has one, else "Take N" (its number in the song), for rows under a section's heading; Q37:
+    // a ladder take is "Ladder · Lip trill" and so on
     short: (id) => {
       const t = TAKES.find((x) => x.id === id);
       if (!t) return 'Take';
       const sg = songById(t.songId);
-      return (noteOf(sg, t.id) || {}).name || 'Take ' + (songTakes(t.songId).indexOf(t) + 1 || 1);
+      const r = takeRung(t);
+      return (noteOf(sg, t.id) || {}).name || (r ? 'Ladder · ' + r.name : 'Take ' + (songTakes(t.songId).indexOf(t) + 1 || 1));
     },
     // Q20: its waveform's peaks (0–255, 50 a second) once read, for the rows' small waveforms
     peaks: (id) => {

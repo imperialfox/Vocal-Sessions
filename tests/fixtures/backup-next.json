@@ -24,7 +24,8 @@
     "pinned": false,
     "added": 1761955200000,
     "ext": {
-     "voice": "baritone"
+     "voice": "baritone",
+     "ladder": true
     },
     "original": "[Verse]\nla la la la\ndo re mi\n\n[Chorus]\noh oh\nyeah",
     "sections": {
@@ -370,5 +371,5 @@
  },
  "draft": null,
  "takes": [],
- "checkCode": "1a7014570aa201195176727693b3f9530fa74f86ceccd05cc16ffa2c91935fc0"
+ "checkCode": "ed0fcbaaeec8b67f998d063e158fe6b541c6cd4dda08830acaeb94a202a1a94c"
 }

@@ -9,6 +9,36 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.52 · 4 Nov 2026
+*The song ladder: sing a section four ways (Q37)*
+<!-- area: practice -->
+
+Application can now sing a section as a ladder: a lip trill, a hum, the vowels, then the words, with your pitch lines showing where the words drift from the trill. It's a way to carry what the exercises teach straight into the song.
+
+**The ladder**
+- The song card has a **Straight / Ladder** switch. Each song remembers which one you chose.
+- Four rungs, one take each: **Lip trill**, **Hum**, **Vowels only** and **Words**. Each has its own short instruction and its own view of the words: faded for the trill and hum, the vowel letters picked out for Vowels only, the words for Words. **Skip this rung** moves on.
+- While a rung records, its pitch line draws live under the meter.
+- The rungs you've sung fold into one row ("2 of 4 sung · Trill · Hum"). Tap it to see each one with a small line and play. Only the rung you're on stays open; the rest are one "Up next" line.
+- Sing over the track and the headphones question work as before.
+
+**Lines and notes**
+- From two rungs, **Lines** shows their pitch lines on top of each other, lined up at the first note, each switched on or off with its chip.
+- It names where the words part from the trill: by line when the song is timed, otherwise by time. **Hear both** plays the trill there, then the words. If they stay together, it says so.
+- Once all four are sung, **Notes of the line** gives a button for each note you held in the trill. Tap one to hear it. With **Repeat** on, it keeps playing until you tap it again.
+- No scores, percentages or red and green anywhere: lines, not grades.
+
+**Your takes**
+- Ladder takes are ordinary takes of the section, named "Ladder · Lip trill" and so on, with Star, Compare, notes and backups as before. **Done** folds the card to "Song · Section · Ladder · N takes".
+- Pitch lines are worked out on your phone when they're needed and never saved or backed up.
+
+<!-- area: fixes -->
+**Behind the scenes**
+- A shared pitch listener reads a voice the same way everywhere, from a take or live from the microphone, ready for bridge-aware patterns and key finding next. It uses pitchy (MIT), kept as a fixed copy in the app so it works offline.
+- The pattern player can play a single note, for the note buttons.
+
+Screens: VS-004
+
 ## 3.51 · 3 Nov 2026
 *One set of corners, presses and motion (Q40)*
 <!-- area: look -->

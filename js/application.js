@@ -77,11 +77,17 @@ const APPL = (() => {
     if (!X || isSong()) return null;
     const s = X.sing,
       sg = s && songById(s.id);
-    if (sg) return { sg, o: okO(sg, s.o), st: s.st === 'done' || s.st === 'norec' ? s.st : 'open' };
+    if (sg)
+      return {
+        sg,
+        o: okO(sg, s.o),
+        st: s.st === 'done' || s.st === 'norec' ? s.st : 'open',
+        skip: Array.isArray(s.skip) ? s.skip.filter(rungOf) : [], // Q37: the ladder's skipped rungs
+      };
     const sp = songById(X.song);
-    if (sp) return { sg: sp, o: null, st: 'open' };
+    if (sp) return { sg: sp, o: null, st: 'open', skip: [] };
     const c = carryOn();
-    return c ? { sg: songById(c.id), o: c.o, st: 'open', carry: true } : null;
+    return c ? { sg: songById(c.id), o: c.o, st: 'open', carry: true, skip: [] } : null;
   }
   // takes of this song and section: all of them, oldest first, and the ones sung in this session, newest first
   const allAt = (c) => TAKES.filter((t) => t.songId === c.sg.id && sameO(okO(c.sg, t.o), c.o));
@@ -96,7 +102,7 @@ const APPL = (() => {
   }
   const short = (t) => TAKE.short(t.id);
   const keep = (c) => {
-    X.sing = { id: c.sg.id, o: c.o, st: c.st };
+    X.sing = Object.assign({ id: c.sg.id, o: c.o, st: c.st }, c.skip && c.skip.length ? { skip: c.skip.slice() } : {});
   };
 
   /* ----- the step's markup ----- */
@@ -135,12 +141,15 @@ const APPL = (() => {
     const mine = mineAt(c);
     if (c.st !== 'open') {
       const st = mine.filter((t) => t.star).pop(),
+        lad = ladderOn(sg) ? mine.filter(takeRung).length : 0, // Q37: "Song · Section · Ladder · N takes"
         line =
           songTitle(sg) +
           (c.o ? ' · ' + secName(sg, c.o) : '') +
           (c.st === 'norec'
             ? ' · practised, not recorded'
-            : ' · ' + mine.length + ' take' + (mine.length === 1 ? '' : 's') + (st ? ' · ★ ' + short(st) : ''));
+            : lad
+              ? ' · Ladder · ' + lad + ' take' + (lad === 1 ? '' : 's')
+              : ' · ' + mine.length + ' take' + (mine.length === 1 ? '' : 's') + (st ? ' · ★ ' + short(st) : ''));
       return (
         '<div class="apcard closed" id="apcard"><button class="osum apline' +
         (c.st === 'norec' ? ' skipped' : '') +
@@ -183,6 +192,8 @@ const APPL = (() => {
           )
           .join('') +
         '</div>';
+    h += modeSeg(sg);
+    if (ladderOn(sg)) return h + ladder(c) + '</div>';
     if (mine.length) {
       const prev = prevOf(c, mine[0]);
       h +=
@@ -210,32 +221,45 @@ const APPL = (() => {
   function recCard() {
     const sg = songById(rec.songId),
       o = sg ? okO(sg, rec.o) : null,
-      words = sg ? lyricsOf(sg, o) : '';
+      r = rungOf(rec.rung), // Q37: a rung of the ladder: its lyric view and the live pitch line
+      words = sg ? lyricsOf(sg, o, r ? r.lyr : null) : '';
     return (
       '<div class="apcard rec" id="apcard" role="group" aria-label="Recording"><div class="aphead"><span class="lbl"><b class="apname">' +
       esc(sg ? secName(sg, o) : 'Recording') +
       '</b><small><span class="recdot" aria-hidden="true"></span>Recording' +
+      (r ? ' · ' + esc(r.name) : '') +
       (rec.over && rec.from != null ? ' · track from ' + mmss(rec.from) : '') +
       '</small></span><span class="aptime" id="recT">' +
       mmss(rec.t) +
       '</span></div><span class="meter apmeter" id="recMeter" aria-hidden="true">' +
       '<i></i>'.repeat(14) +
       '</span>' +
+      (r
+        ? '<div class="aplive" id="apLive" style="--rc:' + r.col + '">' + liveSVG([], r.col) + '</div>'
+        : '') +
       words +
       '<button class="apstop" data-a="apStop"><span aria-hidden="true"></span>Stop</button></div>'
     );
   }
-  // the words to sing: the section's lines, or every section's for Whole song
-  function lyricsOf(sg, o) {
+  // the words to sing: the section's lines, or every section's for Whole song. view (Q37's rungs): 'faint' (the trill
+  // and hum: the words faded), 'vowels' (the vowel letters picked out: spelling, not sounds) or the words as they are
+  const VOWEL = /[aeiouáéíóúàèìòùâêîôûäëïöüæœ]/i;
+  const vowelsOf = (w) =>
+    [...w].map((ch) => (VOWEL.test(ch) ? '<b>' + esc(ch) + '</b>' : '<span>' + esc(ch) + '</span>')).join('');
+  function lyricsOf(sg, o, view) {
     if (!hasLyrics(sg)) return '';
-    const line = (l) => '<p>' + esc((l || []).join(' ')) + '</p>';
+    const cls = view === 'faint' ? ' faint' : view === 'vowels' ? ' vowels' : '';
+    const line = (l) =>
+      '<p>' + (view === 'vowels' ? (l || []).map(vowelsOf).join(' ') : esc((l || []).join(' '))) + '</p>';
     if (o) {
       const x = sg.order[occIdx(sg, o)],
         s = x && sg.sections[x.sid];
-      return s && s.lines && s.lines.length ? '<div class="aply">' + s.lines.map(line).join('') + '</div>' : '';
+      return s && s.lines && s.lines.length ? '<div class="aply' + cls + '">' + s.lines.map(line).join('') + '</div>' : '';
     }
     return (
-      '<div class="aply">' +
+      '<div class="aply' +
+      cls +
+      '">' +
       sg.order
         .map((x, i) => {
           const s = sg.sections[x.sid];
@@ -353,6 +377,403 @@ const APPL = (() => {
     );
   }
 
+  /* ----- Q37 the song ladder -----
+     A section sung four ways (RUNGS in config.js: lip trill, hum, vowels only, words), each an ordinary take of the
+     place with ext.rung. The rungs sung this session fold into one row; only the current rung is open; the rest are
+     "Up next". From two rungs, Lines overlays their pitch lines (PITCH) and names where the words part from the trill;
+     once all four are sung, Notes of the line plays the trill's held notes. The Straight / Ladder switch is the song's
+     own (sg.ext.ladder). Pitch lines are worked out when needed, in memory only */
+  const ladderOn = (sg) => !!(sg && sg.ext && sg.ext.ladder === true);
+  function modeSeg(sg) {
+    const on = ladderOn(sg);
+    return (
+      '<div class="seg wide apmode" role="group" aria-label="How to sing it"><span class="knob" aria-hidden="true"></span>' +
+      '<button data-a="apMode" data-v="straight" class="' +
+      (on ? '' : 'on') +
+      '" aria-pressed="' +
+      !on +
+      '">Straight</button><button data-a="apMode" data-v="ladder" class="' +
+      (on ? 'on' : '') +
+      '" aria-pressed="' +
+      on +
+      '">Ladder</button></div>'
+    );
+  }
+  // this session's ladder at this place: the newest take of each rung, the rungs skipped, the one to sing next
+  function ladState(c) {
+    const sung = {};
+    mineAt(c).forEach((t) => {
+      const r = takeRung(t);
+      if (r && !sung[r.id]) sung[r.id] = t;
+    });
+    const skip = (c.skip || []).filter((id) => !sung[id]),
+      cur = RUNGS.find((r) => !sung[r.id] && !skip.includes(r.id)) || null,
+      list = RUNGS.filter((r) => sung[r.id]);
+    return {
+      sung,
+      skip,
+      cur,
+      list,
+      later: cur ? RUNGS.filter((r) => RUNGS.indexOf(r) > RUNGS.indexOf(cur) && !sung[r.id] && !skip.includes(r.id)) : [],
+      // the lines compared: the trill (else the hum) and the words (else the vowels)
+      base: sung.trill ? 'trill' : sung.hum ? 'hum' : null,
+      target: sung.words ? 'words' : sung.vowels ? 'vowels' : null,
+    };
+  }
+  const RUN_WORD = { trill: 'trill', hum: 'hum', vowels: 'vowels', words: 'words' };
+  function ladder(c) {
+    const L = ladState(c),
+      n = L.list.length;
+    need(L.list.map((r) => L.sung[r.id].id));
+    let h = '<div class="lad">';
+    if (n) {
+      const open = !!U.apFold;
+      h +=
+        '<button class="ladsum' +
+        (open ? ' open' : '') +
+        '" data-a="apLadFold" aria-expanded="' +
+        open +
+        '"><span class="laddots" aria-hidden="true">' +
+        L.list.map((r) => '<i style="background:' + r.col + '"></i>').join('') +
+        '</span><span class="lbl">' +
+        n +
+        ' of 4 sung<small>' +
+        L.list.map((r) => r.short).join(' · ') +
+        (L.skip.length ? ' · skipped ' + L.skip.map((id) => rungOf(id).short).join(', ') : '') +
+        '</small></span>' +
+        ICON.down +
+        '</button>';
+      if (open)
+        h +=
+          '<div class="ladrows">' +
+          L.list
+            .map((r) => {
+              const t = L.sung[r.id],
+                on = takePlaying(t.id),
+                nm = 'Ladder · ' + r.name;
+              return (
+                '<div class="ladrow" data-rung="' +
+                r.id +
+                '"><span class="laddot" style="background:' +
+                r.col +
+                '" aria-hidden="true"></span><span class="lbl">' +
+                (RUNGS.indexOf(r) + 1) +
+                ' · ' +
+                esc(r.name) +
+                '<small>' +
+                mmss(t.len) +
+                '</small></span>' +
+                PITCH.spark(PITCH.got(t.id), r.col) +
+                '<button class="tkplay" data-a="playTake" data-k="' +
+                t.id +
+                '" aria-label="' +
+                (on ? 'Pause ' : 'Play ') +
+                esc(nm) +
+                '">' +
+                (on ? ICON.pause : ICON.play) +
+                '</button></div>'
+              );
+            })
+            .join('') +
+          '</div>';
+    }
+    if (L.cur) {
+      const r = L.cur,
+        i = RUNGS.indexOf(r);
+      h +=
+        '<div class="ladcur" data-rung="' +
+        r.id +
+        '"><div class="ladrn"><span class="laddot hollow" style="--rc:' +
+        r.col +
+        '" aria-hidden="true"></span><b>' +
+        (i + 1) +
+        ' · ' +
+        esc(r.name) +
+        '</b></div><p class="ladhow">' +
+        esc(r.how) +
+        '</p>' +
+        lyricsOf(c.sg, c.o, r.lyr) +
+        (TRACK.has(c.sg.id)
+          ? '<button class="row aptrk" data-a="apOver" role="switch" aria-checked="' +
+            overOn() +
+            '"><span class="lbl">♪ Sing over the track</span><span class="tgl" aria-checked="' +
+            overOn() +
+            '" aria-hidden="true"></span></button>'
+          : '') +
+        '<button class="apsing" data-a="apSing"><span class="dot" aria-hidden="true"></span>Sing · ' +
+        esc(r.short) +
+        '</button><div class="aplinks"><button data-a="apSkip">Skip this rung</button>' +
+        (!n && hasLyrics(c.sg) && c.sg.order.length
+          ? '<span aria-hidden="true">·</span><button data-a="apSecs">' +
+            (U.apSec ? 'Keep ' + esc(secName(c.sg, c.o)) : 'Change section') +
+            '</button>'
+          : '') +
+        (!n ? '<span aria-hidden="true">·</span><button data-a="apNoRec">Practised, not recorded</button>' : '') +
+        '</div></div>';
+      if (L.later.length) h += '<div class="ladnext">Up next: ' + esc(L.later.map((x) => x.name).join(', ')) + '</div>';
+    } else if (!n)
+      h +=
+        '<p class="ladhow">Every rung skipped.</p><div class="aplinks"><button data-a="apLadAgain">Start the ladder again</button>' +
+        '<span aria-hidden="true">·</span><button data-a="apNoRec">Practised, not recorded</button></div>';
+    h += '</div>';
+    if (n >= 2) h += lines(c, L);
+    if (n === 4) h += notesBlock(L);
+    if (n && (n >= 2 || !L.cur)) h += '<div class="aprow"><button class="apsoft" data-a="apDone">Done</button></div>';
+    return h;
+  }
+  // which lines are drawn: chosen with the chips (this screen only), else the two compared (all, with only two)
+  function lnOn(L, id) {
+    const m = U.apLn || {};
+    if (id in m) return !!m[id];
+    return L.list.length <= 2 || id === L.base || id === L.target;
+  }
+  function lines(c, L) {
+    const got = (id) => PITCH.got(L.sung[id].id),
+      ready = L.list.every((r) => got(r.id)),
+      ln = L.list.map((r) => ({ a: got(r.id), col: r.col, on: lnOn(L, r.id), key: r.id })),
+      sp = spot(c, L);
+    let h =
+      '<div class="ladsec"><div class="ladhd">Lines</div>' +
+      (ready
+        ? '<div class="apchart">' +
+          PITCH.svg(ln, {
+            w: 340,
+            h: 170,
+            marker: sp && sp.at != null ? { t: sp.t } : null,
+            label: 'Pitch lines of ' + L.list.map((r) => r.name).join(', '),
+          }) +
+          '</div>'
+        : '<div class="apchart wait" aria-busy="true"><span>Reading the lines…</span></div>') +
+      '<div class="ladchips" role="group" aria-label="Lines shown">' +
+      L.list
+        .map((r) => {
+          const on = lnOn(L, r.id);
+          return (
+            '<button class="ladchip' +
+            (on ? '' : ' off') +
+            '" data-a="apLine" data-v="' +
+            r.id +
+            '" aria-pressed="' +
+            on +
+            '"><i style="background:' +
+            r.col +
+            '" aria-hidden="true"></i>' +
+            esc(r.short) +
+            '</button>'
+          );
+        })
+        .join('') +
+      '</div>';
+    if (sp && sp.none)
+      h +=
+        '<p class="ladspot">The ' + RUN_WORD[L.target] + ' stay with the ' + RUN_WORD[L.base] + ' all the way through.</p>';
+    else if (sp)
+      h +=
+        '<div class="ladspot"><p>The ' +
+        RUN_WORD[L.target] +
+        ' part from the ' +
+        RUN_WORD[L.base] +
+        ' ' +
+        esc(sp.where) +
+        '<small>Hear the ' +
+        RUN_WORD[L.base] +
+        ' there, then the ' +
+        RUN_WORD[L.target] +
+        '.</small></p><button class="apsoft" data-a="apHear">' +
+        ICON.play +
+        'Hear both</button></div>';
+    return h + '</div>';
+  }
+  // where the words (or vowels) part from the trill (or hum): {at, len, t, where}, {none: true}, or null (not yet)
+  function spot(c, L) {
+    if (!L.base || !L.target) return null;
+    const a = PITCH.got(L.sung[L.base].id),
+      b = PITCH.got(L.sung[L.target].id);
+    if (!a || !b) return null;
+    const p = PITCH.part(a, b);
+    if (!p) return { none: true };
+    return Object.assign(p, { where: whereAt(c.sg, c.o, p.t) });
+  }
+  // named by line when Song Clock has the section's lines timed (the first note taken as its first line's start),
+  // otherwise by time
+  function whereAt(sg, o, t) {
+    try {
+      if (hasLyrics(sg) && ckSynced(sg)) {
+        const M = ckModel(sg),
+          k = o ? occIdx(sg, o) : -1,
+          idx = M.L.map((l, i) => i).filter((i) => k < 0 || M.L[i].k === k);
+        const t0 = idx.length && M.T[idx[0]] ? M.T[idx[0]][0] : null;
+        if (t0 != null) {
+          let at = 0;
+          idx.forEach((i, n) => {
+            if (M.T[i] && M.T[i][0] != null && M.T[i][0] - t0 <= t + 0.05) at = n;
+          });
+          const l = M.L[idx[at]],
+            x = sg.order[l.k],
+            s = x && sg.sections[x.sid],
+            w = (s && s.lines && s.lines[l.li]) || [];
+          return 'on line ' + (at + 1) + (w.length ? ' (“' + w.slice(0, 5).join(' ') + (w.length > 5 ? '…' : '') + '”)' : '');
+        }
+      }
+    } catch (e) {}
+    return 'around ' + t.toFixed(1) + ' s';
+  }
+  // Notes of the line: one button per held note of the trill (the hum or the vowels if there's no trill)
+  function lineNotes(L) {
+    const id = ['trill', 'hum', 'vowels'].find((r) => L.sung[r]),
+      a = id && PITCH.got(L.sung[id].id);
+    return a ? { from: id, ms: PITCH.held(a).map((h) => Math.round(h.m)).slice(0, 24) } : null;
+  }
+  function notesBlock(L) {
+    const N = lineNotes(L);
+    let h = '<div class="ladsec"><div class="ladhd">Notes of the line</div>';
+    if (!N) return h + '<div class="apchart wait" aria-busy="true"><span>Reading the notes…</span></div></div>';
+    if (!N.ms.length) return h + '<p class="ladspot">No held notes in your ' + RUN_WORD[N.from] + ' to play.</p></div>';
+    const tn = PAT.toneState();
+    return (
+      h +
+      '<div class="ladnotes" data-edge-fade data-own-gesture><button class="ladrpt' +
+      (U.apRpt ? ' on' : '') +
+      '" data-a="apRpt" aria-pressed="' +
+      !!U.apRpt +
+      '">' +
+      ICON_RPT +
+      'Repeat</button>' +
+      N.ms
+        .map(
+          (m, i) =>
+            '<button class="ladnote' +
+            (tn && U.apTone === i ? ' on' : '') +
+            '" data-a="apNote" data-v="' +
+            i +
+            '" aria-label="Play ' +
+            PITCH.name(m) +
+            '">' +
+            PITCH.name(m) +
+            '</button>'
+        )
+        .join('') +
+      '</div><p class="foot">From your ' +
+      RUN_WORD[N.from] +
+      '. Tap a note to hear it. With Repeat on, it keeps playing until you tap it again.</p></div>'
+    );
+  }
+  const ICON_RPT =
+    '<svg class="i" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11V9a4 4 0 0 1 4-4h12l-3-3M20 13v2a4 4 0 0 1-4 4H4l3 3"/></svg>';
+  // pitch lines are read when the card needs them; the card is drawn again once they're in (never while recording)
+  let needT = 0;
+  function need(ids) {
+    ids.forEach((id) => {
+      if (PITCH.got(id)) return;
+      PITCH.ofTake(id).then((a) => {
+        if (!a || needT) return;
+        needT = setTimeout(() => {
+          needT = 0;
+          if (X && U.view === 'app' && !rec && !U.sheet && q('#app .lad')) rerender();
+        }, 30);
+      });
+    });
+  }
+  // the note buttons and Repeat, changed in place
+  function paintNotes() {
+    const tn = PAT.toneState();
+    document.querySelectorAll('#app .ladnote').forEach((b) => {
+      const on = !!tn && U.apTone === +b.dataset.v;
+      b.classList.toggle('on', on);
+    });
+    const r = q('#app .ladrpt');
+    if (r) {
+      r.classList.toggle('on', !!U.apRpt);
+      r.setAttribute('aria-pressed', !!U.apRpt);
+    }
+  }
+  function note(i) {
+    const c = cur(),
+      N = c && lineNotes(ladState(c));
+    if (!N || !N.ms.length || !(i >= 0 && i < N.ms.length) || rec) return;
+    if (U.apTone === i && PAT.toneState()) {
+      PAT.toneStop();
+      return paintNotes();
+    }
+    stopHear();
+    if (playingId) stopPlayback();
+    const ok = PAT.tone(N.ms[i], {
+      repeat: !!U.apRpt,
+      onEnd: () => {
+        if (U.apTone === i) U.apTone = null;
+        paintNotes();
+      },
+    });
+    U.apTone = ok ? i : null;
+    paintNotes();
+  }
+  // Hear both: the trill (or hum) at the parting spot, then the words (or vowels), as takes through NOW
+  let hearing = null;
+  function stopHear() {
+    if (!hearing) return;
+    clearTimeout(hearing.timer);
+    hearing = null;
+  }
+  function hear() {
+    const c = cur();
+    if (!c || rec) return;
+    const L = ladState(c),
+      sp = spot(c, L);
+    if (!sp || sp.none) return;
+    stopHear();
+    const A = L.sung[L.base],
+      B = L.sung[L.target],
+      st = (t) => Math.max(0, PITCH.got(t.id).firstT + sp.at - 0.5),
+      len = sp.len + 1,
+      me = (hearing = {});
+    const clip = (t, then) => {
+      playTake(t.id, st(t));
+      const p = player;
+      if (!p) return;
+      const go = () => {
+        clearTimeout(me.timer);
+        me.timer = setTimeout(() => {
+          if (hearing !== me || player !== p) return;
+          stopPlayback();
+          rerender();
+          if (then) me.timer = setTimeout(() => hearing === me && then(), 350);
+          else hearing = null;
+        }, len * 1000);
+      };
+      p.addEventListener('playing', go, { once: true });
+    };
+    clip(A, () => clip(B));
+  }
+  // the live line while a rung records: the recording's own microphone, read on the frame clock (PITCH.live). Its
+  // box is found once, and again only once it's been drawn again
+  const LIVE = { w: 340, h: 130 };
+  function liveSVG(pts, col, rg, dur) {
+    rg = rg || { lo: 52, hi: 67 };
+    return PITCH.svg([{ a: pts, col, w: 2.5 }], { w: LIVE.w, h: LIVE.h, lo: rg.lo, hi: rg.hi, dur: dur || 6, label: 'Live pitch line' });
+  }
+  function liveLine(r) {
+    const an = r.mic && r.mic.analyser(PITCH.SET.win),
+      ru = rungOf(r.rung);
+    if (!an || !ru) return;
+    let box = null,
+      last = 0;
+    const rg = { lo: 52, hi: 67 };
+    r.livePts = 0;
+    r.lineOff = PITCH.live(an, (pts, p) => {
+      if (rec !== r || r.stopping) return r.lineOff && r.lineOff();
+      if (!p) return;
+      r.livePts = pts.length;
+      const now = performance.now();
+      if (now - last < 50) return; // about 20 times a second is plenty for a line
+      last = now;
+      if (!box || !box.isConnected) box = document.getElementById('apLive');
+      if (!box) return;
+      if (p.m < rg.lo + 1) rg.lo = Math.floor(p.m) - 2;
+      if (p.m > rg.hi - 1) rg.hi = Math.ceil(p.m) + 2;
+      box.innerHTML = liveSVG(pts, ru.col, rg, Math.max(6, Math.ceil(p.t)));
+    });
+  }
+
   /* ----- singing ----- */
   const overOn = () => sgp().singOver !== false;
   // where the section starts on the track (Song Clock's timing), else the start
@@ -372,6 +793,12 @@ const APPL = (() => {
     U.apSec = false;
     saveDraft();
     const tg = { songId: c.sg.id, o: c.o, app: true };
+    if (ladderOn(c.sg)) {
+      // Q37: the ladder sings its current rung
+      const r = ladState(c).cur;
+      if (!r) return;
+      tg.rung = r.id;
+    }
     if (overOn() && TRACK.has(c.sg.id)) {
       if (REC_OVER.hp) return over(tg, 'hp');
       return askOver(Object.assign(tg, { sing: true })); // Q16's sheet: headphones, or the speaker
@@ -472,6 +899,8 @@ const APPL = (() => {
     if (X.song && X.song !== id && !(X.takes || []).some((k) => (TAKES.find((t) => t.id === k) || {}).songId === X.song)) X.song = null;
     X.sing = { id, o: lastSec(id), st: 'open' };
     U.apSec = false;
+    U.apFold = false; // Q37: the ladder's fold and lines start afresh for another song
+    U.apLn = null;
     saveDraft();
     rerender();
     const c = q('#apcard');
@@ -560,6 +989,7 @@ const APPL = (() => {
       if (!c || rec) return;
       stopPlayback();
       c.o = okO(c.sg, v || null);
+      c.skip = []; // Q37: a new place starts the ladder afresh
       keep(c);
       U.apSec = false;
       saveDraft();
@@ -577,12 +1007,83 @@ const APPL = (() => {
     apCmp: (el) => cmp(el),
     apSort: (el) => sortMenu(el),
     apSortPick: (el, v) => sortPick(v),
+    // Q37 the song ladder
+    apMode(el, v) {
+      const c = cur();
+      if (!c || rec) return;
+      const on = v === 'ladder';
+      if (on === ladderOn(c.sg)) return;
+      stopPlayback();
+      stopHear();
+      PAT.toneStop();
+      const e = Object.assign({}, c.sg.ext);
+      if (on) e.ladder = true;
+      else delete e.ladder;
+      if (Object.keys(e).length) c.sg.ext = e;
+      else delete c.sg.ext;
+      save(); // the song remembers it (backed up with the song)
+      segPick(el);
+      rerender();
+      const l = q('#apcard .lad');
+      if (l) MOTION.animate(l, [{ opacity: 0, transform: 'translateY(-6px)' }, { opacity: 1, transform: 'none' }], { spring: 'gentle', fade: true });
+    },
+    apLadFold() {
+      U.apFold = !U.apFold;
+      rerender();
+      const r = q('#app .ladrows');
+      if (r)
+        r.querySelectorAll('.ladrow').forEach((x, i) =>
+          MOTION.animate(x, [{ opacity: 0, transform: 'translateY(-6px)' }, { opacity: 1, transform: 'none' }], {
+            spring: 'gentle',
+            delay: MOTION.stagger(i, 'row'),
+            fade: true,
+          })
+        );
+    },
+    apSkip() {
+      const c = cur();
+      if (!c || rec) return;
+      const L = ladState(c);
+      if (!L.cur) return;
+      c.skip = (c.skip || []).concat(L.cur.id);
+      keep(c);
+      saveDraft();
+      rerender();
+    },
+    apLadAgain() {
+      const c = cur();
+      if (!c || rec) return;
+      c.skip = [];
+      keep(c);
+      saveDraft();
+      rerender();
+    },
+    apLine(el, v) {
+      const c = cur();
+      if (!c || !rungOf(v)) return;
+      const L = ladState(c);
+      U.apLn = Object.assign({}, U.apLn, { [v]: !lnOn(L, v) });
+      rerender();
+    },
+    apHear: () => hear(),
+    apNote: (el, v) => note(+v),
+    apRpt() {
+      U.apRpt = !U.apRpt;
+      if (!U.apRpt && PAT.toneState() && PAT.toneState().repeat) PAT.toneStop();
+      paintNotes();
+    },
   });
 
   // after every redraw (render() in ui.js): the page dims around the card while it records
   function after() {
     const on = !!(rec && rec.app && X && U.view === 'app');
     document.body.classList.toggle('apprec', on);
+    // Q37: the ladder's notes and Hear both stop once Application isn't on screen
+    if (U.view !== 'app' || !X) {
+      if (PAT.toneState() && U.apTone != null) PAT.toneStop();
+      U.apTone = null;
+      stopHear();
+    }
   }
   // the pinned button's empty state: nothing sung yet
   const empty = () => {
@@ -606,10 +1107,29 @@ const APPL = (() => {
     empty,
     secName,
     startAt,
+    liveLine,
     // tests
     state: () => {
       const c = cur();
-      return c ? { id: c.sg.id, o: c.o, st: c.st, carry: !!c.carry, over: overOn() } : null;
+      if (!c) return null;
+      const out = { id: c.sg.id, o: c.o, st: c.st, carry: !!c.carry, over: overOn(), ladder: ladderOn(c.sg) };
+      if (out.ladder) {
+        const L = ladState(c),
+          sp = spot(c, L),
+          N = L.list.length === 4 ? lineNotes(L) : null;
+        Object.assign(out, {
+          sung: L.list.map((r) => r.id),
+          takes: L.list.map((r) => L.sung[r.id].id),
+          skip: L.skip,
+          cur: L.cur ? L.cur.id : null,
+          later: L.later.map((r) => r.id),
+          spot: sp ? (sp.none ? 'none' : { at: sp.at, len: sp.len, t: sp.t, where: sp.where }) : null,
+          notes: N ? N.ms : null,
+          hearing: !!hearing,
+          tone: U.apTone,
+        });
+      }
+      return out;
     },
   };
 })();

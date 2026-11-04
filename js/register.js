@@ -99,6 +99,15 @@ const SCREENS = {
         { name: 'not-recorded-button', sel: '[data-a="apNoRec"]' },
         { name: 'song-row', sel: '[data-a="apSong"]' },
         { name: 'songs-sort', sel: '[data-a="apSort"]' },
+        // Q37 the song ladder
+        { name: 'ladder-switch', sel: '[data-a="apMode"]' },
+        { name: 'sung-rungs-row', sel: '[data-a="apLadFold"]' },
+        { name: 'skip-rung-button', sel: '[data-a="apSkip"]' },
+        { name: 'live-pitch-line', sel: '#apLive' },
+        { name: 'line-switch', sel: '[data-a="apLine"]' },
+        { name: 'hear-both-button', sel: '[data-a="apHear"]' },
+        { name: 'note-button', sel: '[data-a="apNote"]' },
+        { name: 'repeat-button', sel: '[data-a="apRpt"]' },
       ],
     },
     {
