@@ -17,7 +17,7 @@ Every queued item has a queue ID and a standard name, used in the queue, in hand
 - **Items:** `Q[##] · [Subsystem]: [Feature Name]`, e.g. `Q02 · Track: Waveform Sections`.
 - **Files** (handoffs, specs, wireframes, prototypes): `q##_[subsystem]_[feature]_[type].[ext]`, lower case with underscores, e.g. `q02_track_waveform_sections_handoff.md`.
 - **Releases:** the shipped version's `CHANGELOG.md` headline ends with the queue ID in brackets, e.g. `*Waveform sections on the track player (Q02)*` under `## 3.23 · 27 Oct 2026` (the `##` line keeps its exact format for the app's Changelog page). That's the bridge from queue ID to version. Q01 shipped as 3.22, headline `*Search, from every tab (Q01)*`; Q08 as 3.23.
-- **New items:** an idea gets its ID when Ivan says **Render** for it, taking the next unused number (the next is **Q41**). IDs are never reused or renumbered, even when the queue is reordered or an item ships.
+- **New items:** an idea gets its ID when Ivan says **Render** for it, taking the next unused number (the next is **Q42**). IDs are never reused or renumbered, even when the queue is reordered or an item ships.
 - **Exception, 30 Oct 2026:** Ivan asked for the six stages of the 30 Oct read-only audit, plus its clean-up list, to get IDs straight away, before Render, most critical first. They are **Q11–Q17**. All seven got Render on 30 Oct 2026 and have shipped (3.29–3.31, 3.34, 3.36, 3.37 and 3.38).
 - **Exception, 31 Oct 2026:** Ivan asked for the status bar fix to be queued with an ID before Render. It is **Q23**; Render and Build followed the same evening (shipped in 3.33).
 
@@ -58,13 +58,14 @@ Every ID with its **Status** (`Awaiting Render`, `Approved — awaiting Build`, 
 | Q31 | Atlas: Map and Notes | Shipped (tooling, no app version) | Visual App Atlas stage 2, map, notes, export, changes since last scan, 2 Nov 2026; re-scoped onto the Atlas kit, 2 Nov 2026, 19:50; widened with the Atlas kit 1.1 phone pass, 3 Nov 2026, 11:21 |
 | Q32 | Exercises: Redesign | Shipped 3.48 | Exercise patterns the app plays, Exercise page redesign (both 31 Oct), merged 2 Nov 2026 |
 | Q33 | Interface: Glass Native Tuning | Shipped 3.49 | Glass tuning Recon and glass inventory, 2 Nov 2026 |
-| Q34 | Interface: Native Menus and Controls | Blocked (on hold for the parts kit, 2 Nov 2026) | Component inventory (round 2), worth doing plus smaller wins, 2 Nov 2026 |
+| Q34 | Interface: Native Menus and Controls | Retired → Q41 | Component inventory (round 2), worth doing plus smaller wins, 2 Nov 2026; on hold for the parts kit from 2 Nov, replaced by Q41 at its Render on 4 Nov 2026 |
 | Q35 | Atlas: Starting States | Shipped (tooling, no app version) | Atlas: more starting states (Not scheduled idea), from the screen-flow canvas update, 3 Nov 2026 |
 | Q36 | Interface: Screen IDs | Shipped 3.50 | Screen IDs blueprint (permanent IDs for every screen, part names, flows, saved-data list), 3 Nov 2026 |
 | Q37 | Session: Song Ladder | Shipped 3.52 | Song ladder, pitch test page, "Prototype · Song ladder and bridge-aware patterns" (v1–v3), 2 Nov 2026 |
 | Q38 | Exercises: Bridge-Aware Patterns | Approved — awaiting Build | Bridge-aware patterns, Find your bridge, same prototype, 2 Nov 2026 |
 | Q39 | Songs: Key and Scale Lanes | Approved — awaiting Build | Key detection, scale lanes, suggested patterns, same prototype (v2), 2 Nov 2026 |
 | Q40 | Interface: Value Set and Test | Shipped 3.51 | The value test (consistency audit of 3.49, 2 Nov 2026; called Q35 in early notes before Q35 went to Atlas: Starting States) |
+| Q41 | Interface: Parts Kit Move | Approved — awaiting Build | The move of Vocal Sessions onto the parts kit (replaces Q34), Blueprint 4 Nov 2026 |
 
 Work shipped before this standard (for example Track 1 and Song Clock A1) keeps its version numbers and has no queue ID.
 
@@ -85,10 +86,11 @@ Build top to bottom; each still needs its own **Build**. One line per item: `N. 
 
 1. Q38 — needs Q37 (shipped in 3.52)
 2. Q39 — needs Q37 (shipped in 3.52)
+3. Q41 — needs parts kit 1.1 (`imperialfox/parts-kit`, built first); after Q38 and Q39 (Ivan, 4 Nov 2026)
 
 ## Order (3 Nov 2026)
 
-**Q37** shipped in 3.52 (Render 3 Nov 2026, 08:01; Build 4 Nov 2026, 00:38): the shared pitch listener (`PITCH`, `js/pitch.js`, with pitchy pinned in `js/pitchy.js`) and the song ladder on Application's card (MAINTAINING › The pitch listener, Song ladder); its scope is in this file's history and the handoff. Q38 and Q39 build on its pitch listener. **Q35** shipped on 3 Nov 2026 as tooling (Build 3 Nov 2026, 17:20): Vocal Sessions' Atlas now has starting states for the coach video, recording and takes, How did it go?, the peek card, Check timing's Overlaps, Past the new end and the rescued copy, a caption for every screen, the flows F-01 and F-02, and hand-written doors (`tools/atlas/README.md` › Starting states); its scope is in this file's history and the handoff. **Q40** shipped in 3.51 (Render 3 Nov 2026, 08:08; Build 3 Nov 2026, 17:19): the named value set at the top of `css/app.css`, `MOTION.EASE`, and `tests/test_values.py` with its shrinking known list (MAINTAINING › Value set); its scope is in this file's history and the handoff. **Q31** shipped on 3 Nov 2026 as tooling (Build 3 Nov 2026, 13:36): Vocal Sessions' Atlas now runs on Atlas kit 1.1.0 (`tools/atlas/kit/`), which its Build made first; its scope is in this file's history and the handoff. **Q37–Q39** (Render 3 Nov 2026, 08:01) are app builds, in that order after Q36, each with its own Build: Q37 brings the shared pitch listener that Q38 and Q39 use. **Q36** shipped in 3.50 (Render 3 Nov 2026, 08:00; Build 3 Nov 2026, 08:15): its register is `js/register.js`, since `js/screens.js` already held the main screens' code. **Q35**'s flows, captions and doors use its IDs. The same Render added Atlas kit 1.0's addition 14 (Stable IDs), still to be built with the kit. **Q35** (Render 3 Nov 2026, 00:39) comes after Q31, which reshapes the settings file it fills in; tooling with no app version, like Q30 and Q31. The same Render widened **Atlas kit 1.0** with additions 9–13 (in that kit's handoff), which Q31's kit copy brings and Q35 uses. **Q33** shipped in 3.49 (Render 2 Nov 2026, 17:41; Build 2 Nov 2026, 21:17). **Q34** (Render 2 Nov 2026, 18:12) is on hold for the parts kit (Ivan, 2 Nov 2026, 22:11); it uses Q33's materials and springs. **Q32** shipped in 3.48 (Render 2 Nov 2026, 15:56; Build 2 Nov 2026, 19:06). Q30 shipped as tooling (Build 2 Nov 2026, 17:57; `tools/atlas/`), and **Q31** builds on it (Render 2 Nov 2026, 15:55, in the same instruction as Q30; re-scoped by a fresh Render at 19:50 to put Vocal Sessions on the universal Atlas kit, built after Prototype kit 1.1 and Atlas kit 1.0; its own Build). Atlas kit 1.0 was built on 3 Nov 2026; Q31 was widened at 11:21 with the Atlas kit 1.1 phone pass, which its Build makes first. Both are tooling with no app version, like Q24, so they can be built outside the app queue's order. Q28 shipped in 3.46 and Q29 in 3.47 (Render 2 Nov 2026, 09:29; Build 09:33, in one instruction, built one after the other). **Q07** is still awaiting Render. Q27 shipped in 3.45 (Build 2 Nov 2026). Q25 shipped in 3.43 and Q26 in 3.44 (Build 2 Nov 2026); Q25–Q27 got Render on 1 Nov 2026 (19:59), in one instruction, each with its own Build. Q19 shipped in 3.39, Q20 in 3.40, Q21 in 3.41 and Q22 in 3.42. Q22 got Render on 31 Oct 2026 (20:59) and was built on the one-page session and the saved screen. Q19–Q21 got Render on 31 Oct 2026 (19:58), in one instruction, each with its own Build. They follow Q17 (shipped in 3.38; Q20 needs Q16's track-while-recording, shipped in 3.37). Q11–Q17 got Render on 30 Oct 2026 (06:42) and have all shipped. What has shipped is in the table's Status column. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
+**Q41** (Render 4 Nov 2026, 09:57) moves Vocal Sessions onto the parts kit and replaces **Q34**, which is now Retired. It needs parts kit 1.1 built first (a kit version, recorded in the kit's own handoff) and comes after Q38 and Q39. **Q37** shipped in 3.52 (Render 3 Nov 2026, 08:01; Build 4 Nov 2026, 00:38): the shared pitch listener (`PITCH`, `js/pitch.js`, with pitchy pinned in `js/pitchy.js`) and the song ladder on Application's card (MAINTAINING › The pitch listener, Song ladder); its scope is in this file's history and the handoff. Q38 and Q39 build on its pitch listener. **Q35** shipped on 3 Nov 2026 as tooling (Build 3 Nov 2026, 17:20): Vocal Sessions' Atlas now has starting states for the coach video, recording and takes, How did it go?, the peek card, Check timing's Overlaps, Past the new end and the rescued copy, a caption for every screen, the flows F-01 and F-02, and hand-written doors (`tools/atlas/README.md` › Starting states); its scope is in this file's history and the handoff. **Q40** shipped in 3.51 (Render 3 Nov 2026, 08:08; Build 3 Nov 2026, 17:19): the named value set at the top of `css/app.css`, `MOTION.EASE`, and `tests/test_values.py` with its shrinking known list (MAINTAINING › Value set); its scope is in this file's history and the handoff. **Q31** shipped on 3 Nov 2026 as tooling (Build 3 Nov 2026, 13:36): Vocal Sessions' Atlas now runs on Atlas kit 1.1.0 (`tools/atlas/kit/`), which its Build made first; its scope is in this file's history and the handoff. **Q37–Q39** (Render 3 Nov 2026, 08:01) are app builds, in that order after Q36, each with its own Build: Q37 brings the shared pitch listener that Q38 and Q39 use. **Q36** shipped in 3.50 (Render 3 Nov 2026, 08:00; Build 3 Nov 2026, 08:15): its register is `js/register.js`, since `js/screens.js` already held the main screens' code. **Q35**'s flows, captions and doors use its IDs. The same Render added Atlas kit 1.0's addition 14 (Stable IDs), still to be built with the kit. **Q35** (Render 3 Nov 2026, 00:39) comes after Q31, which reshapes the settings file it fills in; tooling with no app version, like Q30 and Q31. The same Render widened **Atlas kit 1.0** with additions 9–13 (in that kit's handoff), which Q31's kit copy brings and Q35 uses. **Q33** shipped in 3.49 (Render 2 Nov 2026, 17:41; Build 2 Nov 2026, 21:17). **Q34** (Render 2 Nov 2026, 18:12) is on hold for the parts kit (Ivan, 2 Nov 2026, 22:11); it uses Q33's materials and springs. **Q32** shipped in 3.48 (Render 2 Nov 2026, 15:56; Build 2 Nov 2026, 19:06). Q30 shipped as tooling (Build 2 Nov 2026, 17:57; `tools/atlas/`), and **Q31** builds on it (Render 2 Nov 2026, 15:55, in the same instruction as Q30; re-scoped by a fresh Render at 19:50 to put Vocal Sessions on the universal Atlas kit, built after Prototype kit 1.1 and Atlas kit 1.0; its own Build). Atlas kit 1.0 was built on 3 Nov 2026; Q31 was widened at 11:21 with the Atlas kit 1.1 phone pass, which its Build makes first. Both are tooling with no app version, like Q24, so they can be built outside the app queue's order. Q28 shipped in 3.46 and Q29 in 3.47 (Render 2 Nov 2026, 09:29; Build 09:33, in one instruction, built one after the other). **Q07** is still awaiting Render. Q27 shipped in 3.45 (Build 2 Nov 2026). Q25 shipped in 3.43 and Q26 in 3.44 (Build 2 Nov 2026); Q25–Q27 got Render on 1 Nov 2026 (19:59), in one instruction, each with its own Build. Q19 shipped in 3.39, Q20 in 3.40, Q21 in 3.41 and Q22 in 3.42. Q22 got Render on 31 Oct 2026 (20:59) and was built on the one-page session and the saved screen. Q19–Q21 got Render on 31 Oct 2026 (19:58), in one instruction, each with its own Build. They follow Q17 (shipped in 3.38; Q20 needs Q16's track-while-recording, shipped in 3.37). Q11–Q17 got Render on 30 Oct 2026 (06:42) and have all shipped. What has shipped is in the table's Status column. The audit items come from a read-only audit of 3.28.1 on 30 Oct 2026. Detailed findings, with file and line references and how each was checked, are in the audit (`vocal_sessions_audit_2026-10-30.md` in Ivan's project notes; ask him to attach it). Ivan can reorder.
 
 ## Q07 · Song Clock: Dynamic Sync
 
@@ -99,59 +101,27 @@ Build top to bottom; each still needs its own **Build**. One line per item: `N. 
 - **Next action:** confirm dates and scope with Ivan.
 - **Done when:** *Unresolved.*
 
-## Q34 · Interface: Native Menus and Controls
+## Q41 · Interface: Parts Kit Move
 
-**Status:** Blocked: on hold for the parts kit (Ivan, 2 Nov 2026, 22:11: "yep hold"). Menus and controls will be built once in the parts kit, a separate kit planned from the Flutter library's parts, and this item gets a fresh Render when Vocal Sessions moves onto it. Do not Build the scope below as written. **Render:** 2 Nov 2026, 18:12. Ivan: "render", for the Blueprint as drafted with every *Default if unanswered* taken, after choosing both the worth-doing items and the smaller wins "for that extra polish" (18:05). **Build:** awaiting Ivan's instruction.
+**Status:** Approved — awaiting Build. **Render:** 4 Nov 2026, 09:57. Ivan: "render for the move", for the Blueprint as written at 10:00 with every *Default if unanswered* taken. **Build:** awaiting Ivan's instruction. The build handoff is in Ivan's project notes as `q41_interface_parts_kit_move_handoff.md` (plan `vs_parts_kit_move_blueprint.md`). Replaces Q34 · Interface: Native Menus and Controls (Retired; its agreed numbers became the parts kit's defaults).
 
-Menus, the top bar's buttons and the small controls move like iOS 27. Where the Flutter kit `sdegenaar/liquid_glass_widgets` (MIT) measured a number against real iPhone recordings, that number is used; otherwise its by-eye numbers are. The handoff and the inventory are in Ivan's project notes: `q34_interface_native_menus_controls_handoff.md` and `component_inventory_2026-11-02.md` (his private page "Component inventory · Vocal Sessions"). The measured values are in `liquid_glass_widgets_values.md` (+ `_part2.md`). Ask him to attach them.
-
-- **Scope, stage 1 (menus and the top bar):**
-  - **Long-press menus** (a song row, `#ctxmenu`; a lyric line in play-along, `#lmenu`), measured:
-    - the menu opens at 700 ms (was 480 ms and `CK_HOLD`)
-    - the row or line lifts to ×1.04 from about 200 ms, and letting go early opens nothing
-    - the dim is 20% (light) / 25% (dark) with no blur, and the row stays sharp above it
-    - it closes in 170 ms
-    - right-click opens it straight away
-  - **One menu style for every menu:** `.ctxmenu` and `.opmenu` become one component, with blur 22 over `#F5F5F7` at 80% (`#252528` in dark), a 0.5 pt border (black 30% / white 20%), the shadow `0 8px 33px rgba(0,0,0,.08)` and radius 18.
-  - **Pull-down menus** (Songs' sort and heading menus, Recall, the session's and Application's sort menus):
-    - they grow out of their button on new `menuOpen` (z 0.73, f 1.74 Hz) and `menuClose` (z 0.74, f 2.25 Hz) springs
-    - no dim
-    - the blur ramps in over 260 ms
-  - **Top bar buttons**, measured. `renderBar()` keeps each slot's circle:
-    - **New icon:** it blurs out (σ 6) and in (σ 3.5), with the circle swelling up to 22%.
-    - **Appearing:** 250 ms, from 1.1 to 1, with the icon sharpening from an 8 px blur.
-    - **Leaving:** 350 ms, with the icon gone by 55%.
-    - It only runs when the bar redraws in place. Push, zoom and swipe back stay as Q08 built them.
-- **Scope, stage 2 (controls), kit numbers by eye:**
-  - **Toasts:** drop in from the top over 500 ms and leave upwards over 350 ms. They stay 3 s (was 1.9 s) unless the caller sets a time.
-  - **Switches (`.tgl`):**
-    - the knob travels over 380 ms (ease-in-out), widening while it moves and within 120 ms of a press
-    - the knob can be dragged: a flick faster than 200 px/s decides it, otherwise whichever side it's past halfway
-    - a tap on the row still toggles
-  - **Segmented controls (`.seg`):**
-    - the settled slide and squish stay for taps
-    - new: the knob can be dragged, and settles on a `segSettle` spring (z 0.85, f 2.86 Hz)
-    - the knob swells by 12 × 8 px while pressed
-  - **Search fields:**
-    - Songs' bottom search field stretches at most about 7 pt lengthwise and 2 pt up and down when dragged (measured)
-    - plain text fields use the solid grey well, 12% light / 24% dark
-  - Reduce Motion: fades only.
-- **Defaults taken:** the 700 ms hold, menu radius 18, the bar morph only on in-place redraws, the segmented control's slide kept for taps, toasts 3 s.
-- **Out of scope:**
-  - Sheets' flick to close and their corners (moved to the Scroll Behaviour Pass draft).
-  - Submenus, and the drag shrink for sheets that grow out of a button (the app has neither).
-  - Swipe actions on rows, and the tab bar's highlight and dragging.
-  - Waveform scrubbers (no knob). The kit's ×1.35 knob suits Q32's speed slider, but it isn't part of Q32 without its own Render.
-  - Haptics.
-- **Build order:** two stages in one build, with quick tests after each.
-- **Needs:** Q33 built first (its materials and the `release` spring), and Q32 before that.
-- **Done when:**
-  - The hold, lift, dim and close timings above are met. Every menu shares one style.
-  - Pull-down menus grow out of their button. Top bar circles morph, appear and leave with the measured timings, with labels and actions always right.
-  - Toasts, switches, segmented controls and the search field behave as above. Taps work as before.
-  - Reduce Motion gives fades only.
-  - A new `tests/test_menus.py` (with a `controls` part) and a `morph` part in `test_native.py` pass at 375, 390 and 402 wide and on iPad. The fuzzer finds no menu left open, and the full suite passes.
-  - Ivan checks on his iPhone: the 700 ms hold, the Songs sort menu, the gear and Back morph, dragging a switch and the Progress range control, and the 3 s toast.
+- **Goal:** the menus, sheets, alerts, toasts, switches, segmented controls, slider, tab bar, top bar buttons and rows come from the parts kit, and every look decision (D01–D18 in Ivan's decision register) is one line in `js/parts.settings.js`.
+- **Scope, one app version in four stages:**
+  1. **Add the kit:** parts kit 1.1.0 pinned unchanged (`css/parts-kit.css`, `js/parts-kit.js`, docs and checksums in `tools/parts-kit/`), the settings file, and the kit runs the motion (D18): `js/motion.js` keeps its helpers but reads springs, speed and Reduce Motion from `Parts.motion`; Settings › Accessibility calls the kit and still saves the choices on the device. The app lists only its differences from the kit (none today), checked by a difference test. Nothing you'd see changes.
+  2. **Pop-ups:** toasts, alerts (D08), action sheets (D07), menus in one style with 20 corners and a 700 ms hold (D16), and sheets inside the kit's sheet (D09, D10, D14, D15, D17).
+  3. **Controls and bars:** switches, segmented controls (D04), the speed slider (D03), the tab bar (D01, D02), top bar buttons, the search field.
+  4. **Rows:** a highlight while pressed instead of shrinking (D06).
+- **Default if unanswered (all taken):**
+  - The app keeps its own sheet system (which sheet is open, back between sheets) and draws each sheet inside the kit's sheet.
+  - Every `confirmSheet()` sheet becomes an alert; sheets that are only a list of choices become action sheets (probably VS-050, VS-055, VS-058, VS-066, VS-068; the Build checks each and lists them in the handoff first); the rest stay sheets.
+  - The kit's tab bar replaces the app's; the dock's other states stay the app's own.
+  - The named shadow set only on parts that move here.
+  - The next minor version; the decisions register's move into `DECISIONS.md` stays its own piece of work.
+  - A plain list of everything replaced in `tools/parts-kit/REPLACED.md`, for the reference sheets item that follows.
+- **Out of scope:** the element, saved-data and wording reference sheets (the next item); `DECISIONS.md`; the Scroll Behaviour Pass's other fixes; placing D11–D13 (they stay off); the floating window, session clock ring and coach video controls; waveform scrubbers, swipe actions, reorderable lists, haptics; Smart file drop; any change to the kit itself.
+- **Needs:** parts kit 1.1 built first (spring overrides, one-element timings, `Parts.differences()`). After Q38 and Q39 in Release order.
+- **Done when:** the kit copy is unchanged and its settings load cleanly; the kit owns the motion and Speed 0, slow motion and forced Reduce Motion reach every part and survive a reload; D01–D10 and D14–D18 behave as recorded and D11–D13 are off; no long-press menu before 700 ms, toasts stay 3 s, every sheet has 46 corners and closes on a flick; every confirmation is an alert and each still does what it did; the value test's known list only shrinks; the Atlas opens every screen with no new "Failed"; `tests/test_parts.py` passes at 375, 390 and 402 wide and on iPad, and the full suite passes locally and on GitHub.
+- **Build order:** four stages in one fresh chat, quick tests after each, the full suite once before pushing; one receipt.
 
 ---
 

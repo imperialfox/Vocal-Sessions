@@ -19,7 +19,7 @@ Last updated 2 Nov 2026.
   - Music and Notes: where the bars sit on iPhone, and the tab bar's collapse (Q08).
   - Books: the Today dashboard.
   - Health: the Progress charts.
-  - Photos: how the search field stretches (Q34).
+  - Photos: how the search field stretches (Q34, now Q41).
 
 Only the ideas and measured positions are used. Nothing from Apple's apps or videos is copied into the repo.
 
@@ -37,7 +37,7 @@ Only the ideas and measured positions are used. Nothing from Apple's apps or vid
     - the top bar buttons' morph
     - the search field's stretch
   - **By eye:** the menu material and springs, the switch, the segmented control, the toast timing, the sheet's flick and corners, and the soft edge's fade shape.
-  - **Used in:** Q33 · Interface: Glass Native Tuning, Q34 · Interface: Native Menus and Controls, and the Scroll Behaviour Pass draft.
+  - **Used in:** Q33 · Interface: Glass Native Tuning, Q34 · Interface: Native Menus and Controls (retired, replaced by Q41 · Interface: Parts Kit Move), the parts kit, and the Scroll Behaviour Pass draft.
   - Where its numbers were made for a GPU effect (the iOS 27 two-layer frost), the CSS version is an approximation, tuned on the phone.
 
 ### Looked at, nothing used yet
