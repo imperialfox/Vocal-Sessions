@@ -9,6 +9,30 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.54 · 4 Nov 2026
+*Song key and scale lanes: sing a song in its key (Q39)*
+<!-- area: practice -->
+
+The app now finds a song's key from your takes, shows the key's notes behind your pitch lines, and suggests patterns from the pattern player in that key that reach the note you're working on.
+
+**The song key**
+- Under the ladder's lines, the app listens to every take of the song for its key. When two keys fit about as well, it asks ("Which key is this song in?" with both and Other…). Otherwise it suggests one ("This sounds like F major") with Use. You only choose once for each song.
+- Not enough singing yet? It says so, and you can choose the key yourself.
+- Choose or change it on a new sheet: Major or Minor, then 12 notes spelled for the key (D♭, E♭, A♭, B♭ in major; C♯ and G♯ in minor). Open it from Lines or the new **Key** row on the song's page.
+- The key is saved with the song and goes in your backups.
+
+**Scale lanes**
+- Once a song has a key, its notes show as faint lanes behind your pitch lines, on Lines and live while you record. The home note is blue, and every note is spelled for the key (B♭4 in F major, not A♯4).
+- A **Scale lanes** chip on Lines switches them off on this phone. They show where the notes are; nothing is marked right or wrong.
+
+**Practise in the key**
+- The note to work on: where the words part from your trill, or else the line's top note ("sits on A4, the 3rd of F major").
+- Up to three patterns from the library that play in the song's key and reach that note, riffs first. Each shows its range and what it trains, with Play.
+- Tap one to open the pattern player on that note, staying on the key. Your exercises' own choices aren't changed.
+- The ladder's note buttons now match the song's key too.
+
+Screens: VS-004, VS-009, VS-097, VS-098
+
 ## 3.53 · 4 Nov 2026
 *Bridge-aware patterns: find your bridge and get guided through it (Q38)*
 <!-- area: practice -->

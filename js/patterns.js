@@ -276,8 +276,17 @@ const PAT = (() => {
     o.bridge = { lo: Math.min(lo, hi), hi: Math.max(lo, hi) };
     put('voice', o);
   }
-  const exPref = (k) => (D.prefs && D.prefs.pat && D.prefs.pat.ex && D.prefs.pat.ex[k]) || {};
+  // Q39: a guest (Practise in <key>, from a song) keeps its pattern and starting note in memory only, so opening the
+  // player from outside never changes an exercise's saved choices
+  const guestOf = (k) => (cfg && cfg.guest && cfg.key === k ? cfg.gx : null);
+  const exPref = (k) => guestOf(k) || (D.prefs && D.prefs.pat && D.prefs.pat.ex && D.prefs.pat.ex[k]) || {};
   function putEx(k, f, v) {
+    const g = guestOf(k);
+    if (g) {
+      if (v == null) delete g[f];
+      else g[f] = v;
+      return;
+    }
     const p = P();
     p.ex = p.ex || {};
     const e = Object.assign({}, p.ex[k] || {});
@@ -1076,13 +1085,16 @@ const PAT = (() => {
 
   /* ===== The Patterns page's window: previewing one pattern ===== */
   let pvNotes = [],
-    pvT = 0;
-  function preview(p) {
+    pvT = 0,
+    pvEnd = null;
+  // k: the key note to play it in (Q39's Play on a suggested pattern), else the round shown; onEnd once it stops
+  function preview(p, k, onEnd) {
     if (!audio()) return;
     if (S.playing) end(false);
     NOW.start('pattern', 'preview', () => stopPreview(true));
     newBus();
-    const res = round(keyNow(), AC.currentTime + 0.06, p, beatOf(spdOf(p)));
+    pvEnd = onEnd || null;
+    const res = round(k != null ? k : keyNow(), AC.currentTime + 0.06, p, beatOf(spdOf(p)));
     pvNotes = res.ns;
     S.preview = p.n;
     paintPage();
@@ -1094,6 +1106,7 @@ const PAT = (() => {
           S.preview = null;
           NOW.ended('pattern');
           paintPage();
+          previewEnded();
         }
       },
       (res.end - AC.currentTime) * 1000 + 250
@@ -1110,6 +1123,42 @@ const PAT = (() => {
     clearTimeout(pvT);
     if (!quiet) NOW.ended('pattern');
     paintPage();
+    previewEnded();
+  }
+  function previewEnded() {
+    const f = pvEnd;
+    pvEnd = null;
+    if (f) f();
+  }
+  // Q39: a pattern played once in a given key (n: its number, k: the key note), through NOW like any preview
+  function hear(n, k, onEnd) {
+    const p = byN(n);
+    if (!p || !isFinite(k)) return false;
+    if (S.preview != null) stopPreview(true);
+    preview(p, Math.round(k), onEnd);
+    return S.preview === p.n;
+  }
+  /* Q39: the player opened from outside an exercise (Practise in <key>, from a song): o {id, name, n: the pattern, k:
+     its starting note (MIDI), key: the key's name}. One round, Stay on this key on. Its pattern and starting note are
+     kept in memory (cfg.gx), never in an exercise's saved choices */
+  function guest(o) {
+    if (!o || !byN(o.n) || !isFinite(o.k)) return false;
+    use({
+      key: 'song:' + o.id,
+      guest: true,
+      gx: {},
+      name: o.name + ' · ' + o.key,
+      col: 'var(--accent)',
+      route: [Math.round(o.k)],
+      def: +o.n,
+      syl: '',
+      vowels: false,
+      fal: false,
+    });
+    S.round = 0;
+    S.hold = true;
+    S.group = null;
+    return true;
   }
 
   /* ===== The drawing ===== */
@@ -2290,6 +2339,7 @@ const PAT = (() => {
   // the page the player is on: an exercise's Summary (pushed, or in the iPad's split pane) or the Patterns page
   const onPage = () =>
     U.view === 'pat' ||
+    (U.view === 'keyp' && !!cfg && !!cfg.guest) ||
     ((U.view === 'ex' || (!U.view && U.tab === 'exercises' && typeof split === 'function' && split())) &&
       U.exTab === 'summary' &&
       !!cfg &&
@@ -2305,7 +2355,7 @@ const PAT = (() => {
   function back() {
     stopPreview();
     go(() => {
-      U.view = U.patFrom === 'ex' ? 'ex' : null;
+      U.view = U.patFrom === 'ex' || U.patFrom === 'keyp' ? U.patFrom : null;
       U.patFrom = null;
     });
   }
@@ -2648,6 +2698,9 @@ const PAT = (() => {
     play,
     stop,
     preview,
+    hear,
+    hearStop: () => stopPreview(),
+    guest,
     tone,
     toneStop,
     toneState: () => (toneNow ? { m: toneNow.m, repeat: toneNow.repeat, strikes: toneNow.strikes || 0 } : null),
@@ -2690,6 +2743,8 @@ const PAT = (() => {
       listening: !!LS,
       heard: LS ? LS.n : 0,
       cue: !!S.cue,
+      guest: !!(cfg && cfg.guest),
+      gx: cfg && cfg.guest ? Object.assign({}, cfg.gx) : null,
     }),
     triad,
     homeNotes,

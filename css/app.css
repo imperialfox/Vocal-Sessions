@@ -9070,7 +9070,8 @@ body.apprec #dock {
 .ladchip.off {
   opacity: 0.45;
 }
-.ladspot {
+.ladspot,
+.keyq {
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -9078,10 +9079,12 @@ body.apprec #dock {
   font-size: var(--t-callout);
   line-height: 1.4;
 }
-.ladspot p {
+.ladspot p,
+.keyq p {
   margin: 0;
 }
-.ladspot small {
+.ladspot small,
+.keyq small {
   display: block;
   font-size: var(--t-footnote);
   color: var(--fg2);
@@ -9147,6 +9150,119 @@ body.apprec #dock {
 }
 .ladsec .foot {
   margin: 0;
+}
+/* Q39 the song key and Practise in <key>, on Lines (built from the ladder's own parts: .ladsec, .ladspot, .apsoft,
+   .ladchip, .tkplay and .ladnote) */
+.keyrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--t-callout);
+  font-weight: 600;
+}
+.keyrow .lbl {
+  flex: 1;
+}
+.keyrow .apsoft {
+  flex: none;
+  padding: 0 18px;
+  height: 36px;
+}
+.keyopts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.keyopts .apsoft {
+  flex: 1 1 30%;
+  min-width: 96px;
+  padding: 0 12px;
+}
+.keyopts .apsoft.keyuse {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+.ladchip.keychip i {
+  border-radius: 2px;
+  background: var(--accent);
+  opacity: 0.6;
+}
+.keytgt {
+  margin: 0;
+  font-size: var(--t-callout);
+  line-height: 1.4;
+}
+.keytgt b {
+  font-variant-numeric: tabular-nums;
+}
+.keypats {
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--r-medium);
+  background: var(--bg3);
+  overflow: hidden;
+}
+.keypat {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 4px 8px 10px;
+}
+.keypat + .keypat {
+  border-top: 0.5px solid var(--sep);
+}
+.keygo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  text-align: left;
+}
+.keygo .lbl {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--t-subhead);
+  font-weight: 600;
+}
+.keygo .lbl small {
+  display: block;
+  font-size: var(--t-footnote);
+  font-weight: 400;
+  color: var(--fg2);
+}
+/* the key sheet: Major / Minor, then the 12 home notes */
+.keymode {
+  display: flex;
+  justify-content: center;
+  margin: 4px 0 12px;
+}
+.keygrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.keygrid .ladnote {
+  min-width: 0;
+  width: 100%;
+}
+.keysub {
+  margin-top: -4px;
+}
+/* scale lanes on a pitch chart: faint bands at the key's notes, the home note in the accent */
+.pchart .plane {
+  fill: var(--fg);
+  opacity: 0.06;
+}
+.pchart .plane.home {
+  fill: var(--accent);
+  opacity: 0.2;
+}
+.pchart text.home {
+  fill: var(--accent);
+  font-weight: 600;
 }
 /* the red track window while a take is sung over the track */
 /* Q26: a deeper red, solid, that white text passes 4.5:1 on, in the same capsule as every other window */

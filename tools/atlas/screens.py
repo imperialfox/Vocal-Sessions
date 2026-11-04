@@ -277,6 +277,8 @@ CAPTIONS = {
     'VS-087': 'Where backups go and how to keep them', 'VS-088': 'Every backup made from this phone', 'VS-089': 'Restoring a backup',
     'VS-090': 'Put things back as they were before the restore?', 'VS-091': 'Undoing the restore', 'VS-092': 'The session clock: each step’s slice, and Pause',
     'VS-093': 'The floating window for a take, track or video', 'VS-094': 'The launch screen as the app opens', 'VS-095': 'Hold a mark: a quick reminder of it',
+    'VS-096': 'Find your bridge: one slow slide, then From and To',
+    'VS-097': 'A suggested pattern in the song’s key, on its note', 'VS-098': 'Choose the song’s key: Major or Minor, and its home note',
 }
 
 # ---------- doors the scan can't test (Q35): swipes, holds, timed sheets and file pickers, written by hand ----------
@@ -308,6 +310,7 @@ DOORS = [
     {'from': 'VS-009', 'to': 'VS-073', 'how': 'Add track: choose a file over the size limit', 'kind': 'File picker'},
     {'from': 'VS-066', 'to': 'VS-072', 'how': 'Replace track… with a shorter file (a starting state does this)', 'kind': 'File picker'},
     {'from': 'VS-004', 'to': 'VS-047', 'how': 'Sing with the song’s track on this phone and Sing over the track on', 'kind': 'Microphone'},
+    {'from': 'VS-004', 'to': 'VS-097', 'how': 'Sing two ladder rungs, set the song key on Lines, then › on a suggested pattern', 'kind': 'Microphone'},
     {'from': 'VS-094', 'to': 'VS-019~rescued-data', 'how': 'The app opens with saved data it can’t read; the toast leads here', 'kind': 'Timed'},
 ]
 

@@ -235,7 +235,7 @@ const APPL = (() => {
       '<i></i>'.repeat(14) +
       '</span>' +
       (r
-        ? '<div class="aplive" id="apLive" style="--rc:' + r.col + '">' + liveSVG([], r.col) + '</div>'
+        ? '<div class="aplive" id="apLive" style="--rc:' + r.col + '">' + liveSVG([], r.col, null, null, SONGKEY.lanesFor(sg)) + '</div>'
         : '') +
       words +
       '<button class="apstop" data-a="apStop"><span aria-hidden="true"></span>Stop</button></div>'
@@ -518,6 +518,7 @@ const APPL = (() => {
     h += '</div>';
     if (n >= 2) h += lines(c, L);
     if (n === 4) h += notesBlock(L);
+    if (n >= 2) h += keyPart(c, L);
     if (n && (n >= 2 || !L.cur)) h += '<div class="aprow"><button class="apsoft" data-a="apDone">Done</button></div>';
     return h;
   }
@@ -540,6 +541,7 @@ const APPL = (() => {
             w: 340,
             h: 170,
             marker: sp && sp.at != null ? { t: sp.t } : null,
+            lanes: SONGKEY.lanesFor(c.sg), // Q39 the song key's scale lanes
             label: 'Pitch lines of ' + L.list.map((r) => r.name).join(', '),
           }) +
           '</div>'
@@ -563,6 +565,13 @@ const APPL = (() => {
           );
         })
         .join('') +
+      (SONGKEY.of(c.sg) && SONGKEY.has()
+        ? '<button class="ladchip keychip' +
+          (SONGKEY.lanesOn() ? '' : ' off') +
+          '" data-a="keyLanes" aria-pressed="' +
+          SONGKEY.lanesOn() +
+          '"><i aria-hidden="true"></i>Scale lanes</button>'
+        : '') +
       '</div>';
     if (sp && sp.none)
       h +=
@@ -583,6 +592,12 @@ const APPL = (() => {
         ICON.play +
         'Hear both</button></div>';
     return h + '</div>';
+  }
+  // Q39 the song key, then Practise in <key>, from the trill's (or hum's) line, once the lines are read
+  function keyPart(c, L) {
+    const a = PITCH.got(L.sung[L.base || L.list[0].id].id);
+    if (!a || !L.list.every((r) => PITCH.got(L.sung[r.id].id))) return '';
+    return SONGKEY.block(c, a, spot(c, L));
   }
   // where the words (or vowels) part from the trill (or hum): {at, len, t, where}, {none: true}, or null (not yet)
   function spot(c, L) {
@@ -622,14 +637,17 @@ const APPL = (() => {
   function lineNotes(L) {
     const id = ['trill', 'hum', 'vowels'].find((r) => L.sung[r]),
       a = id && PITCH.got(L.sung[id].id);
-    return a ? { from: id, ms: PITCH.held(a).map((h) => Math.round(h.m)).slice(0, 24) } : null;
+    // Q39: once the song has a key, each note is the nearer note of its scale
+    const k = SONGKEY.of(cur() && cur().sg);
+    return a ? { from: id, ms: PITCH.held(a).map((h) => (k ? SONGKEY.snap(h.m, k) : Math.round(h.m))).slice(0, 24), k } : null;
   }
   function notesBlock(L) {
     const N = lineNotes(L);
     let h = '<div class="ladsec"><div class="ladhd">Notes of the line</div>';
     if (!N) return h + '<div class="apchart wait" aria-busy="true"><span>Reading the notes…</span></div></div>';
     if (!N.ms.length) return h + '<p class="ladspot">No held notes in your ' + RUN_WORD[N.from] + ' to play.</p></div>';
-    const tn = PAT.toneState();
+    const tn = PAT.toneState(),
+      nm = (m) => (N.k ? SONGKEY.nameIn(m, N.k) : PITCH.name(m));
     return (
       h +
       '<div class="ladnotes" data-edge-fade data-own-gesture><button class="ladrpt' +
@@ -647,14 +665,15 @@ const APPL = (() => {
             '" data-a="apNote" data-v="' +
             i +
             '" aria-label="Play ' +
-            PITCH.name(m) +
+            nm(m) +
             '">' +
-            PITCH.name(m) +
+            nm(m) +
             '</button>'
         )
         .join('') +
       '</div><p class="foot">From your ' +
       RUN_WORD[N.from] +
+      (N.k ? ', matched to ' + SONGKEY.label(N.k) : '') +
       '. Tap a note to hear it. With Repeat on, it keeps playing until you tap it again.</p></div>'
     );
   }
@@ -747,9 +766,9 @@ const APPL = (() => {
   // the live line while a rung records: the recording's own microphone, read on the frame clock (PITCH.live). Its
   // box is found once, and again only once it's been drawn again
   const LIVE = { w: 340, h: 130 };
-  function liveSVG(pts, col, rg, dur) {
+  function liveSVG(pts, col, rg, dur, lanes) {
     rg = rg || { lo: 52, hi: 67 };
-    return PITCH.svg([{ a: pts, col, w: 2.5 }], { w: LIVE.w, h: LIVE.h, lo: rg.lo, hi: rg.hi, dur: dur || 6, label: 'Live pitch line' });
+    return PITCH.svg([{ a: pts, col, w: 2.5 }], { w: LIVE.w, h: LIVE.h, lo: rg.lo, hi: rg.hi, dur: dur || 6, label: 'Live pitch line', lanes });
   }
   function liveLine(r) {
     const an = r.mic && r.mic.analyser(PITCH.SET.win),
@@ -757,7 +776,8 @@ const APPL = (() => {
     if (!an || !ru) return;
     let box = null,
       last = 0;
-    const rg = { lo: 52, hi: 67 };
+    const rg = { lo: 52, hi: 67 },
+      lanes = SONGKEY.lanesFor(songById(r.songId)); // Q39 the song key's scale lanes, as on Lines
     r.livePts = 0;
     r.lineOff = PITCH.live(an, (pts, p) => {
       if (rec !== r || r.stopping) return r.lineOff && r.lineOff();
@@ -770,7 +790,7 @@ const APPL = (() => {
       if (!box) return;
       if (p.m < rg.lo + 1) rg.lo = Math.floor(p.m) - 2;
       if (p.m > rg.hi - 1) rg.hi = Math.ceil(p.m) + 2;
-      box.innerHTML = liveSVG(pts, ru.col, rg, Math.max(6, Math.ceil(p.t)));
+      box.innerHTML = liveSVG(pts, ru.col, rg, Math.max(6, Math.ceil(p.t)), lanes);
     });
   }
 
@@ -1084,6 +1104,7 @@ const APPL = (() => {
       U.apTone = null;
       stopHear();
     }
+    SONGKEY.after(); // Q39: a suggested pattern playing stops when its row goes
   }
   // the pinned button's empty state: nothing sung yet
   const empty = () => {

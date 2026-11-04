@@ -234,6 +234,7 @@ function cleanSong(x) {
     else {
       s.ext = Object.assign({}, s.ext);
       if ('ladder' in s.ext && s.ext.ladder !== true) delete s.ext.ladder;
+      if (typeof SONGKEY !== 'undefined') SONGKEY.clean(s.ext); // Q39 ext.key {tonic, mode}: one of the 24 keys, or dropped
     }
   }
   return s;
@@ -1422,6 +1423,7 @@ function practiceRow(sg) {
     chev +
     '</button>' +
     TRACK.row(sg) + // 3.19 the track player (track.js)
+    SONGKEY.row(sg) + // Q39 the song key (key.js)
     '</div>'
   );
 }

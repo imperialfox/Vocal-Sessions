@@ -370,7 +370,9 @@ const PITCH = (() => {
     }
     return d;
   }
-  // lines overlaid on note rows: [{a, col, on}], o: {w, h, lo, hi, dur, marker: {t, label}, dots: [{t, m}], label}
+  // lines overlaid on note rows: [{a, col, on}], o: {w, h, lo, hi, dur, marker: {t, label}, dots: [{t, m}], label, lanes}.
+  // lanes (Q39): a function (lo, hi) → [{m, name, home}] (SONGKEY.lanesFor): the key's notes as faint lanes, the home
+  // note in the accent, labelled with their names instead of C, E, G and A
   function svg(list, o) {
     o = o || {};
     const W = o.w || 340,
@@ -386,7 +388,29 @@ const PITCH = (() => {
       y = (m) => T + ((rg.hi - m) / (rg.hi - rg.lo)) * (H - T - B);
     let g = '',
       lastY = -99;
-    for (let m = Math.ceil(rg.lo); m <= rg.hi; m++) {
+    const ln = typeof o.lanes === 'function' ? o.lanes(rg.lo, rg.hi) || [] : [];
+    if (ln.length) {
+      // lanes, then their labels: home notes first, the others where there's room (12 px apart)
+      const band = Math.max(2, (H - T - B) / (rg.hi - rg.lo) - 1),
+        ys = [];
+      ln.forEach((l) => {
+        const yy = y(l.m);
+        g +=
+          '<rect class="plane' + (l.home ? ' home' : '') + '" x="' + L + '" width="' + (W - L - R) + '" y="' +
+          (yy - band / 2).toFixed(1) + '" height="' + band.toFixed(1) + '" rx="' + Math.min(3, band / 2).toFixed(1) + '"/>';
+      });
+      ln.filter((l) => l.home)
+        .concat(ln.filter((l) => !l.home))
+        .forEach((l) => {
+          const yy = y(l.m);
+          if (ys.some((v) => Math.abs(v - yy) < 12)) return;
+          ys.push(yy);
+          g +=
+            '<text class="pn' + (l.home ? ' home' : '') + '" x="' + (L - 5) + '" y="' + (yy + 4).toFixed(1) +
+            '" text-anchor="end">' + l.name + '</text>';
+        });
+    }
+    for (let m = Math.ceil(rg.lo); m <= rg.hi && !ln.length; m++) {
       const yy = y(m).toFixed(1),
         pc = ((m % 12) + 12) % 12;
       g += '<line class="pg" x1="' + L + '" x2="' + (W - R) + '" y1="' + yy + '" y2="' + yy + '"/>';
@@ -421,8 +445,8 @@ const PITCH = (() => {
         '<circle class="pmd" cx="' + xx + '" cy="' + (T + 4) + '" r="4"/>';
     }
     return (
-      '<svg class="pchart" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' +
-      esc(o.label || 'Pitch lines') + '">' + g + '</svg>'
+      '<svg class="pchart' + (ln.length ? ' laned' : '') + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' +
+      esc((o.label || 'Pitch lines') + (ln.length ? ', with scale lanes' : '')) + '">' + g + '</svg>'
     );
   }
   // a small line for a row: 64 × 24

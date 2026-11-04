@@ -83,6 +83,11 @@ function renderBar() {
     $('barT').textContent = 'Patterns';
     $('barL').innerHTML = '<button class="circ glass" data-a="patBack" aria-label="Back">' + ICON.back + '</button>';
     $('barR').innerHTML = '';
+  } else if (U.view === 'keyp') {
+    // Q39 Practise in <key>: the pattern player opened from a song
+    $('barT').textContent = SONGKEY.title();
+    $('barL').innerHTML = '<button class="circ glass" data-a="keyBack" aria-label="Back">' + ICON.back + '</button>';
+    $('barR').innerHTML = '';
   } else if (U.view === 'ex') {
     const e = exById(U.exId);
     $('barT').textContent = e ? e.name : '';
@@ -417,6 +422,7 @@ function renderSheet() {
   let h = '';
   if (s && /^sg[A-Z]/.test(s)) h = songSheet(s);
   else if (s === 'ckGrid') h = CLOCK.gridSheet();
+  else if (s === 'keyPick') h = SONGKEY.sheet(); // Q39 the song key
   else if (s === 'recOver') h = recOverSheet(); // Q16: recording while the track plays
   else if (s === 'away') h = SCLOCK.awaySheet(); // Q22: "You were away N min"
   else if (s === 'bridge') h = PAT.bridgeSheet(); // Q38 Find your bridge
@@ -1140,6 +1146,8 @@ function render(keepScroll) {
         ? scrEx()
       : v === 'pat'
         ? PAT.page() // Q32 the Patterns page (patterns.js)
+      : v === 'keyp'
+        ? SONGKEY.page() // Q39 Practise in <key> (key.js)
         : v === 'all'
           ? scrAll()
           : v === 'lyr'
@@ -1175,6 +1183,7 @@ function render(keepScroll) {
     v === 'trk' ||
     v === 'saved' ||
     v === 'pat' ||
+    v === 'keyp' ||
     (v === 'ex' && !split())
       ? ' narrow'
       : '');
