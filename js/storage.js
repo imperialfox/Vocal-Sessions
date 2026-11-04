@@ -530,7 +530,8 @@ const SAFE = (() => {
   }
   const rescued = () => [...meta.values()].filter((m) => m.key.startsWith('rescued:')).sort((a, b) => b.at - a.at);
   const bytes = () => [...meta.values()].reduce((a, m) => a + (m.bytes || 0), 0);
-  return { put, get, del, rescue, load, rescued, bytes };
+  const list = () => [...meta.values()].map((m) => ({ key: m.key, at: m.at, bytes: m.bytes })); // Q42: tidying old copies
+  return { put, get, del, rescue, load, rescued, bytes, list };
 })();
 
 /* ===== Recordings (IndexedDB vocalTakes) ===== */
@@ -551,7 +552,11 @@ const getUndo = () =>
     .then((r) => r || null)
     .catch(() => null);
 const putUndo = (o) => tx('readwrite', (s) => s.put(o), 'undo');
-const clearUndo = () => tx('readwrite', (s) => s.clear(), 'undo').catch(() => {});
+// Q42: the sheet music scores a restore kept go with it
+const clearUndo = () =>
+  tx('readwrite', (s) => s.clear(), 'undo')
+    .catch(() => {})
+    .then(() => typeof MELODY !== 'undefined' && MELODY.clearUndo());
 const UNDO_DAYS = 30;
 let UNDO = null;
 async function refreshUndo() {

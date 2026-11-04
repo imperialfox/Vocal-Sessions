@@ -4,9 +4,9 @@
 
 It's a web app styled like a native iOS app: a single HTML file with no install, no backend and no account, designed to live on your iPhone Home Screen. It runs on its own, with no other apps needed.
 
-![Version 3.55](https://img.shields.io/badge/version-3.55-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
+![Version 3.56](https://img.shields.io/badge/version-3.56-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
 
-**Current version: 3.55 · 4 Nov 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
+**Current version: 3.56 · 4 Nov 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
 
 ---
 
@@ -42,7 +42,7 @@ It brings guided practice sessions, progress tracking, and song practice togethe
 
 There's also **Song practice**, for when you just want to sing a song and record it. Its clock starts with your first take, and it's kept separate from the focused stats above.
 
-And **Songs**, for learning a song: paste the lyrics, and they're split into labelled sections you can mark up with breaths, runs, pitch, vowels, notes and cues. **Song Clock** times the lyrics so you can sing along with them, and the **track player** loops a phrase of the song's real track, slowly, with the pitch kept.
+And **Songs**, for learning a song: paste the lyrics, and they're split into labelled sections you can mark up with breaths, runs, pitch, vowels, notes and cues. **Song Clock** times the lyrics so you can sing along with them, the **track player** loops a phrase of the song's real track, slowly, with the pitch kept, and **sheet music** reads your own Ultimate Guitar print of the song into its notes, bars and key.
 
 ---
 
@@ -115,6 +115,7 @@ And **Songs**, for learning a song: paste the lyrics, and they're split into lab
   - **Record a section:** in Practise or Perform, focus a section, then **Record**. The screen stays on that section while it records, with a recording bar at the bottom (time, level meter, Stop). Stopping opens the takes for that section over the song, with the new take ready to play. Each repeat keeps its own takes, even when linked. A take on any song page starts (or carries on) song practice for that song, timed from that first take.
   - **Takes:** a switch between this section's takes and **All takes**, newest first. All takes is grouped by section: a row for each with its count, folding open to its takes (the section you came from starts open). Tap a take to expand and play it: a waveform you drag to scrub, −5 s and +5 s, and its name (tap to rename; the original details stay underneath). **Comments** are stamped with the time: the moment you start typing, the playhead's time is locked (tap it for −1 s, +1 s or Use current time). While it plays, each comment pops up as the playhead passes it; dots under the waveform jump to them. Swipe a take right to star it, left to delete it, or hold it for both. Names and comments are in every backup.
   - **Song practice** at the bottom starts song practice with that song picked.
+  - **Sheet music (3.56):** add your own Ultimate Guitar print of the song (in UG, the Vocals part, notation plus tab view, printed from Safari as a PDF). It's read on your phone, line by line, with Cancel, into the song's notes, bars, rests and key. Check what was read, set the octave (Lower, As written or Higher, suggested from Your voice) and the tempo, and save; the key sheet then offers the print's key. The row shows the key, bars, range and where the song sits against your voice; tap it for what to check (bars that don't add up, repeats, notes it muted). A print that isn't right says what to do. The score is in your backups; the PDF stays on this device. New song's **Add media** takes a print too. No playback yet.
   - **Track** (beside it) adds the song's audio from Files, then opens the **track player**:
     - **Views:** **Phrase** (6 s) and **Line** (16 s) are a strip moving under a red playhead, with a three-line lyric card above it: the line before, the line at the playhead (with its section) and the next. **Song** shows the whole song in rows of 24 s, the last one ending at the track's end, with the lyrics under each row (the **Lyrics** pill hides them; tap a line to go to it). **Markers** is a grid of tiles (below). Tap a row to move the playhead there (the view stays). Change the view with the level pills, or pinch. Section starts set in Song Clock show as blue lines with their names.
     - **Jog wheel:** on the right, the left or as a full-width roller under the strip (the player's ⋯ menu). Drag slowly for precision, quickly to skim: down (or right, on the roller) is later. The edge wheel slides further in under your finger.
@@ -306,7 +307,7 @@ A small service worker (`sw.js`) keeps a copy of the app on your device. When yo
 
 Vanilla HTML, CSS and JavaScript, with no frameworks or build step: `index.html`, one stylesheet in `css/` and a dozen plain scripts in `js/`. It uses the iOS system font and a CSS imitation of Liquid Glass, tuned to numbers measured on iOS 27: a hairline edge with rim light, glass buttons that grow when pressed, a collapsing tab bar, a soft blurred edge under the top bar, sliding glass pickers and springy motion.
 
-It uses three libraries, each kept as a fixed copy so the app needs nothing from the internet: [pitchy](https://github.com/ianprime0509/pitchy) 4.1.0 (with [fft.js](https://github.com/indutny/fft.js)) for reading pitch (`js/pitchy.js`), and, for a song's key, [musictheoryjs](https://github.com/Zachacious/MusicTheoryJS) 3.2.2's key finder (`js/musictheory.js`) and [tonal](https://github.com/tonaljs/tonal) 6.5.1's scales and note names (`js/tonal.js`).
+It uses four libraries, each kept as a fixed copy so the app needs nothing from the internet: [pdf.js](https://github.com/mozilla/pdf.js) 4.10.38 for opening sheet music prints (`js/vendor/pdfjs-4.10.38/`, loaded only when a print is added), [pitchy](https://github.com/ianprime0509/pitchy) 4.1.0 (with [fft.js](https://github.com/indutny/fft.js)) for reading pitch (`js/pitchy.js`), and, for a song's key, [musictheoryjs](https://github.com/Zachacious/MusicTheoryJS) 3.2.2's key finder (`js/musictheory.js`) and [tonal](https://github.com/tonaljs/tonal) 6.5.1's scales and note names (`js/tonal.js`).
 
 The look and motion follow Apple's guidance, with numbers taken (never code) from a few open-source Liquid Glass projects. What came from where is in [DESIGN_REFERENCES.md](DESIGN_REFERENCES.md).
 
@@ -327,7 +328,7 @@ See [MAINTAINING.md](MAINTAINING.md) for how the app is built, where data lives,
 
 MIT
 
-`js/pitchy.js` is pitchy 4.1.0 (Copyright 2018-2021 Ian Johnson) with fft.js 4.0.4 (Copyright Fedor Indutny, 2017), both under the MIT License; their notices are at the top of the file. `js/musictheory.js` is part of musictheoryjs 3.2.2 (Copyright 2020-2026 Zach Moore, ISC License) and `js/tonal.js` is part of tonal 6.5.1 (Copyright 2015 danigb, MIT License); each notice is at the top of its file.
+`js/vendor/pdfjs-4.10.38/` is pdf.js 4.10.38 (Copyright Mozilla Foundation), under the Apache License 2.0, unchanged, with its `LICENSE` in the same folder. `js/pitchy.js` is pitchy 4.1.0 (Copyright 2018-2021 Ian Johnson) with fft.js 4.0.4 (Copyright Fedor Indutny, 2017), both under the MIT License; their notices are at the top of the file. `js/musictheory.js` is part of musictheoryjs 3.2.2 (Copyright 2020-2026 Zach Moore, ISC License) and `js/tonal.js` is part of tonal 6.5.1 (Copyright 2015 danigb, MIT License); each notice is at the top of its file.
 
 ---
 

@@ -37,6 +37,8 @@ Notes for whoever works on the app next, whether that's Ivan, a new Claude sessi
 | `.nojekyll` | Tells GitHub Pages to serve files exactly as they are, so `CHANGELOG.md` reaches the app as plain text |
 | `tests/` | The test suite (see below) |
 | `tools/release.py` | Sets the version number everywhere at once |
+| `js/vendor/` | Pinned libraries loaded only when needed, each in a folder named with its version and never edited: `pdfjs-4.10.38/` (pdf.js, Apache-2.0, its `LICENSE` beside it; the `.mjs` files shipped as `.js`), used by the sheet music reader. Served cache-first by `sw.js` and fetched on first use (see Sheet music) |
+| `tools/make_melody_fixtures.py` | Makes the sheet music reader's made-up test prints in `tests/fixtures/melody/` (committed, so the tests need no fonts) |
 | `tools/parts-kit/` | The parts kit's README, changelog, licence and checksums beside the pinned copy, and `REPLACED.md` (what Q41 replaced) |
 | `tools/atlas/` | The Visual App Atlas (Q30, on the Atlas kit since Q31): every screen as saved screenshots, the map, notes and changes (see below). Its scans and notes stay out of git |
 | `.github/workflows/tests.yml` | Runs the tests on GitHub after every push |
@@ -71,6 +73,7 @@ Notes for whoever works on the app next, whether that's Ivan, a new Claude sessi
 | `js/track.js` | **The track player** (`TRACK`, 3.19): a song's track stored on the device, its waveform peaks, the player page (zoom levels, loop, jog wheel, speed, 3.20 markers and chips), song rows' play buttons, its doors and its floating window kind. See The track player below |
 | `js/patterns.js` | **The pattern player** (`PAT`, Q32): the shared player every exercise page plays from (the sound library, the 60-pattern library, the drawing, the dock, the Patterns page, the speed slider, the range check, Settings › Your voice and Pattern player). See The pattern player below |
 | `js/key.js` | **The song key** (`SONGKEY`, Q39): finding a song's key from its takes, the key sheet, scale lanes on pitch lines, Practise in <key> and its page. See Key and scale lanes below |
+| `js/melody.js` | **Sheet music** (`MELODY`, Q42): a song's score read from its UG print, its store, checks, backups, the Song page row, its sheets and the Storage rows. It starts the reader, `js/melodyread.js`, as a Worker: that file isn't a `<script>`; `index.html` lists it as a `prefetch` link so it carries `?v=` and is saved for offline use. See Sheet music below |
 | `js/takes.js` | **Takes** (`TAKE`, 3.20): the takes sheet (section / All takes, the scrubber, ±5 s, swipes and hold), renaming, timestamped comments, Review old takes, and each take's waveform and both-ears copy on the device (`vocalTakeExtras`). See Recordings below |
 | `js/application.js` | **Application** (`APPL`, Q20): the session's last step: the Carry on card, Sing over the track, the recording card, Compare, Done, "Practised, not recorded" and Other songs, and (Q37) the song ladder. See Application and Song ladder below |
 | `js/saved.js` | **Session saved** (`SAVED`, Q21): the screen a focused session lands on when it's finished, and Done turning it into Today. See Session saved below |
@@ -122,6 +125,10 @@ Every key, store and setting the app saves (the saved-data list). **Since** is t
 | IndexedDB `vocalCoach` (version 1) | store `video`, key `v` | The coach video: `{name, size, type, dur, added, blob}`. Reset all data leaves it | 3.16 | No |
 | IndexedDB `vocalSafety` (version 1, Q11) | store `copies`, keyed by name | The safety copies (`SAFE`): `vocalBeforeUpgrade` is `{from, to, at, data}`, the data as it was before the last data upgrade, kept for 30 days; `rescued:<ms>` is `{at, why, text, bytes, appVersion}`, saved data that couldn't be read (`why: 'unreadable'`) or that had a song that couldn't be checked (`'song'`), exactly as it was stored, kept until deleted in Settings › Backup. Restores and Reset all data leave it. Counted in Storage with Sessions and songs | 3.29 | No |
 | IndexedDB `vocalTracks` (version 1) | stores `audio` and `peaks`, key: the song's id | Song tracks (3.19): `audio` is `{name, size, type, dur, added, blob}` (the file as imported), `peaks` is `{p: Uint8Array, rate: 50, dur}`. Restores and Reset all data leave it; deleting a song or Remove track deletes its entries | 3.19 | No |
+| IndexedDB `vocalMelodies` (version 1, Q42) | store `melodies`, key: the song's id | Sheet music scores: `{v, reader, rev, at, src, tempo, time, key, octave, shift, bars, notes, rests, anchors, loop, ug, repeats}` (see Sheet music). Reset all data and restores leave the ones they don't replace; deleting a song deletes its score | 3.56 | Yes, as the backup's `melodies` field with its own `melodiesCode` |
+| IndexedDB `vocalMelodies` | store `prints`, key: the song's id | The print as imported: `{name, size, type, pages, ug, at, blob}`. Deleting the song or Settings › Storage › Remove prints, keep scores deletes it | 3.56 | No, like tracks |
+| IndexedDB `vocalMelodies` | store `undo`, key `last` | The device's scores a restore replaced, `{at, list}`, for Undo last restore; cleared with the takes' undo copy | 3.56 | No |
+| IndexedDB `vocalSafety` | keys `melody:<song id>:<ms>`, `melodyBeforeUpgrade:<song id>` | Q42: a score replaced by a second print, and a score before a shape upgrade, each `{at, …, data}`, kept 30 days (tidied when scores load). A score that can't be read is rescued as `rescued:<ms>` with `why: 'melody'` | 3.56 | No |
 
 **`D.prefs`** (in `vocalTracker`, so in backups):
 
@@ -183,7 +190,7 @@ Each song in `D.songs` is its own record. Songs from before 3.8 have only `id` a
 | `timing` | Song Clock (3.18), optional; none means not synced. `{len, est, slots: {o: {lines: [[start, end\|null], …], anch, marks: [line…]}}}` in seconds. See Song Clock below |
 | `track` | Track player (3.19), optional: `{name, dur}`, the track's file name and length in seconds, so a song restored without its audio knows it had one. The audio itself is in `vocalTracks` |
 | `loop` | The song's last loop (3.19), optional: `{start, end, on}` in seconds. Kept even without the track (like `timing`) |
-| `ext` | The song's own optional extras (Q37), checked by `cleanSong()`, which keeps fields it doesn't know: `ladder` (`true` when Application's card sings the song as a ladder; absent is Straight) and (Q39) `key` (`{tonic, mode}`: the song's key, one of the 24 as the key sheet spells them, `mode` `major` or `minor`; absent is not set; checked by `SONGKEY.clean()`) | 
+| `ext` | The song's own optional extras (Q37), checked by `cleanSong()`, which keeps fields it doesn't know: `ladder` (`true` when Application's card sings the song as a ladder; absent is Straight), (Q39) `key` (`{tonic, mode}`: the song's key, one of the 24 as the key sheet spells them, `mode` `major` or `minor`; absent is not set; checked by `SONGKEY.clean()`) and (Q42) `melody` (`{ug, at}`: the song has sheet music, from the UG tab `ug`, saved at `at`; the score itself is in `vocalMelodies`; checked by `MELODY.cleanNote()`) | 
 | `order` | The running order `[{o, sid}]`. Linked repeats share a `sid`; each `o` is one place in the song, and takes recorded from a section carry it. Unlinking and moving sections never change an `o` |
 
 `cleanSong()` checks each song on its own when data loads or a backup is read: bad values are dropped, marks on missing words and order entries for missing sections are removed, fields it doesn't know are kept, and if the lyrics are unusable but `original` is there, they're rebuilt from it. Practised dates come from recordings (`TAKES`) and `practised`, whichever is later.
@@ -399,7 +406,7 @@ Since 3.32 (queue item Q04), every mark is explained where it's used. `js/guide.
 
 - **Never rename or remove an exercise id** (`slides`, `humming`, `lip`, `straw`, `falsetto`, `upperlower`, `rung`, `hinge`, `half`, `vertical`, `nasal`, `flex`). Sessions store levels by these ids. The backup tests fail if they change.
 - **Data changes are additive.** Add fields with a default; don't rename or repurpose existing ones. Older backups must still restore, and new backups must still restore in the previous version.
-- **Optional extras go in `ext` (3.36, Q15).** A new optional field on a record goes in that record's `ext` object: `mark.ext` (and a held mark's), `timing.ext`, `slot.ext`, a timed line's third item `[start, end, ext]`, `marker.ext`, `loop.ext`, `song.ext` (Q37: `ladder`; Q39: `key`), a take's `ext` (Q37: `rung`), a session's `ext` (Q20: `app`) (and `section.ext` if ever needed). The feature that adds a field checks its own fields there, so the record's checker stays simple. Every checker and writer keeps fields it doesn't know, in `ext` or not, as they are (`dataExtras(rec, known)` in storage.js lists them), so a backup made by the next version restores here and goes back out unchanged. When you add a known field to one of these records, add it to that record's known list (`MK_KNOWN`, `CK_T_KNOWN`, `CK_S_KNOWN`, `TRK_LOOP_KNOWN`, `TRK_MK_KNOWN`) and check it.
+- **Optional extras go in `ext` (3.36, Q15).** A new optional field on a record goes in that record's `ext` object: `mark.ext` (and a held mark's), `timing.ext`, `slot.ext`, a timed line's third item `[start, end, ext]`, `marker.ext`, `loop.ext`, `song.ext` (Q37: `ladder`; Q39: `key`; Q42: `melody`), a take's `ext` (Q37: `rung`), a session's `ext` (Q20: `app`) (and `section.ext` if ever needed). The feature that adds a field checks its own fields there, so the record's checker stays simple. Every checker and writer keeps fields it doesn't know, in `ext` or not, as they are (`dataExtras(rec, known)` in storage.js lists them), so a backup made by the next version restores here and goes back out unchanged. When you add a known field to one of these records, add it to that record's known list (`MK_KNOWN`, `CK_T_KNOWN`, `CK_S_KNOWN`, `TRK_LOOP_KNOWN`, `TRK_MK_KNOWN`) and check it.
 - **A new mark type or option needs no schema change:** the version before keeps it as an inactive mark (see Marks). A new register option, for example, goes in `MK_DEF.register.opts`, with its `GUIDE` words.
 - **Raise `SCHEMA` only when a field's meaning changes.** Adding optional fields isn't that.
 - `tests/test_extras.py` restores `tests/fixtures/backup-next.json`, a made-up backup shaped as the next version would write it (unknown marks, options and layers, `ext` and other extra fields at every level), checks nothing is lost, inactive marks stay invisible and editing keeps every extra field, and that it goes back out unchanged. When a version adds real fields, add them to that fixture's next copy rather than changing what's there.
@@ -431,12 +438,12 @@ Settings › Changelog fetches `CHANGELOG.md` and builds the timeline from it (`
 
 ## Backups
 
-A backup is a JSON file with: a plain-English `README` array, `app`, `format` (2), `appVersion`, `exportedAt`, `device`, `summary`, `data` (= `D`), `draft` (= `X`), `takes` (recordings as data URLs) and `checkCode`.
+A backup is a JSON file with: a plain-English `README` array, `app`, `format` (2), `appVersion`, `exportedAt`, `device`, `summary`, `data` (= `D`), `draft` (= `X`), `takes` (recordings as data URLs), `checkCode`, and since 3.56 (Q42) `melodies` (every sheet music score, `[{id, …score}]`) with its own `melodiesCode` (SHA-256 of `melodies`). `checkCode` doesn't cover `melodies`, so 3.5, 3.6 and every version before 3.56 still call a new file good and ignore the field. Prints are never in backups.
 
 - **Exclude recordings** writes `takes: []` and `recordingsExcluded: true`, and the check code is worked out on that file as written. Check a backup and Import say "Recordings not included", and restoring one keeps the device's recordings (the undo copy notes `keptTakes`, and undoing leaves them alone).
 - `checkCode` is the SHA-256 of `JSON.stringify({data, draft, takes})`. `inspectBackup()` recalculates it to decide whether a file is complete (`good`), from before 3.6 (`old`), edited or partly copied (`changed`), missing some recordings (`partial`) or unusable (`broken`).
 - Export reads its own file back through `inspectBackup()` before offering to save it.
-- Restore keeps an undo copy first; `undoRestore()` puts it back.
+- Restore keeps an undo copy first; `undoRestore()` puts it back. Since Q42 the copy holds the device's sheet music scores too (`vocalMelodies` › `undo`), and `inspectBackup()` reports `mel`: `none` (no field), `good` or `damaged` (the rest restores; the field's text goes to Rescued data).
 - Files are named `Vocal Sessions backup · YYYY-MM · Device.json`, so iOS offers to replace the month's file.
 
 The fixtures in `tests/fixtures/` are real backups made by 3.5 and 3.6, plus a copy of the 3.6 app. **Don't regenerate them.** `backup-next.json` (Q15) is different: made up, shaped as the next version would write it (see Rules that keep old data working). They prove that old backups keep working, and that new backups still open in 3.6.
@@ -665,6 +672,61 @@ Sing a song in its key: the app finds the song's key, lays the scale over your p
 - **Not in Q39:** key changes within a song, chords, moving a song to another key, any score or right/wrong colouring. Q38's bridge band is on the exercise drawing, not on pitch lines, so the lanes have nothing to replace there.
 - Tests: `tests/test_key.py` (`VS_KEY=lib,find,spell,suggest,lines,sheet,player,notes,data,sizes`).
 
+### Sheet music (3.56, Q42)
+
+A song can take Ivan's own Ultimate Guitar print (Safari PDF, Vocals part, notation plus tab view, headers and footers on, 100%, portrait) and keep its vocal line as a score: notes, bars and rests, counted in ticks. "Sheet music" is the name on screen; in code it's the **melody** (`MELODY`, `melody`, `vocalMelodies`), because "sheet" means the bottom sheets everywhere. This is milestone M1a of Ivan's Sheet Music Reader Blueprint: no page, playback or words yet (M1b, M2). The repo is public: **never commit a real print, music or lyrics**; the tests use made-up tunes only.
+
+**Where things live**
+
+| Piece | File | Main function | Stored in | Test |
+|---|---|---|---|---|
+| The reader | `js/melodyread.js` (a classic Worker; `MELREAD` when loaded on the page) | `picturesFromPdf()`, `readSystem()` (one line of music), `readSong()` (bars, ticks, ties, the catcher), `readPictures()` (the input guards), `ugOf()` (the footer) | nothing | `test_melody.py` read, catcher, guards |
+| pdf.js 4.10.38 | `js/vendor/pdfjs-4.10.38/` (`pdf.min.js`, `pdf.worker.min.js`, `LICENSE`) | imported inside the Worker; `globalThis.pdfjsWorker` makes it run there with no second Worker | the service worker's cache | read, offline |
+| The score | `js/melody.js` | `cleanMelody()`, `keep()` (score, note, print), `put()` (the rev check), `edit()`, `line()`, `range()`, `sits()`, `suggest()`, `checks()` | `vocalMelodies` › `melodies` | clean, backup |
+| The song's note | `sg.ext.melody = {ug, at}` | `MELODY.cleanNote()` from `cleanSong()`; `reconcile()` puts a lost note back | `vocalTracker` | clean |
+| The print | `vocalMelodies` › `prints` | `keep()`, `removePrints()`, `forget()` | device only | clean |
+| Backups | `js/backup.js` | `prepareExport()` adds `melodies` and `melodiesCode`; `inspectBackup()` sets `r.mel` with `MELODY.inspect()`; restore calls `MELODY.putUndo()` then `MELODY.restore()`; `undoRestore()` calls `MELODY.undo()` | the backup file | backup |
+| Screens | `js/melody.js` | `row()` (VS-009 › sheet-music-row), `sheet()` (VS-099 to VS-105, VS-107), the reading pill (VS-106), `storageRows()` and `orphanRows()` (VS-020); New song's door in `newSongSheet()` (songs.js, VS-051 › sheet-music-door) | | screens |
+| Test prints | `tools/make_melody_fixtures.py` → `tests/fixtures/melody/` | made-up tunes drawn UG-style at 277 ppi, one picture per line, a UG-style footer | the repo | all |
+
+- **The score** (keyed by song id): `v` (its shape; numbered steps in `UPGRADES`, never removed; the old score goes to the safety copies for 30 days first), `reader` (the reader's version, `READER` in melodyread.js), `rev` (counts writes), `at`, `src: 'sheet'` (the Song note map will add `'track'` scores; a sheet wins), `tempo` (20 to 300, typed or ± by 1; not read from the print yet), `time` `[n, d]`, `key` (sharps positive, flats negative), `octave` (−1, 0, +1 from Lower · As written · Higher), `shift` (±12, for M6), `bars` `[{tick, len, n, ln, x0, x1, f?, exp?, pn?, bars?}]` (`n` the printed bar number, 0 for a pickup; `ln`, `x0`, `x1` where it is on its line picture, for the sheet view later; `f` its flags; `bars` a multi-bar rest's count), `notes` `[{tick, len, midi, flag?}]` (`midi` as sung: the tab's pitch plus any capo-like semitone; `syl` comes with M2), `rests` `[{tick, len}]`, `anchors: []`, `loop: null`, `ug {id, title, artist}`, `repeats`. **480 ticks to a beat.** Which word goes with which note is never stored. Fields it doesn't know are kept.
+- **Write order** (H5, H41): the score, then `sg.ext.melody`, then the print. A print that won't save leaves the score usable, with "Print not saved; storage is full". At launch a score whose song has no note gets it back; a note with no score shows "Sheet not on this device".
+- **Two windows** (H6): `put(id, score, base)` reads the stored `rev` inside the same transaction and refuses the write if it isn't `base`; the score is reloaded and the toast says it changed in another window.
+- **Scores load after the first draw** (`MELODY.load()` in boot.js, like takes); the row shows "Loading…" from the note meanwhile.
+- **The reader** runs as a Worker: `MELODY.start()` sends the file's bytes, and the Worker sends `progress` (by line), `ask` (over 40 pages), `done` or `fail`; Cancel terminates it. Messages to it carry `vs: 1` and from it `mine: 1`, because pdf.js's own handler shares the Worker's messages. If pdf.js won't load inside the Worker it sends `nopdf`, and the page loads `melodyread.js` and pdf.js itself, reads the pictures a page at a time and sends them over (`page`, `pages`). pdf.js runs with `isEvalSupported: false`, no XFA, no fonts, no range or stream fetching, and only image drawing commands are read.
+- **How it reads** (the Recon's method, from the prototype's `reader.js`): staff lines by row darkness (notation 19.2 px apart, tab 28.8), tab digits matched against UG's digit shapes, a note head found above each number, its length from hollow or filled, stem, flags, beams and dots, triplet brackets, rests, multi-bar rests with their count read twice, the key signature, and the tab-to-notation gap for the song. Q42 added: the printed bar number at each line's start, checked against the count (H1); time signatures where printed, so each bar keeps its own length (H22); a pickup bar; repeat signs, first and second endings and the coda sign, flagged (H21; D.S. text isn't read); tab digits within 2 px of the song's digit height and centred on a string, so bend labels like ¼ are ignored (H48); the bar check before ties are joined (H50); grace notes left out and digits joined to slide lines read a digit's width at a time (H51).
+- **The catcher** (`catchNotes()`): unreadable fret numbers (`fret`), notes 7 semitones beyond the song's 2nd–98th percentile (`range`) and one-note spikes of 10 or more semitones (`jump`) are muted; tab and notation disagreeing marks a note `unsure`, and it plays. Pitches outside MIDI 33 to 96 are silence (the bar's `silent` flag).
+- **Where a song sits** (idea 2, `sits()`): the middle 60% of the sung time, weighted by length, and the share in Your voice's bridge and above its top. **The octave** (`suggest()`): as written unless that sits more than 2 semitones outside Your voice; as written when Your voice isn't set (decision 4).
+- **Fills in the song, never without asking:** title and artist from the footer into New song's empty fields; after Save the key sheet (VS-098) opens on the print's major key (on the song's own key if it has one) with "From the print: D major or B minor", and nothing is set until Use; the octave and tempo are on VS-100 and VS-099.
+- **The service worker** serves `js/vendor/<library>-<version>/` cache-first and its clean-up never removes it, so pdf.js is fetched on the first import only, and a release never fetches it again. `melodyread.js` is saved with each version through its `prefetch` link.
+- **Prints out of backups, scores in:** see Backups. Reset all data leaves scores and prints, as it leaves tracks; Settings › Storage lists **Sheets with no song** with Delete (VS-107). Nothing is deleted at launch.
+- **Not yet:** the Sheet music page, dots and sheet views, playback (M1b), words from the print (M2), tempo read from the print, D.S. text.
+
+**Guards** (each names its test in `tests/test_melody.py`)
+
+| What arrives | What happens | Saved? | Test |
+|---|---|---|---|
+| Not a PDF (first bytes, not the name) | "This isn't a PDF." | Nothing | guards |
+| Over 30 MB, or over 40 pages | VS-104 asks first; Cancel, ✕ or a swipe stops it | Nothing until Read it anyway | guards |
+| Locked or damaged | "This PDF can't be opened." | Nothing | guards |
+| No UG footer, or no line pictures | "This doesn't look like an Ultimate Guitar print. Print it from UG as notation plus tab." | Nothing | guards |
+| Notation only, or tab only | Says which view to print | Nothing | guards |
+| A guitar part (over 40% of tab numbers in stacks) | "This looks like a guitar part. Print the Vocals part." | Nothing | guards |
+| Under a third of bars adding up | "Only n of m bars could be read, too few to keep…" | Nothing | guards |
+| Over 5,000 notes or 1,000 bars (`LIMITS`) | The read stops | Nothing | guards |
+| A title that isn't the song's | VS-102: this song, a new song (New song opens with the print), or Cancel | After a pick | guards |
+| The same UG tab id on another song | VS-101: open that song, or add it here too | Only if it goes on | guards |
+| A second print | VS-103 asks; the old score to the safety copies for 30 days; anchors, octave and shift carry over | After Replace | guards |
+| Leaving mid-read | The read belongs to its song id: dropped if the song (or the New song sheet) has gone; "Sheet ready" with Open if the page moved on | Not until Save | guards |
+| Recording | Add sheet music says "Finish the take first" and won't open the picker | Nothing | guards |
+| A read that finishes | Nothing is saved before Save on VS-100 | On Save | read |
+| A damaged score in storage | `cleanMelody()` record by record; unreadable → Rescued data (`why: 'melody'`), the song carries on | | clean |
+| Two windows | The older write is refused and reloaded | | clean |
+| Storage full for the print | The score is kept, "Print not saved; storage is full" | Score only | clean |
+| Damaged `melodies` in a backup | `r.mel.state` `damaged`, a warning, the rest restores, the text to Rescued data | The rest | backup |
+
+**Wording on screen** (for the wording reference sheet): the row's "Add sheet music", "Sheet music", "Sheet not on this device", "Reading the print…", "Loading…", "Finish the take first"; the sheets' titles above; "Every bar adds up"; the to-check reasons in `checks()`; the toasts "Sheet music saved", "Stopped reading", "Sheet ready", "Prints removed. Scores kept.", "Sheet music deleted", "Print not saved; storage is full", and the guard messages in `ERR` and `errText()`.
+
 ### Session saved (3.41, Q21)
 
 Finishing a focused session lands on "Session saved" (`SAVED` in saved.js), and Done turns it into Today. Render given by Ivan on 31 Oct 2026; the prototype was the artifact "Prototype · One-page session" (⋯ → Go straight to Session saved, version **2+5**).
@@ -762,6 +824,7 @@ The tests run with motion off (see Motion above), so nothing waits on a spring. 
 | `test_pitch.py` | Q37 the pitch listener: see The pitch listener above |
 | `test_bridge.py` | Q38 bridge-aware patterns: the bridge saved with Your voice (checking, the voice type and steppers keeping it, reload and backups), Find your bridge (the live slide and its jump marker, the suggested zone, From and To, Use this bridge, Try again, no jump, Set it by feel, a blocked microphone, closing mid-slide, one sound at a time, both doors), the band, rings and bridge line, softer notes, the cue (hums, vowels, its switch), Stop one past last time with Stop at my top note, Last time from a held top only while listening, Listen while I sing (the dot and trail, the shared microphone, nothing recorded), and 375 and 390 in light and dark with Reduce Motion. A fake microphone with synthetic tones only |
 | `test_key.py` | Q39 the song key: see Key and scale lanes above |
+| `test_melody.py` | Q42 sheet music: see Sheet music above (`VS_MELODY=read,catcher,clean,backup,guards,screens,offline`) |
 | `test_ladder.py` | Q37 the song ladder: the switch per song, the rungs (instructions, lyric views, skipping, over the track), the live line from the recording's microphone, the fold, Lines and the parting spot by line and by time, Hear both, Notes of the line with Repeat, Done, backups and old data, no scores, and 375 and 390 in light and dark |
 | `test_saved.py` | Q21 Session saved: see Session saved above |
 | `test_sclock.py` | Q22 the session clock: see The session clock above |
@@ -804,6 +867,8 @@ The tests run with motion off (see Motion above), so nothing waits on a spring. 
 Running side by side, each layout size and each random-tap seed is its own job, every job has its own browser and test web server, and `VS_JOBS` sets how many run at once (default: twice the processor count). Results are shown per job as each one finishes.
 
 **Known test issues:** what fails, where, and why. If one comes back, fix it in the test by waiting for the condition it needs (`harness.until(pg, js)`), not by re-running.
+- `test_bridge` › "with a marker where the voice jumps" (then an IndexError) and `test_sclock` › "Reduce Motion: it fades in" each failed once in Q42's full side-by-side run (4 Nov 2026, Claude's 2-processor workspace) and passed when run on their own and at 3.55. Load, not Q42.
+- **The random taps' "nothing tappable"** (Q42): Q42's new rows changed the seeds' paths, which then reached a parts-kit dim still fading out (350 ms) and Session saved on a short landscape screen with Done below the fold. `test_fuzz` now waits 600 ms and scrolls once before calling a screen stuck, and skips the sheet music file pickers like the track's.
 - **The Changelog "Show in timeline" check** (`test_changelog`) fails under a newer Playwright (1.63, the one preinstalled in Claude's workspace) and passes on GitHub and with 1.56. Use the clean environment above.
 - **Quick flicks** (the swipe back in `test_zoom` and `test_native`, throwing the floating window in `test_window`) failed under a heavy `VS_JOBS`, on GitHub most of all: the app measures a flick's speed from each touch's time stamp, and a busy machine sends the touches slowly, so the flick read as a slow drag. Fixed in 3.35 (Q18): `drag(..., stamp=16)` gives each touch its own time stamp 16 ms apart, so the page sees the same speed however busy the machine is. Use `stamp` for any new flick.
 - **Font width:** GitHub's runner has wider fonts than Claude's workspace, so checks that depended on where lines wrap or how tall text is passed locally and failed there (3.17's sing-as checks, 3.20's paused line, 3.23's flick landing on the segmented control). Don't assert on line wraps or text heights, and start gestures from a named element (a title, a row), not a fixed point.

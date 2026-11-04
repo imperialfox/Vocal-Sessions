@@ -9,6 +9,36 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.56 · 4 Nov 2026
+*Sheet music from your Ultimate Guitar prints (Q42)*
+<!-- area: songs -->
+
+A song can now take your own Ultimate Guitar print and keep its vocal line as sheet music: every note, bar and rest, read on this device. Print the Vocals part from UG in Safari, in the notation plus tab view, and save it as a PDF.
+
+**Adding a print**
+- On a song's page, Practice has a new Sheet music row: tap Add sheet music and choose the PDF. New song's Add media takes a print too, and fills in the title and artist from it.
+- The print is read in the background, line by line, with Cancel, so the app carries on while it reads. Nothing is saved until you tap Save sheet music.
+- Before saving you see the key signature, the bars, the range and where the song sits against your voice, the octave (Lower, As written or Higher, set from Your voice) and the tempo (type the number from the top of the print, or move it by 1).
+- After saving, the key sheet opens on the print's key. Nothing changes until you tap Use.
+
+**What it reads**
+- Notes and their lengths, dots, ties across bar lines, triplets, rests, rests of several bars (checked against the bar numbers on the print), pickup bars and bars that change the time.
+- Bend labels, grace notes and slides don't confuse it. Harmony keeps the top note.
+- Notes it can't trust are muted and listed: a tab number it couldn't read, a note far outside the song's range, a sudden one-note jump. Where the tab and the notes disagree, it plays the tab and marks it.
+- Tap the Sheet music row to see what to check: bars that don't add up, repeats (the order may be wrong), bar numbers that don't match the print.
+
+**It checks what comes in**
+- A file that isn't a PDF, a locked or damaged one, a print from somewhere else, the wrong view, a guitar part, or a print it can barely read is turned away with a message saying what to do. A very big or long PDF asks first.
+- A print with a different title asks whether it's this song, a new song, or neither. A print already on another song offers to open that song. A second print asks before it replaces the first, and the old one is kept for 30 days.
+- Add sheet music waits while you're recording.
+
+**Kept safe**
+- Sheet music is in your backups, with its own check code, so older versions still open new backups. The PDF itself stays on this device, like tracks.
+- Settings › Storage shows the sheet music, with Remove prints, keep scores to free space, and Sheets with no song after a reset.
+- The reader works offline after the first print.
+
+Screens: VS-009, VS-020, VS-051, VS-098, VS-099, VS-100, VS-101, VS-102, VS-103, VS-104, VS-105, VS-106, VS-107
+
 ## 3.55 · 4 Nov 2026
 *Menus, sheets and controls from the parts kit (Q41)*
 <!-- area: look -->

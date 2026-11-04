@@ -6,12 +6,16 @@
    - Versioned files never change, so they're served from the saved copy when there is one.
    - Other files (CHANGELOG.md) are fetched fresh, falling back to the saved copy.
    - Images rarely change, so they come from the saved copy.
+   - Pinned libraries in js/vendor/<library>-<version>/ (Q42: pdf.js) are fetched the first time they're used, not at
+     install, then always come from the saved copy. Their version is in the folder's name, so a release never fetches
+     them again, and the clean-up below never removes them.
    With no signal, or a network too slow to answer within 4 seconds, the saved copy is used. */
 const CACHE = 'vocal-sessions-v3';
 const EXTRA = ['./CHANGELOG.md', './icon.png?v=3', './splash/logo.png'];
 const NET_TIMEOUT = 4000;
 const IMAGE = /\.(png|jpe?g|webp|gif|svg|ico)$/i;
 const APP_FILE = /\/(js|css)\/[^/]+$/;
+const VENDOR = /\/js\/vendor\/[a-z0-9.-]+-\d[^/]*\/[^/]+$/i;
 
 self.addEventListener('install', e => {
   e.waitUntil((async () => {
@@ -32,7 +36,7 @@ self.addEventListener('fetch', e => {
   const url = new URL(req.url);
   if (url.origin !== location.origin) return;
   if (isPage(req, url)) e.respondWith(page(e));
-  else if ((APP_FILE.test(url.pathname) && url.search) || IMAGE.test(url.pathname)) e.respondWith(cacheFirst(req));
+  else if ((APP_FILE.test(url.pathname) && url.search) || VENDOR.test(url.pathname) || IMAGE.test(url.pathname)) e.respondWith(cacheFirst(req));
   else e.respondWith(networkFirst(req, url));
 });
 

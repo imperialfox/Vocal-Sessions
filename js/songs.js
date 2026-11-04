@@ -34,6 +34,9 @@ const SGI = {
   grip: '<svg class="i" viewBox="0 0 24 24"><path d="M5 8h14M5 12h14M5 16h14"/></svg>',
   down: '<svg class="i" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>',
   wave: '<svg class="i" viewBox="0 0 24 24"><path d="M5 10v4M9 6v12M13 8v8M17 4v16M21 10v4"/></svg>',
+  // Q42 sheet music: a staff with a note
+  sheet:
+    '<svg class="i" viewBox="0 0 24 24"><path d="M3 7h18M3 11h18M3 15h18"/><circle cx="10" cy="15" r="2.2"/><path d="M12.2 15V5.5l4 1"/></svg>',
   // 3.19 New song from track: a short waveform with a plus
   trackNew:
     '<svg class="i" viewBox="0 0 24 24"><path d="M3 12h1M6.5 9v6M10 6v12M13.5 10v4"/><path d="M19 8v8M15 12h8"/></svg>',
@@ -235,6 +238,7 @@ function cleanSong(x) {
       s.ext = Object.assign({}, s.ext);
       if ('ladder' in s.ext && s.ext.ladder !== true) delete s.ext.ladder;
       if (typeof SONGKEY !== 'undefined') SONGKEY.clean(s.ext); // Q39 ext.key {tonic, mode}: one of the 24 keys, or dropped
+      if (typeof MELODY !== 'undefined') MELODY.cleanNote(s.ext); // Q42 ext.melody {ug, at}: the song has sheet music
     }
   }
   return s;
@@ -1423,6 +1427,7 @@ function practiceRow(sg) {
     chev +
     '</button>' +
     TRACK.row(sg) + // 3.19 the track player (track.js)
+    MELODY.row(sg) + // Q42 sheet music (melody.js)
     SONGKEY.row(sg) + // Q39 the song key (key.js)
     '</div>'
   );
@@ -1625,7 +1630,7 @@ const fmtLen = (s) => Math.floor(s / 60) + ':' + String(Math.round(s) % 60).padS
 // chosen, or it's the lyrics form (adding lyrics to a song, labelling sections)
 function sgNewFull() {
   const d = U.sDraft;
-  return !!d && (!!d.forId || d.step !== 1 || d.mode === 'manual' || !!d.media);
+  return !!d && (!!d.forId || d.step !== 1 || d.mode === 'manual' || !!d.media || !!d.melody);
 }
 function newSongSheet() {
   const d = U.sDraft;
@@ -1673,34 +1678,60 @@ function newSongSheet() {
           esc(d.reading) +
           '</span></div>'
       );
-    if (media && !d.media)
+    // Q42 a UG print being read for this song
+    const mr = MELODY.reading();
+    if (media && mr && mr.draft)
+      return sheetWrap(
+        'New song',
+        h +
+          '<div class="sgdrop busy melbusyd" role="status" aria-busy="true">' +
+          SGI.sheet +
+          '<b>Reading the print…</b><span>' +
+          esc(MELODY.busyText()) +
+          '</span></div><button class="ghost" data-a="melCancel">Cancel</button>'
+      );
+    if (media && !d.media && !d.melody)
       return sheetWrap(
         'New song',
         h +
           '<button class="sgdrop" data-a="sgAddPick">' +
           SGI.wave +
           '<b>Choose audio file</b><span>MP3, M4A or WAV from Files</span></button>' +
-          '<p class="foot">The track stays on this ' +
+          '<button class="sgdrop sgdrop2" data-a="sgAddPdf">' +
+          SGI.sheet +
+          '<b>Choose sheet music</b><span>A UG print as PDF: title, artist, notes and key</span></button>' +
+          '<p class="foot">The track and the print stay on this ' +
           deviceName() +
-          ' and isn’t included in backups. You can paste the lyrics next, or later.</p>'
+          ' and aren’t included in backups. You can paste the lyrics next, or later.</p>'
       );
-    if (media)
+    if (media && d.media)
       h +=
         '<p class="sgadded">' +
         ICON.check +
         '<span>' +
         esc(d.media.name) +
         ' added</span></p><button class="lnkbtn sgswap" data-a="sgAddPick">Choose a different file</button>';
+    if (media && d.melody)
+      h +=
+        '<p class="sgadded">' +
+        ICON.check +
+        '<span>Sheet music · ' +
+        esc(d.melody.name) +
+        '</span></p><button class="lnkbtn sgswap" data-a="sgAddPdf">Choose a different print</button>';
+    if (media && !d.media)
+      h += '<button class="lnkbtn sgswap" data-a="sgAddPick">Add the track too</button>';
+    else if (media && !d.melody)
+      h += '<button class="lnkbtn sgswap" data-a="sgAddPdf">Add sheet music too</button>';
     h +=
       sgField(
         'sgTitle',
         'Title',
         d.title,
-        media ? sgBase(d.media.name) || 'Song title' : 'Song title',
+        media && d.media ? sgBase(d.media.name) || 'Song title' : 'Song title',
         'maxlength="80" autocapitalize="words"'
       ) +
       sgField('sgArtist', 'Artist (optional)', d.artist, 'Who sings it', 'maxlength="80" autocapitalize="words"') +
-      sgLenRow(media ? d : Object.assign({}, d, { media: null })) +
+      sgLenRow(media && d.media ? d : Object.assign({}, d, { media: null })) +
       '<label class="sglab2" for="sgLyr">Lyrics' +
       (media ? ' (optional)' : '') +
       '</label><textarea class="field sglyr" id="sgLyr" placeholder="Paste lyrics here. Leave a blank line between sections.">' +
@@ -1905,12 +1936,12 @@ function sgRelink(sg, ok) {
 }
 async function sgSaveDraft() {
   const d = U.sDraft;
-  if (!d || !d.blocks || (!d.blocks.length && !(d.media && d.mode !== 'manual'))) return;
+  if (!d || !d.blocks || (!d.blocks.length && !((d.media || d.melody) && d.mode !== 'manual'))) return;
   if (d.saving) return;
   const lyr = d.blocks.length ? buildLyrics(d.blocks) : {},
     media = !d.forId && d.mode !== 'manual' ? d.media : null,
     // 3.20: a blank title uses the file's name, so a song is never nameless
-    title = titleCase(d.title) || (media && sgBase(media.name)) || 'Untitled song',
+    title = titleCase(d.title) || (media && sgBase(media.name)) || (d.melody && d.melody.name) || 'Untitled song',
     artist = titleCase(d.artist);
   let sg = d.forId && songById(d.forId);
   const fresh = !sg;
@@ -1941,6 +1972,12 @@ async function sgSaveDraft() {
       else delete sg.timing.lenLink;
     } else if (sg.timing) delete sg.timing.lenLink;
     D.songs.push(sg);
+    // Q42 the print read for it: the score, then the song's note (the print last)
+    if (d.melody && !d.forId && d.mode !== 'manual') {
+      d.saving = true;
+      await MELODY.attachDraft(sg, d.melody);
+      d.saving = false;
+    }
   }
   save();
   // 3.15: a new song's sheet shrinks into its row in Songs, then the row opens the song (iPhone, motion on)
@@ -1990,6 +2027,7 @@ async function deleteSongs(ids) {
   save();
   for (const t of TAKES.filter((t) => ids.includes(t.songId))) await delTake(t.id);
   await TRACK.forget(ids); // 3.19: a deleted song's track goes from this device too
+  await MELODY.forget(ids); // Q42: and its sheet music score and print
   if (X && ids.includes(X.song) && !rec) {
     X.song = null;
     saveDraft();
@@ -2352,7 +2390,7 @@ const SG_ACT = {
     sgReadDraft();
     const b = splitBlocks(d.text);
     // 3.20: a song added from its audio can be saved without lyrics, to paste later
-    if (!b.length && !d.forId && d.mode !== 'manual' && d.media) {
+    if (!b.length && !d.forId && d.mode !== 'manual' && (d.media || d.melody)) {
       d.blocks = [];
       return sgSaveDraft();
     }

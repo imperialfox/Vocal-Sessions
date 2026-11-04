@@ -214,6 +214,7 @@ async function inspectBackup(text, name, size) {
     draft: p.draft && typeof p.draft === 'object' && +p.draft.start > 0 ? p.draft : null,
   });
   r.sum = sumOf(d, ok);
+  r.mel = await MELODY.inspect(p); // Q42: 'none', 'good' or 'damaged' (the rest restores; its text to Rescued data)
   r.newer = (+d.schema || 0) > SCHEMA;
   r.code = !p.checkCode ? 'none' : code == null ? 'unchecked' : code === p.checkCode ? 'match' : 'mismatch';
   r.status =
@@ -266,6 +267,10 @@ async function prepareExport(noRec, quiet) {
       { takes: out }
     );
     p.checkCode = await checkCode(p);
+    // Q42 sheet music scores: their own field and check code, so older versions still call the file good
+    await MELODY.load();
+    p.melodies = MELODY.all();
+    p.melodiesCode = await MELODY.code(p.melodies);
     const file = new File([backupText(p)], backupName(now), { type: 'application/json' });
     // read the finished file back and check it before offering to save it
     const back = await inspectBackup(await file.text(), file.name, file.size);
@@ -274,6 +279,8 @@ async function prepareExport(noRec, quiet) {
       back.sum.sessions === sm.sessions &&
       back.sum.songPractice === sm.songPractice &&
       back.sum.recordings === sm.recordings &&
+      back.mel.state !== 'damaged' &&
+      back.mel.list.length === p.melodies.length &&
       !!back.noRec === !!noRec;
     if (!okBack) throw new Error('read-back failed');
     pendingExport = {
@@ -368,6 +375,7 @@ async function restoreImport() {
         from: r.name || '',
         keptTakes: !!r.noRec,
       });
+      await MELODY.putUndo(); // Q42: the device's sheet music scores, so Undo puts them back
     } catch (e) {
       undoOK = false;
       await clearUndo();
@@ -380,6 +388,7 @@ async function restoreImport() {
     migrate();
     D.lastBackup = p.exportedAt || new Date().toISOString();
     save();
+    await MELODY.restore(r.mel); // Q42: the backup's scores (others on the device stay, like tracks)
     X = p.draft || null;
     normX();
     saveDraft();
@@ -424,6 +433,7 @@ async function undoRestore() {
     D = cleanData(u.data) || {};
     migrate();
     save();
+    await MELODY.undo(); // Q42: the sheet music scores as they were before the restore
     X = u.draft && +u.draft.start > 0 ? u.draft : null;
     normX();
     saveDraft();
@@ -510,6 +520,13 @@ function bkReportHTML(r, mode) {
       '</b>' +
       plural(r.songsBad, 'song') +
       ' can’t be read and will be left out. Everything else is fine.</div></div>';
+  if (r.mel && r.mel.state === 'damaged' && r.status !== 'broken')
+    b +=
+      '<div class="bkstat warn" style="margin-top:8px">' +
+      ICON.warn +
+      '<div><b>Sheet music is damaged</b>' +
+      (r.mel.list.length ? plural(r.mel.bad, 'score') + ' can’t be read' : 'The sheet music can’t be read') +
+      ' and will go to Rescued data. Everything else restores.</div></div>';
   if (r.status === 'broken')
     return sheetWrap(
       imp ? 'Can’t restore' : 'Backup check',

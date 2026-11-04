@@ -99,7 +99,8 @@ VIS=r"""(()=>{const L=document.getElementById('layer');const pk=document.getElem
    const cx=Math.min(innerWidth-1,Math.max(0,r.left+r.width/2)),cy=Math.min(innerHeight-1,Math.max(0,r.top+r.height/2));const t=document.elementFromPoint(cx,cy);return t&&(t===e||e.contains(t)||t.closest('[data-a]')===e);});
  return els.map((e,i)=>{e.setAttribute('data-fz',i);return {i,a:e.dataset.a||e.tagName.toLowerCase(),v:e.dataset.v||'',k:e.dataset.k||'',id:e.id||'',type:e.type||''};});})()"""
 # no microphone here: Record shows on a selected section, but recording itself is covered by test_recording and test_sections
-SKIP = {'importPick', 'checkPick', 'exportSave', 'saveReadme', 'rec', 'sgRec', 'apSing', 'coachAdd', 'coachFS', 'trkAdd', 'trkReplace', 'sgAddPick', 'ckAddTrack'}
+SKIP = {'importPick', 'checkPick', 'exportSave', 'saveReadme', 'rec', 'sgRec', 'apSing', 'coachAdd', 'coachFS', 'trkAdd', 'trkReplace', 'sgAddPick', 'ckAddTrack',
+        'melAdd', 'sgAddPdf', 'melReplaceAsk'}  # Q42: the sheet music file pickers, like the track's
 HEAVY = ('sgOpen','sgSec','sgTakes','playTake','star','sgMode','sgHint','sgHMenu','sgSetHint','sgRMenu','sgOrder','sgAnywhere','sgEdit','sgWord','sgEditMode','mkLayer','mkPick','mkOpt','mkText','mkRm','mkKeep','mkClear','sgOMove','sgORemove','sgNew','sgSplit','sgSave','sgSearch','sgListEdit','sgToggle','sgCue','sgUnlink','start','songStart','resume','cta','ring','rcue','rown','flowOpen','flowDone','rSort','rSortPick','finHere','wTog','saveHow','skipHow','editSess','saveEdit','exNote','takeNote','addWord','saveWord',
          'openNote','longOk','pauseToggle','fwOpen','fwToggle','clock','sheet','calDay','calSession','eflv','input','textarea',
          # 3.18 Song Clock
@@ -174,6 +175,15 @@ def run(b, t):
                         trace.append('hold ' + (m.get_attribute('data-v') or ''))
                 else:
                     els = [e for e in pg.evaluate(VIS) if e['a'] not in SKIP]
+                    if not els:
+                        # Q42: a dim still fading out (the parts kit's, 350 ms) or a button still on its way in covers
+                        # everything for a moment; look again before calling the screen stuck
+                        pg.wait_for_timeout(600)
+                        els = [e for e in pg.evaluate(VIS) if e['a'] not in SKIP]
+                    if not els:
+                        # or the only buttons are further down a page that scrolls (Session saved on a short screen)
+                        pg.evaluate("window.scrollBy(0,innerHeight*0.8)"); pg.wait_for_timeout(200)
+                        els = [e for e in pg.evaluate(VIS) if e['a'] not in SKIP]
                     if not els:
                         note('nothing tappable on screen', trace); trace.append('nothing tappable'); pg.keyboard.press('Escape'); continue
                     wts = [0.15 if x['a'] in ('tab', 'exTab', 'histTab') else (3 if x['a'] in HEAVY else 1) for x in els]

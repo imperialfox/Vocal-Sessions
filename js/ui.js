@@ -448,6 +448,7 @@ function renderSheet() {
   else if (s === 'away') h = SCLOCK.awaySheet(); // Q22: "You were away N min"
   else if (s === 'bridge') h = PAT.bridgeSheet(); // Q38 Find your bridge
   else if (s && /^trk/.test(s)) h = TRACK.sheet(s);
+  else if (s && /^mel[A-Z]/.test(s)) h = MELODY.sheet(s); // Q42 sheet music
   else if (s === 'how' && X) {
     h =
       '<div class="scrim" data-a="close"><div class="sheet glass" role="dialog" aria-modal="true" aria-label="How did it go?"><div class="shead"><div class="grab"></div><div class="shtop"><button class="shbtn glass" data-a="skipHow" aria-label="Skip and save">' +
@@ -1223,6 +1224,7 @@ function render(keepScroll) {
   songsAfter();
   CLOCK.after(); // 3.18 Song Clock: the play-along view, the current line when paused, the wake lock
   TRACK.after(); // 3.19 the track player: its waveform, and letting go of a deleted song's track
+  MELODY.after(); // Q42: a big or long PDF's question closed without Read it anyway stops the read
   TAKE.after(); // 3.20 the takes sheet: the expanded take's waveform and the field being typed in
   FIND.after(); // 3.22 Search: the field focused when the page is opened from its circle
   MKG.after(); // Q04 the peek card goes with its marks sheet

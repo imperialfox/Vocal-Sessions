@@ -462,6 +462,7 @@ const SONGKEY = (() => {
       'Song key',
       '<p class="note">' +
         esc(sg.name) +
+        (sd.from ? ' · From the print: ' + esc(sd.from) : '') + // Q42 the print's key signature, offered
         '</p><div class="keymode"><div class="seg pk-seg wide" role="group" aria-label="Major or minor"><span class="pk-seg-ind" aria-hidden="true"></span>' +
         MODES.map(
           (m) =>

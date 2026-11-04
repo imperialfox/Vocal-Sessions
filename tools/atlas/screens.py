@@ -111,6 +111,17 @@ def load(pg, setup, ctx):
     if 'short-track' in setup:  # Q35: the next file picker gets a 20 s track, shorter than the song's timing
         short = test_track.F('Paper Boats 20.wav', 20)
         pg.on('filechooser', lambda fc: fc.set_files(short))
+    if 'sheet' in setup:  # Q42: the tests' made-up print read onto the song through its real Add sheet music row, then saved
+        pg.evaluate("id=>go(()=>{U.sheet=null;U.tab='songs';U.view='lyr';U.songId=id})", ctx['song'])
+        with pg.expect_file_chooser(timeout=5000) as fc: pg.click('#app [data-a=melAdd]')
+        fc.value.set_files(harness.fix('melody/paper-lanterns.pdf'))
+        pg.wait_for_function("()=>['melRead','melTitle'].includes(U.sheet)", timeout=20000)
+        if pg.evaluate("U.sheet") == 'melTitle': pg.click('#layer [data-a=melTitleHere]')
+        pg.click('#layer [data-a=melSave]')
+        pg.wait_for_function('id=>MELODY.has(id)', arg=ctx['song'], timeout=10000)
+        pg.evaluate("()=>{U.sheet=null;U.sd={};go(()=>{U.tab='today';U.view=null})}")
+    if 'pdf-next' in setup:  # Q42: the next file picker gets the tests' made-up print
+        pg.on('filechooser', lambda fc: fc.set_files(harness.fix('melody/paper-lanterns.pdf')))
 
 
 # Q35: a made-up microphone for the recording states: a steady 220 Hz tone at a low level, never a real voice
@@ -233,6 +244,15 @@ ROOTS = [
          docs=[('MAINTAINING.md', 'Save safety (3.29, Q11)')]),
     dict(id='rescued-delete', title='Delete the rescued copy', area='Settings', kind='Sheet', key='Sheet:rescueDel',
          steps=BACKUP + [('tap', '#app [data-a="sheet"][data-v="rescueDel"]')], setup=['damaged']),
+    # Q42: VS-100 · Sheet music read, after the Song page's Add sheet music row is given a made-up print; VS-099 · Sheet
+    # music, from the row once it's saved; VS-105 · Remove the prints?, from Settings › Storage with a print kept
+    dict(id='sheet-music-read', title='Sheet music read', area='Songs', kind='Sheet', key='Sheet:melRead',
+         steps=SONG_PAGE + [('tap', '#app [data-a="melAdd"]'), UNTIL("['melRead','melTitle'].includes(U.sheet)", 'the print wasn’t read', 20000)],
+         setup=['pdf-next']),
+    dict(id='sheet-music', title='Sheet music', area='Songs', kind='Sheet', key='Sheet:melSheet',
+         steps=SONG_PAGE + [('tap', '#app [data-a="melOpen"]')], setup=['sheet']),
+    dict(id='sheet-prints-delete', title='Remove the prints?', area='Settings', kind='Sheet', key='Sheet:melPrintsDel',
+         steps=[('tap', '[data-a="openSettings"]'), ('tap', '#app [data-a="setPg"][data-v="storage"]'), ('tap', '#app [data-v="melPrintsDel"]')], setup=['sheet']),
 ]
 
 # ---------- captions (Q35): one plain line per screen, by screen ID (a state by its ID, then ~ and the state) ----------
@@ -279,6 +299,11 @@ CAPTIONS = {
     'VS-093': 'The floating window for a take, track or video', 'VS-094': 'The launch screen as the app opens', 'VS-095': 'Hold a mark: a quick reminder of it',
     'VS-096': 'Find your bridge: one slow slide, then From and To',
     'VS-097': 'A suggested pattern in the song’s key, on its note', 'VS-098': 'Choose the song’s key: Major or Minor, and its home note',
+    'VS-099': 'A song’s sheet music: key, bars, range, tempo, to check', 'VS-100': 'A print just read: check it, set the octave and tempo, save',
+    'VS-101': 'This print is on another song: open it, or add it here', 'VS-102': 'A print with another title: this song, a new one, or cancel',
+    'VS-103': 'Replace the sheet music? The old score is kept 30 days', 'VS-104': 'A big or long PDF: read it anyway?',
+    'VS-105': 'Remove the prints and keep every score?', 'VS-106': 'Reading a print, line by line, with Cancel',
+    'VS-107': 'Delete sheet music whose song has gone?',
 }
 
 # ---------- doors the scan can't test (Q35): swipes, holds, timed sheets and file pickers, written by hand ----------
@@ -312,6 +337,15 @@ DOORS = [
     {'from': 'VS-004', 'to': 'VS-047', 'how': 'Sing with the song’s track on this phone and Sing over the track on', 'kind': 'Microphone'},
     {'from': 'VS-004', 'to': 'VS-097', 'how': 'Sing two ladder rungs, set the song key on Lines, then › on a suggested pattern', 'kind': 'Microphone'},
     {'from': 'VS-094', 'to': 'VS-019~rescued-data', 'how': 'The app opens with saved data it can’t read; the toast leads here', 'kind': 'Timed'},
+    # Q42 sheet music: file pickers, the questions a print can ask, and the reading pill
+    {'from': 'VS-051', 'to': 'VS-100', 'how': 'Choose sheet music: a UG print fills in the new song (a starting state reads one on the Song page)', 'kind': 'File picker'},
+    {'from': 'VS-009', 'to': 'VS-106', 'how': 'While a print reads, line by line, with Cancel', 'kind': 'Timed'},
+    {'from': 'VS-009', 'to': 'VS-101', 'how': 'Add sheet music: a print already on another song', 'kind': 'File picker'},
+    {'from': 'VS-009', 'to': 'VS-102', 'how': 'Add sheet music: a print whose title isn’t the song’s', 'kind': 'File picker'},
+    {'from': 'VS-099', 'to': 'VS-103', 'how': 'Replace with a new print…, then choose a print', 'kind': 'File picker'},
+    {'from': 'VS-009', 'to': 'VS-104', 'how': 'Add sheet music: a PDF over 30 MB or 40 pages', 'kind': 'File picker'},
+    {'from': 'VS-100', 'to': 'VS-098', 'how': 'Save sheet music: the print’s key is offered on the key sheet', 'kind': 'After a read'},
+    {'from': 'VS-020', 'to': 'VS-107', 'how': 'A sheet whose song was deleted or reset, under Sheets with no song: Delete', 'kind': 'After a reset'},
 ]
 
 

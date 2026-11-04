@@ -85,8 +85,8 @@ def pages(b, t):
     pg.evaluate("U.sheet=null;pendingExport=null;rerender()")
     pg.evaluate(PAGE, 'storage'); pg.wait_for_timeout(200)
     s = pg.evaluate("SET.sizes()")
-    ok([x['l'] for x in s] == ['Recordings', 'Song tracks', 'Coach video', 'Sessions and songs'], 'Storage counts recordings, song tracks, the coach video and app data')
-    ok(pg.locator('#app .setbar i').count() == len([x for x in s if x['b'] > 0]) and pg.locator('#app .setkey span').count() == 4,
+    ok([x['l'] for x in s] == ['Recordings', 'Song tracks', 'Coach video', 'Sessions and songs', 'Sheet music'], 'Storage counts recordings, song tracks, the coach video, app data and (Q42) sheet music')
+    ok(pg.locator('#app .setbar i').count() == len([x for x in s if x['b'] > 0]) and pg.locator('#app .setkey span').count() == 5,
        'one bar split by what’s using the space, with a key')
     ok(pg.locator('#app [data-a=tkReview]').count() == 1 and pg.locator('#app [data-v=persist]').count() == 1, 'with Review old takes and Storage protection')
     ok(pg.evaluate("document.querySelector('.setuse').getAttribute('aria-label')").endswith('MB'), 'the bar has a spoken summary')

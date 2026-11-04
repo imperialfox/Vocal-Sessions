@@ -80,7 +80,7 @@ checkPersist(true)
     if (SET.shown()) rerender();
   })
   .catch(() => {});
-Promise.all([refreshTakes(), refreshUndo(), COACH.load(), TRACK.load(), bootSafe])
+Promise.all([refreshTakes(), refreshUndo(), COACH.load(), TRACK.load(), bootSafe, MELODY.load().catch(() => {})]) // Q42 scores
   .then(() => TAKE.load()) // 3.20: takes' waveforms (and both-ears copies) on this device
   .then(() => BOOT_DREW && rerender())
   .catch(() => {})

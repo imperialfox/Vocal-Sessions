@@ -180,6 +180,7 @@ const SET = (() => {
       { k: 'trk', l: 'Song tracks', b: TRACK.bytes(), c: 'var(--cR)' },
       { k: 'cv', l: 'Coach video', b: cm ? +cm.size || 0 : 0, c: 'var(--cA)' },
       { k: 'app', l: 'Sessions and songs', b: app, c: 'var(--done)' },
+      { k: 'mel', l: 'Sheet music', b: MELODY.bytes(), c: 'var(--sys-pink)' }, // Q42; read by k, not by position (H45)
     ];
   }
   const total = () => sizes().reduce((a, s) => a + s.b, 0);
@@ -342,7 +343,7 @@ const SET = (() => {
             '<button class="row" data-a="rescueSave" data-k="' +
             esc(c.key) +
             '"><span class="lbl acc">Save the rescued copy<small>' +
-            (c.why === 'song' ? 'A song couldn’t be read' : 'Couldn’t be read') +
+            (c.why === 'song' ? 'A song couldn’t be read' : c.why === 'melody' ? 'Sheet music couldn’t be read' : 'Couldn’t be read') +
             ' on ' +
             shortDate(c.at) +
             ' at ' +
@@ -387,10 +388,12 @@ const SET = (() => {
       '<div class="grp setgap">' +
       TAKE.storageRows() + // Recordings · n takes · x MB, and Review old takes (3.20)
       TRACK.storageRow() +
+      MELODY.storageRows() + // Q42 sheet music: scores and prints, Remove prints, keep scores
       COACH.storageRow() +
       '<div class="row"><span class="lbl">Sessions and songs</span><span class="mut">' +
-      mb(s[3].b) +
+      mb(s.find((x) => x.k === 'app').b) +
       '</span></div></div>' +
+      MELODY.orphanRows() + // Q42 Sheets with no song, each with Delete
       '<div class="grp setgap">' +
       '<button class="row" data-a="sheet" data-v="persist"><span class="lbl">Storage protection<small>' +
       (PERSIST === true

@@ -10092,3 +10092,43 @@ html.motion-reduced .pt.held {
   color: var(--fg2);
   background: color-mix(in srgb, var(--bg) 78%, transparent);
 }
+
+/* ===== Q42 sheet music: the reading pill (VS-106, copied from the track's busy pill), New song's second door, the
+   octave and tempo controls ===== */
+.melbusy {
+  position: fixed;
+  left: 50%;
+  top: calc(14px + env(safe-area-inset-top, 0px));
+  transform: translateX(-50%);
+  z-index: 59;
+  border-radius: 999px;
+  padding: 6px 6px 6px 18px;
+  font-size: var(--t-subhead);
+  font-weight: 500;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.melbusy-x {
+  min-height: 44px;
+  padding: 0 14px;
+  border-radius: 999px;
+  color: var(--accent);
+  font-weight: 600;
+}
+.sgdrop2 {
+  margin-top: 10px;
+  min-height: 110px;
+}
+.meloct {
+  margin: 0 0 4px;
+}
+.meltempo {
+  gap: 8px;
+}
+.meltempo .field {
+  width: 76px;
+  text-align: center;
+  margin: 0;
+}
