@@ -14,7 +14,7 @@ const CK_MIN = 0.1; // a line lasts at least this long, and starts at least this
 const CK_DOT = 1.2; // a gap after a line longer than this gets an automatic breath dot
 const CK_GAP = 0.35; // the gap left between lines spread evenly
 const CK_SB = 0.25; // Q05: a gap this long after a placed line (with no breath mark of Ivan's) is a suggested breath
-const CK_HOLD = 500; // Q05: ms held for punch-in and the lyric line's hold menu
+const CK_HOLD = 500; // Q05: ms held for punch-in (the lyric line's hold menu is the parts kit's 700 ms since Q41)
 const CK_MAXLEN = 20 * 60 + 59; // the song length picker goes to 20:59
 const CK_TILES = ['timing', 'check', 'key', 'marks', 'blur', 'snap', 'awake', 'lyrics', 'track']; // 3.19: track; Q05: Sync again retired
 const CK_MP = ['off', 'breaths', 'active']; // Marks while playing (Q03 added Active layer to the cycle)
@@ -41,7 +41,6 @@ const CK = {
   pi: null, // Q05 punch-in: holding the lyrics while playing along {x, y, t (when pressed), timer, on, i}
   piAt: 0, // when a punch-in ended (its click isn't also a tap on a line)
   lm: null, // Q05 the hold menu on a lyric line: {o, li}
-  lmAt: 0, // when the hold menu opened (the hold's click isn't also a tap)
   mdl: null, // Q14: the timing model kept between frames ({sg, t, o, s, M}), dropped by every redraw and ckStore
   dom: null, // Q14: the big view's lines, words and dots, looked up once per build (ckDom)
   drawn: null, // Q14: what the big view's lines were built from ({base, tim}), so a timing change patches its dots
@@ -479,25 +478,11 @@ function ckUndo(id) {
   ckTick();
   toast('Undone');
 }
-// a toast with an Undo button
+// a toast with an Undo button (Q41: the parts kit's toast)
 function ckToast(text, undo) {
-  toast(text);
-  if (!undo) return;
-  const el = document.querySelector('.toast');
-  if (!el) return;
-  el.classList.add('ckundo');
-  const b = document.createElement('button'),
-    id = CK.undoId; // Q17: the toast undoes the song its change was made to, whatever changes after it
-  b.className = 'ckub';
-  b.textContent = 'Undo';
-  b.addEventListener('click', (e) => {
-    e.stopPropagation();
-    el.remove();
-    undo(id);
-  });
-  el.appendChild(b);
-  clearTimeout(toastT);
-  toastT = setTimeout(() => el.remove(), 4500);
+  if (!undo) return toast(text);
+  const id = CK.undoId; // Q17: the toast undoes the song its change was made to, whatever changes after it
+  toastBtn(text, 'Undo', () => undo(id), 4500);
 }
 
 /* ===== Song Clock: spreading lines evenly between section starts =====
@@ -2175,11 +2160,10 @@ document.addEventListener('keydown', (e) => {
 });
 
 /* ===== Q05 the hold menu on a lyric line =====
-   Hold a line on the song page for half a second in Practise or Perform (not Recall, where a hold peeks; not while
+   Hold a line on the song page (700 ms, the parts kit's long-press since Q41, D16) in Practise or Perform (not Recall, where a hold peeks; not while
    editing or recording): it lifts, the rest dims, and a menu offers Retime line (the track player on that line), Play
    from here (play-along from that line) and Annotate (the Marks side, the whole line selected, on the last-used layer).
    The hold never also taps (section focus), and moving the finger (a scroll) lets it go. */
-let ckLH = null; // a finger holding a line: {ln, x, y, t}
 const ckLmOk = () => {
   const sg = songShown();
   return !!(
@@ -2201,108 +2185,46 @@ function ckLmLine() {
   if (!sg || !m) return -1;
   return ckLines(sg).findIndex((l) => l.o === m.o && l.li === m.li);
 }
+// Q41 the menu's buttons: the parts kit draws the menu (KMENU in ui.js, opened by sgMenus)
 function ckLmHTML() {
   if (!CK.lm || !ckLmOk() || ckLmLine() < 0) return '';
   return (
-    '<div class="ctxback clear" data-a="ckLmClose"></div><div class="ctxmenu glass" id="lmenu" role="menu" aria-label="Line">' +
     '<button role="menuitem" data-a="ckLmRetime">Retime line' +
     CKI.retime +
     '</button><button role="menuitem" data-a="ckLmPlay">Play from here' +
     ICON.play +
     '</button><button role="menuitem" data-a="ckLmMark">Annotate' +
     SGI.pen +
-    '</button></div>'
+    '</button>'
   );
-}
-// the line lifts and everything else dims; the menu sits under it (above it near the bottom)
-function ckLmPaint() {
-  document.querySelectorAll('.sgl.lifted').forEach((l) => l.classList.remove('lifted'));
-  const m = CK.lm,
-    ln = m && $('lmenu') && document.querySelector('#app .sgl[data-o="' + m.o + '"][data-li="' + m.li + '"]');
-  if (ln) ln.classList.add('lifted');
-  document.body.classList.toggle('lmopen', !!ln);
-  if (ln) sgPlace('lmenu', '#app .sgl.lifted', 'row');
 }
 function ckLmAfter() {
   if (CK.lm && (!ckLmOk() || ckLmLine() < 0)) CK.lm = null;
-  if (!CK.lm) document.body.classList.remove('lmopen');
 }
 function ckLmShow() {
   const sl = $('slayer');
   if (sl) sl.innerHTML = slayerHTML();
-  ckLmPaint();
+  sgMenus();
 }
 function ckLmClose() {
   CK.lm = null;
   ckLmShow();
 }
+// Q41 the hold is the parts kit's: a line that can hold gets .pk-hold as the finger lands, so the kit lifts it from
+// 200 ms and sends pk:hold at 700 ms (a right-click at once); the kit's own rule keeps that hold from also being a tap
 document.addEventListener(
   'pointerdown',
   (e) => {
-    if (ckLH) clearTimeout(ckLH.t);
-    ckLH = null;
-    CK.lmAt = 0; // a new press: its click is a real tap
-    if (e.button > 0 || CK.lm) return;
     const ln = e.target.closest && e.target.closest('#app .sgl[data-o][data-li]');
-    if (!ln || !ckLmOk()) return;
-    ckLH = {
-      ln,
-      x: e.clientX,
-      y: e.clientY,
-      t: setTimeout(() => {
-        if (!ckLH || ckLH.ln !== ln || !ln.isConnected || !ckLmOk()) return;
-        ckLH = { held: true };
-        CK.lm = { o: ln.dataset.o, li: +ln.dataset.li };
-        CK.lmAt = Date.now();
-        ckLmShow();
-      }, CK_HOLD),
-    };
+    if (ln) ln.classList.toggle('pk-hold', !CK.lm && ckLmOk());
   },
   true
 );
-document.addEventListener(
-  'pointermove',
-  (e) => {
-    if (ckLH && !ckLH.held && Math.hypot(e.clientX - ckLH.x, e.clientY - ckLH.y) > 10) {
-      clearTimeout(ckLH.t);
-      ckLH = null;
-    }
-  },
-  true
-);
-['pointerup', 'pointercancel'].forEach((t) =>
-  document.addEventListener(
-    t,
-    () => {
-      if (ckLH && ckLH.held) CK.lmAt = Date.now(); // the click this lift makes isn't a tap
-      else if (ckLH) clearTimeout(ckLH.t);
-      ckLH = null;
-    },
-    true
-  )
-);
-window.addEventListener(
-  'scroll',
-  () => {
-    if (ckLH && !ckLH.held) clearTimeout(ckLH.t);
-    if (ckLH && !ckLH.held) ckLH = null;
-  },
-  { passive: true }
-);
-// the hold that opened the menu isn't also a tap (focusing the section, or closing the menu that rose under the finger)
-document.addEventListener(
-  'click',
-  (e) => {
-    if (CK.lmAt && Date.now() - CK.lmAt < 400) {
-      CK.lmAt = 0;
-      e.stopPropagation();
-      e.preventDefault();
-    }
-  },
-  true
-);
-document.addEventListener('contextmenu', (e) => {
-  if (e.target.closest && e.target.closest('#app .sgl[data-o]') && ckLmOk()) e.preventDefault();
+document.addEventListener('pk:hold', (e) => {
+  const ln = e.target.closest && e.target.closest('#app .sgl[data-o][data-li]');
+  if (!ln || CK.lm || !ckLmOk()) return;
+  CK.lm = { o: ln.dataset.o, li: +ln.dataset.li };
+  ckLmShow();
 });
 Object.assign(SG_ACT, {
   ckLmClose() {

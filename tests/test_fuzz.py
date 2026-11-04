@@ -16,8 +16,8 @@ SIZES=[(390,844,True),(375,667,True),(852,393,True),(820,1180,True),(1180,820,Tr
 TEXTS=['','x','  ','<b>bold</b> & "quotes" \'single\'','😀🎤 emoji','A'*300,'-5','0','999999','12.7','#tag','Line\nbreak']
 INV=r"""(()=>{const p=[];const L=document.getElementById('layer');
  if(document.documentElement.scrollWidth>innerWidth+1)p.push('sideways scroll '+document.documentElement.scrollWidth+'>'+innerWidth);
- if(U.sheet&&!L.querySelector('.sheet'))p.push('sheet state "'+U.sheet+'" but nothing shown');
- if(!U.sheet&&L.querySelector('.sheet'))p.push('sheet shown without state');
+ if(U.sheet&&!L.querySelector(':is(.sheet,.pk-alert,.pk-actions):not(.pk-leaving)'))p.push('sheet state "'+U.sheet+'" but nothing shown');
+ if(!U.sheet&&L.querySelector(':is(.sheet,.pk-alert,.pk-actions):not(.pk-leaving)'))p.push('sheet shown without state');
  if(isFlow(U.view)&&!X)p.push('in a session view with no session');
  if(document.querySelector('[data-screen="VS-???"]'))p.push('a screen with no ID in the register (js/register.js): '+SCR.viewKey()+(U.sheet?' · sheet:'+U.sheet:''));
  if(!U.sheet&&!U.view&&!U.sList&&!document.querySelector('[data-a=tab]'))p.push('no way to switch tabs');
@@ -34,10 +34,10 @@ INV=r"""(()=>{const p=[];const L=document.getElementById('layer');
  if(!!document.querySelector('#dock .hcap')!==(recallOn()&&!U.sheet&&!rec))p.push('hint capsule shown when it shouldn\'t be, or missing in Recall');
  if(document.querySelector('.hx:not(.zm .hx)')&&!recallOn())p.push('hidden letters outside Recall'); // a zoom's still copy of a Recall page doesn't count
  const fw=document.getElementById('fw'),ae=document.activeElement,typing=ae&&ae.matches&&ae.matches('input,textarea');
- if(FW.shown){if(U.sheet||L.firstElementChild)p.push('floating window over a sheet');if(rec&&FW.shown!=='rectrack')p.push('floating window while recording');
+ if(FW.shown){if(U.sheet||Parts.open||L.querySelector('#lyc > *'))p.push('floating window over a sheet');if(rec&&FW.shown!=='rectrack')p.push('floating window while recording');
    if(FW.shown==='session'&&isFlow(U.view))p.push('session window on its own screen');
    const r=fw.getBoundingClientRect();if(!FW.drag&&!FW.stopSpring&&!FW.tuck&&!fw.getAnimations().length&&(r.left<-1||r.right>innerWidth+1||r.top<-1||r.bottom>innerHeight+1))p.push('floating window off screen');}
- else if(X&&X.start&&!LAUNCH.busy()&&!FW.shut&&!FW_KINDS.find(k=>k.id==='session').own()&&!U.sheet&&!U.clock&&!L.firstElementChild&&!rec&&!U.sFocus&&!typing)p.push('session running but no floating window');
+ else if(X&&X.start&&!LAUNCH.busy()&&!FW.shut&&!FW_KINDS.find(k=>k.id==='session').own()&&!U.sheet&&!U.clock&&!Parts.open&&!L.querySelector('#lyc > *')&&!rec&&!U.sFocus&&!typing)p.push('session running but no floating window');
  // Q26: tucked at the edge, its tab is always there to bring it back, and never without a window
  {const tb=document.getElementById('fwtab'),tab=!!tb&&!tb.hidden;if(FW.shown&&FW.tuck&&!tab)p.push('a tucked window with no tab');if(tab&&!(FW.shown&&FW.tuck))p.push('a tab with no tucked window');
   if(tab){const q=tb.getBoundingClientRect();if(q.left<-1||q.right>innerWidth+1||q.top<-1||q.bottom>innerHeight+1)p.push('the tab off screen')}}
@@ -63,24 +63,24 @@ INV=r"""(()=>{const p=[];const L=document.getElementById('layer');
  if(ck.on&&!TRACK.has(ck.songId))p.push('play-along without the song’s track on this device (Q05)');
  if(ck.punch&&!ck.run)p.push('a punch-in left on while not playing along');
  if(CLOCK.lineMenu()&&!document.getElementById('lmenu'))p.push('a line’s hold menu open with no menu');
- if(document.getElementById('lmenu')&&!document.querySelector('#app .sgl.lifted'))p.push('a hold menu without its lifted line');
- if(document.body.classList.contains('lmopen')&&!document.getElementById('lmenu'))p.push('the song left dimmed after its hold menu');
+ if(document.getElementById('lmenu')&&!document.querySelector('#layer .pk-lift-clone'))p.push('a hold menu without its lifted line');
+ if(Parts.open===0&&document.querySelector('#layer .pk-dim.pk-on'))p.push('the page left dimmed with nothing open (Q41)');
  if(!document.getElementById('ckpa').hidden&&!(ck.on&&songShown()&&!U.sEdit))p.push('play-along view shown without play-along');
  if(document.documentElement.classList.contains('ckplay')&&document.getElementById('ckpa').hidden)p.push('page scrolling locked without play-along');
  const tk=TRACK.state();
  if(FW.shown==='track'&&U.view==='trk'&&U.songId===tk.id)p.push('track window on its own screen');
- if(tk.playing&&!tk.along&&!FW.shown&&!FW.shut&&!(U.view==='trk'&&U.songId===tk.id)&&!LAUNCH.busy()&&!U.sheet&&!U.clock&&!L.firstElementChild&&!rec&&!U.sFocus&&!typing)p.push('track playing with no way back to it');
+ if(tk.playing&&!tk.along&&!FW.shown&&!FW.shut&&!(U.view==='trk'&&U.songId===tk.id)&&!LAUNCH.busy()&&!U.sheet&&!U.clock&&!Parts.open&&!L.querySelector('#lyc > *')&&!rec&&!U.sFocus&&!typing)p.push('track playing with no way back to it');
  if(tk.playing&&((COACH.el()&&!COACH.el().paused)||(typeof player!=='undefined'&&player&&!player.paused)||(ck.run&&!tk.along)))p.push('two sounds at once');
  if(tk.along&&!ck.run)p.push('the track playing along without play-along (Q02)');
  if(COACH.el()&&!COACH.el().paused&&((typeof player!=='undefined'&&player&&!player.paused)||ck.run))p.push('two sounds at once (video)');
  if(typeof player!=='undefined'&&player&&!player.paused&&ck.run)p.push('two sounds at once (take and play-along)');
  if(tk.loaded&&!songById(tk.id))p.push('a deleted song’s track still loaded');
  if(U.view==='trk'&&!U.sheet&&TRACK.has(U.songId)&&tk.loaded&&tk.id===U.songId&&!document.querySelector('#dock .trktr, #dock .trkmd'))p.push('track player without its transport');
- if(document.querySelector('#dock .tabbar')&&!document.querySelector('#dock [data-a=findOpen]'))p.push('tab bar without the search circle');
+ if(document.querySelector('#dock .pk-tabbar')&&!document.querySelector('#dock [data-a=findOpen]'))p.push('tab bar without the search circle');
  if(U.tab==='find'&&!U.view&&!document.getElementById('fq'))p.push('Search without its field');
  if(U.tab==='find'&&!U.view&&!document.querySelector('[data-a=findOpen].on,[data-a=findOpen][aria-current=page]')&&document.querySelector('[data-a=findOpen]'))p.push('Search open but its circle not selected');
  {const c=document.querySelector('#dock .scirc');if(FW.shown&&c&&!FW.drag&&!FW.stopSpring&&!fw.getAnimations().length&&!c.getAnimations().length){const a=fw.getBoundingClientRect(),q=c.getBoundingClientRect();if(!(a.right<=q.left||q.right<=a.left||a.bottom<=q.top||q.bottom<=a.top))p.push('floating window over the search circle')}}
- {const r=document.querySelector('#dock .dockrow');if(r&&r.classList.contains('min')){if(U.tab==='find'||U.sheet||!tabRoom()||!document.body.classList.contains('phone'))p.push('tab bar collapsed where it never should (Search, a sheet, a short page, not iPhone upright)');if(!r.querySelector('.tabpill'))p.push('tab bar collapsed with no pill to bring it back');}}
+ if(document.querySelector('#dock .pk-folded'))p.push('the tab bar folded (it never should: D01)');
  if(document.querySelector('.zm.push')&&!ZOOM.busy())p.push('a push layer left behind');
  // Q03 marks: no marks sheet without a selection, no selection outside the Marks side, and every song's marks valid
  if(document.getElementById('mksheet')&&!(SG.sel&&U.sEdit==='annotate'))p.push('marks sheet without a selection');
@@ -94,7 +94,7 @@ INV=r"""(()=>{const p=[];const L=document.getElementById('layer');
  const sumOk=Object.keys(D.months).length>=0;
  return p;})()"""
 # with a sheet open, only the sheet is in reach, and the length picker when it pops over the sheet (it lives on <body>)
-VIS=r"""(()=>{const L=document.getElementById('layer');const pk=document.getElementById('ckpk');const root=pk||(L.querySelector('.scrim,.clock')?L:document);
+VIS=r"""(()=>{const L=document.getElementById('layer');const pk=document.getElementById('ckpk');const root=pk||(L.querySelector('.pk-layer>:not(.pk-dim):not(.pk-toast):not(.pk-leaving),.clock')?L:document);
  const els=[...root.querySelectorAll('[data-a],input:not([type=file]),textarea')].filter(e=>{const r=e.getBoundingClientRect();if(r.width<2||r.height<2)return false;if(r.bottom<0||r.top>innerHeight||r.right<0||r.left>innerWidth)return false;
    const cx=Math.min(innerWidth-1,Math.max(0,r.left+r.width/2)),cy=Math.min(innerHeight-1,Math.max(0,r.top+r.height/2));const t=document.elementFromPoint(cx,cy);return t&&(t===e||e.contains(t)||t.closest('[data-a]')===e);});
  return els.map((e,i)=>{e.setAttribute('data-fz',i);return {i,a:e.dataset.a||e.tagName.toLowerCase(),v:e.dataset.v||'',k:e.dataset.k||'',id:e.id||'',type:e.type||''};});})()"""

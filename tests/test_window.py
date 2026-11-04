@@ -20,7 +20,7 @@ CORNERED = """c=>{const f=document.getElementById('fw');if(!f||FW.corner!==c)ret
 # what the window must stay clear of: the tab bar or dock button, the top bar, the sidebar and Recall's hint capsule
 CLEAR = """(()=>{const f=document.getElementById('fw').getBoundingClientRect(),hit=[];
  const over=(a,b)=>a.left<b.right-0.5&&a.right>b.left+0.5&&a.top<b.bottom-0.5&&a.bottom>b.top+0.5;
- [['the tab bar','#dock .tabbar'],['the dock','#dock .cta'],['the hint capsule','#dock .hcap'],['the top bar','#bar'],['the sidebar','#side']].forEach(([n,s])=>{
+ [['the tab bar','#dock .pk-tabbar'],['the dock','#dock .cta'],['the hint capsule','#dock .hcap'],['the top bar','#bar'],['the sidebar','#side']].forEach(([n,s])=>{
    const e=document.querySelector(s);if(e&&e.offsetParent!==null&&getComputedStyle(e).display!=='none'&&over(f,e.getBoundingClientRect()))hit.push(n)});
  if(f.left<0||f.top<0||f.right>innerWidth+0.5||f.bottom>innerHeight+0.5)hit.push('the screen edge');
  return hit})()"""
@@ -98,7 +98,7 @@ def session(b, t):
     pg.evaluate("go(()=>{U.tab='today';U.view=null})"); pg.wait_for_timeout(200)
     pg.click('.titlerow [data-a=openCal]'); pg.wait_for_timeout(400)
     ok(pg.evaluate("U.sheet") == 'calendar' and not pg.evaluate(SHOWN), 'it hides while a sheet is open')
-    pg.click('.scrim .ghost'); pg.wait_for_timeout(300)
+    pg.click('#layer .sheet .ghost'); pg.wait_for_timeout(300)
     ok(pg.evaluate(SHOWN), 'and comes back when it closes')
 
     # back to exactly where you were

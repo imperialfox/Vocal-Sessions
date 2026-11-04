@@ -482,10 +482,10 @@ const OP = (() => {
     flip(() => (U.fEdit = null));
   }
 
-  /* ----- More exercises' order ----- */
+  /* ----- More exercises' order (Q41: the parts kit's pull-down menu, KMENU in ui.js) ----- */
   let menu = null;
   function closeMenu() {
-    if (menu) menu.remove();
+    if (menu) menu.shut();
     menu = null;
   }
   // list, now and act (Q20): Application's Other songs uses the same menu with its own orders
@@ -494,31 +494,28 @@ const OP = (() => {
     list = list || ROT_SORTS;
     now = now || U.rSort || 'old';
     act = act || 'rSortPick';
-    const m = document.createElement('div');
-    m.className = 'opmenu';
-    m.setAttribute('role', 'menu');
-    m.innerHTML = list
-      .map(
-        (o) =>
-          '<button role="menuitemradio" aria-checked="' +
-          (now === o[0]) +
-          '" data-a="' +
-          act +
-          '" data-v="' +
-          o[0] +
-          '"><span>' +
-          o[1] +
-          '</span><span class="tk" aria-hidden="true">' +
-          (now === o[0] ? ICON.check : '') +
-          '</span></button>'
-      )
-      .join('');
-    const r = btn.getBoundingClientRect();
-    m.style.top = window.scrollY + r.bottom + 4 + 'px';
-    document.body.appendChild(m);
-    m.style.left = Math.max(16, Math.min(window.innerWidth - m.offsetWidth - 16, r.right - m.offsetWidth)) + 'px';
-    menu = m;
-    MOTION.animate(m, [{ opacity: 0, transform: 'scale(.6)' }, { opacity: 1, transform: 'none' }], { spring: 'ripple', fade: true });
+    const o = (menu = KMENU.open({
+      id: 'opmenu',
+      anchor: btn,
+      kind: 'pull',
+      name: 'Order',
+      onClose: () => menu === o && (menu = null),
+      html: list
+        .map(
+          (x) =>
+            '<button role="menuitemradio" aria-checked="' +
+            (now === x[0]) +
+            '" data-a="' +
+            act +
+            '" data-v="' +
+            x[0] +
+            '">' +
+            x[1] +
+            (now === x[0] ? ICON.check : '') +
+            '</button>'
+        )
+        .join(''),
+    }));
   }
   // the rows slide to their new places
   function sortPick(v) {
@@ -539,20 +536,13 @@ const OP = (() => {
       fade: true,
     });
   }
-  document.addEventListener(
-    'click',
-    (e) => {
-      if (menu && !e.target.closest('.opmenu') && !e.target.closest('[data-a=rSort],[data-a=apSort]')) closeMenu();
-    },
-    true
-  );
   window.addEventListener('scroll', () => menu && closeMenu(), { passive: true });
 
   /* ----- pulling past the bottom: a rubber band, then it springs back ----- */
   const PULL = { y: null, x: 0, on: false, base: 0, last: 0, off: 0, w: 0, wt: 0 };
   let msg = null;
   const canPull = () =>
-    onPage() && U.fEdit == null && !U.sheet && !U.clock && !rec && !$('layer').firstElementChild && !KEYS.typing();
+    onPage() && U.fEdit == null && !U.sheet && !U.clock && !rec && !Parts.open && !$('lyc').firstElementChild && !KEYS.typing();
   const atBottom = () => window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 2;
   const rubber = (x) => {
     const d = window.innerHeight;

@@ -31,7 +31,8 @@ def run(b, t):
     m = pg.evaluate("""()=>({names:Object.keys(MOTION.SPRINGS),ease:MOTION.ease('nav'),gentle:MOTION.curve(.82,1.9).ms,
       nav:MOTION.curve(.86,2.2).ms,cap:MOTION.BLUR_MAX,speed:MOTION.speed(),off:document.documentElement.classList.contains('motion-off'),
       dur:getComputedStyle(document.documentElement).getPropertyValue('--dur-gentle').trim(),stag:[MOTION.stagger(2,'word'),MOTION.stagger(2,'row')]})""")
-    ok(m['names'] == ['gentle', 'nav', 'ripple', 'press', 'release'] and m['ease'].startswith('linear('), 'the shared springs (Q33 adds press and release), as linear() easings')
+    ok(m['names'][:5] == ['gentle', 'nav', 'ripple', 'press', 'release'] and 'sheet' in m['names'] and m['ease'].startswith('linear('),
+       "the shared springs (Q33 adds press and release; Q41 they're the parts kit's, with its own), as linear() easings")
     ok(m['nav'] < m['gentle'], 'the navigation spring is a little quicker than the gentle one')
     ok(m['cap'] == 1.5, 'distance blur is capped at 1.5 px')
     ok(m['speed'] == 0 and m['off'] and m['dur'] == '0ms', 'tests run with motion off, so nothing waits on a spring')

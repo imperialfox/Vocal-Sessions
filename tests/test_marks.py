@@ -234,12 +234,12 @@ def run(b, t):
         chips = pg.locator('#mksheet .mkchipx').count()
         ok(chips >= 5, f'"On these words" lists the layer\'s marks and Notes on the selection ({chips})')
         pg.click('#mksheet [data-a=mkRm] >> nth=0'); pg.wait_for_timeout(150)
-        ok(len(M(ch['sid'])) == n0 - 1 and 'Removed' in pg.inner_text('.toast'), 'removing from "On these words" says so')
-        pg.click('.toast .ckub'); pg.wait_for_timeout(150)
+        ok(len(M(ch['sid'])) == n0 - 1 and 'Removed' in pg.inner_text('.pk-toast'), 'removing from "On these words" says so')
+        pg.click('.pk-toast .pk-toast-undo'); pg.wait_for_timeout(150)
         ok(len(M(ch['sid'])) == n0, 'Undo in the toast puts it back')
         pg.click('#mksheet [data-a=mkPick][data-v=carry]'); pg.wait_for_timeout(150)
-        ok('Added Carry' in pg.inner_text('.toast'), 'adding says "Added Carry"')
-        pg.click('.toast .ckub'); pg.wait_for_timeout(150)
+        ok('Added Carry' in pg.inner_text('.pk-toast'), 'adding says "Added Carry"')
+        pg.click('.pk-toast .pk-toast-undo'); pg.wait_for_timeout(150)
         ok(len(M(ch['sid'])) == n0, 'and Undo takes it away again')
         # linked repeats: the same marks on every copy, the same words highlighted
         ok(pg.locator(f'.sgsec[data-o="{ch2["o"]}"] .w.echo').count() >= 1, 'selecting in Chorus 1 highlights the same words in the repeat')
@@ -267,7 +267,7 @@ def run(b, t):
         ok(len(stv) == 1 and (stv[0]['w0'], stv[0]['w1']) == (0, 3) and stv[0].get('check') == 1 and stv[0].get('was') == 'the',
            f'a changed word inside a range keeps the range, flagged to check ({stv})')
         pg.click('[data-a=sgDone]'); pg.wait_for_timeout(300)
-        ok('to check' in pg.inner_text('.toast'), 'Done says how many marks to check')
+        ok('to check' in pg.inner_text('.pk-toast'), 'Done says how many marks to check')
         t.shot(pg, 'sheet')
         pg.context.close()
 

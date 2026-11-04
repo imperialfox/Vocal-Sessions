@@ -579,7 +579,7 @@ function scrHistory() {
     chev +
     '</button></div>';
   const timeB =
-    '<div class="hdr">Practice time</div><div class="seg wide r6" role="tablist" aria-label="Range"><span class="knob" aria-hidden="true"></span>' +
+    '<div class="hdr">Practice time</div><div class="seg pk-seg wide r6" role="tablist" aria-label="Range"><span class="pk-seg-ind" aria-hidden="true"></span>' +
     RANGES.map(
       (r) =>
         '<button role="tab" data-a="prange" data-v="' +
@@ -637,7 +637,7 @@ function scrAll() {
     sel = sp ? histSel(songs) : null,
     sid = sel ? sel.id : null;
   const segH =
-    '<div class="seg wide" role="tablist" style="margin:2px 0 4px"><span class="knob" aria-hidden="true"></span><button role="tab" data-a="histTab" data-v="sessions" class="' +
+    '<div class="seg pk-seg wide" role="tablist" style="margin:2px 0 4px"><span class="pk-seg-ind" aria-hidden="true"></span><button role="tab" data-a="histTab" data-v="sessions" class="' +
     (songs ? '' : 'on') +
     '" aria-selected="' +
     !songs +
@@ -828,7 +828,7 @@ function scrEx() {
     '</span>' +
     (d ? '<span class="badge">Exercise ' + d.n + '</span>' : '') +
     '</div>' +
-    '<div class="seg wide" role="tablist" style="margin-bottom:6px"><span class="knob" aria-hidden="true"></span><button role="tab" data-a="exTab" data-v="summary" class="' +
+    '<div class="seg pk-seg wide" role="tablist" style="margin-bottom:6px"><span class="pk-seg-ind" aria-hidden="true"></span><button role="tab" data-a="exTab" data-v="summary" class="' +
     (U.exTab === 'summary' ? 'on' : '') +
     '" aria-selected="' +
     (U.exTab === 'summary') +

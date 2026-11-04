@@ -22,7 +22,7 @@ REFUSE = "Object.defineProperty(navigator,'wakeLock',{configurable:true,value:{r
 WIDE = "document.documentElement.scrollWidth<=innerWidth+1"
 OPEN = "!!document.querySelector('#layer .sck')&&U.clock"
 SHUT = "!document.querySelector('#layer .sck')&&!U.clock"
-TOAST = "t=>[...document.querySelectorAll('.toast')].some(x=>x.textContent.includes(t))"
+TOAST = "t=>[...document.querySelectorAll('.pk-toast')].some(x=>x.textContent.includes(t))"
 # a session 37 minutes in: Foundation logged at 22 min, Rotation running
 MID = """(()=>{newSession();X.start=Date.now()-37*60e3;X.f={slides:2,humming:3,lip:2,straw:3};X.fEnd=Date.now()-15*60e3;X.fE=22*60;
   saveDraft();go(()=>{U.tab='today';U.view='rot'})})()"""
@@ -302,28 +302,28 @@ def undo(b, t):
     pg.evaluate("(()=>{newSession();X.start=Date.now()-20*60e3;X.f={slides:2,humming:3,lip:2,straw:3};saveDraft();go(()=>{U.tab='today';U.view='found'})})()")
     pg.click('#dock [data-a=cta]')
     ok(until(pg, "U.view==='rot'") and until(pg, TOAST, arg='Foundation logged'), 'Log foundation shows an Undo toast')
-    pg.click('.toast .ckub')
+    pg.click('.pk-toast .pk-toast-undo')
     ok(until(pg, "U.view==='found'") and pg.evaluate("X.fEnd===null&&X.fE===null"), 'Undo goes back to Foundation with its end cleared')
     pg.wait_for_timeout(1000)
     pg.click('#dock [data-a=cta]')
     until(pg, "U.view==='rot'")
     fE = pg.evaluate("X.fE")
     ok(abs(fE - pg.evaluate("elapsedSec()")) < 1, 'logging again stamps the new end')
-    ok(until(pg, "![...document.querySelectorAll('.toast')].some(x=>x.textContent.includes('Foundation logged'))", 8000), 'the toast goes after about 5 s')
+    ok(until(pg, "![...document.querySelectorAll('.pk-toast')].some(x=>x.textContent.includes('Foundation logged'))", 8000), 'the toast goes after about 5 s')
     pg.evaluate("X.start-=4*60e3;saveDraft()")  # Rotation has run 4 minutes (under 2 counts as filled in afterwards)
     # from the clock: Log rotation, Undo, the clock still open on Rotation
     opened(pg)
     pg.click('.sck .sckmain')
     ok(until(pg, "U.view==='app'") and pg.evaluate(OPEN), 'Skip rotation from the clock: the clock stays open on Application')
     ok(until(pg, TOAST, arg='Rotation skipped'), 'with its Undo toast')
-    pg.click('.toast .ckub')
+    pg.click('.pk-toast .pk-toast-undo')
     ok(until(pg, "U.view==='rot'") and pg.evaluate("X.rEnd===null&&X.rE===null&&X.fE") == fE and pg.evaluate(OPEN),
        'Undo: back on Rotation, Foundation’s end untouched, the clock still open')
     # an Undo that's out of date does nothing
     pg.evaluate("X.rot={rung:2};OP.dockUpd()")
     pg.click('.sck .sckmain'); until(pg, "U.view==='app'")
     pg.evaluate("X.rE=X.rE-1;saveDraft()")
-    pg.click('.toast .ckub')
+    pg.click('.pk-toast .pk-toast-undo')
     pg.wait_for_timeout(200)
     ok(pg.evaluate("U.view") == 'app' and pg.evaluate("X.rEnd") is not None, 'an Undo after something else has changed the times does nothing')
     # the split, after an Undo: exactly from the stamps
@@ -334,7 +334,7 @@ def undo(b, t):
     e = max(1, st[2]); sc = ss['mins'] * 60 / e
     exp = {'f': round(st[0] * sc / 6) / 10, 'r': round((st[1] - st[0]) * sc / 6) / 10}
     ok(abs(ss['split']['f'] - exp['f']) <= 0.1 and abs(ss['split']['r'] - exp['r']) <= 0.1, f'Progress’s split is from the stamps as they ended up ({ss["split"]} vs {exp})')
-    ok(not pg.evaluate("[...document.querySelectorAll('.toast .ckub')].length"), 'and finishing takes away a Log’s Undo')
+    ok(not pg.evaluate("[...document.querySelectorAll('.pk-toast .pk-toast-undo')].length"), 'and finishing takes away a Log’s Undo')
     pg.context.close()
 
 
@@ -416,7 +416,7 @@ def wake(b, t):
     ok(until(pg, TOAST, arg='Screen stays on'), 'with a brief “Screen stays on” chip')
     pg.evaluate("togglePause();rerender()")
     ok(until(pg, "window.__wl.held===0"), 'pausing lets it go')
-    pg.evaluate("document.querySelectorAll('.toast').forEach(x=>x.remove());togglePause();rerender()")
+    pg.evaluate("document.querySelectorAll('.pk-toast').forEach(x=>x.remove());togglePause();rerender()")
     ok(until(pg, "window.__wl.held===1") and until(pg, TOAST, arg='Screen stays on'), 'Resume keeps it on again, with the chip')
     # the app hidden: iOS lets the lock go; back on screen it's asked for again
     pg.evaluate("Object.defineProperty(document,'hidden',{configurable:true,get:()=>true});document.dispatchEvent(new Event('visibilitychange'))")

@@ -1614,9 +1614,9 @@ const PAT = (() => {
     return (
       '<span class="lbl">Listen while I sing' +
       (on ? '<small>Headphones in, so it only hears you</small>' : '') +
-      '</span><span class="tgl" aria-checked="' +
-      on +
-      '" aria-hidden="true"></span>'
+      '</span>' +
+      switchHTML(on) +
+      ''
     );
   }
   // update the card and dock in place (no redraw of the page while playing)
@@ -1912,7 +1912,7 @@ const PAT = (() => {
       '<div class="phd"><h1>Patterns</h1><span class="pfor">' +
       esc(cfg.name) +
       '</span></div>' +
-      '<div class="pfix"><div class="seg wide pgrp" role="tablist" aria-label="Pattern groups"><span class="knob" aria-hidden="true"></span>' +
+      '<div class="pfix"><div class="seg pk-seg wide pgrp" role="tablist" aria-label="Pattern groups"><span class="pk-seg-ind" aria-hidden="true"></span>' +
       GROUPS.map(
         ([k, l]) =>
           '<button role="tab" data-a="patGroup" data-v="' +
@@ -1953,6 +1953,8 @@ const PAT = (() => {
     y0 = 0,
     i0 = 0,
     pvTimers = [];
+  // Q41 (D03) the speed is the parts kit's slider (its knob grows ×1.35 while held), under the −, speed and + bubble;
+  // the vertical bar it replaced is kept in git at the tag vs-3.54-speedbar
   function hudEl() {
     if (hud) return hud;
     hud = document.createElement('div');
@@ -1963,49 +1965,41 @@ const PAT = (() => {
       '<button class="phramp" id="pHudRamp" data-a="patRamp" aria-pressed="false" aria-label="Speed up each round">' +
       IC.ramp +
       '</button></div>' +
-      '<div class="phbox"><div class="phbar" id="pHudBar" role="slider" tabindex="0" aria-label="Speed" aria-valuemin="0.5" aria-valuemax="2"><div class="phfill" id="pHudFill"></div><span class="phhare" id="pHudTop">' +
-      IC.hare +
-      '</span><div class="phticks" id="pHudTicks"></div><span class="phtort">' +
+      '<div class="phcard glass"><span class="phtort" aria-hidden="true">' +
       IC.tort +
-      '</span></div><div class="phlabs" id="pHudLabs"></div></div></div>';
+      '</span><div class="pk-slider" id="pHudBar" data-name="speed-slider" data-min="0" data-max="' +
+      (SPEEDS.length - 1) +
+      '" data-step="1" data-value="' +
+      spdIx() +
+      '" aria-label="Speed" tabindex="0"><div class="pk-slider-track"><div class="pk-slider-fill"></div></div><div class="pk-slider-thumb"></div></div><span class="phhare" id="pHudTop" aria-hidden="true">' +
+      IC.hare +
+      '</span><div class="phlabs" id="pHudLabs"></div></div></div>';
     document.body.appendChild(hud);
     const bar = hud.querySelector('#pHudBar');
-    bar.addEventListener('pointerdown', (e) => {
-      bar.setPointerCapture(e.pointerId);
-      begin(e.clientY);
+    bar.addEventListener('pk:input', (e) => {
+      setSpeed(Math.round(e.detail.value), true);
+      clearTimeout(hudT);
     });
-    bar.addEventListener('pointermove', (e) => {
-      if (e.buttons || e.pointerType === 'touch') move(e.clientY);
-    });
-    bar.addEventListener('pointerup', () => let_go());
-    bar.addEventListener('pointercancel', () => let_go());
-    bar.addEventListener('keydown', (e) => {
-      if (e.key === 'ArrowUp' || e.key === 'ArrowRight') setSpeed(spdIx() + 1, true);
-      else if (e.key === 'ArrowDown' || e.key === 'ArrowLeft') setSpeed(spdIx() - 1, true);
-      else return;
-      e.preventDefault();
-      later();
-    });
+    bar.addEventListener('pk:change', () => later());
     return hud;
   }
-  const pc = (i) => 14 + (i / (SPEEDS.length - 1)) * 86;
+  const pc = (i) => (i / (SPEEDS.length - 1)) * 100;
   function hudDraw() {
     if (!hudOn) return;
     const i = spdIx();
-    hud.querySelector('#pHudFill').style.height = pc(i) + '%';
     hud.querySelector('#pHudVal').textContent = spLabel(i);
     const bar = hud.querySelector('#pHudBar');
-    bar.setAttribute('aria-valuenow', SPEEDS[i]);
+    if (+bar.dataset.value !== i) Parts.setSlider(bar, i);
+    bar.setAttribute('aria-valuemin', 0);
+    bar.setAttribute('aria-valuemax', SPEEDS.length - 1);
+    bar.setAttribute('aria-valuenow', i);
     bar.setAttribute('aria-valuetext', spLabel(i));
-    hud.querySelector('#pHudTicks').innerHTML = SPEEDS.map(
-      (x, k) => '<i class="' + (k <= i ? 'in' : '') + '" style="bottom:' + pc(k) + '%"></i>'
-    ).join('');
     hud.querySelector('#pHudLabs').innerHTML = [
-      [SPEEDS.length - 1, '2×'],
-      [ONE, '1×'],
       [0, '0.5×'],
+      [ONE, '1×'],
+      [SPEEDS.length - 1, '2×'],
     ]
-      .map(([k, l]) => '<span style="bottom:' + pc(k) + '%">' + l + '</span>')
+      .map(([k, l]) => '<span style="left:' + pc(k) + '%">' + l + '</span>')
       .join('');
     hud.querySelector('#pHudTop').classList.toggle('in', i === SPEEDS.length - 1);
     const rb = hud.querySelector('#pHudRamp');
@@ -2036,32 +2030,26 @@ const PAT = (() => {
     clearTimeout(hudT);
     hudT = setTimeout(closeHud, 2600);
   };
-  // the slider moves with the finger, not to it, from the current speed; it snaps to the 12 stops and stretches a
-  // little past either end
-  function begin(y) {
-    y0 = y;
+  // holding the speed pill opens the slider and a drag carries straight on, sideways, from the current speed; it snaps
+  // to the 12 stops
+  function begin(x) {
+    y0 = x;
     i0 = spdIx();
     clearTimeout(hudT);
-    hud.querySelector('#pHudBar').classList.remove('stretch');
   }
-  function move(y) {
+  function move(x) {
     if (!hudOn) return;
     const bar = hud.querySelector('#pHudBar'),
       n = SPEEDS.length - 1,
-      step = bar.getBoundingClientRect().height / n,
-      raw = i0 + (y0 - y) / step;
+      step = bar.getBoundingClientRect().width / n,
+      raw = i0 + (x - y0) / step;
     setSpeed(Math.round(Math.max(0, Math.min(n, raw))), true);
-    const over = raw > n ? (raw - n) * step : raw < 0 ? raw * step : 0,
-      k = Math.min(1, Math.abs(over) / 140);
-    bar.style.transformOrigin = over > 0 ? '50% 100%' : '50% 0%';
-    bar.style.transform = over && MOTION.on() ? 'scale(' + (1 - 0.06 * k) + ',' + (1 + 0.1 * k) + ')' : '';
+    bar.classList.add('pk-held');
     clearTimeout(hudT);
   }
   function let_go() {
     if (!hud) return;
-    const bar = hud.querySelector('#pHudBar');
-    bar.classList.add('stretch');
-    bar.style.transform = '';
+    hud.querySelector('#pHudBar').classList.remove('pk-held');
     later();
   }
   function setSpeed(i, quiet) {
@@ -2104,7 +2092,7 @@ const PAT = (() => {
     if (!pl) return;
     held = false;
     clearTimeout(holdT);
-    const y = e.clientY;
+    const x = e.clientX;
     try {
       pl.setPointerCapture(e.pointerId);
     } catch (er) {}
@@ -2112,11 +2100,11 @@ const PAT = (() => {
       held = true;
       heldAt = Date.now();
       openHud();
-      begin(y);
+      begin(x);
     }, 330);
   });
   document.addEventListener('pointermove', (e) => {
-    if (held && hudOn && e.target.closest && e.target.closest('#pSpd')) move(e.clientY);
+    if (held && hudOn && e.target.closest && e.target.closest('#pSpd')) move(e.clientX);
   });
   const up = (e) => {
     if (!e.target.closest || !e.target.closest('#pSpd')) return;
@@ -2129,60 +2117,53 @@ const PAT = (() => {
   document.addEventListener('pointerup', up);
   document.addEventListener('pointercancel', up);
 
-  /* ===== A small pull-up menu (the sound pill, Your voice's type) ===== */
-  let menuFn = null;
+  /* ===== A small menu (the sound pill, Your voice's type): Q41 the parts kit's, growing out of its button ===== */
+  let menuFn = null,
+    pm = null;
   // items: [key, label, checked] (checked true/false: a ✓ item; undefined: a choice, ✓ on cur), or ['-', heading]
   function menu(anchor, title, items, cur, fn) {
     closeMenu();
     menuFn = fn;
-    const el = document.createElement('div');
-    el.className = 'pmenu';
-    el.setAttribute('role', 'menu');
-    el.setAttribute('data-own-gesture', '');
-    el.innerHTML =
-      (title ? '<div class="pmh">' + esc(title) + '</div>' : '') +
-      items
-        .map(([k, l, on]) => {
-          if (k === '-') return '<div class="pmh pmsep">' + esc(l) + '</div>';
-          const c = on === undefined ? k === cur : !!on;
-          return (
-            '<button role="' +
-            (on === undefined ? 'menuitemradio' : 'menuitemcheckbox') +
-            '" aria-checked="' +
-            c +
-            '" data-a="patMenuPick" data-v="' +
-            esc(k) +
-            '"><span class="pmck">' +
-            (c ? '✓' : '') +
-            '</span>' +
-            esc(l) +
-            '</button>'
-          );
-        })
-        .join('');
-    const sc = document.createElement('div');
-    sc.className = 'pmscrim';
-    sc.dataset.a = 'patMenuClose';
-    document.body.appendChild(sc);
-    document.body.appendChild(el);
-    const r = anchor.getBoundingClientRect(),
-      mh = el.offsetHeight,
-      mw = el.offsetWidth,
-      vw = document.documentElement.clientWidth;
-    const below = r.top < innerHeight / 2;
-    el.style.left = Math.max(12, Math.min(vw - mw - 12, r.left + r.width / 2 - mw / 2)) + 'px';
-    el.style.top = (below ? r.bottom + 8 : Math.max(12, r.top - mh - 8)) + 'px';
-    el.style.transformOrigin = below ? '50% 0' : '50% 100%';
-    const first = el.querySelector('button');
-    if (first) first.focus({ preventScroll: true });
+    const o = (pm = KMENU.open({
+      id: 'pmenu',
+      anchor,
+      kind: 'pull',
+      name: title || 'Menu',
+      onClose: (picked) => {
+        if (pm !== o) return;
+        pm = null;
+        if (!picked) menuFn = null;
+      },
+      html:
+        (title ? '<div class="pmh">' + esc(title) + '</div>' : '') +
+        items
+          .map(([k, l, on]) => {
+            if (k === '-') return '<div class="pmh pmsep">' + esc(l) + '</div>';
+            const c = on === undefined ? k === cur : !!on;
+            return (
+              '<button role="' +
+              (on === undefined ? 'menuitemradio' : 'menuitemcheckbox') +
+              '" aria-checked="' +
+              c +
+              '" data-a="patMenuPick" data-v="' +
+              esc(k) +
+              '">' +
+              esc(l) +
+              (c ? ICON.check : '') +
+              '</button>'
+            );
+          })
+          .join(''),
+    }));
   }
   function closeMenu() {
-    document.querySelectorAll('.pmenu, .pmscrim').forEach((x) => x.remove());
+    if (pm) pm.shut();
+    pm = null;
     menuFn = null;
   }
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
-      if (document.querySelector('.pmenu')) closeMenu();
+      if (pm) closeMenu();
       else if (hudOn) closeHud();
     }
   });
@@ -2196,13 +2177,13 @@ const PAT = (() => {
     '"><span class="lbl">' +
     l +
     (sub ? '<small>' + sub + '</small>' : '') +
-    '</span><span class="tgl" aria-checked="' +
-    on +
-    '" aria-hidden="true"></span></button>';
+    '</span>' +
+    switchHTML(on) +
+    '</button>';
   const segH = (a, opts, cur, label) =>
-    '<div class="seg wide pset" role="group" aria-label="' +
+    '<div class="seg pk-seg wide pset" role="group" aria-label="' +
     label +
-    '"><span class="knob" aria-hidden="true"></span>' +
+    '"><span class="pk-seg-ind" aria-hidden="true"></span>' +
     opts
       .map(
         ([k, l]) =>
@@ -2458,7 +2439,6 @@ const PAT = (() => {
       tick();
       if (U.view === 'pat' && S.playing) end(false);
     }
-    if (U.view === 'pat') placeKnobs();
     // Q38 Find your bridge lets go of the microphone once its sheet goes
     if (U.sheet !== 'bridge' && (FB.stop || FB.phase !== 'ready')) fbReset();
   }

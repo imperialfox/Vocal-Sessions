@@ -316,7 +316,7 @@ const FIND = (() => {
     return (
       '<h1>Search</h1><div class="fbar' +
       (q.trim() ? ' on' : '') +
-      '"><label class="sfield inl ffield">' +
+      '"><label class="sfield pk-search inl ffield">' +
       SGI.search +
       '<input id="fq" type="search" placeholder="Search" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="search" aria-label="Search" value="' +
       esc(q) +
@@ -352,7 +352,7 @@ const FIND = (() => {
 
   /* ----- the circle and the other doors ----- */
   const circle = () =>
-    '<button class="circ glass scirc' +
+    '<button class="pk-btn pk-circle pk-glass pk-press pk-search-circle scirc' + // Q41 the parts kit's search circle (D02)
     (U.tab === 'find' ? ' on' : '') +
     '" data-a="findOpen" aria-label="Search" aria-current="' +
     (U.tab === 'find' ? 'page' : 'false') +

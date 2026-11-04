@@ -112,13 +112,13 @@
      999px and circles 50% */
   --r-small: 10px; /* icon tiles, badges, small inner boxes, the focus ring */
   --r-medium: 14px; /* fields, banners, inner boxes, menus */
-  --r-card: 20px; /* cards and grouped lists */
+  --r-card: 20px; /* cards and grouped lists, and (Q41, D16) every menu */
   --r-large: 26px; /* big blocks, pads, the iPad hero */
-  --r-sheet: 34px; /* sheets and the session clock */
+  --r-sheet: 46px; /* sheets and the session clock: the screen's own corners (Q41, D17; 34 before) */
   /* the solid button press (glass buttons grow instead: PRESS in gestures.js, Q33) */
   --press: 0.93;
-  /* easings the app really uses, beside MOTION's springs (--ease-gentle, -nav, -ripple, -press, -release, published by
-     js/motion.js); code reads the same three as MOTION.EASE */
+  /* easings the app really uses, beside the parts kit's springs (--ease-gentle, -nav, -ripple, -press, -release …,
+     published by js/parts-kit.js since Q41); code reads the same three as MOTION.EASE */
   --ease-pop: cubic-bezier(0.3, 1.7, 0.45, 1); /* the solid press settle */
   --ease-knob: cubic-bezier(0.3, 1.35, 0.5, 1); /* the segmented knob's settle */
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1); /* one settle without a bounce */
@@ -352,7 +352,6 @@ html.glass-solid {
 .circ,
 .pill,
 .tabbar,
-.sheet,
 .cta {
   position: relative;
 }
@@ -1036,76 +1035,29 @@ html.motion-reduced .tl-item.now .tl-node::after {
   color: var(--fg2);
 }
 
-.seg {
-  position: relative;
-  display: inline-flex;
-  background: var(--fill);
-  border-radius: 999px;
-  padding: 3px;
-  gap: 2px;
+/* Q41 (D04) segmented controls are the parts kit's (.pk-seg): its track, knob and spring. Their segments are equal, as
+   on iOS: as wide as the widest label in the row, or sharing the row's width (.wide) */
+.seg.pk-seg {
+  display: inline-grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
   flex-shrink: 0;
 }
-.seg button {
-  position: relative;
-  z-index: 2;
-  min-width: 44px;
-  height: 34px;
-  border-radius: 999px;
-  font-size: var(--t-subhead);
-  font-weight: 500;
-  color: var(--fg2);
+.seg.pk-seg > button {
+  padding: 0 12px;
   text-align: center;
-  transition: color var(--dur-fade);
+  min-width: 0;
+  white-space: nowrap;
+  font-size: var(--t-subhead);
+  color: var(--fg2);
+  transition: color calc(var(--dur-fade) * var(--pk-speed)) var(--ease-out);
 }
-.seg button.on {
+.seg.pk-seg > button.on {
   color: var(--fg);
 }
-.knob {
-  position: absolute;
-  z-index: 1;
-  top: 3px;
-  bottom: 3px;
-  left: 0;
-  width: 44px;
-  border-radius: 999px;
-  background: var(--surface);
-  opacity: 0;
-  box-shadow:
-    inset 0 1px 0 var(--rim1),
-    inset 0 -0.5px 0 var(--glass-lo),
-    inset 0 0 10px var(--glass-glow),
-    0 3px 12px var(--glass-shadow);
-  transition:
-    transform 0.45s var(--ease-knob),
-    width 0.3s,
-    opacity var(--dur-fade);
-}
-.knob.set {
-  opacity: 1;
-}
-.knob.squish {
-  animation: squish 0.45s var(--ease-knob);
-}
-@keyframes squish {
-  0% {
-    scale: 1 1;
-  }
-  35% {
-    scale: 1.22 0.86;
-  }
-  70% {
-    scale: 0.96 1.04;
-  }
-  100% {
-    scale: 1 1;
-  }
-}
-.seg.wide {
-  display: flex;
+.seg.pk-seg.wide {
+  display: grid;
   width: 100%;
-}
-.seg.wide button {
-  flex: 1;
 }
 .chips {
   display: flex;
@@ -1142,8 +1094,8 @@ html.motion-reduced .tl-item.now .tl-node::after {
   transition: transform 0.5s var(--ease-pop);
 }
 .arch:active {
-  transform: scale(0.96);
-  transition-duration: var(--dur-quick);
+  background-color: var(--pk-row-press); /* Q41 (D06) row-like cards highlight while pressed, no shrink */
+  transition-duration: 0s;
 }
 .arch:focus-visible {
   outline: 2px solid var(--accent);
@@ -1299,7 +1251,6 @@ html.motion-reduced .tl-item.now .tl-node::after {
 .circ,
 .row,
 .chip,
-.tabbar button,
 .calbtn,
 .cal button {
   transition: transform 0.5s var(--ease-pop);
@@ -1318,8 +1269,8 @@ html.motion-reduced .tl-item.now .tl-node::after {
   background-image: linear-gradient(var(--lift, transparent), var(--lift, transparent)) !important;
 }
 .row:active {
-  transform: scale(0.98);
-  transition-duration: var(--dur-quick);
+  background-color: var(--pk-row-press); /* Q41 (D06) rows highlight while pressed (the parts kit's row press), no shrink */
+  transition-duration: 0s;
 }
 .ghost {
   display: block;
@@ -1405,54 +1356,6 @@ main {
   font-size: 0;
   gap: 0;
 }
-/* 3.23 (Q08) the tab bar's collapse, as in Music: the bar fades and scales away towards the left while a pill holding
-   only the active tab's icon grows in from that tab's place to the left edge; the search circle stays at the right.
-   Transforms and opacity only (nothing re-lays out or changes size), on the gentle spring, and the row keeps its
-   height so nothing resting on the bar moves */
-.dockrow {
-  position: relative;
-}
-.dockrow .tabbar {
-  transform-origin: 0 50%;
-  transition:
-    transform var(--dur-gentle) var(--ease-gentle),
-    opacity calc(var(--dur-gentle) * 0.45) ease;
-}
-.dockrow.min .tabbar {
-  opacity: 0;
-  transform: scale(0.62);
-  pointer-events: none;
-}
-.tabpill {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 64px;
-  height: 64px;
-  border-radius: 999px;
-  padding: 5px;
-  opacity: 0;
-  pointer-events: none;
-  transform: translateX(var(--pill-x, 0px)) scale(0.84);
-  transition:
-    transform var(--dur-gentle) var(--ease-gentle),
-    opacity calc(var(--dur-gentle) * 0.45) ease;
-}
-.tabpill span {
-  display: grid;
-  place-items: center;
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  background: var(--fill);
-  color: var(--accent);
-}
-.dockrow.min .tabpill {
-  opacity: 1;
-  transform: none;
-  pointer-events: auto;
-}
-
 .sw {
   overflow: hidden;
   background: var(--danger);
@@ -1658,35 +1561,74 @@ main {
   height: auto;
 }
 
-.scrim {
+/* Q41 the parts kit's overlays (sheets, alerts, action sheets, menus, toasts) live in #layer, the kit's root: the
+   whole screen above the app, letting taps through where nothing is open. The session clock is the app's own, in #lyc */
+#layer {
   position: fixed;
   inset: 0;
-  z-index: 40;
-  overscroll-behavior: contain;
-  background: var(--scrim);
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  animation: fade var(--dur-fade);
+  z-index: 60;
+  pointer-events: none;
 }
-/* Q33 sheets keep their strength (near-solid, for reading) and their blur; they take only the new rim and shadow, and
-   dark mode's gentler saturation. The session clock is a sheet too */
-.sheet,
+#layer > :not(.pk-layer) {
+  pointer-events: auto;
+}
+/* Q33 the session clock keeps its strength and blur (sheets are the kit's now: strong glass, D15) */
 .clock {
   -webkit-backdrop-filter: blur(26px) saturate(var(--glass-sat)) brightness(1.06);
   backdrop-filter: blur(26px) saturate(var(--glass-sat)) brightness(1.06);
 }
-.sheet {
-  width: 100%;
-  max-width: 440px;
-  max-height: 88vh;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  margin: 0 8px calc(8px + env(safe-area-inset-bottom, 0px));
-  border-radius: var(--r-sheet);
-  padding: 10px 16px 16px;
-  background: var(--glass-strong);
-  animation: up 0.55s cubic-bezier(0.28, 1.35, 0.45, 1);
+/* Q41 an app sheet inside the kit's sheet (HOST in ui.js): the app's head takes the kit's head's place at the kit's
+   60 pt, so the kit measures it right; the kit's grabber is the one shown. On iPad and Mac it stays at most 540 pt wide,
+   in the middle */
+.vs-sheet .pk-sheet-head.vs-own {
+  padding: 0;
+  display: block;
+}
+.vs-sheet .shead {
+  position: static;
+  margin: 0;
+  padding: 14px 16px 6px;
+  background: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  border-radius: 0;
+}
+.vs-sheet .shead .grab {
+  display: none;
+}
+/* Q11, kept on the kit's toast (Q41): a longer message wraps onto a second line rather than being cut off */
+.pk-toast.vs-long {
+  height: auto;
+  min-height: 50px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  border-radius: var(--r-large);
+  line-height: 1.3;
+}
+.pk-toast.vs-long > span {
+  white-space: normal;
+}
+/* the Marks key's full-screen cover (D10): the app's head starts just under the status bar */
+.vs-sheet.pk-cover .pk-cover-body {
+  padding-top: calc(var(--sat) + 8px);
+}
+/* Q41 the parts kit places the knobs of a zoom's still copy too: a still never slides */
+.zm :is(.pk-seg-ind, .pk-tab-ind, .pk-switch-knob, .pk-slider-thumb, .pk-slider-fill) {
+  transition: none !important;
+}
+/* Q41 a top bar button changing its icon in place: the old and new icons share the circle while they cross */
+#bar .circ:has(> .pk-ico) {
+  display: grid;
+  place-items: center;
+}
+#bar .circ > .pk-ico {
+  grid-area: 1 / 1;
+  display: grid;
+  place-items: center;
+}
+body.reg .vs-sheet {
+  left: max(var(--pk-m, 8px), calc(50% - 270px));
+  right: max(var(--pk-m, 8px), calc(50% - 270px));
 }
 .grab {
   width: 36px;
@@ -1725,32 +1667,6 @@ textarea.field {
   font-size: var(--t-footnote);
   color: var(--danger);
   margin: 6px 4px 0;
-}
-.toast {
-  position: fixed;
-  left: 50%;
-  top: calc(14px + env(safe-area-inset-top, 0px));
-  transform: translateX(-50%);
-  z-index: 60;
-  border-radius: 999px;
-  padding: 10px 18px;
-  font-size: var(--t-subhead);
-  font-weight: 500;
-  white-space: nowrap;
-  max-width: calc(100vw - 32px);
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-/* Q11: a longer message wraps rather than being cut off */
-.toast.long {
-  white-space: normal;
-  text-align: center;
-  width: max-content;
-  line-height: 1.3;
-  border-radius: 22px;
-}
-.toast.ckundo.long {
-  text-align: left;
 }
 /* 3.12 the floating window: a running session or a playing take, shown on every other screen (window.js) */
 .fw {
@@ -2442,19 +2358,6 @@ main.ptr-snap {
 body.land .wrap {
   max-width: 860px;
 }
-body.land .tabbar button {
-  flex-direction: row;
-  width: auto;
-  max-width: none;
-  height: 40px;
-  padding: 0 14px;
-  font-size: var(--t-footnote);
-  gap: 6px;
-}
-body.land .tabbar button svg {
-  width: 20px;
-  height: 20px;
-}
 body.land .dash {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -2463,13 +2366,6 @@ body.land .dash {
 }
 body.land .d-side .week {
   margin-top: 8px;
-}
-body.land .scrim {
-  align-items: flex-end;
-}
-body.land .sheet {
-  max-width: 560px;
-  max-height: 94vh;
 }
 body.land.sheet-open .wrap {
   transform: none;
@@ -2572,16 +2468,6 @@ body.reg .d-side .grp:first-of-type {
 }
 .sl .seg.wide {
   margin-top: 0 !important;
-}
-body.reg .scrim {
-  align-items: center;
-}
-body.reg .sheet {
-  max-width: 540px;
-  margin: 24px;
-  max-height: min(86vh, 900px);
-  border-radius: 28px;
-  animation: pop 0.42s cubic-bezier(0.28, 1.25, 0.45, 1);
 }
 body.reg .grab {
   display: none;
@@ -2730,14 +2616,6 @@ body.wide .side-nav {
 }
 body.reg .shead {
   border-radius: 28px 28px 0 0;
-}
-.sheet.drag {
-  transition: none !important;
-  animation: none !important;
-}
-.sheet.back {
-  transition: transform 0.32s cubic-bezier(0.3, 1.15, 0.5, 1) !important;
-  animation: none !important;
 }
 /* 3.4 launch screen: app icon on the normal background, fades with a slight zoom once ready */
 #splash {
@@ -3065,84 +2943,56 @@ html.motion-reduced *::after {
   color: #fff;
   font-weight: 600;
 }
-/* tab bar with the search circle beside it */
-.dockrow {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
+/* Q41 (D01, D02) the dock's tab bar is the parts kit's (.pk-dock.pk-inline: the bar and the search circle, 8 pt apart);
+   it keeps the app's width on iPhone upright (the whole dock) and its compact rows on its side */
+.dockrow.pk-dock {
+  height: auto;
 }
-.dockrow .tabbar {
-  margin: 0;
-  flex: 0 1 auto;
-  min-width: 0;
+.dockrow .pk-tab svg {
+  width: 26px;
+  height: 26px;
 }
-.dockrow .tabbar button {
-  width: 72px;
-  max-width: 72px;
-  flex: 0 1 72px;
-  min-width: 0;
+.dockrow.vs-notab .pk-tab-ind {
+  opacity: 0;
 }
-/* 3.23 (Q08) iPhone upright: the tabs share the bar's full width, and with the search circle beside it the bar
-   narrows to make room, like Notes' search field beside its compose button: 12 pt apart, the circle as tall as the bar */
-body.phone .dock .tabbar {
-  width: 100%;
-  max-width: none;
+.dockrow.vs-notab .pk-tab.on {
+  color: var(--fg);
 }
-body.phone .dock .tabbar button {
-  width: auto;
-  max-width: none;
-  flex: 1 1 0;
-  min-width: 0;
-}
-body.phone .dockrow {
-  gap: 12px;
-}
-body.phone .dockrow .tabbar {
-  flex: 1 1 auto;
-}
-body.phone .dock .scirc {
+.dockrow .scirc {
   width: 64px;
   height: 64px;
   flex: none;
 }
-.scirc {
-  width: 64px;
-  height: 64px;
+/* Q27 iPhone on its side: the dock is 430 pt wide, so each tab is a row (icon, then label) in a shorter bar; the tabs
+   stay equal, as the kit's highlight needs, and each label shows in full */
+body.land .dockrow .pk-tabbar {
+  height: 50px;
 }
-@media (max-width: 340px) {
-  .dockrow .tabbar button {
-    font-size: var(--t-caption2);
-    letter-spacing: -0.01em;
-  }
-  .scirc {
-    width: 58px;
-    height: 58px;
-  }
+body.land .dockrow.pk-dock {
+  height: 50px;
+}
+body.land .dockrow .pk-tab {
+  flex-direction: row;
+  gap: 4px;
+  font-size: var(--t-footnote);
+}
+body.land .dockrow .pk-tab > span {
+  overflow: visible;
+}
+body.land .dockrow .pk-tab svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
 }
 body.land .scirc {
   width: 50px;
   height: 50px;
 }
-/* Q27 iPhone on its side: the dock is 430 pt wide, so with the search circle beside it the tabs can be short of room
-   ("Exercises" read "Exerc" under the circle at 844 × 390). Each tab's side padding is two spacers (14 pt, as
-   before) that may shrink to 3 pt, so a short bar tightens the tabs rather than cutting a label; with room to spare
-   it looks exactly as it did. Icons, labels and the 6 pt between them keep their size */
-body.land .dockrow .tabbar button {
-  flex: 0 1 auto;
-  padding: 0;
-  gap: 0;
-}
-body.land .dockrow .tabbar button::before,
-body.land .dockrow .tabbar button::after {
-  content: '';
-  flex: 0 1 auto;
-  width: 14px;
-  min-width: 3px;
-}
-body.land .dockrow .tabbar button svg {
-  flex: none;
-  margin-right: 6px;
+@media (max-width: 340px) {
+  .scirc {
+    width: 58px;
+    height: 58px;
+  }
 }
 /* 3.22 Search: the circle beside the tab bar, tinted while Search is open */
 .scirc {
@@ -3361,7 +3211,7 @@ body.land .sgbar {
   transition: none;
 }
 .rowc:active:not(.drag) {
-  background: color-mix(in srgb, var(--surface) 92%, var(--fg));
+  background: var(--pk-row-press); /* Q41 (D06) the parts kit's row press colour */
 }
 .rowc.sel {
   background: var(--hl);
@@ -3456,17 +3306,6 @@ mark.sgmk {
   height: 14px;
   stroke-width: 3;
 }
-.rowc.lifted {
-  z-index: 45;
-  transform: scale(1.03);
-  box-shadow: 0 14px 34px var(--glass-shadow);
-  border-radius: 16px;
-}
-.srow:has(.lifted),
-.grp:has(.lifted) {
-  overflow: visible;
-  z-index: 45;
-}
 .hdrsort {
   display: inline-flex;
   align-items: center;
@@ -3545,47 +3384,6 @@ mark.sgmk {
   margin: 10px 0 4px;
 }
 /* menus */
-.ctxback {
-  position: fixed;
-  inset: 0;
-  z-index: 44;
-  background: var(--scrim);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
-  animation: fade 0.25s;
-}
-.ctxback.clear {
-  background: transparent;
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-}
-.ctxmenu {
-  position: absolute;
-  z-index: 46;
-  border-radius: 18px;
-  min-width: 240px;
-  overflow: hidden;
-  background: var(--glass-strong);
-  animation: pop 0.3s cubic-bezier(0.3, 1.4, 0.5, 1);
-}
-.ctxmenu button {
-  position: relative;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  width: 100%;
-  padding: 13px 16px;
-  font-size: var(--t-body);
-  text-align: left;
-}
-.ctxmenu button + button {
-  border-top: 0.5px solid var(--sep);
-}
-.ctxmenu svg.i {
-  width: 19px;
-  height: 19px;
-}
 .etool {
   position: fixed;
   left: 50%;
@@ -4220,33 +4018,6 @@ textarea.field.sglyr {
   margin-top: 14px;
 }
 /* an iOS switch */
-.tgl {
-  position: relative;
-  width: 51px;
-  height: 31px;
-  border-radius: 999px;
-  background: var(--fill);
-  flex-shrink: 0;
-  transition: background 0.25s;
-}
-.tgl::after {
-  content: '';
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 27px;
-  height: 27px;
-  border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
-  transition: transform 0.3s cubic-bezier(0.3, 1.3, 0.5, 1);
-}
-.tgl[aria-checked='true'] {
-  background: var(--good);
-}
-.tgl[aria-checked='true']::after {
-  transform: translateX(20px);
-}
 .bkstat.info {
   background: var(--fill);
 }
@@ -5473,23 +5244,6 @@ html.ckplay body {
   width: 18px;
   height: 18px;
 }
-/* toasts with Undo */
-.toast.ckundo {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 6px 6px 6px 18px;
-}
-.ckub {
-  flex: none;
-  height: 30px;
-  padding: 0 12px;
-  border-radius: 999px;
-  background: var(--fill);
-  color: var(--accent);
-  font-size: var(--t-subhead);
-  font-weight: 600;
-}
 .cknote2 {
   background: var(--hl);
   border-radius: var(--r-medium);
@@ -5688,7 +5442,7 @@ html.ckplay body {
   min-height: 300px;
 }
 /* zoom levels: the selected one outlined in orange */
-.trklv .knob {
+.trklv .pk-seg-ind {
   box-shadow:
     inset 0 0 0 1.5px var(--trk-loop),
     0 3px 12px var(--glass-shadow);
@@ -7107,12 +6861,7 @@ body.ckpaused #app {
   }
 }
 html.motion-reduced .lgdraw,
-html.motion-reduced .sheet,
-html.motion-reduced .notebox,
-html.motion-reduced .ctxmenu {
-  animation-name: rmIn;
-}
-html.motion-reduced .knob.squish {
+html.motion-reduced .notebox {
   animation: none;
 }
 
@@ -7208,8 +6957,8 @@ html.motion-reduced .knob.squish {
   transition: transform 0.5s var(--ease-pop);
 }
 .setfoot:active {
-  transform: scale(0.96);
-  transition-duration: var(--dur-quick);
+  background-color: var(--pk-row-press); /* Q41 (D06) */
+  transition-duration: 0s;
 }
 .setfoot img {
   width: 60px;
@@ -7888,26 +7637,6 @@ button.ckr {
 .sgl {
   -webkit-touch-callout: none;
 }
-.sgl.lifted {
-  z-index: 1;
-  background: var(--surface);
-  border-radius: var(--r-small);
-  box-shadow:
-    0 0 0 6px var(--surface),
-    0 12px 30px var(--glass-shadow);
-  transform: scale(1.03);
-  transform-origin: left center;
-  transition: transform var(--dur-gentle) var(--ease-gentle);
-}
-body.lmopen #app .sgsec .sgl:not(.lifted),
-body.lmopen #app .sgsec .sghead,
-body.lmopen #app .sgsec .sgnote,
-body.lmopen #app .sgsec .sgcue,
-body.lmopen #app .sgsec .mint,
-body.lmopen #app .sgsec .sgrecp {
-  opacity: 0.3;
-  transition: opacity var(--dur-gentle) var(--ease-gentle);
-}
 /* suggested breaths: a faint dashed ’ + at the line's end, in Phrasing on the Marks side */
 .sgsb {
   display: inline-flex;
@@ -8193,8 +7922,8 @@ body.lmopen #app .sgsec .sgrecp {
   transition: transform 0.5s var(--ease-pop);
 }
 .osum:active {
-  transform: scale(0.98);
-  transition-duration: var(--dur-quick);
+  background-color: var(--pk-row-press); /* Q41 (D06) */
+  transition-duration: 0s;
 }
 .otick {
   width: 24px;
@@ -8424,37 +8153,6 @@ html.motion-off .cuebox {
   color: var(--accent);
   stroke-width: 3;
 }
-.opmenu {
-  position: absolute;
-  z-index: 45;
-  min-width: 200px;
-  border-radius: var(--r-medium);
-  background: var(--glass-strong);
-  /* Q33 the new glass material */
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
-  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
-  box-shadow: var(--glass-rim), var(--glass-float);
-  overflow: hidden;
-  transform-origin: top right;
-}
-.opmenu button {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  width: 100%;
-  min-height: 44px;
-  padding: 0 16px;
-  font-size: var(--t-body);
-  text-align: left;
-}
-.opmenu button + button {
-  border-top: 0.5px solid var(--sep);
-}
-.opmenu .tk {
-  color: var(--accent);
-  display: grid;
-}
 /* the pinned button, its hint and "Finish here" */
 .ophint {
   text-align: center;
@@ -8631,8 +8329,8 @@ body:has(#dock .ophint) .dock .in {
 .apsing:active,
 .apsoft:active,
 .apstop:active {
-  transform: scale(0.96);
-  transition-duration: var(--dur-quick);
+  filter: brightness(0.9); /* Q41 (D06) row-like buttons darken while pressed, no shrink */
+  transition-duration: 0s;
 }
 .aplinks {
   display: flex;
@@ -8780,9 +8478,6 @@ body:has(#dock .ophint) .dock .in {
   gap: 8px;
   padding: 10px;
   margin-top: 10px;
-}
-.seg.apcmp {
-  display: flex;
 }
 .seg.apcmp button {
   flex: 1;
@@ -10292,151 +9987,61 @@ body.patdock main {
   width: 18px;
   height: 18px;
 }
-.phbox {
+/* Q41 (D03) the speed is the parts kit's slider, on a glass card under the bubble, between a tortoise and a hare */
+.phcard {
   position: relative;
-}
-.phbar {
-  position: relative;
-  width: 84px;
-  height: 250px;
-  border-radius: 30px;
-  overflow: hidden;
-  background: rgba(120, 120, 128, 0.32);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
-  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  width: min(300px, calc(100vw - 32px));
+  padding: 8px 14px 22px;
+  border-radius: var(--r-large);
+  display: flex;
+  align-items: center;
+  gap: 10px;
   opacity: 0;
-  transform: translateY(24px) scale(0.35);
-  transform-origin: 50% 100%;
+  transform: translateY(10px) scale(0.9);
   transition:
     opacity var(--dur-fade),
-    transform 0.5s var(--ease-knob);
-  touch-action: none;
+    transform calc(var(--dur-gentle)) var(--ease-gentle);
 }
-#pHud.on .phbar,
+#pHud.on .phcard,
 #pHud.on .phbub {
   opacity: 1;
   transform: none;
   pointer-events: auto;
 }
-.phbar.stretch {
-  transition: transform 0.5s cubic-bezier(0.3, 1.5, 0.5, 1);
-}
-.phfill {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: #fff;
-  transition: height 0.32s cubic-bezier(0.3, 1.5, 0.5, 1);
-}
-.phticks i {
-  position: absolute;
-  left: 50%;
-  width: 14px;
-  height: 2px;
-  margin: 0 0 -1px -7px;
-  border-radius: 1px;
-  background: rgba(255, 255, 255, 0.6);
-}
-.phticks i.in {
-  background: rgba(0, 0, 0, 0.16);
-}
-.phbar svg {
-  position: absolute;
-  left: 50%;
-  width: 24px;
-  height: 24px;
-  margin-left: -12px;
+.phcard svg {
+  width: 22px;
+  height: 22px;
   fill: none;
+  stroke: var(--fg2);
   stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
-}
-.phtort svg {
-  bottom: 14px;
-  stroke: #1c1c1e;
-}
-.phhare svg {
-  top: 14px;
-  stroke: rgba(255, 255, 255, 0.85);
+  display: block;
 }
 .phhare.in svg {
-  stroke: #1c1c1e;
+  stroke: var(--accent);
 }
 .phlabs {
   position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 100%;
-  margin-left: 8px;
-  opacity: 0;
-  transition: opacity var(--dur-fade);
-}
-#pHud.on .phlabs {
-  opacity: 1;
+  left: calc(14px + 32px);
+  right: calc(14px + 32px);
+  bottom: 4px;
+  height: 16px;
 }
 .phlabs span {
   position: absolute;
-  left: 0;
-  transform: translateY(50%);
+  transform: translateX(-50%);
   font-size: var(--t-caption1);
   font-weight: 600;
-  color: #fff;
+  color: var(--fg2);
   white-space: nowrap;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
 }
 /* the pull-up menu (sound, voice type) */
-.pmscrim {
-  position: fixed;
-  inset: 0;
-  z-index: 69;
-}
-.pmenu {
-  position: fixed;
-  z-index: 70;
-  min-width: 230px;
-  max-width: calc(100vw - 24px);
-  border-radius: 16px;
-  background: var(--glass-strong);
-  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
-  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
-  box-shadow: 0 12px 40px var(--glass-shadow);
-  padding: 6px 0;
-  animation: pmIn 0.35s var(--ease-knob);
-}
 @keyframes pmIn {
   from {
     opacity: 0;
     transform: scale(0.6);
   }
-}
-.pmenu button {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  min-height: 44px;
-  padding: 0 16px;
-  font-size: var(--t-body);
-  text-align: left;
-  color: var(--fg);
-}
-.pmenu button + button {
-  border-top: 0.5px solid var(--sep);
-}
-.pmck {
-  width: 16px;
-  font-weight: 600;
-}
-.pmh {
-  font-size: var(--t-footnote);
-  color: var(--fg2);
-  padding: 6px 16px 4px;
-}
-.pmh.pmsep {
-  border-top: 0.5px solid var(--sep);
-  margin-top: 4px;
-  padding-top: 10px;
 }
 /* Settings › Your voice and Pattern player */
 .pvstep {
@@ -10461,11 +10066,10 @@ body.patdock main {
 .psetbox {
   margin: 0 4px;
 }
-html.motion-reduced .pmenu,
 html.motion-reduced .pvowel b.swap {
-  animation: rmIn var(--dur-fade) ease-out;
+  animation: rmIn var(--dur-fade) var(--ease-out);
 }
-html.motion-reduced .phbar,
+html.motion-reduced .phcard,
 html.motion-reduced .phbub,
 html.motion-reduced .pt.held {
   transform: none !important;

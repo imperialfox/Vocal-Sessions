@@ -54,19 +54,20 @@ def sheets(b, t):
     pg.evaluate("document.querySelector('main').style.paddingBottom='1200px';scrollTo(0,80)")
     y = pg.evaluate("scrollY")
     pg.click('[data-a=exportPrep]'); pg.wait_for_function("U.sheet==='exportReady'", timeout=10000); pg.wait_for_timeout(700)
-    tall = pg.evaluate("(()=>{const s=document.querySelector('.sheet');return s.scrollHeight>s.clientHeight+20})()")
+    # Q41 the parts kit's sheet: its content (.pk-sheet-body) is what scrolls
+    tall = pg.evaluate("(()=>{const s=document.querySelector('.sheet .pk-sheet-body');return s.scrollHeight>s.clientHeight+20})()")
     ok(tall, 'Backup ready is taller than the screen here')
     box = pg.locator('.sheet').bounding_box()
     cx, cy = box['x'] + box['width'] / 2, box['y'] + box['height'] / 2
     swipe(pg, cx, cy + 120, cy - 120)
-    ok(pg.evaluate("document.querySelector('.sheet').scrollTop") > 20 and pg.evaluate("scrollY") == y, 'a swipe scrolls the tall sheet itself')
+    ok(pg.evaluate("document.querySelector('.sheet .pk-sheet-body').scrollTop") > 20 and pg.evaluate("scrollY") == y, 'a swipe scrolls the tall sheet itself')
     pg.mouse.move(cx, cy)
     for _ in range(4): pg.mouse.wheel(0, 800); pg.wait_for_timeout(150)
-    ok(pg.evaluate("(()=>{const s=document.querySelector('.sheet');return s.scrollTop+s.clientHeight>=s.scrollHeight-2})()"),
+    ok(pg.evaluate("(()=>{const s=document.querySelector('.sheet .pk-sheet-body');return s.scrollTop+s.clientHeight>=s.scrollHeight-2})()"),
        'the wheel scrolls it to the bottom')
     swipe(pg, cx, cy + 120, cy - 120); pg.mouse.wheel(0, 800); pg.wait_for_timeout(300)
     ok(pg.evaluate("scrollY") == y, 'going past its bottom leaves the page behind still')
-    pg.evaluate("document.querySelector('.sheet').scrollTop=0"); pg.wait_for_timeout(100)
+    pg.evaluate("document.querySelector('.sheet .pk-sheet-body').scrollTop=0"); pg.wait_for_timeout(100)
     pg.mouse.wheel(0, -800); pg.wait_for_timeout(300)
     ok(pg.evaluate("scrollY") == y, 'and so does going past its top')
     pg.context.close()
@@ -83,7 +84,7 @@ def song_practice(b, t):
     ok(pg.locator('.clock').count() == 0 and not pg.evaluate("U.clock"), 'so there’s no clock or Pause yet')
     ok(pg.inner_text('#dock .cta').strip() == 'Record a take first', 'the dock button says Record a take first')
     pg.click('#dock .cta', force=True); pg.wait_for_timeout(300)  # aria-disabled, so Playwright needs force
-    ok(pg.evaluate("U.sheet") is None and pg.evaluate("X") is not None and pg.locator('.toast').count() == 1, 'and can’t save it')
+    ok(pg.evaluate("U.sheet") is None and pg.evaluate("X") is not None and pg.locator('.pk-toast').count() == 1, 'and can’t save it')
     ok(pg.evaluate("localStorage.getItem('vocalDraft')") is None, 'nothing is kept as a draft')
     pg.wait_for_timeout(1300)
     ok(pg.inner_text('#timer').strip() == 'Not started' and pg.evaluate("elapsedSec()") == 0, 'waiting isn’t counted')

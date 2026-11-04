@@ -228,8 +228,11 @@ def run(b, t):
     ok(not pg.evaluate(f"!!songById('{rid}')"), 'and deletes the song')
     # press and hold
     row = pg.locator(f'.rowc[data-k="{ren}"]'); rb = row.bounding_box()
-    pg.mouse.move(rb['x'] + 60, rb['y'] + 20); pg.mouse.down(); pg.wait_for_timeout(650); pg.mouse.up(); pg.wait_for_timeout(300)
-    ok(pg.locator('#ctxmenu').count() == 1 and pg.evaluate("U.view") is None, 'press and hold opens Pin, Rename, Delete without opening the song')
+    pg.mouse.move(rb['x'] + 60, rb['y'] + 20); pg.mouse.down(); pg.wait_for_timeout(450)
+    ok(pg.locator('#ctxmenu').count() == 0 and pg.locator(f'.rowc[data-k="{ren}"].pk-lifting').count() == 1, 'Q41 the row lifts from 200 ms, before its menu (700 ms)')
+    pg.wait_for_timeout(400); pg.mouse.up(); pg.wait_for_timeout(300)
+    ok(pg.locator('#ctxmenu.pk-menu').count() == 1 and pg.locator('#ctxmenu .pk-menu-item').count() == 3 and pg.evaluate("U.view") is None,
+       'press and hold opens Pin, Rename, Delete (the parts kit\'s menu) without opening the song')
     t.shot(pg, 'hold-menu')
     pg.click('[data-a=sgCtxRename]'); pg.wait_for_timeout(350); pg.fill('#sgRenIn', 'renamed song'); pg.click('[data-a=sgSaveRename]'); pg.wait_for_timeout(300)
     ok(pg.evaluate("D.songs.some(s=>s.name==='Renamed Song')"), 'Rename capitalises too')
@@ -242,7 +245,7 @@ def run(b, t):
 
     # search
     pg.click('[data-a=sgSearch]'); pg.wait_for_timeout(250)
-    ok(pg.evaluate("document.activeElement.id") == 'sgqb' and pg.locator('#sgbar').is_visible() and pg.locator('#dock .tabbar').count() == 0,
+    ok(pg.evaluate("document.activeElement.id") == 'sgqb' and pg.locator('#sgbar').is_visible() and pg.locator('#dock .pk-tabbar').count() == 0,
        'search opens at the bottom, with the tab bar shrunk to a circle')
     for q, want in [('carry further', 'River Song'), ('KITCHEN', 'Kitchen Radio'), ('elmwood', 'River Song'), ('candls', 'River Song'),
                     ('carry dress', None), ('lanterns sing', 'Paper Lanterns'), ('example', 'River Song')]:
@@ -256,7 +259,7 @@ def run(b, t):
     pg.click('[data-a=sgQClear]'); pg.wait_for_timeout(200)
     ok('elmwood' in pg.inner_text('main'), 'recent searches are listed')
     pg.mouse.click(200, 500); pg.wait_for_timeout(250)
-    ok(not pg.evaluate("U.sFocus") and pg.locator('#dock .tabbar').count() == 1, 'tapping empty space ends an empty search')
+    ok(not pg.evaluate("U.sFocus") and pg.locator('#dock .pk-tabbar').count() == 1, 'tapping empty space ends an empty search')
 
     # Today's pinned songs
     pg.click('[data-a=tab][data-v=today]'); pg.wait_for_timeout(250)
@@ -270,10 +273,10 @@ def run(b, t):
     # Settings is the gear on Today
     pg.click('[data-a=tab][data-v=today]'); pg.wait_for_timeout(200)
     pg.click('#barR [data-a=openSettings]'); pg.wait_for_timeout(250)
-    ok(pg.evaluate("U.tab") == 'settings' and pg.locator('#dock .tabbar button.on').get_attribute('data-v') == 'today', 'the gear opens Settings, under Today')
+    ok(pg.evaluate("U.tab") == 'settings' and pg.locator('#dock .pk-tab.on').get_attribute('data-v') == 'today', 'the gear opens Settings, under Today')
     pg.click('[data-a=setBack]'); pg.wait_for_timeout(250); ok(pg.evaluate("U.tab") == 'today', 'Back returns to Today')
-    ok(pg.locator('#dock .tabbar [data-a=tab]').count() == 4 and pg.locator('#dock .tabbar [data-v=settings]').count() == 0, 'the tab bar has four tabs and no Settings')
-    ok(pg.evaluate("[...document.querySelectorAll('#dock .tabbar [data-a=tab]')].map(b=>b.dataset.v)") == ['today', 'history', 'songs', 'exercises'],
+    ok(pg.locator('#dock .pk-tabbar [data-a=tab]').count() == 4 and pg.locator('#dock .pk-tabbar [data-v=settings]').count() == 0, 'the tab bar has four tabs and no Settings')
+    ok(pg.evaluate("[...document.querySelectorAll('#dock .pk-tabbar [data-a=tab]')].map(b=>b.dataset.v)") == ['today', 'history', 'songs', 'exercises'],
        'the tab bar is Today, Progress, Songs, Exercises (3.17)')
 
     # backup round trip

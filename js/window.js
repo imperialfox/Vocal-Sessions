@@ -1092,7 +1092,7 @@ window.addEventListener(
   },
   { passive: true }
 );
-// sheets, the clock and menus come and go in #layer
-new MutationObserver(() => fwUpdate()).observe($('layer'), { childList: true });
+// sheets, the clock and menus come and go in #layer (Q41: the parts kit's inside its .pk-layer)
+new MutationObserver(() => fwUpdate()).observe($('layer'), { childList: true, subtree: true });
 document.addEventListener('focusin', () => FW.shown && fwUpdate());
 document.addEventListener('focusout', () => setTimeout(fwUpdate, 0));

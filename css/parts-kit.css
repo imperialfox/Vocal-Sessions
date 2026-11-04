@@ -1,0 +1,1921 @@
+/* Parts kit 1.1.0 · one set of Liquid Glass parts for any app or prototype.
+   MIT licence. Numbers from sdegenaar/liquid_glass_widgets (MIT), measured against iOS where marked.
+   Load this file first, then your app's own stylesheet: any value below that your app also sets is yours.
+   Every corner, press, curve and duration the parts use is named in the defaults block; nothing below it writes its
+   own (tools/check.py fails if one does). */
+
+/* ===================================================================================================================
+   DEFAULTS · light. :where() keeps them at zero weight, so an app's own value of the same name always wins.
+   =================================================================================================================== */
+:where(:root, .pk-light) {
+  /* colours: Apple's base set */
+  --bg: #f2f2f7;
+  --surface: #ffffff;
+  --fg: #000000;
+  --fg2: #6c6c72;
+  --fg3: #a3a3a8;
+  --sep: rgba(60, 60, 67, 0.16);
+  --fill: rgba(118, 118, 128, 0.12); /* also the solid input well (12%) */
+  --accent: #007aff;
+  --on-accent: #ffffff;
+  --danger: #ff3b30;
+  --good: #34c759;
+  --pk-orange: #ff9500;
+
+  /* glass: iOS 27 .regular, measured against a SwiftUI control on the same screen */
+  --glass: rgba(248, 248, 248, 0.53);
+  --glass-rt: rgba(248, 248, 248, 0.665); /* Reduce transparency: alpha × 0.5 + 0.4 */
+  --glass-blur: 14px;
+  --glass-sat: 210%;
+  --glass-float: 0 7px 12px rgba(0, 0, 0, 0.016); /* light mode only */
+  --glass-line: rgba(0, 0, 0, 0.31); /* the 0.5 pt hairline, page − 80 */
+  --glass-line-end: rgba(0, 0, 0, 0.062); /* where the light hits it */
+  --glass-rim:
+    inset 0 1px 0.5px rgba(255, 255, 255, 0.2), inset 0 3px 3px rgba(255, 255, 255, 0.035),
+    inset 0 -1px 0.5px rgba(255, 255, 255, 0.13), inset 0 -3px 3px rgba(255, 255, 255, 0.023);
+  --glass-strong: rgba(250, 250, 252, 0.86); /* sheets */
+  --lift-max: rgba(255, 255, 255, 0.3); /* a pressed glass button lights up with this under its icon */
+  --tint: rgba(0, 122, 255, 0.82);
+  --pk-clear: rgba(255, 255, 255, 0.35); /* glass inside glass: a see-through fill with the rim, no second blur */
+  --pk-glint: rgba(255, 255, 255, 0.1);
+  --pk-rest: rgba(0, 0, 0, 0.1); /* the picked tab's flat fill */
+  --pk-lens: rgba(255, 255, 255, 0.08); /* the tab or segment highlight while pressed */
+  --pk-menu: rgba(245, 245, 247, 0.8);
+  --pk-menu-blur: 22px;
+  --pk-menu-line: rgba(0, 0, 0, 0.3);
+  --pk-menu-gap: rgba(0, 0, 0, 0.06);
+  --pk-popover: rgba(255, 255, 255, 0.12);
+  --pk-popover-blur: 10px;
+  --pk-sheet-blur: 10px;
+  --pk-dim: rgba(0, 0, 0, 0.54); /* behind sheets */
+  --pk-dim-light: rgba(0, 0, 0, 0.2); /* behind menus, alerts and action sheets */
+  --pk-grab: rgba(0, 0, 0, 0.2);
+  --pk-switch-off: rgba(120, 120, 128, 0.16);
+  --pk-knob: #ffffff;
+  --pk-row-press: #d1d1d6;
+  --pk-seg-knob: #ffffff;
+
+  /* shadows: the named set of three */
+  --shadow-lifted: 0 8px 24px rgba(0, 0, 0, 0.18); /* a lifted card or row */
+  --shadow-floating: 0 8px 33px rgba(0, 0, 0, 0.08); /* menus, popovers, toasts */
+  --shadow-glow: 0 0 22px rgba(0, 122, 255, 0.35); /* a part calling attention to itself */
+
+}
+
+/* DEFAULTS · shapes, motion and layout (the same in every look) */
+:where(:root) {
+  /* corners */
+  --r-small: 10px; /* icon tiles, badges, small inner boxes */
+  --r-medium: 14px; /* fields, inner boxes, menu rows */
+  --r-card: 20px; /* cards, grouped lists, menus (D16) */
+  --r-large: 26px; /* big blocks, glass cards, popovers */
+  --r-sheet: 46px; /* sheets and covers: the screen's own corners (D17) */
+  --r-alert: 34px;
+  --r-actions: 28px; /* action sheet groups */
+
+  /* press */
+  --press: 0.93; /* solid buttons */
+  --press-row: 0.98; /* rows, when row.press is 'shrink' */
+  --pk-knob-grow: 1.35; /* a switch or slider knob while held */
+  --pk-lift-scale: 1.04; /* (M) a held row lifting before its menu */
+  --pk-recede: 0.971; /* (M) a menu behind its submenu */
+
+  /* easings (fixed curves; the springs are --ease-gentle … published by the motion core) */
+  --ease-pop: cubic-bezier(0.3, 1.7, 0.45, 1); /* the solid press settle */
+  --ease-knob: cubic-bezier(0.3, 1.35, 0.5, 1); /* the squish knob's settle */
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1); /* one settle without a bounce; fades */
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1); /* the switch */
+  --ease-decel: cubic-bezier(0.33, 1, 0.68, 1); /* arriving: toasts, action sheets, lifts */
+  --ease-accel: cubic-bezier(0.32, 0, 0.67, 0); /* leaving */
+  --ease-back: cubic-bezier(0.34, 1.56, 0.64, 1); /* the slider knob */
+  --ease-lift: cubic-bezier(0, 0, 0.58, 1); /* the press light coming up */
+  --ease-linear: linear;
+  --ease-steps: steps(8); /* the spinner */
+
+  /* durations (fixed; multiplied by the motion speed where used) */
+  --dur-quick: 120ms;
+  --dur-fade: 200ms;
+  --dur-lift-in: 150ms;
+  --dur-lift-out: 60ms;
+  --dur-switch: 380ms;
+  --dur-knob: 150ms;
+  --dur-squish: 450ms;
+  --dur-appear: 250ms;
+  --dur-leave: 350ms;
+  --dur-cover: 500ms;
+  --dur-toast-in: 500ms;
+  --dur-toast-out: 350ms;
+  --dur-close: 170ms; /* menus closing */
+  --dur-ramp: 260ms; /* a blur fading in */
+  --dur-lift-row: 360ms; /* a held row lifting */
+  --dur-recede: 320ms; /* a menu behind its submenu */
+  --dur-reduced: 100ms; /* Reduce Motion: the short fade that replaces movement */
+  --dur-glint: 500ms;
+  --dur-progress: 600ms;
+  --dur-spin: 1s;
+  --dur-rise: 350ms; /* action sheets rising */
+  --dur-morph: 420ms; /* (M) a top bar button changing icon: the gel swell and the icons' blur */
+
+  /* spring stand-ins until the motion core publishes the real ones (--ease-<name>, --dur-<name>) */
+  --ease-gentle: var(--ease-out);
+  --ease-nav: var(--ease-out);
+  --ease-ripple: var(--ease-out);
+  --ease-press: var(--ease-out);
+  --ease-release: var(--ease-out);
+  --ease-snap: var(--ease-out);
+  --ease-bloom: var(--ease-out);
+  --ease-settle: var(--ease-out);
+  --ease-pill: var(--ease-out);
+  --ease-sheet: var(--ease-out);
+  --ease-menu-open: var(--ease-out);
+  --ease-menu-close: var(--ease-out);
+  --dur-gentle: 0ms;
+  --dur-nav: 0ms;
+  --dur-ripple: 0ms;
+  --dur-press: 0ms;
+  --dur-release: 0ms;
+  --dur-snap: 0ms;
+  --dur-bloom: 0ms;
+  --dur-settle: 0ms;
+  --dur-pill: 0ms;
+  --dur-sheet: 0ms;
+  --dur-menu-open: 0ms;
+  --dur-menu-close: 0ms;
+
+  /* layout */
+  --dockb: 21px;
+  --dockl: 21px;
+  --dockr: 21px;
+  --pk-search-gap: 8px; /* tabBar.searchGap (D02) */
+  --pk-bar-top: 54px; /* where the top bar's buttons sit (below the status bar) */
+  --pk-speed: 1; /* the motion speed: 1 normal, 4 slow, 0 off (set by parts-kit.js) */
+}
+
+/* DEFAULTS · dark, from the iPhone's setting. The same block again for .pk-dark (a forced look); tools/check.py
+   checks the two stay identical. */
+@media (prefers-color-scheme: dark) {
+  :where(:root:not(.pk-light)) {
+    --bg: #000000;
+    --surface: #1c1c1e;
+    --fg: #ffffff;
+    --fg2: #98989f;
+    --fg3: #5c5c61;
+    --sep: rgba(84, 84, 88, 0.5);
+    --fill: rgba(118, 118, 128, 0.24);
+    --accent: #0a84ff;
+    --danger: #ff453a;
+    --good: #30d158;
+    --pk-orange: #ff9f0a;
+    --glass: rgba(255, 255, 255, 0.12);
+    --glass-rt: rgba(255, 255, 255, 0.46);
+    --glass-sat: 140%;
+    --glass-float: 0 0 0 transparent;
+    --glass-line-end: transparent;
+    --glass-rim:
+      inset 0 -1px 0.5px rgba(255, 255, 255, 0.23), inset 0 -3px 3px rgba(255, 255, 255, 0.04),
+      inset 0 1px 0.5px rgba(255, 255, 255, 0.2), inset 0 3px 3px rgba(255, 255, 255, 0.035);
+    --glass-strong: rgba(44, 44, 48, 0.86);
+    --lift-max: rgba(255, 255, 255, 0.14);
+    --tint: rgba(10, 132, 255, 0.78);
+    --pk-clear: rgba(255, 255, 255, 0.1);
+    --pk-glint: rgba(255, 255, 255, 0.07);
+    --pk-rest: rgba(255, 255, 255, 0.1);
+    --pk-lens: rgba(255, 255, 255, 0.08);
+    --pk-menu: rgba(37, 37, 40, 0.8);
+    --pk-menu-line: rgba(255, 255, 255, 0.2);
+    --pk-menu-gap: rgba(0, 0, 0, 0.25);
+    --pk-dim-light: rgba(0, 0, 0, 0.25);
+    --pk-grab: rgba(255, 255, 255, 0.35);
+    --pk-switch-off: rgba(120, 120, 128, 0.32);
+    --pk-row-press: #3a3a3c;
+    --pk-seg-knob: #636366;
+    --shadow-glow: 0 0 22px rgba(10, 132, 255, 0.45);
+  }
+}
+:where(.pk-dark) {
+    --bg: #000000;
+    --surface: #1c1c1e;
+    --fg: #ffffff;
+    --fg2: #98989f;
+    --fg3: #5c5c61;
+    --sep: rgba(84, 84, 88, 0.5);
+    --fill: rgba(118, 118, 128, 0.24);
+    --accent: #0a84ff;
+    --danger: #ff453a;
+    --good: #30d158;
+    --pk-orange: #ff9f0a;
+    --glass: rgba(255, 255, 255, 0.12);
+    --glass-rt: rgba(255, 255, 255, 0.46);
+    --glass-sat: 140%;
+    --glass-float: 0 0 0 transparent;
+    --glass-line-end: transparent;
+    --glass-rim:
+      inset 0 -1px 0.5px rgba(255, 255, 255, 0.23), inset 0 -3px 3px rgba(255, 255, 255, 0.04),
+      inset 0 1px 0.5px rgba(255, 255, 255, 0.2), inset 0 3px 3px rgba(255, 255, 255, 0.035);
+    --glass-strong: rgba(44, 44, 48, 0.86);
+    --lift-max: rgba(255, 255, 255, 0.14);
+    --tint: rgba(10, 132, 255, 0.78);
+    --pk-clear: rgba(255, 255, 255, 0.1);
+    --pk-glint: rgba(255, 255, 255, 0.07);
+    --pk-rest: rgba(255, 255, 255, 0.1);
+    --pk-lens: rgba(255, 255, 255, 0.08);
+    --pk-menu: rgba(37, 37, 40, 0.8);
+    --pk-menu-line: rgba(255, 255, 255, 0.2);
+    --pk-menu-gap: rgba(0, 0, 0, 0.25);
+    --pk-dim-light: rgba(0, 0, 0, 0.25);
+    --pk-grab: rgba(255, 255, 255, 0.35);
+    --pk-switch-off: rgba(120, 120, 128, 0.32);
+    --pk-row-press: #3a3a3c;
+    --pk-seg-knob: #636366;
+    --shadow-glow: 0 0 22px rgba(10, 132, 255, 0.45);
+}
+:where(.pk-dark) {
+  color-scheme: dark;
+}
+:where(.pk-light) {
+  color-scheme: light;
+}
+/* END OF DEFAULTS */
+
+/* blur ramps need a registered property; where it's missing the blur simply starts full */
+@property --pk-ramp {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+
+/* ===================================================================================================================
+   FOUNDATIONS
+   =================================================================================================================== */
+:where(.pk-btn, .pk-tab, .pk-chip, .pk-menu-item, .pk-action, .pk-alert-btn, .pk-toast-undo, .pk-seg > button, .pk-stepper > button, .pk-field-clear, button.pk-row, .pk-swipe-actions > button) {
+  font: inherit;
+  color: inherit;
+  border: 0;
+  background: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+:where([class^='pk-'], [class*=' pk-']) {
+  box-sizing: border-box;
+}
+:where([class^='pk-'], [class*=' pk-']) svg {
+  display: block;
+  flex: none;
+}
+
+/* (1) the glass material. Glass goes on the control layer only (bars, buttons, sheets, toasts); lists stay solid */
+.pk-glass {
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-sat));
+  box-shadow: var(--glass-rim), var(--glass-float);
+  isolation: isolate;
+}
+:where(.pk-glass, .pk-clear) {
+  position: relative;
+}
+/* the hairline: 0.5 pt, darkest across the light's direction and fading where the light hits */
+.pk-glass::before,
+.pk-clear::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 0.5px;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(var(--glass-line-end), var(--glass-line) 30%, var(--glass-line) 70%, var(--glass-line-end));
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+.pk-glass.pk-strong {
+  background: var(--glass-strong);
+}
+.pk-glass.pk-tinted,
+.pk-clear.pk-tinted {
+  background: var(--tint);
+  color: var(--on-accent);
+}
+.pk-clear {
+  background: var(--pk-clear);
+  box-shadow: var(--glass-rim);
+  isolation: isolate;
+}
+/* Reduce transparency: the tint more solid, the blur kept (html.glass-solid, or any ancestor with it) */
+.glass-solid .pk-glass:not(.pk-strong, .pk-tinted) {
+  background: var(--glass-rt);
+}
+
+/* the press. parts-kit.js measures the button and sets --pk-ps:
+   .pk-press grows by 17 pt along its longest side and lights up (glass buttons);
+   .pk-press-bar only lights up (buttons on a glass bar);
+   .pk-press-solid shrinks to --press (solid buttons) */
+.pk-press,
+.pk-press-bar,
+.pk-press-solid {
+  scale: var(--pk-ps, 1);
+  translate: var(--pk-tx, 0px) var(--pk-ty, 0px);
+  transition: scale var(--dur-release) var(--ease-release), translate var(--dur-release) var(--ease-release);
+}
+:where(.pk-press, .pk-press-bar, .pk-press-solid) {
+  position: relative;
+  isolation: isolate;
+}
+.pk-press.pk-pressed,
+.pk-press-bar.pk-pressed {
+  z-index: 20;
+  transition: scale var(--dur-press) var(--ease-press), translate var(--dur-press) var(--ease-press);
+}
+.pk-press-solid.pk-pressed {
+  --pk-ps: var(--press);
+  transition: scale calc(var(--dur-quick) * var(--pk-speed)) var(--ease-pop);
+}
+.pk-press::after,
+.pk-press-bar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  z-index: -1;
+  pointer-events: none;
+  background: var(--lift-max);
+  opacity: 0;
+  transition: opacity calc(var(--dur-lift-out) * var(--pk-speed)) var(--ease-linear);
+}
+.pk-pressed::after {
+  opacity: 1;
+  transition: opacity calc(var(--dur-lift-in) * var(--pk-speed)) var(--ease-lift);
+}
+.pk-press-solid::after {
+  content: none;
+}
+.motion-reduced :is(.pk-press, .pk-press-bar, .pk-press-solid) {
+  scale: none;
+  translate: none;
+}
+/* (52, pinned) the finger glint: a soft glow under the finger, on buttons named in press.glint */
+.pk-glint {
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: -1;
+  background: radial-gradient(closest-side, var(--pk-glint), transparent);
+  filter: blur(8px);
+  mix-blend-mode: plus-lighter;
+  opacity: 0;
+  transition: opacity calc(var(--dur-glint) * var(--pk-speed)) var(--ease-out);
+}
+.pk-pressed.pk-glinting > .pk-glint-clip > .pk-glint {
+  opacity: 1;
+  transition: opacity calc(var(--dur-lift-in) * var(--pk-speed)) var(--ease-out);
+}
+.pk-glint-clip {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* the shared shapes */
+.pk-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: var(--fg);
+  flex: none;
+}
+.pk-circle {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+}
+.pk-circle.pk-sm {
+  width: 36px;
+  height: 36px;
+}
+.pk-circle.pk-lg {
+  width: 56px;
+  height: 56px;
+}
+.pk-pill {
+  height: 44px;
+  padding: 0 22px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+.pk-cta {
+  height: 50px;
+  padding: 0 22px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 17px;
+}
+.pk-cta.pk-wide {
+  width: 100%;
+}
+.pk-btn.pk-tinted {
+  color: var(--on-accent);
+}
+.pk-btn.pk-solid {
+  background: var(--fg);
+  color: var(--bg);
+}
+.pk-btn.pk-text {
+  color: var(--accent);
+  font-size: 17px;
+  height: 34px;
+  padding: 0 4px;
+}
+.pk-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* layers for overlays: parts-kit.js puts one inside the root (the page, or the app's own root) */
+.pk-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+}
+body > .pk-layer {
+  position: fixed;
+}
+.pk-layer > * {
+  pointer-events: auto;
+}
+.pk-dim {
+  position: absolute;
+  inset: 0;
+  background: var(--pk-dim);
+  opacity: 0;
+  transition: opacity calc(var(--dur-fade) * var(--pk-speed)) var(--ease-out);
+}
+.pk-dim.pk-soft {
+  background: var(--pk-dim-light);
+}
+.pk-dim.pk-clear-dim {
+  background: transparent;
+}
+.pk-dim.pk-on {
+  opacity: 1;
+}
+
+/* ===================================================================================================================
+   GLASS, BARS AND BUTTONS
+   =================================================================================================================== */
+
+/* (2) top bar: no card of its own. After 36 pt of scrolling the soft edge and the small title fade in.
+   Put .pk-topbar beside the .pk-scroll it belongs to (same parent). */
+.pk-topbar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 100px;
+  z-index: 30;
+  pointer-events: none;
+}
+.pk-topbar-title {
+  position: absolute;
+  left: 70px;
+  right: 70px;
+  top: var(--pk-bar-top);
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 17px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0;
+  transition: opacity calc(var(--dur-fade) * var(--pk-speed)) var(--ease-out);
+}
+.pk-bar-slot {
+  position: absolute;
+  top: var(--pk-bar-top);
+  height: 44px;
+  display: flex;
+  gap: 8px;
+  pointer-events: auto;
+}
+.pk-bar-slot.pk-left {
+  left: 16px;
+}
+.pk-bar-slot.pk-right {
+  right: 16px;
+}
+.pk-bar-slot > .pk-btn {
+  position: relative;
+}
+/* (51) the soft edge: mostly a fade of the page colour, not a blur (100 pt at the top, 60 pt at the bottom) */
+.pk-edge {
+  position: absolute;
+  inset: 0;
+  background: var(--bg);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity calc(var(--dur-fade) * var(--pk-speed)) var(--ease-out);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.7) 15%, rgba(0, 0, 0, 0.3) 45%, rgba(0, 0, 0, 0.04) 75%, transparent 92%);
+  mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.7) 15%, rgba(0, 0, 0, 0.3) 45%, rgba(0, 0, 0, 0.04) 75%, transparent 92%);
+}
+.pk-edge.pk-text-heavy {
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.9) 30%, rgba(0, 0, 0, 0.5) 60%, rgba(0, 0, 0, 0.04) 85%, transparent 95%);
+  mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.9) 30%, rgba(0, 0, 0, 0.5) 60%, rgba(0, 0, 0, 0.04) 85%, transparent 95%);
+}
+.pk-edge-bottom {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 60px;
+  background: var(--bg);
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(to top, #000 0%, rgba(0, 0, 0, 0.7) 15%, rgba(0, 0, 0, 0.3) 45%, rgba(0, 0, 0, 0.04) 75%, transparent 92%);
+  mask-image: linear-gradient(to top, #000 0%, rgba(0, 0, 0, 0.7) 15%, rgba(0, 0, 0, 0.3) 45%, rgba(0, 0, 0, 0.04) 75%, transparent 92%);
+}
+/* the blur kind of edge: three stacked blurs, strongest at the top (σ 18 → 6 → 2) */
+.pk-edge-blur {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity calc(var(--dur-fade) * var(--pk-speed)) var(--ease-out);
+}
+.pk-edge-blur > i {
+  position: absolute;
+  inset: 0;
+}
+.pk-edge-blur > i:nth-child(1) {
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, transparent 35%);
+  mask-image: linear-gradient(to bottom, #000 0%, transparent 35%);
+}
+.pk-edge-blur > i:nth-child(2) {
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, transparent 65%);
+  mask-image: linear-gradient(to bottom, #000 0%, transparent 65%);
+}
+.pk-edge-blur > i:nth-child(3) {
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+  -webkit-mask-image: linear-gradient(to bottom, #000 20%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 20%, transparent 100%);
+}
+.pk-topbar.pk-scrolled :is(.pk-edge, .pk-edge-blur, .pk-topbar-title),
+.pk-topbar.pk-edge-on :is(.pk-edge, .pk-edge-blur) {
+  opacity: 1;
+}
+
+/* (3) large title, with an optional date line above */
+.pk-large-title {
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+  margin: 0;
+}
+.pk-date-line {
+  font-size: 13px;
+  color: var(--fg2);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* (4) the tab bar: a 64 pt glass capsule. The picked tab sits on a flat 10% fill; pressed it turns to clear glass and
+   swells 12 × 8 pt; drag along it to switch. (6) the search circle sits 8 pt away (tabBar.searchGap, D02).
+   (5) folding into a pill on scroll is off unless tabBar.fold is on (D01). */
+.pk-dock {
+  position: absolute;
+  left: var(--dockl);
+  right: var(--dockr);
+  bottom: var(--dockb);
+  z-index: 31;
+  height: 64px;
+  display: flex;
+  gap: var(--pk-search-gap);
+  align-items: center;
+}
+.pk-dock.pk-inline {
+  position: relative;
+  left: auto;
+  right: auto;
+  bottom: auto;
+  width: 100%;
+}
+.pk-tabbar {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: 64px;
+  border-radius: 999px;
+  display: flex;
+  padding: 4px;
+  touch-action: none;
+  transform-origin: left center;
+  transition: scale var(--dur-gentle) var(--ease-gentle), opacity calc(var(--dur-fade) * var(--pk-speed)) var(--ease-out);
+}
+.pk-tab {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--fg);
+  min-width: 0;
+}
+.pk-tab > span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pk-tab svg {
+  transition: scale calc(var(--dur-fade) * var(--pk-speed)) var(--ease-out);
+}
+.pk-tab.on {
+  color: var(--accent);
+}
+.pk-tab.pk-under svg {
+  scale: 1.15;
+}
+/* the highlight (tab bar) and knob (segmented control) share one rule: placed by --pk-i of --pk-n */
+.pk-tab-ind,
+.pk-seg-ind {
+  position: absolute;
+  z-index: 0;
+  border-radius: 999px;
+  translate: calc(var(--pk-i, 0) * 100%) 0;
+  scale: var(--pk-bx, 1) var(--pk-by, 1);
+  transition:
+    translate var(--dur-snap) var(--ease-snap),
+    scale var(--dur-snap) var(--ease-snap),
+    background-color var(--dur-bloom) var(--ease-bloom),
+    box-shadow var(--dur-bloom) var(--ease-bloom);
+}
+.pk-tab-ind {
+  left: 4px;
+  top: 4px;
+  bottom: 4px;
+  width: calc((100% - 8px) / var(--pk-n, 4));
+  background: var(--pk-rest);
+}
+.pk-tab-ind.pk-live,
+.pk-seg-ind.pk-live {
+  background: var(--pk-lens);
+  box-shadow: inset 0 0 0 0.5px var(--glass-line), inset 0 1px 0.5px rgba(255, 255, 255, 0.5), 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+.pk-tab-ind.pk-drag,
+.pk-seg-ind.pk-drag {
+  translate: var(--pk-x, 0px) 0;
+  transition:
+    scale var(--dur-snap) var(--ease-snap),
+    background-color var(--dur-bloom) var(--ease-bloom),
+    box-shadow var(--dur-bloom) var(--ease-bloom);
+}
+.motion-reduced :is(.pk-tab-ind, .pk-seg-ind) {
+  scale: none;
+  transition: none;
+}
+/* (5) folded: the bar shrinks into a 50 pt pill at its left */
+.pk-tab-pill {
+  position: absolute;
+  left: 0;
+  top: 7px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  color: var(--accent);
+  opacity: 0;
+  scale: 0.5;
+  pointer-events: none;
+  transition: scale var(--dur-gentle) var(--ease-gentle), opacity calc(var(--dur-fade) * var(--pk-speed)) var(--ease-out);
+}
+.pk-dock.pk-folded .pk-tabbar {
+  scale: 0.16 0.78;
+  opacity: 0;
+  pointer-events: none;
+}
+.pk-dock.pk-folded .pk-tab-pill {
+  opacity: 1;
+  scale: 1;
+  pointer-events: auto;
+}
+/* (6) the search circle opens into a 50 pt field on the pill spring; ✕ closes it */
+.pk-search-circle {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+}
+.pk-search-field {
+  position: absolute;
+  left: 0;
+  right: 58px;
+  top: 7px;
+  height: 50px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px;
+  color: var(--fg2);
+  opacity: 0;
+  scale: 0.3 1;
+  transform-origin: right center;
+  pointer-events: none;
+  touch-action: pan-y;
+  transition: scale var(--dur-pill) var(--ease-pill), opacity calc(var(--dur-fade) * var(--pk-speed)) var(--ease-out);
+}
+.pk-search-field input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: none;
+  outline: none;
+  font: inherit;
+  font-size: 17px;
+  color: var(--fg);
+}
+.pk-search-close {
+  position: absolute;
+  right: 0;
+  top: 7px;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  opacity: 0;
+  scale: 0.5;
+  pointer-events: none;
+  transition: scale var(--dur-pill) var(--ease-pill), opacity calc(var(--dur-fade) * var(--pk-speed)) var(--ease-out);
+}
+.pk-dock .pk-tabbar,
+.pk-dock .pk-search-circle {
+  transition: scale var(--dur-pill) var(--ease-pill), opacity calc(var(--dur-fade) * var(--pk-speed)) var(--ease-out);
+}
+.pk-dock.pk-searching :is(.pk-search-field, .pk-search-close) {
+  opacity: 1;
+  scale: 1;
+  pointer-events: auto;
+}
+.pk-dock.pk-searching :is(.pk-tabbar, .pk-search-circle, .pk-tab-pill) {
+  opacity: 0;
+  scale: 0.8;
+  pointer-events: none;
+}
+
+/* (10) a pushed page slides in from the right while the page underneath moves a third left and dims */
+.pk-push {
+  position: absolute;
+  inset: 0;
+  z-index: 25;
+  background: var(--bg);
+  overflow-y: auto;
+  translate: 100% 0;
+  box-shadow: var(--shadow-lifted);
+  touch-action: pan-y;
+  display: none;
+  transition: translate var(--dur-nav) var(--ease-nav);
+}
+.pk-push.pk-shown {
+  display: block;
+}
+.pk-push.pk-on {
+  translate: var(--pk-px, 0px) 0;
+}
+.pk-pushed-under {
+  translate: -33% 0;
+  transition: translate var(--dur-nav) var(--ease-nav);
+}
+.pk-pushed-back {
+  translate: 0 0;
+  transition: translate var(--dur-nav) var(--ease-nav);
+}
+.pk-tracking {
+  transition: none !important;
+}
+.pk-navdim {
+  position: absolute;
+  inset: 0;
+  z-index: 24;
+  background: rgba(0, 0, 0, 0.1);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-nav) var(--ease-nav);
+}
+.pk-navdim.pk-on {
+  opacity: 1;
+}
+.motion-reduced .pk-pushed-under {
+  translate: none;
+}
+.motion-reduced .pk-push {
+  transition: translate 0s, opacity calc(var(--dur-reduced) * var(--pk-speed)) var(--ease-out);
+}
+
+/* (15) buttons on a bar: one glass capsule, the buttons inside only light up (never glass inside glass) */
+.pk-group {
+  display: inline-flex;
+  border-radius: 999px;
+  padding: 4px;
+  gap: 2px;
+}
+.pk-group > .pk-btn {
+  width: 52px;
+  height: 44px;
+  border-radius: 999px;
+}
+.pk-group > .pk-btn[aria-pressed='true'] {
+  background: var(--pk-clear);
+}
+
+/* (17) edit button: Edit turns into Done and rows show their delete circles */
+.pk-edit-del {
+  flex: none;
+  width: 0;
+  overflow: hidden;
+  display: flex;
+  transition: width var(--dur-gentle) var(--ease-gentle);
+}
+.pk-editing .pk-edit-del {
+  width: 30px;
+}
+.pk-edit-del > i {
+  display: flex;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--danger);
+  color: #fff;
+  align-items: center;
+  justify-content: center;
+}
+
+/* (18) chips: tap to pick; picked chips take the accent colour */
+.pk-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.pk-chip {
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: var(--fill);
+  font-size: 15px;
+  display: inline-flex;
+  align-items: center;
+  transition:
+    background-color calc(var(--dur-fade) * var(--pk-speed)) var(--ease-out),
+    color calc(var(--dur-fade) * var(--pk-speed)) var(--ease-out);
+}
+.pk-chip.on {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+.pk-chip.pk-chip-add {
+  background: none;
+  box-shadow: inset 0 0 0 1px var(--sep);
+  color: var(--accent);
+}
+
+/* (19) badges: a count on a button, and a small word badge */
+.pk-badged {
+  position: relative;
+  display: inline-flex;
+}
+.pk-badge {
+  position: absolute;
+  top: -4px;
+  right: -6px;
+  z-index: 25;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--danger);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.6);
+  pointer-events: none;
+}
+.pk-tag {
+  height: 22px;
+  padding: 0 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--tint);
+  color: var(--on-accent);
+  display: inline-flex;
+  align-items: center;
+}
+
+/* ===================================================================================================================
+   CONTROLS AND INPUTS
+   =================================================================================================================== */
+
+/* (21) switch: 64 × 28. Pressed, the knob turns to glass and swells; it travels over 380 ms. Drag it: a flick faster
+   than 200 px/s decides, otherwise whichever side it's past halfway. */
+.pk-switch {
+  position: relative;
+  display: inline-block;
+  width: 64px;
+  height: 28px;
+  border-radius: 999px;
+  background: var(--pk-switch-off);
+  flex: none;
+  touch-action: none;
+  cursor: pointer;
+  transition: background-color calc(var(--dur-switch) * var(--pk-speed)) var(--ease-in-out);
+}
+.pk-switch.on {
+  background: var(--good);
+}
+.pk-switch-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 38px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--pk-knob);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.18);
+  pointer-events: none;
+  translate: var(--pk-sx, 0px) 0;
+  scale: var(--pk-sb, 1);
+  transition:
+    translate calc(var(--dur-switch) * var(--pk-speed)) var(--ease-in-out),
+    scale calc(var(--dur-quick) * var(--pk-speed)) var(--ease-lift),
+    background-color calc(var(--dur-quick) * var(--pk-speed)) var(--ease-out),
+    box-shadow calc(var(--dur-quick) * var(--pk-speed)) var(--ease-out);
+}
+.pk-switch.on .pk-switch-knob {
+  --pk-sx: 22px;
+}
+.pk-switch.pk-held .pk-switch-knob {
+  --pk-sb: var(--pk-knob-grow);
+  background: rgba(255, 255, 255, 0.18);
+  box-shadow: inset 0 0 0 0.5px var(--glass-line), inset 0 1px 0.5px rgba(255, 255, 255, 0.6), 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+.pk-switch.pk-dragging .pk-switch-knob {
+  transition:
+    scale calc(var(--dur-quick) * var(--pk-speed)) var(--ease-lift),
+    background-color calc(var(--dur-quick) * var(--pk-speed)) var(--ease-out);
+}
+.pk-switch.pk-swell .pk-switch-knob {
+  animation: pk-swell calc(var(--dur-switch) * var(--pk-speed)) var(--ease-in-out);
+}
+@keyframes pk-swell {
+  45% {
+    scale: 1.18 1.1;
+  }
+}
+.motion-reduced .pk-switch .pk-switch-knob {
+  --pk-sb: 1;
+  animation: none;
+  transition: background-color calc(var(--dur-reduced) * var(--pk-speed)) var(--ease-out);
+}
+.pk-switch:focus-visible,
+.pk-slider:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* (22) slider: the knob grows ×1.35 while held (150 ms) and turns to glass; the fill follows the finger */
+.pk-slider {
+  position: relative;
+  height: 34px;
+  flex: 1;
+  min-width: 80px;
+  touch-action: none;
+  cursor: pointer;
+}
+.pk-slider-track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 14px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--pk-switch-off);
+  overflow: hidden;
+}
+.pk-slider-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: var(--pk-p, 50%);
+  background: var(--accent);
+}
+.pk-slider-thumb {
+  position: absolute;
+  top: 5px;
+  left: calc(var(--pk-p, 50%) - 19px);
+  width: 38px;
+  height: 24px;
+  border-radius: 999px;
+  background: var(--pk-knob);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  pointer-events: none;
+  transition:
+    scale calc(var(--dur-knob) * var(--pk-speed)) var(--ease-back),
+    background-color calc(var(--dur-fade) * var(--pk-speed)) var(--ease-out);
+}
+.pk-slider.pk-held .pk-slider-thumb {
+  scale: var(--pk-knob-grow);
+  background: rgba(255, 255, 255, 0.25);
+  box-shadow: inset 0 0 0 0.5px var(--glass-line), inset 0 1px 0.5px rgba(255, 255, 255, 0.6), 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+.motion-reduced .pk-slider.pk-held .pk-slider-thumb {
+  scale: none;
+}
+
+/* (23) segmented control: the knob slides on a 350 ms spring, swells to glass when pressed and can be dragged
+   (segmented.style 'gallery', D04). The alternative, 'squish', slides on a curve and squishes. */
+.pk-seg {
+  position: relative;
+  display: flex;
+  height: 36px;
+  border-radius: 999px;
+  background: var(--fill);
+  padding: 2px;
+  touch-action: none;
+}
+.pk-seg > button {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  min-width: 44px;
+  font-size: 15px;
+  font-weight: 500;
+  border-radius: 999px;
+  color: var(--fg);
+}
+.pk-seg-ind {
+  left: 2px;
+  top: 2px;
+  bottom: 2px;
+  width: calc((100% - 4px) / var(--pk-n, 2));
+  background: var(--pk-seg-knob);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+.pk-seg-squish .pk-seg-ind {
+  transition:
+    translate calc(var(--dur-squish) * var(--pk-speed)) var(--ease-knob),
+    background-color calc(var(--dur-fade) * var(--pk-speed)) var(--ease-out);
+}
+.pk-seg-ind.pk-squish {
+  animation: pk-squish calc(var(--dur-squish) * var(--pk-speed)) var(--ease-knob);
+}
+@keyframes pk-squish {
+  35% {
+    scale: 1.22 0.86;
+  }
+  70% {
+    scale: 0.96 1.04;
+  }
+}
+.motion-reduced .pk-seg-ind.pk-squish {
+  animation: none;
+}
+
+/* (24) stepper: a glass capsule with − and +; the halves only light up */
+.pk-stepper {
+  display: inline-flex;
+  height: 34px;
+  border-radius: 999px;
+  flex: none;
+}
+.pk-stepper > button {
+  width: 48px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  color: var(--fg);
+}
+.pk-stepper > button:disabled {
+  opacity: 0.35;
+}
+.pk-stepper-div {
+  width: 0.5px;
+  background: var(--sep);
+  margin: 8px 0;
+}
+
+/* (25) progress: a bar, a spinner and a ring (--pk-v from 0 to 100) */
+.pk-progress {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--pk-switch-off);
+  overflow: hidden;
+  flex: 1;
+}
+.pk-progress > i {
+  display: block;
+  height: 100%;
+  width: calc(var(--pk-v, 0) * 1%);
+  background: var(--accent);
+  border-radius: 3px;
+  transition: width calc(var(--dur-progress) * var(--pk-speed)) var(--ease-decel);
+}
+.pk-spinner {
+  width: 24px;
+  height: 24px;
+  color: var(--fg2);
+  animation: pk-spin calc(var(--dur-spin) * var(--pk-speed)) var(--ease-steps) infinite;
+}
+@keyframes pk-spin {
+  to {
+    rotate: 360deg;
+  }
+}
+.pk-ring {
+  width: 34px;
+  height: 34px;
+  rotate: -90deg;
+}
+.pk-ring circle {
+  fill: none;
+  stroke-width: 4;
+}
+.pk-ring .pk-ring-bg {
+  stroke: var(--pk-switch-off);
+}
+.pk-ring .pk-ring-fg {
+  stroke: var(--accent);
+  stroke-linecap: round;
+  stroke-dasharray: 100;
+  stroke-dashoffset: calc(100 - var(--pk-v, 0));
+  transition: stroke-dashoffset calc(var(--dur-progress) * var(--pk-speed)) var(--ease-decel);
+}
+
+/* (26, 27, 29) inputs: solid wells (12% grey in light, 24% in dark), no blur. Text stays at 17 pt so iOS doesn't zoom.
+   (26) the search field stretches when dragged (about 7 pt lengthwise, 2 pt across; measured from Photos) */
+.pk-field,
+.pk-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  border-radius: var(--r-medium);
+  background: var(--fill);
+  padding: 0 12px;
+  color: var(--fg2);
+}
+.pk-search {
+  border-radius: 999px;
+  touch-action: pan-y;
+}
+.pk-search,
+.pk-search-field {
+  transition: scale var(--dur-settle) var(--ease-settle), translate var(--dur-settle) var(--ease-settle);
+}
+.pk-dock .pk-search-field {
+  transition:
+    scale var(--dur-pill) var(--ease-pill),
+    translate var(--dur-settle) var(--ease-settle),
+    opacity calc(var(--dur-fade) * var(--pk-speed)) var(--ease-out);
+}
+.pk-stretching {
+  transition: none !important;
+}
+.pk-field input,
+.pk-field textarea,
+.pk-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: none;
+  outline: none;
+  font: inherit;
+  font-size: 17px;
+  color: var(--fg);
+}
+:is(.pk-field, .pk-search) ::placeholder {
+  color: var(--fg3);
+}
+.pk-field-clear {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--fg3);
+  color: var(--surface);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+.pk-has > .pk-field-clear {
+  display: flex;
+}
+.pk-field.pk-area {
+  height: auto;
+  align-items: flex-start;
+  padding: 10px 12px;
+}
+.pk-field.pk-area textarea {
+  resize: none;
+  min-height: 66px;
+  line-height: 1.35;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* ===================================================================================================================
+   LISTS · lists stay solid, not glass
+   =================================================================================================================== */
+
+/* (36) grouped section: a header, rows in an inset group (corners 20) and a footer */
+.pk-list {
+  position: relative;
+  background: var(--surface);
+  border-radius: var(--r-card);
+  overflow: hidden;
+}
+.pk-section-head {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--fg2);
+  margin: 0 16px 6px;
+}
+.pk-section-foot {
+  font-size: 13px;
+  color: var(--fg2);
+  margin: 6px 16px 0;
+}
+/* (35) list row: 50 pt, a 34 pt icon tile, a chevron when it opens something. Rows that do something (a button, a
+   link or .pk-tap) highlight while pressed (row.press 'highlight', D06) or shrink to --press-row ('shrink') */
+.pk-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 50px;
+  width: 100%;
+  padding: 8px 16px;
+  background: var(--surface);
+  color: var(--fg);
+  text-align: left;
+  font: inherit;
+  font-size: 17px;
+}
+.pk-row + .pk-row::before,
+.pk-row.pk-sep::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 16px;
+  height: 0.5px;
+  background: var(--sep);
+}
+.pk-tiles .pk-row + .pk-row::before {
+  left: 62px;
+}
+.pk-row-text {
+  flex: 1;
+  min-width: 0;
+}
+.pk-row-text small {
+  display: block;
+  font-size: 13px;
+  color: var(--fg2);
+  margin-top: 1px;
+}
+.pk-row-value {
+  color: var(--fg2);
+}
+.pk-chev {
+  color: var(--fg3);
+}
+.pk-tile {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--r-small);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  flex: none;
+}
+:is(button.pk-row, a.pk-row, .pk-row.pk-tap) {
+  cursor: pointer;
+  transition:
+    background-color calc(var(--dur-fade) * var(--pk-speed)) var(--ease-out),
+    scale var(--dur-release) var(--ease-release);
+}
+.pk-row.pk-pressed {
+  background-color: var(--pk-row-press);
+  transition: none;
+}
+.pk-row-shrink .pk-row.pk-pressed {
+  background-color: var(--surface);
+  scale: var(--press-row);
+  transition: scale calc(var(--dur-quick) * var(--pk-speed)) var(--ease-pop);
+}
+.motion-reduced.pk-row-shrink .pk-row.pk-pressed,
+.motion-reduced .pk-row-shrink .pk-row.pk-pressed {
+  scale: none;
+}
+
+/* (33) glass container: a plain glass panel that can hold anything. (34) card: a glass card */
+.pk-container {
+  border-radius: var(--r-card);
+  padding: 16px;
+}
+.pk-card {
+  border-radius: var(--r-large);
+  padding: 16px;
+}
+
+/* (38) divider: a hairline, full width or inset past an icon */
+.pk-divider {
+  height: 0.5px;
+  background: var(--sep);
+  margin: 12px 0;
+}
+.pk-divider.pk-inset {
+  margin-left: 46px;
+}
+
+/* (39) swipe actions: swipe a row left to show its actions (Delete is 88 pt). Tap elsewhere to close */
+.pk-swipe {
+  position: relative;
+  overflow: hidden;
+  background: var(--surface);
+}
+.pk-swipe + .pk-swipe::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 16px;
+  height: 0.5px;
+  background: var(--sep);
+  z-index: 2;
+}
+.pk-swipe-actions {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  visibility: hidden;
+}
+.pk-swipe.pk-show .pk-swipe-actions {
+  visibility: visible;
+}
+.pk-swipe-actions > button {
+  width: 88px;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  background: var(--fg3);
+}
+.pk-swipe-actions > .pk-red {
+  background: var(--danger);
+}
+.pk-swipe-actions > .pk-orange {
+  background: var(--pk-orange);
+}
+.pk-swipe-front {
+  position: relative;
+  z-index: 1;
+  touch-action: pan-y;
+  translate: var(--pk-sx, 0px) 0;
+  transition: translate var(--dur-gentle) var(--ease-gentle);
+}
+.pk-swipe-front.pk-dragging {
+  transition: none;
+}
+
+/* (40) reorderable list: hold the handle and drag */
+.pk-reorder > * {
+  transition: translate var(--dur-gentle) var(--ease-gentle);
+}
+.pk-reorder > .pk-lifted {
+  z-index: 5;
+  transition: none;
+  box-shadow: var(--shadow-lifted);
+  border-radius: var(--r-medium);
+}
+.pk-grip {
+  color: var(--fg3);
+  touch-action: none;
+  cursor: grab;
+  padding: 8px;
+  margin: -8px;
+}
+
+/* ===================================================================================================================
+   OVERLAYS · made by Parts.sheet(), .cover(), .popover(), .menu(), .choices(), .confirm() and .toast()
+   =================================================================================================================== */
+
+/* (41, 42) sheet: rises from the bottom, 8 pt from the edges, corners following the screen's (--r-sheet, D17).
+   Drag it down from its header or, when its content is at the top, from the content; a flick faster than 700 pt/s
+   jumps a stop or closes it. With stops (sheet.withStops, D09): 45% and full (90 pt from the top), turning solid at
+   full. Growing to full screen (sheet.growsToFull, D10) covers the screen. Strong glass by default (sheet.glass, D15) */
+.pk-sheet {
+  position: absolute;
+  left: var(--pk-m, 8px);
+  right: var(--pk-m, 8px);
+  bottom: var(--pk-m, 8px);
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--r-sheet);
+  overflow: hidden;
+  touch-action: none;
+  translate: 0 var(--pk-y, 100%);
+  scale: var(--pk-shrink, 1);
+  --glass-blur: var(--pk-sheet-blur);
+  transition:
+    translate var(--dur-sheet) var(--ease-sheet),
+    left var(--dur-sheet) var(--ease-sheet),
+    right var(--dur-sheet) var(--ease-sheet),
+    bottom var(--dur-sheet) var(--ease-sheet),
+    scale var(--dur-sheet) var(--ease-sheet);
+}
+.pk-sheet.pk-leaving {
+  transition:
+    translate calc(var(--dur-leave) * var(--pk-speed)) var(--ease-accel),
+    opacity calc(var(--dur-leave) * var(--pk-speed)) var(--ease-accel);
+}
+.pk-sheet.pk-dragging {
+  transition:
+    left calc(var(--dur-fade) * var(--pk-speed)) var(--ease-out),
+    right calc(var(--dur-fade) * var(--pk-speed)) var(--ease-out),
+    bottom calc(var(--dur-fade) * var(--pk-speed)) var(--ease-out);
+}
+.pk-sheet-solid {
+  position: absolute;
+  inset: 0;
+  background: var(--surface);
+  opacity: 0;
+  z-index: -1;
+  pointer-events: none;
+  transition: opacity calc(var(--dur-fade) * var(--pk-speed)) var(--ease-out);
+}
+.pk-sheet.pk-solid-now .pk-sheet-solid {
+  opacity: 1;
+}
+.pk-sheet-head {
+  position: relative;
+  flex: none;
+  padding: 8px 16px 0;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.pk-grabber {
+  position: absolute;
+  left: 50%;
+  top: 6px;
+  width: 36px;
+  height: 4px;
+  margin-left: -18px;
+  border-radius: 2px;
+  background: var(--pk-grab);
+}
+.pk-sheet-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 17px;
+  font-weight: 600;
+  text-align: center;
+  padding: 0 44px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pk-sheet-close {
+  position: absolute;
+  right: 12px;
+  top: 14px;
+}
+.pk-sheet-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px 16px 24px;
+  touch-action: pan-y;
+}
+.pk-sheet-body.pk-at-top {
+  touch-action: none;
+}
+.motion-reduced :is(.pk-sheet, .pk-sheet.pk-leaving) {
+  scale: none;
+  transition:
+    translate 0s,
+    opacity calc(var(--dur-reduced) * var(--pk-speed)) var(--ease-out),
+    left 0s,
+    right 0s,
+    bottom 0s;
+}
+
+/* (43) full-screen cover: covers the whole screen, rising over 500 ms; ✕ closes it (sheet.fullScreen, D10) */
+.pk-cover {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  border-radius: var(--r-sheet);
+  overflow: hidden;
+  translate: 0 100%;
+  transition: translate calc(var(--dur-cover) * var(--pk-speed)) var(--ease-decel);
+}
+.pk-cover.pk-on {
+  translate: 0 0;
+}
+.pk-cover.pk-leaving {
+  transition: translate calc(var(--dur-leave) * var(--pk-speed)) var(--ease-accel);
+}
+.pk-cover .pk-bar-slot.pk-right {
+  z-index: 2;
+}
+.pk-cover-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: calc(var(--pk-bar-top) + 58px) 16px 30px;
+}
+.motion-reduced .pk-cover {
+  translate: 0 0;
+  opacity: 0;
+  transition: opacity calc(var(--dur-reduced) * var(--pk-speed)) var(--ease-out);
+}
+.motion-reduced .pk-cover.pk-on {
+  opacity: 1;
+}
+
+/* (44) popover and (16, 46) menus grow out of their button on the menu springs; their blur fades in over 260 ms
+   and stays while they close */
+.pk-morph {
+  position: absolute;
+  transform-origin: var(--pk-ox, 0px) var(--pk-oy, 0px);
+  scale: var(--pk-s0x, 0.2) var(--pk-s0y, 0.2);
+  opacity: 0;
+  -webkit-backdrop-filter: blur(var(--pk-ramp)) saturate(var(--glass-sat));
+  backdrop-filter: blur(var(--pk-ramp)) saturate(var(--glass-sat));
+  transition:
+    scale var(--dur-menu-open) var(--ease-menu-open),
+    opacity calc(var(--dur-quick) * var(--pk-speed)) var(--ease-linear),
+    --pk-ramp calc(var(--dur-ramp) * var(--pk-speed)) var(--ease-lift);
+}
+.pk-morph.pk-on {
+  scale: 1;
+  opacity: 1;
+  --pk-ramp: var(--pk-blur-to, 22px);
+}
+.pk-morph.pk-leaving {
+  scale: var(--pk-s0x, 0.2) var(--pk-s0y, 0.2);
+  opacity: 0;
+  --pk-ramp: var(--pk-blur-to, 22px);
+  transition:
+    scale var(--dur-menu-close) var(--ease-menu-close),
+    opacity calc(var(--dur-close) * var(--pk-speed)) var(--ease-linear);
+}
+.motion-reduced .pk-morph {
+  scale: none;
+  --pk-ramp: var(--pk-blur-to, 22px);
+  transition: opacity calc(var(--dur-reduced) * var(--pk-speed)) var(--ease-linear);
+}
+/* one menu style everywhere: blur 22 over an 80% fill, corners --r-card (D16) */
+.pk-menu {
+  --pk-blur-to: var(--pk-menu-blur);
+  width: 250px;
+  max-width: calc(100% - 24px);
+  border-radius: var(--r-card);
+  background: var(--pk-menu);
+  box-shadow: inset 0 0 0 0.5px var(--pk-menu-line), var(--shadow-floating);
+  padding: 6px;
+  overflow: hidden;
+  color: var(--fg);
+  z-index: 2;
+}
+.pk-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: 44px;
+  padding: 0 12px;
+  border-radius: var(--r-medium);
+  font-size: 17px;
+  text-align: left;
+  color: var(--fg);
+  transition:
+    background-color calc(var(--dur-lift-in) * var(--pk-speed)) var(--ease-decel),
+    opacity calc(var(--dur-recede) * var(--pk-speed)) var(--ease-decel);
+}
+.pk-menu-item > span {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pk-menu-item:active,
+.pk-menu-item.pk-hl {
+  background: var(--fill);
+}
+.pk-menu-item.pk-red {
+  color: var(--danger);
+}
+.pk-menu-item:disabled {
+  opacity: 0.4;
+}
+.pk-menu-sep {
+  height: 8px;
+  margin: 0 -6px;
+  background: var(--pk-menu-gap);
+}
+.pk-menu-label {
+  font-size: 13px;
+  color: var(--fg2);
+  padding: 8px 12px 4px;
+}
+.pk-menu.pk-recede {
+  scale: var(--pk-recede);
+  transition: scale calc(var(--dur-recede) * var(--pk-speed)) var(--ease-decel);
+}
+.pk-menu.pk-recede .pk-menu-item {
+  opacity: 0.5;
+}
+/* (45, pinned) a submenu opens over its menu */
+.pk-submenu {
+  position: absolute;
+  -webkit-backdrop-filter: blur(var(--pk-menu-blur)) saturate(var(--glass-sat));
+  backdrop-filter: blur(var(--pk-menu-blur)) saturate(var(--glass-sat));
+  box-shadow: inset 0 0 0 0.5px var(--pk-menu-line), var(--shadow-floating);
+  scale: 0.92;
+  opacity: 0;
+  transform-origin: 50% 0;
+  z-index: 3;
+  transition:
+    scale calc(var(--dur-recede) * var(--pk-speed)) var(--ease-decel),
+    opacity calc(var(--dur-fade) * var(--pk-speed)) var(--ease-out);
+}
+.pk-submenu.pk-on {
+  scale: 1;
+  opacity: 1;
+}
+.pk-popover {
+  --pk-blur-to: var(--pk-popover-blur);
+  width: 240px;
+  border-radius: var(--r-large);
+  padding: 14px 16px;
+  font-size: 15px;
+  line-height: 1.35;
+  background: var(--pk-popover);
+  box-shadow: inset 0 0 0 0.5px var(--glass-line), inset 0 1px 0.5px rgba(255, 255, 255, 0.2), var(--shadow-floating);
+  color: var(--fg);
+}
+.glass-solid .pk-popover {
+  background: var(--glass-strong);
+}
+/* (46) long-press: a held .pk-hold lifts from 200 ms (×1.04) and opens its menu at 700 ms, over a 20% / 25% dim
+   with no blur; the menu closes in 170 ms */
+.pk-hold {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  transition: scale calc(var(--dur-lift-row) * var(--pk-speed)) var(--ease-decel);
+}
+.pk-hold.pk-lifting {
+  scale: var(--pk-lift-scale);
+  z-index: 3;
+}
+.motion-reduced .pk-hold.pk-lifting {
+  scale: none;
+}
+.pk-lift-clone {
+  position: absolute;
+  margin: 0;
+  border-radius: var(--r-medium);
+  overflow: hidden;
+  scale: var(--pk-lift-scale);
+  box-shadow: var(--shadow-lifted);
+  pointer-events: none;
+  transition: opacity calc(var(--dur-close) * var(--pk-speed)) var(--ease-linear);
+}
+.motion-reduced .pk-lift-clone {
+  scale: none;
+}
+
+/* (47) action sheet: actions from the bottom, Cancel on its own (choices 'actionSheet', D07) */
+.pk-actions {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  translate: 0 110%;
+  transition: translate calc(var(--dur-rise) * var(--pk-speed)) var(--ease-decel);
+}
+.pk-actions.pk-on {
+  translate: 0 0;
+}
+.pk-actions.pk-leaving {
+  translate: 0 110%;
+  transition-timing-function: var(--ease-accel);
+}
+.pk-actions-group {
+  border-radius: var(--r-actions);
+  overflow: hidden;
+}
+.pk-actions-title {
+  text-align: center;
+  font-size: 13px;
+  color: var(--fg2);
+  padding: 14px 16px 10px;
+}
+.pk-action {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 56px;
+  font-size: 20px;
+  color: var(--accent);
+}
+.pk-action:active {
+  background: var(--fill);
+}
+.pk-action + .pk-action::before,
+.pk-actions-title + .pk-action::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 0.5px;
+  background: var(--sep);
+}
+.pk-action.pk-red {
+  color: var(--danger);
+}
+.pk-action.pk-cancel {
+  font-weight: 600;
+}
+
+/* (48) alert: a centred box with two capsule buttons; appears over 250 ms from ×1.1 (confirm 'alert', D08) */
+.pk-alert {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 300px;
+  max-width: calc(100% - 40px);
+  border-radius: var(--r-alert);
+  padding: 22px 18px 18px;
+  text-align: center;
+  translate: -50% -50%;
+  scale: 1.1;
+  opacity: 0;
+  transition:
+    scale calc(var(--dur-appear) * var(--pk-speed)) var(--ease-linear),
+    opacity calc(var(--dur-appear) * var(--pk-speed)) var(--ease-linear);
+}
+.pk-alert.pk-on {
+  scale: 1;
+  opacity: 1;
+}
+.pk-alert.pk-leaving {
+  scale: 1.05;
+  opacity: 0;
+  transition:
+    scale calc(var(--dur-leave) * var(--pk-speed)) var(--ease-linear),
+    opacity calc(var(--dur-leave) * var(--pk-speed)) var(--ease-linear);
+}
+.pk-alert-title {
+  font-size: 17px;
+  font-weight: 600;
+  margin: 0 0 6px;
+}
+.pk-alert-text {
+  font-size: 15px;
+  color: var(--fg2);
+  margin: 0 0 18px;
+  line-height: 1.35;
+}
+.pk-alert-btns {
+  display: flex;
+  gap: 10px;
+}
+.pk-alert-btn {
+  flex: 1;
+  height: 48px;
+  border-radius: 999px;
+  background: var(--fill);
+  font-weight: 600;
+  font-size: 17px;
+  color: var(--fg);
+}
+.pk-alert-btn.pk-red {
+  background: var(--danger);
+  color: #fff;
+}
+.pk-alert-btn.pk-blue {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+.motion-reduced :is(.pk-alert, .pk-alert.pk-leaving, .pk-actions, .pk-actions.pk-leaving) {
+  scale: none;
+  transition: opacity calc(var(--dur-reduced) * var(--pk-speed)) var(--ease-linear);
+}
+.motion-reduced .pk-actions {
+  translate: 0 0;
+  opacity: 0;
+}
+.motion-reduced .pk-actions.pk-on {
+  opacity: 1;
+}
+
+/* (49) toast: drops in from the top over 500 ms, stays 3 s (timing.toast), leaves upward over 350 ms; Undo where
+   something can be undone */
+.pk-toast {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--pk-bar-top) + 2px);
+  height: 50px;
+  min-width: 220px;
+  max-width: calc(100% - 32px);
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 8px 0 18px;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--fg);
+  translate: -50% calc(-100% - 60px);
+  transition: translate calc(var(--dur-toast-in) * var(--pk-speed)) var(--ease-decel);
+}
+.pk-toast.pk-on {
+  translate: -50% 0;
+}
+.pk-toast.pk-leaving {
+  translate: -50% calc(-100% - 60px);
+  transition: translate calc(var(--dur-toast-out) * var(--pk-speed)) var(--ease-accel);
+}
+.pk-toast > span {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 10px;
+}
+.pk-toast-undo {
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 999px;
+  color: var(--accent);
+  font-weight: 600;
+}
+.motion-reduced .pk-toast {
+  translate: -50% 0;
+  opacity: 0;
+  transition: opacity calc(var(--dur-reduced) * var(--pk-speed)) var(--ease-linear);
+}
+.motion-reduced .pk-toast.pk-on {
+  opacity: 1;
+}

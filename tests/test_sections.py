@@ -57,7 +57,7 @@ def run(b, t):
     ok(pg.inner_text('#barT').strip() == 'Recording Chorus 2', 'the top bar says what’s recording: ' + pg.inner_text('#barT').strip())
     ok(pg.locator('.sgmodes.locked').count() == 1 and pg.locator('[data-a=sgSec]').count() == 0, 'the mode switch dims and sections can’t be tapped')
     ok(pg.locator('#barL [data-a=sgBack]').count() == 0 and pg.locator('[data-a=sgEdit],[data-a=ckPencil]').count() == 0, 'no back or edit while recording')
-    ok(pg.locator('#dock .recbar').count() == 1 and pg.locator('#dock .tabbar').count() == 0 and pg.locator('#recMeter i').count() == 14,
+    ok(pg.locator('#dock .recbar').count() == 1 and pg.locator('#dock .pk-tabbar').count() == 0 and pg.locator('#recMeter i').count() == 14,
        'the recording bar, with the timer and a level meter, takes the place of the tab bar')
     ok(pg.locator(sec(o4) + '.recording').count() == 1 and pg.locator('[data-a=sgRec]').count() == 0, 'the section being recorded is marked, without its pills')
     ok(pg.evaluate("rec.lv.length") > 0, 'the level meter is listening')
@@ -171,7 +171,7 @@ def run(b, t):
     pg.evaluate("Object.defineProperty(document,'hidden',{configurable:true,get:()=>true});document.dispatchEvent(new Event('visibilitychange'))"); pg.wait_for_timeout(1000)
     pg.evaluate("Object.defineProperty(document,'hidden',{configurable:true,get:()=>false});document.dispatchEvent(new Event('visibilitychange'))"); pg.wait_for_timeout(800)
     ok(pg.evaluate("!rec") and pg.evaluate(f"TAKES.some(t=>t.o==='{o3}')") and pg.evaluate("U.sheet") == 'sgTakes'
-       and 'saved when you left' in pg.inner_text('.toast'), 'leaving the app stops and saves the take, with the sheet waiting')
+       and 'saved when you left' in pg.inner_text('.pk-toast'), 'leaving the app stops and saves the take, with the sheet waiting')
     pg.click('.sheet .xbtn'); pg.wait_for_timeout(200)
 
     # recording stops at the time limit, and when leaving the song
@@ -182,7 +182,7 @@ def run(b, t):
     pg.click(sec(o3) + ' [data-a=sgRec]'); pg.wait_for_function("!!rec", timeout=5000); pg.wait_for_timeout(1100)
     ids = pg.evaluate("TAKES.map(t=>t.id)")
     pg.evaluate("go(()=>{U.view=null;U.tab='today'})"); pg.wait_for_function("!rec", timeout=4000); pg.wait_for_timeout(400)
-    ok(pg.evaluate("ids=>TAKES.some(t=>!ids.includes(t.id))", ids) and pg.evaluate("U.sheet") is None and 'stopped and saved' in pg.inner_text('.toast'),
+    ok(pg.evaluate("ids=>TAKES.some(t=>!ids.includes(t.id))", ids) and pg.evaluate("U.sheet") is None and 'stopped and saved' in pg.inner_text('.pk-toast'),
        'leaving the song stops and saves the take')
     pg.evaluate("sgp().sort='recent';U.tab='songs';U.view=null;render()"); pg.wait_for_timeout(300)
     first_row = pg.inner_text('#slist .rowc >> nth=0')
@@ -229,7 +229,7 @@ def run(b, t):
     pg.click('[data-a=importYes]'); pg.wait_for_function("U.sheet===null", timeout=10000); pg.wait_for_timeout(300)
     ok(pg.evaluate("TAKES.length") == 2 and pg.evaluate("TAKES.every(t=>t.blob&&t.blob.size>0)") and pg.evaluate("D.sessions.length") == 3,
        'restoring it keeps this device’s recordings')
-    ok('recordings were kept' in pg.inner_text('.toast'), 'and says so')
+    ok('recordings were kept' in pg.inner_text('.pk-toast'), 'and says so')
     pg.evaluate("U.tab='settings';U.view='set';U.setPg='backup';render()"); pg.click('[data-a=sheet][data-v=undoRestore]'); pg.wait_for_timeout(300)
     ok('didn’t include recordings' in pg.text_content('.sheet'), 'the undo sheet says the recordings were kept')
     pg.click('[data-a=undoYes]'); pg.wait_for_function("U.sheet===null", timeout=10000); pg.wait_for_timeout(300)

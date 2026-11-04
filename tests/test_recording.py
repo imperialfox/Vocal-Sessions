@@ -15,7 +15,7 @@ def run(b, t):
     pg.click('[data-a=rec]'); pg.wait_for_timeout(1500)
     pg.evaluate("Object.defineProperty(document,'hidden',{configurable:true,get:()=>true});document.dispatchEvent(new Event('visibilitychange'))"); pg.wait_for_timeout(1200)
     pg.evaluate("Object.defineProperty(document,'hidden',{configurable:true,get:()=>false});document.dispatchEvent(new Event('visibilitychange'))"); pg.wait_for_timeout(900)
-    ok(pg.evaluate("TAKES.length") == 2 and pg.locator('.toast').count() == 1, 'leaving the app mid-take saves it and says so')
+    ok(pg.evaluate("TAKES.length") == 2 and pg.locator('.pk-toast').count() == 1, 'leaving the app mid-take saves it and says so')
 
     pg.click('[data-a=rec]'); pg.wait_for_timeout(1200); pg.click('[data-a=exit]'); pg.wait_for_timeout(1500)
     ok(not pg.evaluate("!!rec"), 'leaving the screen stops the recording')
@@ -27,7 +27,7 @@ def run(b, t):
                 "const c=AUDIO.ctx(),r=c.resume.bind(c);window.__res=c.resume;c.resume=()=>new Promise(ok=>setTimeout(()=>r().then(ok),300));0")
     # (the context is slow to wake, as on a quick machine where the refusal comes first: it still rests once awake)
     pg.click('[data-a=rec]')
-    pg.wait_for_function("[...document.querySelectorAll('.toast')].some(e=>e.textContent.includes('Microphone access was blocked'))", timeout=5000)
+    pg.wait_for_function("[...document.querySelectorAll('.pk-toast')].some(e=>e.textContent.includes('Microphone access was blocked'))", timeout=5000)
     pg.wait_for_function("!AUDIO.state().waking&&AUDIO.state().ctx==='suspended'", timeout=5000)
     ok(not pg.evaluate("!!rec") and pg.evaluate("AUDIO.state().users") == 0 and pg.evaluate("AUDIO.state().made") == 1,
        'Q16: with the microphone blocked, nothing records and the one shared audio context rests again')
@@ -41,7 +41,7 @@ def run(b, t):
     ss = pg.evaluate("D.songSessions[0]"); ok(bool(ss) and len(ss['takes']) >= 1, 'song practice is saved with its takes')
     pg.click('.xbtn[data-a=close]'); pg.wait_for_timeout(300)
 
-    pg.evaluate("scrollTo(0,0);U.tab='settings';U.view='set';U.setPg='backup';tabMin=false;render()"); pg.wait_for_timeout(300)
+    pg.evaluate("scrollTo(0,0);U.tab='settings';U.view='set';U.setPg='backup';render()"); pg.wait_for_timeout(300)
     pg.click('[data-a=exportPrep]'); pg.wait_for_function("U.sheet==='exportReady'", timeout=10000)
     with pg.expect_download(timeout=5000) as dl: pg.click('[data-a=exportSave]')
     path = dl.value.path(); data = json.load(open(path, encoding='utf-8'))

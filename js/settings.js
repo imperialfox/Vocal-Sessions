@@ -88,7 +88,7 @@ const SET = (() => {
       if (m === 'on' || m === 'off') localStorage.setItem(RKEY, m);
       else localStorage.removeItem(RKEY);
     } catch (e) {}
-    MOTION.publish();
+    Parts.motion.setReduced(m === 'on' ? true : m === 'off' ? false : null); // Q41 the kit runs the motion (D18)
   }
   const slow = () => MOTION.speed() === 4;
 
@@ -412,7 +412,7 @@ const SET = (() => {
     return (
       '<h1>Recall</h1>' +
       '<div class="grp setgap"><div class="row"><span class="lbl">Peek length</span>' +
-      '<div class="seg pkseg" role="group" aria-label="Peek length"><span class="knob" aria-hidden="true"></span>' +
+      '<div class="seg pk-seg pkseg" role="group" aria-label="Peek length"><span class="pk-seg-ind" aria-hidden="true"></span>' +
       PEEKS.map(
         (n) =>
           '<button data-a="peekLen" data-v="' +
@@ -444,16 +444,16 @@ const SET = (() => {
       '<div class="grp setgap">' +
       '<button class="row" data-a="setGrad" role="switch" aria-checked="' +
       g +
-      '"><span class="lbl">Gradient background</span><span class="tgl" aria-checked="' +
-      g +
-      '" aria-hidden="true"></span></button></div>' +
+      '"><span class="lbl">Gradient background</span>' +
+      switchHTML(g) +
+      '</button></div>' +
       '<p class="foot">A soft moving wash behind Today’s header.</p>' +
       '<div class="grp setgap">' +
       '<button class="row" data-a="setIds" role="switch" aria-checked="' +
       idsOn() +
-      '"><span class="lbl">Show screen IDs</span><span class="tgl" aria-checked="' +
-      idsOn() +
-      '" aria-hidden="true"></span></button></div>' +
+      '"><span class="lbl">Show screen IDs</span>' +
+      switchHTML(idsOn()) +
+      '</button></div>' +
       '<p class="foot">A small label in the corner with each screen’s ID, such as VS-001, for pointing at a screen in a note. This ' +
       deviceName() +
       ' only, never in backups.</p>'
@@ -488,9 +488,9 @@ const SET = (() => {
       '<div class="hdr">Transparency</div><div class="grp">' +
       '<button class="row" data-a="setTransp" role="switch" aria-checked="' +
       transpSet() +
-      '"><span class="lbl">Reduce transparency</span><span class="tgl" aria-checked="' +
-      transpSet() +
-      '" aria-hidden="true"></span></button></div>' +
+      '"><span class="lbl">Reduce transparency</span>' +
+      switchHTML(transpSet()) +
+      '</button></div>' +
       '<p class="foot">Makes the glass more solid, so what’s on it is easier to read. ' +
       (transpSet() || !(tmq && tmq.matches)
         ? 'This ' + deviceName() + ' only, never in backups.'
@@ -499,9 +499,9 @@ const SET = (() => {
       '<div class="hdr">Tuning</div><div class="grp">' +
       '<button class="row" data-a="setSlow" role="switch" aria-checked="' +
       slow() +
-      '"><span class="lbl">Slow motion</span><span class="tgl" aria-checked="' +
-      slow() +
-      '" aria-hidden="true"></span></button></div>' +
+      '"><span class="lbl">Slow motion</span>' +
+      switchHTML(slow()) +
+      '</button></div>' +
       '<p class="foot">Plays every animation four times slower, to check how it feels. This ' +
       deviceName() +
       ' only, never in backups.</p>'

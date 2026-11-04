@@ -12,10 +12,10 @@ import screens as INV  # the Atlas's settings (Q31; Q30's inventory.py before): 
 from atlas_kit import docs as ATLAS_DOCS  # the Atlas kit's reading of the docs (tools/atlas/kit, on the path through screens.py)
 
 PART_RE = re.compile(r'^[a-z0-9]+(-[a-z0-9]+)*$')
-KINDS = {'Tab', 'Screen', 'Sub-page', 'Sheet', 'Overlay'}
+KINDS = {'Tab', 'Screen', 'Sub-page', 'Sheet', 'Alert', 'Action sheet', 'Overlay'}  # Q41 alerts and action sheets are the parts kit's
 REG = "JSON.parse(JSON.stringify(SCREENS))"
 HERE = "()=>[document.getElementById('app').dataset.screen,SCR.viewKey()]"
-SHEET_ID = "()=>{const s=document.querySelector('#layer .sheet,#layer .clock');return s?s.dataset.screen||'':null}"
+SHEET_ID = "()=>{const s=document.querySelector('#layer :is(.sheet,.pk-alert,.pk-actions):not(.pk-leaving),#layer .clock');return s?s.dataset.screen||'':null}"
 
 
 def src_all():
@@ -143,18 +143,18 @@ def on_page(b, t):
         # sheets: every one this sample data can open carries its ID, and the label shows both
         opened, bad = [], []
         for s in S:
-            if s['kind'] != 'Sheet': continue
+            if s['kind'] not in ('Sheet', 'Alert', 'Action sheet'): continue
             k = s['key'][6:]
             r = pg.evaluate("""k=>{const ks=[null,'g_1','s0','s2','sp1',FOUND[0].id,'c0_x'];
               for(const withX of [false,true]){if(withX&&!X)newSession();
                 for(const kk of ks){U.view=null;U.tab='today';U.sheet=k;U.sd={k:kk};try{render()}catch(e){}
-                  const sh=document.querySelector('#layer .sheet');if(U.sheet===k&&sh)return [sh.dataset.screen,document.getElementById('scrid').textContent]}}
+                  const sh=document.querySelector('#layer :is(.sheet,.pk-alert,.pk-actions):not(.pk-leaving)');if(U.sheet===k&&sh)return [sh.dataset.screen,document.getElementById('scrid').textContent]}}
               return null}""", k)
             pg.evaluate("(()=>{U.sheet=null;U.sd={};if(X){X=null;saveDraft()}render()})()")
             if r:
                 opened.append(s['id'])
                 if r[0] != s['id'] or r[1] != 'VS-001 · ' + s['id']: bad.append(f"{s['id']} {k}: {r}")
-        nsheets = sum(1 for s in S if s['kind'] == 'Sheet')
+        nsheets = sum(1 for s in S if s['kind'] in ('Sheet', 'Alert', 'Action sheet'))
         ok(not bad and len(opened) >= 30, f'{sc}: {len(opened)} of {nsheets} sheets open from sample data, each carrying its own ID, and the label shows the screen’s then the sheet’s ({bad})')
         t.shot(pg, 'label-' + sc)
         pg.context.close()

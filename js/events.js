@@ -89,7 +89,7 @@ document.addEventListener('click', (e) => {
     e.preventDefault();
     return;
   }
-  if (swOpen && !(el && el.classList.contains('swdel')) && !e.target.closest('.scrim')) {
+  if (swOpen && !(el && el.classList.contains('swdel')) && !e.target.closest('#layer')) {
     const inOpen = e.target.closest('.sw') === swOpen;
     closeSwipes();
     if (inOpen) {
@@ -108,11 +108,6 @@ document.addEventListener('click', (e) => {
     case 'tab':
       U.clock = false;
       if (sgTabTap(v)) break;
-      // the collapsed bar's pill (or any tab while it's collapsed) brings the bar back first (3.23, Q08)
-      if (tabMin && !MQ.reg.matches && $('dock').querySelector('.dockrow')) {
-        setTabMin(false);
-        break;
-      }
       go(() => {
         U.tab = v;
         U.view = null;

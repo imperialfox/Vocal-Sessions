@@ -643,7 +643,6 @@ const ZOOM = (() => {
       // page slides away to the right)
       stack.pop();
       window.scrollTo(0, top.y);
-      lastY = window.scrollY; // a scroll put back, not one you made: the tab bar stays as it is
       if (moving()) zoomed = top.kind === 'push' ? pushClose(ctx) : close(ctx, top.key);
     } else if (ctx.armed && ctx.armed.replace && top && top.to === ctx.sp) {
       top.to = nsp; // a pushed page that became another (retarget()): Back still slides it away
@@ -739,7 +738,7 @@ const ZOOM = (() => {
     }
     const tint = colourOf(card),
       rad = radiusOf(card, R),
-      z = build({ page: sh, rad: 34, tint, top: true });
+      z = build({ page: sh, rad: parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--r-sheet')) || 46, tint, top: true });
     z.kind = 'sheet';
     z.then = then;
     Z = z;

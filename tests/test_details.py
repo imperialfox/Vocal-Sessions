@@ -59,7 +59,7 @@ def lists(b, t):
     pg.evaluate("U.sheet='delSession';U.sd={k:'s2'};rerender()")
     quiet(pg)
     top = pg.evaluate("document.querySelector('#app .sw').dataset.fk")
-    pg.click('[data-a=delSession]')
+    pg.click('#layer .pk-alert .pk-red')
     pg.wait_for_timeout(60)
     ok(pg.locator('.det-ghost').count() == 1, 'a deleted row leaves a copy that shrinks away')
     ok(pg.evaluate("getComputedStyle(document.querySelector('.det-ghost')).pointerEvents") == 'none', 'which never blocks taps')
@@ -245,7 +245,8 @@ def sheets(b, t):
     pg.click('[data-a=exportPrep]')
     pg.wait_for_function("U.sheet==='exportReady'", timeout=20000)
     ok(pg.evaluate("window.__sw") > 50, 'Preparing backup becomes Backup ready in the same sheet, from its old height')
-    ok(pg.evaluate("document.querySelector('#layer .sheet').classList.contains('still')"), 'it does not rise again')
+    ok(pg.evaluate("!document.querySelector('#layer .sheet').getAnimations().some(a=>a.transitionProperty==='translate')"),
+       'it does not rise again (the parts kit\'s sheet opens again in place at its new height, Q41)')
     quiet(pg)
     pg.context.close()
 
@@ -256,13 +257,13 @@ def reduced(b, t):
     pg.wait_for_function("!document.getElementById('splash')", timeout=20000)
     ok(not pg.evaluate("MOTION.on()"), 'Reduce Motion: movement is off')
     pg.click('.calbtn'); pg.wait_for_timeout(60)
-    an = pg.evaluate("[...document.querySelectorAll('#layer .sheet, #layer .scrim')].flatMap(e=>e.getAnimations().map(a=>Object.keys(a.effect.getKeyframes()[0]).filter(x=>!['offset','easing','composite','computedOffset'].includes(x)).join()))")
+    an = pg.evaluate("[...document.querySelectorAll('#layer .sheet, #layer .pk-dim')].flatMap(e=>e.getAnimations().map(a=>Object.keys(a.effect.getKeyframes()[0]).filter(x=>!['offset','easing','composite','computedOffset'].includes(x)).join()))")
     ok(an and all(k == 'opacity' for k in an), 'a sheet fades in instead of rising')
     ok(not pg.evaluate(ANIM, '.cal button'), 'the calendar days do not ripple')
     pg.evaluate("U.sheet=null;U.sd={};rerender()")
     pg.evaluate("go(()=>{U.tab='history';U.view='all'})")
     pg.evaluate("U.sheet='delSession';U.sd={k:'s2'};rerender()")
-    pg.click('[data-a=delSession]'); pg.wait_for_timeout(60)
+    pg.click('#layer .pk-alert .pk-red'); pg.wait_for_timeout(60)
     ok(pg.locator('.det-ghost').count() == 0, 'a deleted row just goes: no shrinking copy')
     ok(pg.evaluate("[...document.querySelectorAll('#app *')].every(e=>e.getAnimations().every(a=>!Object.keys(a.effect.getKeyframes()[0]).includes('transform')))"),
        'and nothing slides, scales or moves')
@@ -274,7 +275,7 @@ def motion_off(b, t):
     pg = t.page(b, touch=True, data=sample())
     pg.evaluate("go(()=>{U.tab='history';U.view='all'})")
     pg.evaluate("U.sheet='delSession';U.sd={k:'s2'};rerender()")
-    pg.click('[data-a=delSession]'); pg.wait_for_timeout(60)
+    pg.click('#layer .pk-alert .pk-red'); pg.wait_for_timeout(60)
     APP_ANIMS = "[...document.querySelectorAll('#app, #app *')].reduce((n,e)=>n+e.getAnimations().length,0)"
     ok(pg.locator('.det-ghost').count() == 0 and pg.evaluate(APP_ANIMS) == 0, 'motion off: no copies, nothing in the page animates, as before 3.14')
     ok(pg.locator('#app .sw').count() == 2, 'and the row is simply gone')

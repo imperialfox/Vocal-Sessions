@@ -446,7 +446,7 @@ function scrLog() {
       )
       .join('') +
     '</div></div>' +
-    '<div class="seg wide" role="tablist" style="margin-top:18px"><span class="knob" aria-hidden="true"></span><button role="tab" data-a="logMode" data-v="hl" class="' +
+    '<div class="seg pk-seg wide" role="tablist" style="margin-top:18px"><span class="pk-seg-ind" aria-hidden="true"></span><button role="tab" data-a="logMode" data-v="hl" class="' +
     (U.logAll ? '' : 'on') +
     '" aria-selected="' +
     !U.logAll +

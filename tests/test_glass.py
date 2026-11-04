@@ -101,7 +101,7 @@ def material(b, t):
     for sc in ('light', 'dark'):
         pg = t.page(b, sc=sc)
         g = pg.evaluate(G, '#bar .circ.glass')
-        bar = pg.evaluate(G, '.dockrow .tabbar')
+        bar = pg.evaluate(G, '.dockrow .pk-tabbar')
         if sc == 'light':
             ok(g['bg'] == 'rgba(248, 248, 248, 0.53)', f'light: glass is tinted #F8F8F8 at 53% ({g["bg"]})')
             ok(g['bf'] == 'blur(14px) saturate(2.1)', f'light: blur 14 px with saturate 210%, no brightness boost ({g["bf"]})')
@@ -118,25 +118,26 @@ def material(b, t):
             ok(g['sh'].startswith('rgba(255, 255, 255, 0.23) 0px -1px 0.5px 0px inset'), 'dark: the rim light is at the bottom')
             ok(g['rim'].startswith('linear-gradient(rgba(0, 0, 0, 0)'), 'dark: the hairline fades out at the ends')
         ok(g['pad'] == '0.5px' and g['after'] == 'none', f'{sc}: a 0.5 pt hairline, and no shine layer')
-        ok(bar['bf'] == g['bf'] and bar['bg'] == g['bg'], f'{sc}: the tab bar takes the same material')
+        ok(bar and bar['bg'] == g['bg'], f'{sc}: the tab bar (the parts kit\'s, Q41) takes the same glass tint ({bar and bar["bf"]})')
         # sheets keep their strength and blur; they take the rim, the shadow and dark mode's saturation
         pg.evaluate(GO, "U.tab='today'"); pg.locator('#app [data-a="openCal"]').first.click(); pg.wait_for_timeout(250)
         s = pg.evaluate(G, '.sheet')
         h = pg.evaluate(G, '.shead')
         strong = 'rgba(250, 250, 252, 0.86)' if sc == 'light' else 'rgba(44, 44, 48, 0.86)'
         sat = '2.1' if sc == 'light' else '1.4'
-        ok(s and s['bg'] == strong and s['bf'] == f'blur(26px) saturate({sat}) brightness(1.06)',
-           f'{sc}: a sheet keeps its near-solid tint and blur, with {sat} saturation ({s and s["bf"]})')
+        # Q41 the sheet is the parts kit's: its strong glass (D15), the near-solid tint, the kit's sheet blur
+        ok(s and s['bg'] == strong and s['bf'] == f'blur(10px) saturate({sat})',
+           f'{sc}: a sheet is the parts kit\'s strong glass: the near-solid tint, its blur, with {sat} saturation ({s and s["bf"]})')
         ok(s and s['sh'] == g['sh'] and s['pad'] == '0.5px', f'{sc}: and takes the new rim and shadow')
-        ok(h and h['bf'] == 'blur(20px) saturate(' + ('1.8' if sc == 'light' else '1.4') + ')', f'{sc}: the sheet header follows its sheet ({h and h["bf"]})')
+        ok(h and h['bf'] == 'none', f'{sc}: the sheet header is part of the kit\'s sheet, with no blur of its own ({h and h["bf"]})')
         t.shot(pg, f'calendar-{sc}')
         pg.context.close()
     # the other blurs the handoff named take the new material too
     pg = t.page(b)
-    rules = pg.evaluate("""()=>{const o={};for(const sh of document.styleSheets){for(const r of sh.cssRules){if(['.fwtabin','.opmenu'].includes(r.selectorText))
+    rules = pg.evaluate("""()=>{const o={};for(const sh of document.styleSheets){for(const r of sh.cssRules){if(['.fwtabin'].includes(r.selectorText))
       o[r.selectorText]=(r.style.backdropFilter||r.style.webkitBackdropFilter)+' | '+r.style.boxShadow}}return o}""")
-    ok(all('var(--glass-blur)' in v and 'var(--glass-rim)' in v for v in rules.values()) and len(rules) == 2,
-       f'the floating window’s tuck tab and the option menu use the new material ({rules})')
+    ok(all('var(--glass-blur)' in v and 'var(--glass-rim)' in v for v in rules.values()) and len(rules) == 1,
+       f'the floating window’s tuck tab uses the new material (Q41: menus are the parts kit\'s) ({rules})')
     pg.context.close()
 
 
@@ -161,9 +162,19 @@ def press(b, t, seed, sid):
     pg = t.page(b, data=seed)
     # Today: the top bar's circle, the search circle, the tabs
     check(pg, '#bar .circ.glass', 'grow')
-    check(pg, '.dockrow .scirc', 'grow')
-    check(pg, '.dockrow .tabbar button:not(.on)', 'bar')
-    check(pg, '.dockrow .tabbar button.on', 'bar')
+    # Q41 the search circle and the tabs are the parts kit's: the circle grows and a pressed tab's highlight swells
+    # to glass (the kit's own press, checked in its repo)
+    box = pg.locator('.dockrow .scirc').bounding_box()
+    pg.mouse.move(box['x'] + box['width'] / 2, box['y'] + box['height'] / 2); pg.mouse.down(); pg.wait_for_timeout(250)
+    ok(pg.evaluate("document.querySelector('.dockrow .scirc').matches('.pk-btn.pk-glass.pk-press')") and
+       pg.evaluate("parseFloat(getComputedStyle(document.querySelector('.dockrow .scirc')).scale)||1") > 1.05, 'the search circle grows while pressed (the kit\'s glass press)')
+    pg.mouse.up(); pg.wait_for_timeout(200)
+    pg.evaluate("go(()=>{U.tab='today';U.view=null})"); pg.wait_for_timeout(100)
+    box = pg.locator('.dockrow .pk-tab:not(.on) >> nth=0').bounding_box()
+    pg.mouse.move(box['x'] + box['width'] / 2, box['y'] + box['height'] / 2); pg.mouse.down(); pg.wait_for_timeout(120)
+    ok(pg.locator('.dockrow .pk-tab-ind.pk-live').count() == 1, 'a pressed tab\'s highlight swells into glass')
+    pg.evaluate("window.dispatchEvent(new PointerEvent('pointercancel'))"); pg.mouse.up(); pg.wait_for_timeout(200)
+    pg.evaluate("go(()=>{U.tab='today';U.view=null})"); pg.wait_for_timeout(100)
     # a real press with the mouse goes through the same rule
     box = pg.locator('#bar .circ.glass').bounding_box()
     pg.mouse.move(box['x'] + box['width'] / 2, box['y'] + box['height'] / 2); pg.mouse.down()
@@ -171,12 +182,6 @@ def press(b, t, seed, sid):
     pg.evaluate("window.dispatchEvent(new PointerEvent('pointercancel'))")
     pg.mouse.up()
     ok(abs(sc - (1 + 17 / box['width'])) <= 0.01, f'a real mouse press grows it too (×{sc:.3f})')
-    # the collapsed tab pill
-    pg.evaluate(GO, "U.tab='songs'"); pg.wait_for_timeout(150)
-    pg.evaluate("setTabMin(true)"); pg.wait_for_timeout(100)
-    check(pg, '.dockrow.min .tabpill', 'grow')
-    ok(pg.evaluate("getComputedStyle(document.querySelector('.dockrow.min .tabpill')).transform") == 'none', 'the pill’s own transform is left alone')
-    pg.evaluate("setTabMin(false)")
     check(pg, '#app .circ.glass, #bar .circ.glass', 'grow')
     # a sheet's ✕
     pg.evaluate(GO, "U.tab='today'"); pg.locator('#app [data-a="openCal"]').first.click(); pg.wait_for_timeout(250)
@@ -271,7 +276,7 @@ def motion(b, t):
 def reduced(b, t):
     ok = t.ok
     pg = t.page(b, init="try{localStorage.setItem('vocalMotion','1');localStorage.setItem('vocalReduce','on')}catch(e){}")
-    o = pg.evaluate("""()=>new Promise(res=>{const el=document.querySelector('.dockrow .scirc');const sam=[],t0=performance.now();
+    o = pg.evaluate("""()=>new Promise(res=>{const el=document.querySelector('#bar .circ.glass');const sam=[],t0=performance.now();
       el.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerType:'touch',isPrimary:true,button:0}));
       const tick=()=>{const t=performance.now()-t0;sam.push([t,getComputedStyle(el).scale,getComputedStyle(el).getPropertyValue('--lift').trim()]);
         if(t<320)requestAnimationFrame(tick);else{window.dispatchEvent(new PointerEvent('pointerup',{pointerType:'touch'}));res(sam)}};requestAnimationFrame(tick)})""")
@@ -324,7 +329,7 @@ def transp(b, t):
 
 
 SIZES = [('375', 375, 812), ('390', 390, 844), ('402', 402, 874), ('ipad', 820, 1180)]
-GROW_ON_SCREEN = '.glass:is(.circ, .shbtn, .txtbtn, .cta, .tabpill, .trkpad, .trkpill, .ppill, .prep, .mktp), #timer[data-a="clock"]'
+GROW_ON_SCREEN = '.glass:is(.circ, .shbtn, .txtbtn, .cta, .trkpad, .trkpill, .ppill, .prep, .mktp), #timer[data-a="clock"]'
 
 
 def clip(b, t, seed, sid):
@@ -342,19 +347,14 @@ def clip(b, t, seed, sid):
                 ('Settings', "U.tab='settings'", None),
                 ('the calendar sheet', "U.tab='today'", '[data-a="openCal"]'),
             ]
-            if name != 'ipad':
-                screens.append(('the collapsed tab bar', "U.tab='songs'", 'min'))
             for label, js, then in screens:
                 pg.evaluate(GO, js); pg.wait_for_timeout(200)
-                if then == 'min':
-                    pg.evaluate("setTabMin(true)"); pg.wait_for_timeout(100)
-                elif then:
+                if then:
                     pg.locator('#app ' + then).first.click(); pg.wait_for_timeout(300)
                 res = pg.evaluate(CLIP, GROW_ON_SCREEN)
                 bad = [f"{r['cls']} “{r['label']}”: {', '.join(r['bad'])}" for r in res if r['bad']]
                 ok(not bad, f'{name} {sc}, {label}: {len(res)} glass buttons pressed, none cut off or covered {bad}')
-                if then == 'min': pg.evaluate("setTabMin(false)")
-                if then and then != 'min': pg.evaluate("closeSheet()"); pg.wait_for_timeout(100)
+                if then: pg.evaluate("closeSheet()"); pg.wait_for_timeout(100)
             # a session (its clock pill and main button)
             pg.evaluate("()=>{newSession();go(()=>{U.view='found'})}"); pg.wait_for_timeout(250)
             for y in (0, 'end'):

@@ -731,7 +731,7 @@ function songListCol() {
         '</button></div>';
     if (D.songs.length && !U.sList)
       h +=
-        '<label class="sfield inl">' +
+        '<label class="sfield pk-search inl">' +
         SGI.search +
         '<input id="sgqi" class="sgq" type="search" placeholder="Search songs" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="search" aria-label="Search songs" value="' +
         esc(U.sq || '') +
@@ -745,7 +745,7 @@ function songListCol() {
     // 3.22: the Songs list keeps its own filter; on iPhone its field sits under the title (Search has the circle)
     if (D.songs.length && !U.sList)
       h +=
-        '<button class="sfield inl sgqbtn" data-a="sgSearch" aria-label="Search songs">' +
+        '<button class="sfield pk-search inl sgqbtn" data-a="sgSearch" aria-label="Search songs">' +
         SGI.search +
         '<span>Search songs</span></button>';
   }
@@ -821,7 +821,7 @@ function songRowHTML(s, hit, toks, pm) {
     acts +
     '<div class="rowc' +
     (open ? ' sel' : '') +
-    (SG.ctx === s.id ? ' lifted' : '') +
+    (ed ? '' : ' pk-hold') + // Q41 the parts kit's long-press: lifts from 200 ms, the menu at 700 ms (D16)
     '"' +
     (ed ? '' : ' data-zk="sg:' + s.id + '" data-push') + // 3.23 (Q08): a song pushes in from the right
     ' data-a="' +
@@ -1195,7 +1195,7 @@ function songControls(sg) {
         '</button>' +
         CLOCK.timerPill(), // Q03 marking while listening: the play-along clock carries on, as a pill
       t:
-        '<div class="seg sgseg" role="tablist"><span class="knob" aria-hidden="true"></span>' +
+        '<div class="seg pk-seg sgseg" role="tablist"><span class="pk-seg-ind" aria-hidden="true"></span>' +
         [
           ['annotate', 'Marks'], // Q03: Marks · Lyrics (U.sEdit stays 'annotate' inside the code)
           ['lyrics', 'Lyrics'],
@@ -1321,7 +1321,7 @@ function songBody(sg, inPane) {
     h +=
       '<div class="sgmodes' +
       (recHere(sg) ? ' locked" aria-disabled="true' : '') +
-      '"><div class="seg sgseg" role="tablist"><span class="knob" aria-hidden="true"></span>' +
+      '"><div class="seg pk-seg sgseg" role="tablist"><span class="pk-seg-ind" aria-hidden="true"></span>' +
       [
         ['practise', 'Practise'],
         ['recall', 'Recall'],
@@ -1621,6 +1621,12 @@ function sgLenRow(d) {
   return h;
 }
 const fmtLen = (s) => Math.floor(s / 60) + ':' + String(Math.round(s) % 60).padStart(2, '0');
+// Q41 (D09, D10) New song opens at the 45% stop on Add media, and grows to full once a file is picked, Manually is
+// chosen, or it's the lyrics form (adding lyrics to a song, labelling sections)
+function sgNewFull() {
+  const d = U.sDraft;
+  return !!d && (!!d.forId || d.step !== 1 || d.mode === 'manual' || !!d.media);
+}
 function newSongSheet() {
   const d = U.sDraft;
   if (!d) return '';
@@ -1638,7 +1644,7 @@ function newSongSheet() {
   if (d.step === 1) {
     const media = d.mode !== 'manual';
     let h =
-      '<div class="seg wide sgaddseg" role="tablist" aria-label="How to add the song"><span class="knob" aria-hidden="true"></span>' +
+      '<div class="seg pk-seg wide sgaddseg" role="tablist" aria-label="How to add the song"><span class="pk-seg-ind" aria-hidden="true"></span>' +
       [
         ['media', 'Add media'],
         ['manual', 'Manually'],
@@ -1939,6 +1945,7 @@ async function sgSaveDraft() {
   save();
   // 3.15: a new song's sheet shrinks into its row in Songs, then the row opens the song (iPhone, motion on)
   const sh = fresh && !split() ? ZOOM.sheetShot() : null;
+  if (sh) HOST.drop(); // Q41 the kit's sheet goes at once: its still copy shrinks into the row instead
   U.sDraft = null;
   U.sheet = null;
   U.sd = {};
@@ -2035,7 +2042,6 @@ function sgTabTap(v) {
       i.blur();
     }
     if (v === 'songs') {
-      tabMin = false;
       rerender();
       return true;
     }
@@ -2733,7 +2739,7 @@ function sgEnsure() {
   b.innerHTML =
     '<nav class="tabbar glass min" aria-label="Tabs"><button class="on" data-a="tab" data-v="songs" aria-label="Show tabs">' +
     SGI.music +
-    'Songs</button></nav><label class="sfield glass">' +
+    'Songs</button></nav><label class="sfield pk-search glass">' +
     SGI.search +
     '<input id="sgqb" class="sgq" type="search" placeholder="Search songs" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="search" aria-label="Search songs"><button class="sclear" data-a="sgQClear" aria-label="Clear search" hidden>' +
     SGI.xc +
@@ -2876,12 +2882,29 @@ function slayerHTML() {
   const sg = songShown();
   // Q03 the marks sheet: rises when words are selected, in place of the dock; with nothing selected, a capsule
   if (sg && U.sEdit === 'annotate' && !U.sheet && !SG.drag) h += SG.sel ? mkSheetHTML(sg) : mkCapHTML();
+  // Q41 the menus are the parts kit's: slayerHTML() lists them in SG.menus and sgMenus() opens them (KMENU, ui.js)
+  const M = (SG.menus = []);
   // Q05 the hold menu on a lyric line (clock.js)
-  h += CLOCK.lineMenuHTML();
+  const lm = CLOCK.lineMenu();
+  if (lm && CLOCK.lineMenuHTML())
+    M.push({
+      id: 'lmenu',
+      html: CLOCK.lineMenuHTML(),
+      anchor: document.querySelector('#app .sgl[data-o="' + lm.o + '"][data-li="' + lm.li + '"]'),
+      kind: 'row',
+      close: 'ckLmClose',
+      name: 'Line',
+    });
   if (sg && recallOn() && !U.sheet && !rec) {
     if (SG.rMenu)
-      h +=
-        '<div class="ctxback clear" data-a="sgMClose"></div><div class="ctxmenu glass" id="rmenu" role="menu"><button role="menuitem" data-a="sgAnywhere">Start anywhere' +
+      M.push({
+        id: 'rmenu',
+        anchor: $('sgrbtn'),
+        kind: 'pull',
+        close: 'sgMClose',
+        name: 'Recall order',
+        html:
+        '<button role="menuitem" data-a="sgAnywhere">Start anywhere' +
         SGI.shuffle +
         '</button>' +
         [
@@ -2899,12 +2922,16 @@ function slayerHTML() {
               ((U.sOrder || 'start') === x[0] ? ICON.check : '<span></span>') +
               '</button>'
           )
-          .join('') +
-        '</div>';
+          .join(''),
+      });
     if (SG.hMenu)
-      h +=
-        '<div class="ctxback clear" data-a="sgMClose"></div><div class="ctxmenu glass" id="hmenu" role="menu">' +
-        SG_HINTS.map(
+      M.push({
+        id: 'hmenu',
+        anchor: $('sghname'),
+        kind: 'pull',
+        close: 'sgMClose',
+        name: 'Hint level',
+        html: SG_HINTS.map(
           (l, i) =>
             '<button role="menuitemradio" aria-checked="' +
             (U.sHint === i) +
@@ -2914,14 +2941,18 @@ function slayerHTML() {
             l +
             (U.sHint === i ? ICON.check : '<span></span>') +
             '</button>'
-        ).join('') +
-        '</div>';
+        ).join(''),
+      });
   }
   const list = U.tab === 'songs' && !U.view && !U.sheet;
   if (list && SG.sortMenu)
-    h +=
-      '<div class="ctxback clear" data-a="sgSortClose"></div><div class="ctxmenu glass" id="sortmenu" role="menu">' +
-      Object.keys(SG_SORTS)
+    M.push({
+      id: 'sortmenu',
+      anchor: $('hdrsort'),
+      kind: 'pull',
+      close: 'sgSortClose',
+      name: 'Sort songs',
+      html: Object.keys(SG_SORTS)
         .map(
           (k) =>
             '<button role="menuitemradio" aria-checked="' +
@@ -2933,18 +2964,25 @@ function slayerHTML() {
             (sgp().sort === k ? ICON.check : '<span></span>') +
             '</button>'
         )
-        .join('') +
-      '</div>';
+        .join(''),
+    });
   if (list && SG.ctx && songById(SG.ctx)) {
     const cs = songById(SG.ctx);
-    h +=
-      '<div class="ctxback" data-a="sgCtxClose"></div><div class="ctxmenu glass" id="ctxmenu" role="menu"><button role="menuitem" data-a="sgCtxPin">' +
+    M.push({
+      id: 'ctxmenu',
+      anchor: document.querySelector('#app .rowc[data-k="' + SG.ctx + '"]'),
+      kind: 'row',
+      close: 'sgCtxClose',
+      name: 'Song',
+      html:
+      '<button role="menuitem" data-a="sgCtxPin">' +
       (cs.pinned ? 'Unpin' + SGI.unpin : 'Pin' + SGI.pin) +
       '</button><button role="menuitem" data-a="sgCtxRename">Rename' +
       SGI.pen +
       '</button><button role="menuitem" class="dng" data-a="sgCtxDel">Delete' +
       SGI.trash +
-      '</button></div>';
+      '</button>',
+    });
   }
   if (list && U.sList) {
     const n = U.sSel.length,
@@ -2990,11 +3028,7 @@ function songsAfter() {
     sgPlaceMenu();
     sgFocusPaint(false);
   }
-  ckLmPaint();
-  sgPlace('ctxmenu', '.rowc.lifted', 'row');
-  sgPlace('sortmenu', '#hdrsort', 'under');
-  sgPlace('rmenu', '#sgrbtn', 'under');
-  sgPlaceHintMenu();
+  sgMenus();
   if (U.sheet && U.sd && U.sd.focus) {
     const f = U.sd.focus;
     U.sd.focus = null;
@@ -3006,6 +3040,10 @@ function songsAfter() {
       }
     }, 250);
   }
+}
+// Q41 the menus slayerHTML() listed, as the parts kit's (KMENU in ui.js)
+function sgMenus() {
+  KMENU.sync(SG.menus || []);
 }
 // one phrase per line: one size for a whole section, shrunk to fit like iOS, wrapping with a hanging indent as a last resort
 /* ===== Songs: focusing a section (3.11) =====
@@ -3134,17 +3172,6 @@ function sgPlaceMenu() {
   if ($('mksheet')) document.documentElement.style.setProperty('--mkh', $('mksheet').offsetHeight + 'px');
 }
 // the hint level menu opens above the hint capsule
-function sgPlaceHintMenu() {
-  const m = $('hmenu'),
-    b = $('sghname');
-  if (!m || !b) return;
-  const r = b.getBoundingClientRect(),
-    vw = document.documentElement.clientWidth;
-  m.style.position = 'fixed';
-  const sat = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sat')) || 0; // Q23: below the status bar
-  m.style.top = Math.max(12 + sat, r.top - m.offsetHeight - 12) + 'px';
-  m.style.left = Math.max(12, Math.min(vw - m.offsetWidth - 12, r.left + r.width / 2 - m.offsetWidth / 2)) + 'px';
-}
 // the hint capsule at the bottom in Recall: show more, the level (tap for the menu), hide more
 function hintCapHTML() {
   const lv = U.sHint || 0,
@@ -3172,23 +3199,8 @@ function hintCapHTML() {
     '</button></div>'
   );
 }
-function sgPlace(id, anchor, how) {
-  const m = $(id),
-    b = document.querySelector(anchor);
-  if (!m || !b) return;
-  const r = b.getBoundingClientRect(),
-    mh = m.offsetHeight,
-    mw = m.offsetWidth,
-    vw = document.documentElement.clientWidth;
-  let top = r.bottom + (how === 'row' ? 8 : 6);
-  if (how === 'row' && top + mh > window.innerHeight - 90) top = r.top - mh - 8;
-  m.style.top = top + window.scrollY + 'px';
-  m.style.left = Math.max(12, Math.min(vw - mw - 12, how === 'row' ? r.left : r.left - 8)) + 'px';
-}
-
 /* ===== Songs: swipe a row (pin or delete), press and hold (menu) ===== */
-let sgSuppress = 0,
-  sgLP = null;
+let sgSuppress = 0;
 function sgCloseSwipes() {
   document.querySelectorAll('.rowc').forEach((r) => {
     if (+r.dataset.x) {
@@ -3228,13 +3240,14 @@ document.addEventListener('pointerdown', (e) => {
     mode: null,
     pid: e.pointerId,
   };
-  clearTimeout(sgLP);
-  sgLP = setTimeout(() => {
-    if (SG.sw && !SG.sw.mode) {
-      SG.sw.mode = 'lp';
-      sgOpenCtx(SG.sw.id);
-    }
-  }, 480);
+});
+// Q41 hold a row: the parts kit lifts it from 200 ms and sends pk:hold at 700 ms (a right-click at once); its menu is
+// the kit's (SG.ctx, opened by sgMenus)
+document.addEventListener('pk:hold', (e) => {
+  const rc = e.target.closest && e.target.closest('.rowc');
+  if (!rc || U.sList || U.sheet || SG.ctx || searching() || (SG.sw && SG.sw.mode)) return;
+  if (SG.sw) SG.sw.mode = 'lp';
+  sgOpenCtx(rc.dataset.k);
 });
 document.addEventListener('pointermove', (e) => {
   const s = SG.sw;
@@ -3244,7 +3257,6 @@ document.addEventListener('pointermove', (e) => {
   if (!s.mode) {
     if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)) {
       s.mode = 'swipe';
-      clearTimeout(sgLP);
       s.el.classList.add('drag');
       s.el.parentElement.classList.add('swp');
       try {
@@ -3252,7 +3264,6 @@ document.addEventListener('pointermove', (e) => {
       } catch (err) {}
     } else if (Math.abs(dy) > 8) {
       s.mode = 'scroll';
-      clearTimeout(sgLP);
     }
   }
   if (s.mode === 'swipe') {
@@ -3261,7 +3272,6 @@ document.addEventListener('pointermove', (e) => {
   }
 });
 function sgEndSwipe() {
-  clearTimeout(sgLP);
   const s = SG.sw;
   SG.sw = null;
   if (!s) return;
@@ -3281,13 +3291,6 @@ function sgEndSwipe() {
 }
 document.addEventListener('pointerup', sgEndSwipe);
 document.addEventListener('pointercancel', sgEndSwipe);
-document.addEventListener('contextmenu', (e) => {
-  const rc = e.target.closest && e.target.closest('.rowc');
-  if (rc && !U.sList && !searching() && !U.sheet) {
-    e.preventDefault();
-    sgOpenCtx(rc.dataset.k);
-  }
-});
 window.addEventListener('scroll', () => SG.swOpen && sgCloseSwipes(), { passive: true });
 
 /* ===== Songs: hold a section in Annotate to move it ===== */
@@ -3460,7 +3463,7 @@ document.addEventListener(
         if (best) selectWord({ o: best.dataset.o, sid: best.dataset.k, li: +best.dataset.li, wi: +best.dataset.wi });
         return;
       }
-      if (SG.sel && !e.target.closest('#mksheet, .toast, #barL, #barR, #barT')) {
+      if (SG.sel && !e.target.closest('#mksheet, .pk-toast, #barL, #barR, #barT')) {
         SG.sel = null;
         rerender();
       }

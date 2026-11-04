@@ -87,7 +87,7 @@ def cards(b, t):
         quiet(pg)
         ok(where(pg) == back_to and pg.evaluate(CLEAN), f'{name}: back on {back_to}, the card is shown again and nothing is left over')
         ok(abs(pg.evaluate("scrollY") - y0) < 2, f'{name}: the list is where it was ({y0:.0f}px down)')
-    ok(pg.evaluate("document.querySelector('#dock .tabbar')&&!document.querySelector('#dock .dockrow.min')") is not False,
+    ok(pg.evaluate("document.querySelector('#dock .pk-tabbar')&&!document.querySelector('#dock .pk-folded')") is not False,
        'putting the scroll back doesn\'t shrink the tab bar')
     # the arch zooms into Progress (a tab, so there is no Back to shrink it again)
     pg.evaluate("go(()=>{U.tab='today';U.view=null})")

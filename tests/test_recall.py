@@ -27,7 +27,7 @@ def run(b, t):
     sizes = pg.evaluate(BOXES)
     ok(pg.locator('.sgl .w .v').count() == 0, 'Recall shows no labels above words (Q03)')
     ok(pg.evaluate("U.sMode") == 'recall' and pg.evaluate("U.sHint") == 0 and pg.locator('.hx').count() == 0, 'Recall starts at Full lyrics')
-    ok(pg.locator('#dock .hcap').count() == 1 and pg.locator('#dock .tabbar').count() == 0 and 'Full lyrics' in pg.inner_text('.hcap'),
+    ok(pg.locator('#dock .hcap').count() == 1 and pg.locator('#dock .pk-tabbar').count() == 0 and 'Full lyrics' in pg.inner_text('.hcap'),
        'the hint capsule takes the place of the tab bar')
     ok(pg.locator('.hcap [data-v="-1"]').is_disabled() and not pg.locator('.hcap [data-v="1"]').is_disabled(), 'Show more is off at Full lyrics')
     ok(pg.locator('[data-a=sgKey]').count() == 0 and pg.locator('#sgrbtn').count() == 1, 'Recall has its options button instead of Key')
@@ -80,13 +80,13 @@ def run(b, t):
     ok(pg.evaluate("[...document.querySelectorAll('.sgsec')].map(s=>s.dataset.o)") == order[::-1] and 'Working from the end' in pg.inner_text('main'),
        'From the end lists the sections last first')
     pg.click('#sgrbtn'); pg.wait_for_timeout(200); pg.click('#rmenu [data-a=sgAnywhere]'); pg.wait_for_timeout(400)
-    ok('Start from' in pg.inner_text('.toast') and pg.locator('.sgsec.flash').count() == 1, 'Start anywhere picks a section and points to it')
+    ok('Start from' in pg.inner_text('.pk-toast') and pg.locator('.sgsec.flash').count() == 1, 'Start anywhere picks a section and points to it')
     pg.click('#sgrbtn'); pg.wait_for_timeout(200); pg.click('#rmenu [data-v=start]'); pg.wait_for_timeout(300)
     ok(pg.evaluate("[...document.querySelectorAll('.sgsec')].map(s=>s.dataset.o)") == order, 'From the start puts them back')
 
     # leaving and coming back: always Full lyrics
     pg.click('[data-a=sgMode][data-v=practise]'); pg.wait_for_timeout(400)
-    ok(pg.locator('.hx').count() == 0 and pg.locator('#dock .hcap').count() == 0 and pg.locator('#dock .tabbar').count() == 1,
+    ok(pg.locator('.hx').count() == 0 and pg.locator('#dock .hcap').count() == 0 and pg.locator('#dock .pk-tabbar').count() == 1,
        'Practise shows everything and the tab bar again')
     pg.click('[data-a=sgMode][data-v=recall]'); pg.wait_for_timeout(400)
     ok(pg.evaluate("U.sHint") == 0 and pg.locator('.hx').count() == 0, 'coming back to Recall starts at Full lyrics again')

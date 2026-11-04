@@ -1,5 +1,5 @@
 /* Vocal Sessions · gestures.js
-   Pull to refresh, update checks, rotating and resizing, keyboard shortcuts, dragging sheets, scrolling.
+   Pull to refresh, update checks, rotating and resizing, keyboard shortcuts, scrolling.
    Plain script (not a module): files share one global scope and load in the order listed in index.html. */
 
 /* ===== Pull to refresh (Today and History) =====
@@ -143,7 +143,6 @@ Object.values(MQ).forEach((m) => {
     }
     if (split()) U.sFocus = false;
     else if ((U.sq || '').trim()) U.sFocus = true;
-    tabMin = false;
     render(true);
   };
   if (m.addEventListener) m.addEventListener('change', f);
@@ -170,16 +169,17 @@ document.addEventListener('keydown', KEYS.route);
 /* a sheet or the clock keeps scrolling to itself: when it can't scroll any further that way (or the swipe is on
    the dimmed page around it), the page behind stays put. iOS ignores overscroll-behavior once nothing inside can
    scroll, so touches and the mouse wheel are checked here */
-const overlayOpen = () => !!$('layer').firstElementChild;
+// Q41 the kit's overlays (Parts.open) or the session clock
+const overlayOpen = () => Parts.open > 0 || !!$('lyc').firstElementChild;
 // can something between el and the sheet (or clock) still scroll in direction dy (positive = further down)?
 function canScrollIn(el, dy) {
   for (let n = el; n && n.nodeType === 1; n = n.parentElement) {
-    if (n.classList.contains('scrim') || n.classList.contains('clockscrim') || n.id === 'layer') return false;
+    if (n.classList.contains('pk-dim') || n.classList.contains('clockscrim') || n.id === 'layer') return false;
     const oy = getComputedStyle(n).overflowY;
     if ((oy === 'auto' || oy === 'scroll') && n.scrollHeight > n.clientHeight + 1) {
       if (dy > 0 ? n.scrollTop + n.clientHeight < n.scrollHeight - 1 : n.scrollTop > 0) return true;
     }
-    if (n.classList.contains('sheet') || n.classList.contains('clock')) return false;
+    if (n.classList.contains('sheet') || n.classList.contains('pk-sheet') || n.classList.contains('clock')) return false;
   }
   return false;
 }
@@ -213,49 +213,8 @@ document.addEventListener(
   },
   { passive: false }
 );
-/* drag a sheet down by its header to dismiss it, like iOS */
-let SD = null;
-document.addEventListener(
-  'touchstart',
-  (e) => {
-    const h = e.target.closest('.shead');
-    SD = null;
-    if (!h || e.touches.length !== 1) return;
-    SD = { sh: h.closest('.sheet'), y: e.touches[0].clientY, dy: 0 };
-  },
-  { passive: true }
-);
-document.addEventListener(
-  'touchmove',
-  (e) => {
-    if (!SD || e.touches.length !== 1) return;
-    const dy = e.touches[0].clientY - SD.y;
-    SD.dy = Math.max(0, dy);
-    if (e.cancelable) e.preventDefault();
-    SD.sh.classList.add('drag');
-    SD.sh.style.transform = SD.dy ? 'translateY(' + SD.dy + 'px)' : '';
-  },
-  { passive: false }
-);
-function sheetDragEnd() {
-  if (!SD) return;
-  const { sh, dy } = SD;
-  SD = null;
-  sh.classList.remove('drag');
-  if (!dy) return;
-  sh.classList.add('back');
-  if (dy > 90) {
-    sh.style.transform = 'translateY(110%)';
-    setTimeout(() => {
-      if (U.sheet) closeSheet();
-    }, 200);
-  } else {
-    sh.style.transform = '';
-    setTimeout(() => sh.classList.remove('back'), 340);
-  }
-}
-document.addEventListener('touchend', sheetDragEnd);
-document.addEventListener('touchcancel', sheetDragEnd);
+/* Q41 dragging a sheet down to close it is the parts kit's own (Parts.sheet: from its head, or from its content when
+   that's at the top; a flick closes it) */
 // live session clock
 setInterval(() => {
   if (!X || !isFlow(U.view)) return;
@@ -263,81 +222,17 @@ setInterval(() => {
   if (t) t.textContent = pillText();
   SCLOCK.tick(); // Q22: the session clock's ring and numbers, in place
 }, 1000);
-/* 3.23 (Q08) the tab bar's collapse, as in Music. Scrolling down shrinks it to a pill at the left edge, scrolling up
-   (or tapping the pill) brings it back. Only scrolling you do counts:
-   - about 30 pt of steady scrolling down collapses it, about 20 pt up expands it (TAB_DOWN, TAB_UP);
-   - never in the first 120 pt, and always expanded within 60 pt of the top;
-   - the page needs real room to scroll (tabRoom(), a third of the screen); rechecked whenever the page's height changes;
-   - rubber-banding past either end is ignored, and so are scrolls the app makes itself (scroll restore after Back,
-     scrolling to a section): window.scrollTo and scrollBy move lastY with them, and a smooth one is ignored until done;
-   - never on Search, with a sheet open or while typing (the keyboard is up), and only on iPhone upright. */
-let lastY = 0,
-  tabMin = false,
-  tabRun = 0, // how far this run of scrolling has gone, signed (down is positive)
-  tabInput = 0, // when a finger, the wheel or a key last moved the page
-  tabTouch = false,
-  tabQuiet = 0; // until when an app-made smooth scroll is going on
-const TAB_DOWN = 30,
-  TAB_UP = 20;
-const tabMayMin = () =>
-  document.body.classList.contains('phone') && !U.sheet && U.tab !== 'find' && !KEYS.typing() && !!$('dock').querySelector('.dockrow .tabpill') && tabRoom();
-['scrollTo', 'scrollBy'].forEach((m) => {
-  const f = window[m].bind(window);
-  window[m] = function () {
-    const o = arguments[0];
-    if (o && typeof o === 'object' && o.behavior === 'smooth') tabQuiet = Date.now() + 900;
-    f.apply(window, arguments);
-    lastY = window.scrollY; // not a scroll you made
-    tabRun = 0;
-  };
-});
-['touchstart', 'touchmove', 'touchend', 'wheel', 'keydown'].forEach((t) =>
-  document.addEventListener(
-    t,
-    (e) => {
-      tabInput = Date.now();
-      if (t === 'touchstart') tabTouch = true;
-      if (t === 'touchend') tabTouch = e.touches && e.touches.length > 0;
-    },
-    { passive: true, capture: true }
-  )
-);
-// momentum after a flick carries on for a moment after the finger lifts
-const tabByYou = () => tabTouch || Date.now() - tabInput < 1500;
+/* Q41 (D01) the tab bar never folds away (the parts kit's tabBar.fold is off): scrolling only brings the soft edge */
 window.addEventListener(
   'scroll',
   () => {
     closeSwipes();
-    const y = window.scrollY,
-      max = document.documentElement.scrollHeight - window.innerHeight;
-    const sc = y > 36;
+    const sc = window.scrollY > 36;
     $('bar').classList.toggle('scrolled', sc);
     document.body.classList.toggle('scrolled', sc);
-    if (y < 0 || y > max + 1) return; // rubber-banding past an end
-    const dy = y - lastY;
-    lastY = y;
-    if (y < 60) {
-      tabRun = 0;
-      if (tabMin) setTabMin(false);
-      return;
-    }
-    if (!dy || Date.now() < tabQuiet || !tabByYou()) {
-      tabRun = 0;
-      return;
-    }
-    tabRun = Math.sign(dy) === Math.sign(tabRun) ? tabRun + dy : dy;
-    if (!tabMin && tabRun >= TAB_DOWN && y > 120 && tabMayMin()) setTabMin(true);
-    else if (tabMin && tabRun <= -TAB_UP) setTabMin(false);
   },
   { passive: true }
 );
-// the page's height changes (a filter, a section folding, rows deleted, rotating): too short now, and it comes back
-if (window.ResizeObserver)
-  new ResizeObserver(() => {
-    if (tabMin && !tabRoom()) setTabMin(false);
-  }).observe(document.body);
-// the keyboard coming up brings the bar back
-document.addEventListener('focusin', () => tabMin && KEYS.typing() && setTabMin(false));
 // iOS pauses the mic when you leave the app, so stop and save the take, then say so on return
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
@@ -420,7 +315,7 @@ document.addEventListener('scroll', hintHide, { passive: true, capture: true });
    Solid and other non-glass buttons keep their own :active shrink in app.css. */
 const PRESS = (() => {
   const GROW =
-    '.glass:is(.circ, .shbtn, .txtbtn, .cta, .tabpill, .trkpad, .trkpill, .ppill, .prep, .mktp), #timer[data-a="clock"]';
+    '.glass:is(.circ, .shbtn, .txtbtn, .cta, .trkpad, .trkpill, .ppill, .prep, .mktp), #timer[data-a="clock"]';
   const ON_BAR = '.tabbar button, .toptabs button, .trkb, .trkpp, .fwbtn, .pstep button';
   const SEL = GROW + ', ' + ON_BAR;
   const GROW_PT = 17,

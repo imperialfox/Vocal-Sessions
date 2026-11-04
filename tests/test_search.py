@@ -50,40 +50,36 @@ def circle(b, t):
         pg.evaluate("v=>go(()=>{U.tab=v;U.view=null})", tab); pg.wait_for_timeout(150)
         c = pg.locator('#dock .scirc[data-a=findOpen]')
         ok(c.count() == 1 and c.get_attribute('aria-label') == 'Search', f'{tab}: the search circle sits in the dock')
-        lay = pg.evaluate("(()=>{const b=document.querySelector('#dock .tabbar').getBoundingClientRect(),c=document.querySelector('#dock .scirc').getBoundingClientRect();return {gap:c.left-b.right,mid:Math.abs((c.top+c.bottom)/2-(b.top+b.bottom)/2),h:c.height}})()")
+        lay = pg.evaluate("(()=>{const b=document.querySelector('#dock .pk-tabbar').getBoundingClientRect(),c=document.querySelector('#dock .scirc').getBoundingClientRect();return {gap:c.left-b.right,mid:Math.abs((c.top+c.bottom)/2-(b.top+b.bottom)/2),h:c.height}})()")
         ok(0 <= lay['gap'] <= 12 and lay['mid'] < 1.5 and lay['h'] >= 44, f'{tab}: beside the tab bar, centred on it ({lay})')
         ok(pg.evaluate("document.documentElement.scrollWidth<=innerWidth"), f'{tab}: nothing scrolls sideways')
     # a pushed page keeps the tab bar, so it keeps the circle too
     # (Q32: an exercise's Summary has the pattern player's dock instead, so its History tab is checked)
     pg.evaluate("go(()=>{U.tab='exercises';U.view='ex';U.exId='rung';U.exTab='history';U.prevTab='exercises'})"); pg.wait_for_timeout(150)
     ok(pg.locator('#dock .scirc').count() == 1, 'an exercise page keeps the circle')
-    # the tab bar collapsing on scroll (3.23, Q08): a pill at the left edge, the circle stays at the right, the same height
+    # Q41 (D02) the parts kit's tab bar: the circle sits 8 pt from it, the same height
     pg.evaluate("go(()=>{U.tab='exercises';U.view=null})"); pg.wait_for_timeout(150)
-    pg.evaluate("scrollTo(0,400);setTabMin(true)"); pg.wait_for_timeout(500)
-    if pg.locator('#dock .dockrow.min').count():
-        g = pg.evaluate("(()=>{const p=document.querySelector('#dock .tabpill').getBoundingClientRect(),c=document.querySelector('#dock .scirc').getBoundingClientRect();return {l:p.left,r:innerWidth-c.right,h:Math.abs(p.height-c.height),mid:Math.abs((c.top+c.bottom)/2-(p.top+p.bottom)/2)}})()")
-        ok(abs(g['l'] - 21) < 1 and abs(g['r'] - 21) < 1 and g['h'] < 1 and g['mid'] < 1,
-           f'with the tab bar collapsed, its pill sits at the left and the circle stays at the right, the same height ({g})')
-    else:
-        ok(False, 'the tab bar collapses when asked (to check the circle beside it)')
+    g = pg.evaluate("(()=>{const p=document.querySelector('#dock .pk-tabbar').getBoundingClientRect(),c=document.querySelector('#dock .scirc').getBoundingClientRect();return {gap:c.left-p.right,h:Math.abs(p.height-c.height)}})()")
+    ok(abs(g['gap'] - 8) < 1 and g['h'] < 1, f'the search circle sits 8 pt from the tab bar, the same height ({g})')
     pg.evaluate("scrollTo(0,0)"); pg.wait_for_timeout(200)
     pg.evaluate(TODAY); pg.wait_for_timeout(150)
     # opening
     pg.click('#dock .scirc'); pg.wait_for_timeout(300)
     ok(pg.evaluate("U.tab") == 'find' and pg.evaluate("U.view") is None, 'tapping the circle opens Search')
     ok(pg.evaluate("document.activeElement.id") == 'fq', 'with its field focused')
-    ok(pg.locator('#dock .scirc.on').count() == 1 and pg.locator('#dock .tabbar button.on').count() == 0
+    ok(pg.locator('#dock .scirc.on').count() == 1 and pg.locator('#dock .pk-tab[aria-current=page]').count() == 0
+       and pg.evaluate("+getComputedStyle(document.querySelector('#dock .pk-tab-ind')).opacity") == 0
        and pg.evaluate("document.querySelector('#dock .scirc').getAttribute('aria-current')") == 'page',
        'the circle is tinted as selected, and no tab is')
-    ok(pg.evaluate("getComputedStyle(document.querySelector('#dock .scirc')).color") != pg.evaluate("getComputedStyle(document.querySelector('#dock .tabbar button')).color"),
+    ok(pg.evaluate("getComputedStyle(document.querySelector('#dock .scirc')).color") != pg.evaluate("getComputedStyle(document.querySelector('#dock .pk-tab:not(.on)')).color"),
        'its icon takes the accent colour')
     pg.evaluate("scrollTo(0,600)"); pg.wait_for_timeout(300)
-    ok(pg.locator('#dock .dockrow.min').count() == 0, 'on Search the tab bar never shrinks (it has no tab of its own to shrink to)')
+    ok(pg.locator('#dock .pk-folded').count() == 0, 'on Search the tab bar never shrinks')
     pg.evaluate("scrollTo(0,0)")
     t.shot(pg, 'empty')
     # a tab takes you away; the circle brings you back with what you typed
     typed(pg, 'river')
-    pg.click('#dock .tabbar [data-v=exercises]'); pg.wait_for_timeout(250)
+    pg.click('#dock .pk-tabbar [data-v=exercises]'); pg.wait_for_timeout(250)
     ok(pg.evaluate("U.tab") == 'exercises', 'a tab leaves Search')
     pg.click('#dock .scirc'); pg.wait_for_timeout(250)
     ok(pg.input_value('#fq') == 'river' and 'River Song' in pg.inner_text('#flist'), 'and the circle comes back to the same search')

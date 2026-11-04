@@ -109,7 +109,10 @@ def accessibility(b, t):
        and pg.evaluate("document.documentElement.classList.contains('motion-reduced')"), 'On reduces motion here, kept on this device')
     ok('vocalReduce' not in pg.evaluate("localStorage.getItem('vocalTracker')"), 'it isn’t in the app’s data, so never in a backup')
     pg.evaluate("U.sheet='resetMonth';rerender()"); pg.wait_for_timeout(100)
-    ok(pg.evaluate("getComputedStyle(document.querySelector('.sheet')).animationName") == 'rmIn', 'with it on, a sheet fades in rather than rising')
+    # Q41 an "Are you sure?" is the parts kit's alert; under Reduce Motion it only fades
+    tr = pg.evaluate("(()=>{const c=getComputedStyle(document.querySelector('#layer .pk-alert'));return [c.transitionProperty,c.transitionDuration]})()")
+    ok(tr[0].split(', ')[0] == 'opacity' and all(d == '0s' for p, d in zip(tr[0].split(', '), tr[1].split(', ')) if p != 'opacity'),
+       f'with it on, an alert fades in rather than growing ({tr})')
     pg.evaluate("U.sheet=null;rerender()")
     ok(pg.evaluate("getComputedStyle(document.querySelector('#app .row')).transitionProperty").startswith('opacity'), 'and only fades and colours can ease')
     pg.reload(); pg.wait_for_function("!document.getElementById('splash')", timeout=15000)

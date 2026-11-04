@@ -80,7 +80,7 @@ def numbers(b, t):
                       "getComputedStyle(document.querySelector('.svd-line')).color]:null})()")
     green = pg.evaluate("(()=>{const p=document.createElement('i');p.style.color='var(--good)';document.body.appendChild(p);const c=getComputedStyle(p).color;p.remove();return c})()")
     ok(dot and dot[0].startswith(n['day']) and dot[1] == green and pg.locator('#app .week .svd-now').count() == 1, f"that day's circle is green ({dot and dot[0]})")
-    ok(pg.locator('#dock .tabbar').count() == 0 and pg.inner_text('#barT').strip() == 'Session saved' and pg.inner_text('#barR').strip() == '',
+    ok(pg.locator('#dock .pk-tabbar').count() == 0 and pg.inner_text('#barT').strip() == 'Session saved' and pg.inner_text('#barR').strip() == '',
        'no tab bar and no top-bar buttons: Done is the way on')
     done = pg.evaluate(RECT, '#app .svd-done'); st = pg.evaluate(RECT, '#app [data-sv=streak]')
     ok(done and abs(done['l'] + done['w'] / 2 - 195) < 1 and 8 <= done['t'] - st['b'] <= 40 and done['b'] <= 844 - 100,
@@ -88,7 +88,7 @@ def numbers(b, t):
     t.shot(pg, 'reached')
     # Done: Today (motion off: straight there)
     pg.click('[data-a=savedDone]')
-    ok(until(pg, "U.view===null&&U.tab==='today'") and pg.evaluate("U.saved") is None and pg.locator('#dock .tabbar').count() == 1
+    ok(until(pg, "U.view===null&&U.tab==='today'") and pg.evaluate("U.saved") is None and pg.locator('#dock .pk-tabbar').count() == 1
        and pg.locator('#app [data-zk=start]').inner_text().strip() == 'Start session', 'Done turns it into Today, with Start session and the tab bar')
     ok(pg.locator('#app .svd-now').count() == 0 and pg.locator('#app .week span.today.done').count() == 1, "Today shows the day as practised, in its own colour")
     pg.context.close()

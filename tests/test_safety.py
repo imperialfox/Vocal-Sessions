@@ -7,7 +7,7 @@ from harness import ready, url, APP_PATH, SP, sample, SEED, until
 LAUNCH_ARGS = ['--use-fake-device-for-media-stream', '--use-fake-ui-for-media-stream']
 
 CUT = json.dumps(sample())[:-40]  # a save cut off part-way
-TOAST = "(document.querySelector('.toast')||{}).textContent||''"
+TOAST = "(document.querySelector('.pk-toast')||{}).textContent||''"
 RESCUED = "SAFE.rescued().map(c=>({why:c.why,text:c.text,bytes:c.bytes}))"
 # the database stops (aborts) every save of a take while window.__abort is set: what a full phone looks like
 ABORT = """(()=>{const P=IDBObjectStore.prototype.put;IDBObjectStore.prototype.put=function(v,k){const r=P.call(this,v,k);
@@ -40,7 +40,7 @@ def run(b, t):
     pg.wait_for_function("SAFE.rescued().length===1", timeout=8000)
     r = pg.evaluate(RESCUED)
     ok(r and r[0]['why'] == 'unreadable' and r[0]['text'] == CUT, 'a cut-off vocalTracker is copied exactly as it was, into IndexedDB')
-    pg.wait_for_function("document.querySelector('.toast')", timeout=8000)
+    pg.wait_for_function("document.querySelector('.pk-toast')", timeout=8000)
     ok('couldn’t be read' in pg.evaluate(TOAST) and 'Settings › Backup' in pg.evaluate(TOAST), 'and the app says so, pointing to Settings › Backup')
     t.shot(pg, 'rescued-toast')
     ok(pg.locator('[data-a=tab]').count() > 0, 'the app still opens')
@@ -58,8 +58,8 @@ def run(b, t):
        'Save the rescued copy gives back exactly what was stored')
     ok(pg.evaluate("SET.sizes().find(x=>x.k==='app').b") >= len(CUT), 'Storage counts the rescued copy')
     pg.click('[data-a=sheet][data-v=rescueDel]'); pg.wait_for_timeout(400)
-    ok('can’t be undone' in pg.inner_text('.sheet'), 'deleting it asks first')
-    pg.click('.sheet [data-a=rescueDel]'); pg.wait_for_timeout(500)
+    ok('can’t be undone' in pg.inner_text('#layer .pk-alert'), 'deleting it asks first')
+    pg.click('#layer .pk-alert .pk-red'); pg.wait_for_timeout(500)
     ok(pg.evaluate("SAFE.rescued().length") == 0 and pg.locator('[data-a=rescueSave]').count() == 0, 'and then deletes it')
     pg.reload(); ready(pg)
     ok(pg.evaluate("SAFE.rescued().length") == 0, 'it stays deleted')
@@ -94,7 +94,7 @@ def run(b, t):
     pg.evaluate("D.months['1999-01']=5;save()")
     ok(pg.evaluate("localStorage.getItem('vocalTracker')") == CUT and pg.evaluate("SAVE_LOCK") == 'uncopied',
        'if it can’t be copied, the damaged data is left untouched and nothing is saved over it')
-    pg.wait_for_function("document.querySelector('.toast')", timeout=8000)
+    pg.wait_for_function("document.querySelector('.pk-toast')", timeout=8000)
     ok('left as it was' in pg.evaluate(TOAST), 'and the app says so')
     pg.context.close()
 
@@ -123,19 +123,19 @@ def run(b, t):
     pg.click('[data-a=rec]'); pg.wait_for_timeout(1800); pg.click('[data-a=rec]')
     pg.wait_for_function("UNSAVED.length===1", timeout=8000)
     ok(pg.evaluate("TAKES.length") == 0 and pg.evaluate("UNSAVED[0].t.blob.size") > 1000, 'an aborted save keeps the take, audio and all, in memory')
-    ok('Couldn’t save the take' in pg.evaluate(TOAST) and pg.locator('.toast .ckub').inner_text() == 'Retry', 'and says so, with Retry')
+    ok('Couldn’t save the take' in pg.evaluate(TOAST) and pg.locator('.pk-toast .pk-toast-undo').inner_text() == 'Retry', 'and says so, with Retry')
     t.shot(pg, 'take-retry')
     ok(pg.evaluate("X&&X.start>0"), 'the song practice it belongs to carries on')
-    pg.click('.toast .ckub'); pg.wait_for_timeout(700)
+    pg.click('.pk-toast .pk-toast-undo'); pg.wait_for_timeout(700)
     ok(pg.evaluate("UNSAVED.length") == 1 and 'Still couldn’t save' in pg.evaluate(TOAST), 'Retry while it still fails keeps it and says so')
-    pg.evaluate("window.__abort=false"); pg.click('.toast .ckub'); pg.wait_for_timeout(900)
+    pg.evaluate("window.__abort=false"); pg.click('.pk-toast .pk-toast-undo'); pg.wait_for_timeout(900)
     ok(pg.evaluate("UNSAVED.length") == 0 and pg.evaluate("TAKES.length") == 1 and 'Take saved' in pg.evaluate(TOAST), 'Retry saves it once there’s room')
     ok(pg.evaluate("X.takes.length") == 1 and pg.evaluate("X.takes[0]===TAKES[0].id"), 'and it joins the song practice it was recorded in')
     # missed the toast: coming back to the app tries again
     pg.evaluate("window.__abort=true")
     pg.click('[data-a=rec]'); pg.wait_for_timeout(1500); pg.click('[data-a=rec]')
     pg.wait_for_function("UNSAVED.length===1", timeout=8000)
-    pg.evaluate("window.__abort=false;document.querySelector('.toast')&&document.querySelector('.toast').remove()")
+    pg.evaluate("window.__abort=false;document.querySelector('.pk-toast')&&document.querySelector('.pk-toast').remove()")
     pg.evaluate("Object.defineProperty(document,'hidden',{configurable:true,get:()=>false});document.dispatchEvent(new Event('visibilitychange'))")
     pg.wait_for_function("UNSAVED.length===0", timeout=5000)
     # Q18: the take leaves UNSAVED once stored, and TAKES is read back just after it: wait for that too
@@ -149,7 +149,7 @@ def run(b, t):
       if(k==='vocalDraft')throw new DOMException('full','QuotaExceededError');return S.call(this,k,v)}})()""")
     pg.evaluate("X={start:Date.now(),kind:'focused'};normX();saveDraft()")
     ok('Couldn’t save your practice so far' in pg.evaluate(TOAST), 'a draft that can’t be saved warns, as saving does')
-    pg.evaluate("document.querySelector('.toast').remove();saveDraft()")
+    pg.evaluate("document.querySelector('.pk-toast').remove();saveDraft()")
     ok(pg.evaluate(TOAST) == '', 'and doesn’t repeat itself on every save')
     pg.context.close()
 
@@ -164,7 +164,7 @@ def run(b, t):
     pg.wait_for_function("!document.getElementById('splash')", timeout=10000)
     ok(True, 'the launch screen goes even if the first draw throws')
     ok(any('first draw' in e for e in pg.evaluate("BOOT_ERRORS")) and 'Something went wrong' in pg.inner_text('#app'), 'and a message is shown in its place')
-    pg.wait_for_function("document.querySelector('.toast')", timeout=8000)
+    pg.wait_for_function("document.querySelector('.pk-toast')", timeout=8000)
     ok('Something went wrong' in pg.evaluate(TOAST), 'with a toast')
     t.shot(pg, 'boot-draw-failed')
     pg.context.close()
@@ -176,6 +176,6 @@ def run(b, t):
     ok(pg.locator('[data-a=tab]').count() > 0 and pg.evaluate("SAVE_LOCK") == 'boot', 'if opening the data goes wrong, the app still opens, with saving off')
     pg.evaluate("D.months['1999-01']=5;save()")
     ok(pg.evaluate("localStorage.getItem('vocalTracker')") == good, 'and the stored data is left exactly as it was')
-    pg.wait_for_function("document.querySelector('.toast')", timeout=8000)
+    pg.wait_for_function("document.querySelector('.pk-toast')", timeout=8000)
     ok('left as it was' in pg.evaluate(TOAST), 'and says so')
     pg.context.close()

@@ -28,7 +28,7 @@ JSDIR = os.path.join(ROOT, 'js')
 
 # the agreed set (Render 3 Nov 2026, 08:08); change a number here and in app.css together, on purpose
 NAMED = {
-    'r-small': '10px', 'r-medium': '14px', 'r-card': '20px', 'r-large': '26px', 'r-sheet': '34px',
+    'r-small': '10px', 'r-medium': '14px', 'r-card': '20px', 'r-large': '26px', 'r-sheet': '46px',
     'press': '0.93',
     'ease-pop': 'cubic-bezier(0.3, 1.7, 0.45, 1)', 'ease-knob': 'cubic-bezier(0.3, 1.35, 0.5, 1)',
     'ease-out': 'cubic-bezier(0.2, 0.8, 0.2, 1)',
@@ -178,7 +178,8 @@ def key(it):
 def js_curves(files=None):
     """cubic-bezier( in js/, as 'file · curve'. MOTION.EASE's own (the names, for code) are returned apart."""
     found, names = [], {}
-    for f in files or sorted(glob.glob(os.path.join(JSDIR, '*.js'))):
+    # the parts kit's pinned copy is checked by the kit's own value rule (tools/values.py in its repo), not here (Q41)
+    for f in files or sorted(x for x in glob.glob(os.path.join(JSDIR, '*.js')) if not os.path.basename(x).startswith('parts-kit')):
         src = open(f, encoding='utf-8').read() if isinstance(f, str) and os.path.exists(f) else f[1]
         name = os.path.basename(f) if isinstance(f, str) else f[0]
         ease = re.search(r'const EASE = \{(.*?)\};', src, re.S) if name == 'motion.js' else None
@@ -204,7 +205,7 @@ def same_curve(a, b):
 # Every value here was in the app at Q40 (3.51) and doesn't match a name. They leave as their parts move onto the
 # parts kit, so nothing is tidied twice. Remove a line when its value goes; never add one without a reason
 # (MAINTAINING.md › Value set (Q40) says how to add a value on purpose).
-# Rows and row-like cards keep their 0.98 / 0.96 shrink here until decision D06 turns them into a highlight.
+# Rows and row-like cards lost their 0.98 / 0.96 shrink at Q41: decision D06 turned it into a highlight.
 
 KNOWN = [
     'corner · body.sheet-open .wrap · border-radius · 28px',
@@ -212,20 +213,16 @@ KNOWN = [
     'corner · .bkstat · border-radius · 16px',
     'corner · .arch · border-radius · 24px',
     'corner · .tile.big · border-radius · 18px',
-    'corner · .toast.long · border-radius · 22px',
     'corner · .fw · border-radius · 22px',
     'corner · .fw .fwopen · border-radius · 17px',
     'corner · .nudge · border-radius · 16px',
     'corner · .addnote · border-radius · 16px',
     'corner · .sckrows · border-radius · 18px',
-    'corner · body.reg .sheet · border-radius · 28px',
     'corner · .sbi · border-radius · 12px',
     'corner · body.reg .shead · border-radius · 28px',
     'corner · body.reg .shead · border-radius · 28px',
     'corner · .pcard · border-radius · 22px',
     'corner · .sfield.inl · border-radius · 12px',
-    'corner · .rowc.lifted · border-radius · 16px',
-    'corner · .ctxmenu · border-radius · 18px',
     'corner · .sgwarn · border-radius · 12px',
     'corner · .blk · border-radius · 16px',
     'corner · .rl · border-radius · 8px',
@@ -263,34 +260,20 @@ KNOWN = [
     'corner · .pplay · border-radius · 24px',
     'corner · .pwin · border-radius · 22px',
     'corner · .preset · border-radius · 16px',
-    'corner · .phbar · border-radius · 30px',
-    'corner · .pmenu · border-radius · 16px',
-    'press · .arch:active · transform · scale(0.96)',
-    'press · .row:active · transform · scale(0.98)',
-    'press · .setfoot:active · transform · scale(0.96)',
-    'press · .osum:active · transform · scale(0.98)',
-    'press · .apsing:active, .apsoft:active, .apstop:active · transform · scale(0.96)',
     'ease · .wrap · transition · cubic-bezier(0.3, 1.3, 0.5, 1)',
     'ease · .tl-in.seen · transition · ease',
     'ease · .tabbar · transition · cubic-bezier(0.3, 1.3, 0.5, 1)',
     'ease · .tabbar button · transition · cubic-bezier(0.3, 1.25, 0.5, 1)',
-    'ease · .dockrow .tabbar · transition · ease',
-    'ease · .tabpill · transition · ease',
     'ease · .sw .fg · transition · ease',
-    'ease · .sheet · animation · cubic-bezier(0.28, 1.35, 0.45, 1)',
     'ease · .notebox · animation · ease',
     'ease · #ptr.go .spin · animation · steps(8)',
     'ease · main.ptr-snap · transition · cubic-bezier(0.25, 0.8, 0.3, 1)',
-    'ease · body.reg .sheet · animation · cubic-bezier(0.28, 1.25, 0.45, 1)',
-    'ease · .sheet.back · transition · cubic-bezier(0.3, 1.15, 0.5, 1)',
     'ease · #splash · transition · ease',
     'ease · #splash .sp-icon · transition · cubic-bezier(0.3, 0.9, 0.4, 1)',
     'ease · html.motion-reduced *, html.motion-reduced *::before, html.motion-reduced *::after · transition-timing-function · ease-out',
     'ease · .rowc · transition · cubic-bezier(0.3, 1.2, 0.5, 1)',
-    'ease · .ctxmenu · animation · cubic-bezier(0.3, 1.4, 0.5, 1)',
     'ease · .w.pulse · animation · ease-out',
     'ease · .crow · transition · cubic-bezier(0.3, 1.2, 0.5, 1)',
-    'ease · .tgl::after · transition · cubic-bezier(0.3, 1.3, 0.5, 1)',
     'ease · .hx · transition · ease',
     'ease · .hx::after · transition · ease',
     'ease · .hxin .hx · animation · ease',
@@ -305,9 +288,6 @@ KNOWN = [
     'ease · .pdraw .prip · animation · ease-out',
     'ease · .pvowel b.swap · animation · cubic-bezier(0.3, 1.4, 0.5, 1)',
     'ease · .pt · transition · cubic-bezier(0.3, 1.5, 0.5, 1)',
-    'ease · .phbar.stretch · transition · cubic-bezier(0.3, 1.5, 0.5, 1)',
-    'ease · .phfill · transition · cubic-bezier(0.3, 1.5, 0.5, 1)',
-    'ease · html.motion-reduced .pmenu, html.motion-reduced .pvowel b.swap · animation · ease-out',
     'duration · .edge · transition · 0.25s',
     'duration · .wrap · transition · 0.45s',
     'duration · .wrap · transition · 0.45s',
@@ -316,18 +296,14 @@ KNOWN = [
     'duration · .tl-more svg.i · transition · 0.3s',
     'duration · .tl-in.seen · transition · 0.5s',
     'duration · .tl-in.seen · transition · 0.6s',
-    'duration · .knob · transition · 0.45s',
-    'duration · .knob · transition · 0.3s',
-    'duration · .knob.squish · animation · 0.45s',
     'duration · .arch · transition · 0.5s',
-    'duration · .cta, .circ, .row, .chip, .tabbar button, .calbtn, .cal button · transition · 0.5s',
+    'duration · .cta, .circ, .row, .chip, .calbtn, .cal button · transition · 0.5s',
     'duration · .tabbar · transition · 0.45s',
     'duration · .tabbar button · transition · 0.5s',
     'duration · .tabbar button · transition · 0.45s',
     'duration · .tabbar button · transition · 0.25s',
     'duration · .tabbar button · transition · 0.35s',
     'duration · .sw .fg · transition · 0.22s',
-    'duration · .sheet · animation · 0.55s',
     'duration · .fw .fwbtn · transition · 0.5s',
     'duration · .nudge · transition · 0.5s',
     'duration · .notebox · animation · 0.3s',
@@ -335,20 +311,14 @@ KNOWN = [
     'duration · .spin i · transition · 0.08s',
     'duration · #ptr.go .spin · animation · 0.8s',
     'duration · main.ptr-snap · transition · 0.42s',
-    'duration · body.reg .sheet · animation · 0.42s',
     'duration · .sbi · transition · 0.15s',
-    'duration · .sheet.back · transition · 0.32s',
     'duration · #splash · transition · 0.35s',
     'duration · #splash .sp-icon · transition · 0.45s',
     'duration · .txtbtn · transition · 0.5s',
     'duration · .rowc · transition · 0.35s',
-    'duration · .ctxback · animation · 0.25s',
-    'duration · .ctxmenu · animation · 0.3s',
     'duration · .w.pulse · animation · 0.9s',
     'duration · .crow · transition · 0.25s',
     'duration · .meter i · transition · 0.1s',
-    'duration · .tgl · transition · 0.25s',
-    'duration · .tgl::after · transition · 0.3s',
     'duration · .hx · transition · 0.35s',
     'duration · .hx::after · transition · 0.35s',
     'duration · .hxin .hx · animation · 0.25s',
@@ -386,10 +356,6 @@ KNOWN = [
     'duration · .pt .pst > span · transition · 0.25s',
     'duration · #pHud .phscrim · transition · 0.3s',
     'duration · .phbub · transition · 0.45s',
-    'duration · .phbar · transition · 0.5s',
-    'duration · .phbar.stretch · transition · 0.5s',
-    'duration · .phfill · transition · 0.32s',
-    'duration · .pmenu · animation · 0.35s',
 ]
 
 KNOWN_JS = [
@@ -397,11 +363,10 @@ KNOWN_JS = [
     'details.js · cubic-bezier(.3, .7, .3, 1)',
     'launch.js · cubic-bezier(.3, .7, .4, 1)',
     'launch.js · cubic-bezier(.3, .7, .4, 1)',
-    'motion.js · cubic-bezier(.25, .9, .3, 1)',
 ]
 
 # Q40's two fixes
-GLASS_FIX = ['.phbar', '.pmenu']
+GLASS_FIX = []  # Q40's two glass fixes (.phbar, .pmenu) left with their parts at Q41: the parts kit's slider and menus
 PRESS_FIX = ['.ckpi:active', '.cktile:active .ckc', '.sgplay:active',
              '.trkpad:not(.glass):active, .trkpill:not(.glass):active',
              '.pplay:active, .prep:not(.glass):active, .ppill:not(.glass):active', '.nudge:active']
@@ -417,10 +382,14 @@ def named(b, t):
     bad = {k: got.get(k) for k, v in NAMED.items() if got.get(k) != v}
     ok(not bad, f'the named set at the top of app.css has the agreed values ({bad})')
     ok(root.index('--r-small') > root.index('--t-num-l'), 'it sits beside the text sizes')
-    springs = re.findall(r'^\s{4}(\w+): \{ z:', open(os.path.join(JSDIR, 'motion.js'), encoding='utf-8').read(), re.M)
+    # Q41 the springs are the parts kit's (MOTION reads them from Parts.motion)
+    kit = open(os.path.join(JSDIR, 'parts-kit.js'), encoding='utf-8').read()
+    kit = kit[kit.index('const SPRINGS = {'):]
+    kit = kit[:kit.index('};')]
+    springs = re.findall(r"^\s{4}'?([\w-]+)'?: ", kit, re.M)
     defined = set(got) | {f'{a}-{s}' for s in springs for a in ('ease', 'dur')}
     used = set(re.findall(r'var\(--((?:r|ease|dur)-[a-z0-9-]+|press)\b', css))
-    ok(used <= defined, f'every named value used is defined, in app.css or as a MOTION spring ({used - defined})')
+    ok(used <= defined, f'every named value used is defined, in app.css or as a parts kit spring ({used - defined})')
     _, names = js_curves()
     ok(set(names) == {'pop', 'knob', 'out'} and all(same_curve(names[k], NAMED['ease-' + k]) for k in names),
        f'MOTION.EASE holds the same three easings for code ({names})')
@@ -490,7 +459,8 @@ def guard(b, t):
         its, _ = items(''.join(src))
         new, gone = compare([key(i) for i in its if not i[5]], KNOWN)
         ok(gone == [KNOWN[0]] and not new, f'a stray taken away is noticed, so the list must shrink ({gone})')
-    found, _ = js_curves([(os.path.basename(f), open(f, encoding='utf-8').read()) for f in glob.glob(os.path.join(JSDIR, '*.js'))]
+    found, _ = js_curves([(os.path.basename(f), open(f, encoding='utf-8').read()) for f in glob.glob(os.path.join(JSDIR, '*.js'))
+                          if not os.path.basename(f).startswith('parts-kit')]
                          + [('new.js', "el.animate(f, {easing: 'cubic-bezier(.1,.2,.3,1)'})")])
     new, _ = compare(found, KNOWN_JS)
     ok(new == ['new.js · cubic-bezier(.1, .2, .3, 1)'], f'a new curve in code is caught ({new})')

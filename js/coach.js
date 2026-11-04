@@ -628,7 +628,7 @@ const COACH = (() => {
       '</button></div>' +
       '<div class="cvctl">' +
       (ch && a.lv === 3
-        ? '<div class="seg cvlv" role="group" aria-label="Level"><span class="knob" aria-hidden="true"></span>' +
+        ? '<div class="seg pk-seg cvlv" role="group" aria-label="Level"><span class="pk-seg-ind" aria-hidden="true"></span>' +
           [1, 2, 3]
             .map(
               (l) =>

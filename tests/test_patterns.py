@@ -74,7 +74,7 @@ def routes(b, t):
     ok(not bad, 'every level plays the coach’s starting notes from the note data (shifted onto key notes where the coach starts above the key; Squeaky hinge made up)' + (': ' + '; '.join(bad[:3]) if bad else ''))
     pg.evaluate(EX, 'slides')
     ok(pg.locator('#pcCard').count() == 0 and pg.locator('#app .pcard .pdraw').count() == 1 and 'No “Hear it”' in pg.inner_text('#app .pcard')
-       and pg.locator('#dock .pdock').count() == 0 and pg.locator('#dock .tabbar').count() == 1,
+       and pg.locator('#dock .pdock').count() == 0 and pg.locator('#dock .pk-tabbar').count() == 1,
        'Vocal slides has no “Hear it”: a still picture of the slides, and the tab bar stays')
     # the level shown: the last logged, then the dots
     d = sample()
@@ -119,7 +119,7 @@ def range_(b, t):
     # low: below your bottom
     for _ in range(3): pg.click('[data-a=patShift][data-v="-1"]'); pg.wait_for_timeout(60)
     ok('below your tenor bottom (G♯2)' in pg.inner_text('#pcRange'), 'starting lower warns where it dips below your bottom')
-    ok('⚠' in pg.evaluate("document.querySelector('.toast').textContent"), 'and the stepper’s toast warns straight away')
+    ok('⚠' in pg.evaluate("document.querySelector('.pk-toast').textContent"), 'and the stepper’s toast warns straight away')
     pg.evaluate("D.prefs.pat.ex={};rerender()")
     # Stop at my top note
     pg.evaluate(LV, ['flex', 1]); pg.wait_for_timeout(100)
@@ -240,7 +240,7 @@ def page_(b, t):
        and pg.locator('#app .pgrp .pfseg .pstar.on').count() == 1, 'Favourites: the eight riffs, in the order added, and the star fills')
     # favourites
     pg.click('#pTiles .pfav[data-v="22"]'); pg.wait_for_timeout(100)
-    ok(22 not in pg.evaluate(ST)['favs'] and pg.evaluate("document.querySelector('.toast').textContent") == 'Removed from Favourites', 'a tile’s star removes it, with a toast')
+    ok(22 not in pg.evaluate(ST)['favs'] and pg.evaluate("document.querySelector('.pk-toast').textContent") == 'Removed from Favourites', 'a tile’s star removes it, with a toast')
     pg.click('#app .pgrp [data-v=w]'); pg.wait_for_timeout(100)
     pg.click('#pTiles .pfav[data-v="3"]'); pg.wait_for_timeout(100)
     ok(pg.evaluate(ST)['favs'][-1] == 3 and pg.locator('#pTiles .pfav[data-v="3"].on[aria-pressed=true]').count() == 1, 'and adds any pattern, outlined off and filled on')
@@ -313,19 +313,20 @@ def speed(b, t):
     pg.evaluate(EX, 'humming')
     ok(pg.inner_text('#pSpd') == '1×', 'the speed pill starts at 1×')
     pg.click('#pSpd'); pg.wait_for_timeout(100)
-    ok(pg.evaluate(ST)['hud'] and pg.locator('#pHud.on .phbar[role=slider]').count() == 1 and pg.locator('#pHud .phticks i').count() == 12,
-       'a tap opens the slider: 12 stops')
-    ok(pg.evaluate("[...document.querySelectorAll('#pHudLabs span')].map(s=>s.textContent)") == ['2×', '1×', '0.5×'], 'only 0.5×, 1× and 2× are labelled')
+    ok(pg.evaluate(ST)['hud'] and pg.locator('#pHud.on .pk-slider[role=slider][data-max="11"][data-step="1"]').count() == 1,
+       'a tap opens the slider (Q41: the parts kit\'s, D03): 12 stops')
+    ok(pg.evaluate("[...document.querySelectorAll('#pHudLabs span')].map(s=>s.textContent)") == ['0.5×', '1×', '2×'], 'only 0.5×, 1× and 2× are labelled')
     pg.click('#pHud [data-a=patSpdStep][data-v="1"]'); pg.wait_for_timeout(50)
     ok(pg.inner_text('#pHudVal') == '1.1×' and pg.inner_text('#pSpd') == '1.1×' and pg.evaluate("D.prefs.pat.spd[1]") == 6, 'the + in the bubble goes up one stop, saved for this pattern')
-    # drag: moves with the finger, not to it
-    bb = pg.locator('#pHud .phbar').bounding_box()
-    step = bb['height'] / 11
-    x, y0 = bb['x'] + bb['width'] / 2, bb['y'] + bb['height'] - 10
-    drag(pg, x, y0, x, y0 - step * 3, steps=6, ms=16)
-    ok(pg.evaluate(ST)['speed'] == 1.5, f'dragging up three stops from anywhere on it moves three stops ({pg.evaluate(ST)["speed"]}×), not to the finger')
-    drag(pg, x, bb['y'] + 20, x, bb['y'] + bb['height'] + 200, steps=10, ms=16)
-    ok(pg.evaluate(ST)['speed'] == 0.5, 'and down past the end stops at 0.5×')
+    ok(pg.evaluate("document.querySelector('#pHudBar').dataset.value") == '6', 'and the slider follows it')
+    # drag the kit's slider: its knob grows while held, and it snaps to the stops
+    bb = pg.locator('#pHud .pk-slider').bounding_box()
+    step = bb['width'] / 11
+    y = bb['y'] + bb['height'] / 2
+    drag(pg, bb['x'] + step * 6, y, bb['x'] + step * 9, y, steps=6, ms=16)
+    ok(pg.evaluate(ST)['speed'] == 1.5, f'dragging it to the ninth stop sets 1.5× ({pg.evaluate(ST)["speed"]}×)')
+    drag(pg, bb['x'] + step * 9, y, bb['x'] - 200, y, steps=10, ms=16)
+    ok(pg.evaluate(ST)['speed'] == 0.5, 'and past the start stops at 0.5×')
     pg.click('#pHud [data-a=patRamp]'); pg.wait_for_timeout(50)
     ok(pg.evaluate("D.prefs.pat.ramp") is True and pg.locator('#pHudRamp.on').count() == 1 and pg.locator('#pSpd.ramping').count() == 1, 'Speed up each round is a toggle in the bubble')
     pg.click('#pHud [data-a=patRamp]')
@@ -340,7 +341,7 @@ def speed(b, t):
     cx, cy = sb['x'] + sb['width'] / 2, sb['y'] + sb['height'] / 2
     pg.mouse.move(cx, cy); pg.mouse.down(); pg.wait_for_timeout(450)
     ok(pg.evaluate(ST)['hud'], 'holding the pill opens the slider')
-    for i in range(1, 7): pg.mouse.move(cx, cy - step * 0.5 * i); pg.wait_for_timeout(16)
+    for i in range(1, 7): pg.mouse.move(cx + step * 0.5 * i, cy); pg.wait_for_timeout(16)
     pg.mouse.up(); pg.wait_for_timeout(100)
     ok(pg.evaluate(ST)['speed'] == 0.8, f'and dragging straight on changes it ({pg.evaluate(ST)["speed"]}×)')
     t.shot(pg, 'slider')
@@ -375,7 +376,7 @@ def settings(b, t):
     # the sound menu in the dock
     pg.evaluate(EX, 'humming')
     pg.click('#pSnd'); pg.wait_for_timeout(100)
-    items = pg.evaluate("[...document.querySelectorAll('.pmenu button')].map(b=>b.textContent)")
+    items = pg.evaluate("[...document.querySelectorAll('.pmenu button')].map(b=>(b.querySelector('svg')?'✓':'')+b.textContent)")
     ok(items == ['Soft tone', '✓Piano-ish', 'Electric piano', 'Held note underneath'],
        f'the sound pill opens a menu with a ✓, and Held note underneath under it ({items})')
     pg.click('.pmenu [data-v=ep]'); pg.wait_for_timeout(100)

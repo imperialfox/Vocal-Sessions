@@ -9,6 +9,37 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.55 · 4 Nov 2026
+*Menus, sheets and controls from the parts kit (Q41)*
+<!-- area: look -->
+
+Menus, sheets, alerts, toasts, switches, segmented controls, the speed slider and the tab bar now come from the parts kit, so they behave like the iPhone's own and every later change to their look is one setting.
+
+**Pop-ups**
+- "Are you sure?" questions (deleting a take, a session or a song, removing the track, resetting, discarding) are now iPhone alerts in the middle of the screen: Cancel and a red action.
+- A take's menu, a comment's menu and a marker's menu are now action sheets that rise from the bottom.
+- Toasts drop in from the top and stay 3 seconds.
+- Every menu shares one style, with rounder corners. Holding a song row or a lyric line lifts it after a moment and opens its menu at 0.7 seconds. The page dims a little behind it, with no blur.
+- Sheets have the screen's own rounder corners. Flick one down to close it, or pull it down from its content when that's at the top.
+- New song opens halfway up on Add media and grows to full height once you pick a file or choose Manually. The Marks key for a song opens full screen.
+
+**Controls and bars**
+- Switches slide, and you can drag or flick them.
+- Segmented controls (Practise, Recall and Perform, ranges, levels and the rest) have equal segments. The knob springs across, swells into glass while you press it, and can be dragged.
+- The pattern player's speed is a slider now, under the − and + bubble. Holding the speed pill and sliding sideways still changes it in one go.
+- The tab bar never folds away when you scroll, and the search circle sits a little closer to it.
+- When a top bar button changes its icon, the old icon blurs out and the new one blurs in.
+- Search fields stretch a little when you drag them.
+- Rows highlight while you press them instead of shrinking.
+
+<!-- area: fixes -->
+**Behind the scenes**
+- The parts kit (version 1.1.0) is part of the app, unchanged, and it runs the app's motion: its springs, slow motion and Reduce Motion. Settings › Accessibility works as before.
+- Every design decision is one line in the kit's settings for this app, and a test checks the app differs from the kit only where a decision says so.
+- A list of everything the kit replaced is kept for the reference sheets that come next.
+
+Screens: VS-001, VS-004, VS-006, VS-007, VS-008, VS-009, VS-010, VS-013, VS-014, VS-015, VS-016, VS-017, VS-018, VS-019, VS-021, VS-023, VS-024, VS-025, VS-026, VS-027, VS-031, VS-032, VS-033, VS-034, VS-035, VS-036, VS-037, VS-038, VS-039, VS-040, VS-041, VS-042, VS-043, VS-044, VS-045, VS-046, VS-047, VS-048, VS-049, VS-050, VS-051, VS-052, VS-053, VS-054, VS-055, VS-056, VS-057, VS-058, VS-059, VS-060, VS-061, VS-062, VS-063, VS-064, VS-065, VS-066, VS-067, VS-068, VS-069, VS-070, VS-071, VS-072, VS-073, VS-074, VS-075, VS-076, VS-077, VS-078, VS-079, VS-080, VS-081, VS-082, VS-083, VS-084, VS-085, VS-086, VS-087, VS-088, VS-089, VS-090, VS-091, VS-092, VS-096, VS-097, VS-098
+
 ## 3.54 · 4 Nov 2026
 *Song key and scale lanes: sing a song in its key (Q39)*
 <!-- area: practice -->

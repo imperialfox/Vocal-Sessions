@@ -123,7 +123,7 @@ def sheet(b, t):
     pg.click('#layer [data-a=bfStep][data-v=lo][data-k="-1"]'); pg.click('#layer [data-a=bfStep][data-v=lo][data-k="-1"]'); pg.click('#layer [data-a=bfStep][data-v=lo][data-k="-1"]')
     pg.click('#layer [data-a=bfUse]')
     ok(until(pg, "U.sheet===null") and pg.evaluate("D.prefs.pat.voice.bridge") == {'lo': 64, 'hi': 67}, 'Use this bridge saves it and closes the sheet')
-    ok('Bridge set · E4–G4' in pg.evaluate("document.querySelector('.toast').textContent"), 'with a toast')
+    ok('Bridge set · E4–G4' in pg.evaluate("document.querySelector('.pk-toast').textContent"), 'with a toast')
     ok(pg.inner_text('#pcBridge').startswith('Bridge E4–G4'), 'the exercise page now shows it')
     # the second door: Settings › Your voice
     pg.evaluate("go(()=>{U.tab='settings';U.view='set';U.setPg='voice'})"); pg.wait_for_timeout(100)
@@ -308,7 +308,7 @@ def listen(b, t):
        'your voice shows as a dot and a trail on the drawing')
     ok(until(pg, f"(PAT.state().last||{{}}).m==={top}", 8000), f'holding the round’s top cleanly moves Last time up to it ({name(top)})')
     ok(pg.inner_text('#pcLast') == f'Last time: {name(top)} · today', 'quietly, on the card')
-    ok(pg.evaluate("document.querySelectorAll('.toast').length") == 0 or 'Last' not in pg.evaluate("(document.querySelector('.toast')||{}).textContent||''"), 'with no message')
+    ok(pg.evaluate("document.querySelectorAll('.pk-toast').length") == 0 or 'Last' not in pg.evaluate("(document.querySelector('.pk-toast')||{}).textContent||''"), 'with no message')
     # nothing looked up per frame for the voice
     calls = pg.evaluate("""async()=>{let n=0;const q=Element.prototype.querySelector;Element.prototype.querySelector=function(s){if(/pvoice|ptrail/.test(s))n++;return q.call(this,s)};
       await new Promise(r=>setTimeout(r,400));Element.prototype.querySelector=q;return n}""")

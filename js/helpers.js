@@ -269,7 +269,7 @@ const KEYS = (() => {
   return { apple, typing, mod, composing, enter, busy, add, route };
 })();
 const seg = (a, key, v) =>
-  '<div class="seg" role="group"><span class="knob" aria-hidden="true"></span>' +
+  '<div class="seg pk-seg" role="group"><span class="pk-seg-ind" aria-hidden="true"></span>' +
   [1, 2, 3]
     .map(
       (n) =>
@@ -292,7 +292,7 @@ const seg = (a, key, v) =>
     .join('') +
   '</div>';
 const segF = (a, key, v) =>
-  '<div class="seg" role="group"><span class="knob" aria-hidden="true"></span>' +
+  '<div class="seg pk-seg" role="group"><span class="pk-seg-ind" aria-hidden="true"></span>' +
   [0, 1, 2, 3]
     .map(
       (n) =>

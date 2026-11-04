@@ -88,10 +88,10 @@ def ripple(b, t):
     ok(pg.evaluate("U.tab") == 'today' and pg.evaluate("LAUNCH.busy()"), 'importing a backup brings the launch screen back on Today')
     pg.wait_for_function("document.querySelectorAll('#splash i').length===6&&[...document.querySelectorAll('#splash i')].every(i=>i.getAnimations().length)", timeout=15000)
     ok(True, 'and the bars pulse again')
-    ok(pg.locator('.toast').count() == 0, 'the "Backup restored" message waits for the ripple')
+    ok(pg.locator('.pk-toast').count() == 0, 'the "Backup restored" message waits for the ripple')
     pg.wait_for_function("document.getElementById('splash')&&document.getElementById('splash').dataset.going", timeout=15000)
     ok(len([a for a in pg.evaluate(ANIMS, '#app [data-rise]') if a]) >= 8, "Today's blocks rise in again")
-    ok(pg.locator('.toast').count() == 1 and 'Backup restored' in pg.locator('.toast').inner_text(), 'and the message shows as the screen goes')
+    ok(pg.locator('.pk-toast').count() == 1 and 'Backup restored' in pg.locator('.pk-toast').inner_text(), 'and the message shows as the screen goes')
     pg.wait_for_function("!LAUNCH.busy()", timeout=15000)
     # 3.17: under a heavily loaded machine the last rise can be a frame or two behind LAUNCH ending, so allow 1.5 s
     try: pg.wait_for_function(SETTLED, timeout=1500)

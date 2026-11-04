@@ -176,9 +176,9 @@ def promotion(b, t):
     pg.evaluate(SETMK, [sid, [3.5, 17, {'t': 22, 'end': 24, 'name': 'Riff'}]])
     # hold a chip: its menu has the door
     hold(pg, '#trkMk .trkchip[data-mk=m1] .trkchb')
-    ok(pg.evaluate("U.sheet") == 'trkMkMenu' and pg.locator('.sheet [data-a=trkMkSec]').count() == 1,
+    ok(pg.evaluate("U.sheet") == 'trkMkMenu' and pg.locator('.pk-actions [data-a=trkMkSec]').count() == 1,
        'holding a chip offers “Make this a section start…”')
-    pg.click('.sheet [data-a=trkMkSec]'); pg.wait_for_timeout(250)
+    pg.click('.pk-actions [data-a=trkMkSec]'); pg.wait_for_timeout(250)
     rows = pg.evaluate("[...document.querySelectorAll('.sheet [data-a=trkMkSecPick]')].map(r=>[r.dataset.v,r.querySelector('.lbl').firstChild.textContent,r.getAttribute('aria-disabled')])")
     ok([r[1] for r in rows] == ['Verse 1', 'Chorus 1', 'Verse 2', 'Chorus 2'] and not any(r[2] for r in rows),
        f'the picker lists the running order; nothing is set yet so every place is open ({rows})')
@@ -190,12 +190,12 @@ def promotion(b, t):
        f'Chorus 1 starts at the marker’s time (17 s) in Song Clock’s timing ({M["anch"]}, {M["T"][M["first"]]})')
     ok(T and T.get('est') is True, 'an untimed song’s lines are spread, marked as estimated like Sync by sections')
     ok([m['id'] for m in pg.evaluate(MK, sid)] == ['m0', 'm2'], 'the promoted chip is removed')
-    ok(pg.evaluate("U.sheet") is None and 'Chorus 1 starts at 0:17.0' in pg.inner_text('.toast') and
-       pg.locator('.toast .ckub').count() == 1, 'a toast says so, with Undo')
+    ok(pg.evaluate("U.sheet") is None and 'Chorus 1 starts at 0:17.0' in pg.inner_text('.pk-toast') and
+       pg.locator('.pk-toast .pk-toast-undo').count() == 1, 'a toast says so, with Undo')
     ok(pg.evaluate("CLOCK.synced(songById(%r))" % sid), 'the song is timed in Song Clock now')
     ok(pg.evaluate("TRACK.secStarts()") == [{'k': 1, 't': 17, 'label': 'Chorus 1'}], 'and the start is drawn on the waveform')
     # one Undo restores both
-    pg.click('.toast .ckub'); pg.wait_for_timeout(300)
+    pg.click('.pk-toast .pk-toast-undo'); pg.wait_for_timeout(300)
     ok(not pg.evaluate("CLOCK.synced(songById(%r))" % sid) and not (pg.evaluate(TL, sid) or {}).get('slots')
        and [m['id'] for m in pg.evaluate(MK, sid)] == ['m0', 'm1', 'm2'],
        'Undo restores the timing and the marker together')
@@ -210,7 +210,7 @@ def promotion(b, t):
     ok(ch[0]['why'].startswith('Must come before') and ch[1]['why'] and ch[3]['why'] == '' and ch[3]['set'] == 46,
        f'40 s can’t start Verse 1 or Chorus 1; Chorus 2 is open, set at 0:46 now ({[(c["why"], c["set"]) for c in ch]})')
     pg.evaluate("TRACK.jump('m2')")
-    hold(pg, '#trkMk .trkchip[data-mk=m2] .trkchb'); pg.click('.sheet [data-a=trkMkSec]')
+    hold(pg, '#trkMk .trkchip[data-mk=m2] .trkchb'); pg.click('.pk-actions [data-a=trkMkSec]')
     until(pg, "document.querySelectorAll('.sheet [data-a=trkMkSecPick]').length>1")  # Q22: waits for the picker, not a fixed 250 ms
     off = pg.evaluate("[...document.querySelectorAll('.sheet [data-a=trkMkSecPick][aria-disabled=true]')].map(r=>r.dataset.v)")
     ok(off == ['0', '1'], f'the picker greys the places that would break the order ({off})')
@@ -284,7 +284,7 @@ def grid(b, t):
     pg.click('#trkGrid .trktl[data-mk=m4] .trktlo'); pg.wait_for_timeout(150)
     ok(loop(pg, sid)['on'] is False, 'and turns it off again')
     pg.click('#trkGrid .trktl[data-mk=m2] .trktlo', force=True); pg.wait_for_timeout(200)
-    ok('Too short' in pg.inner_text('.toast'), 'a marker too close to the next says it’s too short to loop')
+    ok('Too short' in pg.inner_text('.pk-toast'), 'a marker too close to the next says it’s too short to loop')
     # a too-short marker still plays, without a loop
     pg.click('#trkGrid .trktl[data-mk=m2] .trktlb'); pg.wait_for_function("TRACK.state().playing", timeout=5000); pg.wait_for_timeout(700)
     ok(not loop(pg, sid)['on'] and pg.evaluate("TRACK.now()") > 25.5, 'tapping it plays on from there with no loop')
@@ -308,7 +308,7 @@ def grid(b, t):
        'and adds a marker there')
     # hold a tile: the same menu as a chip
     hold(pg, '#trkGrid .trktl[data-mk=m1] .trktlb')
-    ok(pg.evaluate("U.sheet") == 'trkMkMenu' and pg.locator('.sheet [data-a=trkMkSec]').count() == 1, 'holding a tile opens the marker’s menu')
+    ok(pg.evaluate("U.sheet") == 'trkMkMenu' and pg.locator('.pk-actions [data-a=trkMkSec]').count() == 1, 'holding a tile opens the marker’s menu')
     pg.evaluate("closeSheet()"); pg.wait_for_timeout(200)
     ok(no_side(pg), 'no sideways scroll at 375 px')
     t.shot(pg, 'markers-375')
@@ -578,7 +578,7 @@ def q09_controls(b, t):
     ok(order == ['m9', 'm10', 'm11'], f'Next moves through the markers in time order ({order})')
     ok(pg.evaluate(IN_VIEW, 'm11'), 'and scrolls the active tile into view between the top bar and the dock')
     pg.click('#dock [data-a=trkNext]'); pg.wait_for_timeout(200)
-    ok('last marker' in pg.inner_text('.toast'), 'after the last it says so')
+    ok('last marker' in pg.inner_text('.pk-toast'), 'after the last it says so')
     pg.evaluate("TRACK.pause()")
     pg.context.close()
     # smooth scrolling with motion on

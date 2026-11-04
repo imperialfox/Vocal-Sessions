@@ -19,9 +19,9 @@ def run(b, t):
     pg.reload(); ready(pg)
 
     pg.click('button.dateline'); pg.wait_for_timeout(500); ok(pg.locator('.cal').count() == 1, 'tapping the date opens the calendar')
-    pg.click('.scrim .ghost'); pg.wait_for_timeout(300)
+    pg.click('#layer .sheet .ghost'); pg.wait_for_timeout(300)
     pg.click('.tbtn'); pg.wait_for_timeout(500); ok(pg.locator('.cal').count() == 1, 'tapping Today opens the calendar')
-    pg.click('.scrim .ghost'); pg.wait_for_timeout(300)
+    pg.click('#layer .sheet .ghost'); pg.wait_for_timeout(300)
 
     # Foundation with Skip and exercise notes (Q19: on one page, tapping each row through its levels; the words for
     # "What kept it at level N?" are saved as the exercise's note, as the notes sheet saved them)
@@ -131,7 +131,7 @@ def run(b, t):
         pg.click('[data-a=calMove][data-v="-1"]')
     until(pg, "document.querySelectorAll('.cal button.s').length===1", timeout=3000)
     ok(pg.locator('.cal button.s').count() == 1, 'the calendar shows a coral dot for it')
-    pg.click('.scrim .ghost'); pg.wait_for_timeout(300)
+    pg.click('#layer .sheet .ghost'); pg.wait_for_timeout(300)
     pg.evaluate("U.view='ex';U.exId='humming';U.exTab='history';render()"); pg.wait_for_timeout(200)
     ok('Lost the buzz' in pg.inner_text('main'), "the exercise's History shows its note")
     pg.evaluate("U.view=null;U.tab='today';render()")
@@ -156,7 +156,7 @@ def run(b, t):
 
     # delete song practice
     pg.evaluate("U.sheet=null;U.prevTab='history';U.tab='history';U.view='all';U.histTab='songs';render()")
-    pg.click('[data-v=songSession]'); pg.wait_for_timeout(400); pg.click('.sheet [data-v=delSongSess]'); pg.wait_for_timeout(300); pg.click('[data-a=delSongSess]'); pg.wait_for_timeout(300)
+    pg.click('[data-v=songSession]'); pg.wait_for_timeout(400); pg.click('.sheet [data-v=delSongSess]'); pg.wait_for_timeout(300); pg.click('#layer .pk-alert .pk-red'); pg.wait_for_timeout(300)
     ok(pg.evaluate("D.songSessions.length") == 0, 'song practice can be deleted')
 
     pg.evaluate("U.view=null;U.tab='settings';render()"); pg.evaluate("scrollTo(0,document.body.scrollHeight)"); pg.wait_for_timeout(300)

@@ -14,7 +14,36 @@ function pillText() {
   const st = VIEWS[U.view] && VIEWS[U.view][1];
   return (X && X.paused ? '❚❚ ' : '') + (st ? st + ' · ' : '') + clk(elapsedSec());
 }
+/* Q41 the top bar's buttons changing in place (the parts kit's Parts.bar.swap, measured): when a side of the bar is
+   drawn again with the same buttons and one of them shows a new icon, that button stays, its old icon blurs out and the
+   new one blurs in while the circle swells up to 22%. Push, zoom and swipe back stay as they are */
 function renderBar() {
+  const was = ['barL', 'barR'].map((id) => [...$(id).children]);
+  renderBar0();
+  if (!Parts.motion.on()) return;
+  ['barL', 'barR'].forEach((id, k) => {
+    const old = was[k],
+      now = [...$(id).children];
+    if (old.length !== now.length || !old.length) return;
+    old.forEach((o, i) => {
+      const n = now[i];
+      const icos = o.querySelectorAll(':scope > .pk-ico'),
+        shown = icos.length ? icos[icos.length - 1].innerHTML : o.innerHTML;
+      if (o.tagName !== 'BUTTON' || n.tagName !== 'BUTTON' || o.className !== n.className || shown === n.innerHTML) return;
+      if (o.textContent.trim() || n.textContent.trim()) return; // icons only: a text button changes at once
+      // the old button goes back in, its icon wrapped for the kit, then takes the new one's labels and icon
+      const ico = document.createElement('span');
+      ico.className = 'pk-ico';
+      ico.innerHTML = shown;
+      o.replaceChildren(ico);
+      [...o.attributes].forEach((a) => a.name !== 'class' && !n.hasAttribute(a.name) && o.removeAttribute(a.name));
+      [...n.attributes].forEach((a) => a.name !== 'class' && o.setAttribute(a.name, a.value));
+      n.replaceWith(o);
+      Parts.bar.swap(o, n.innerHTML);
+    });
+  });
+}
+function renderBar0() {
   const bar = $('bar');
   bar.classList.remove('tabsmode', 'always');
   $('barT').classList.remove('tabs');
@@ -211,28 +240,9 @@ function renderSide() {
       )
       .join('');
 }
-// 3.23 (Q08) the tab bar's collapse: the class lives on the row holding the bar, its pill and the search circle, so
-// the bar fades and scales away towards the left while the pill grows in where the active tab was (transforms and
-// opacity only). renderDock() keeps the row when nothing in it changed, so a collapse that's still moving carries on
+// Q41 the tab bar is the parts kit's (D01, D02); renderDock() keeps the row when nothing in it changed, so its
+// highlight carries on moving
 let dockKey = null;
-function setTabMin(b) {
-  tabMin = !!b;
-  const r = $('dock').querySelector('.dockrow');
-  if (r) r.classList.toggle('min', tabMin);
-}
-// how far the pill sits from the active tab: it grows in from there (layout positions, so a collapsed bar's own
-// scale doesn't count)
-function tabPillPlace(row) {
-  const nav = row.querySelector('.tabbar'),
-    on = nav && nav.querySelector('button.on'),
-    pill = row.querySelector('.tabpill');
-  if (!pill) return;
-  const x = on ? nav.offsetLeft + on.offsetLeft + on.offsetWidth / 2 - (pill.offsetLeft + pill.offsetWidth / 2) : 0;
-  row.style.setProperty('--pill-x', Math.round(x) + 'px');
-}
-// a page has real room to scroll when it can move at least a third of the screen's height (Ivan, 26 Oct 2026); a
-// shorter page keeps the full bar
-const tabRoom = () => document.documentElement.scrollHeight - window.innerHeight >= window.innerHeight / 3;
 function renderDock() {
   const html = renderDock1();
   if (html === null) {
@@ -241,14 +251,21 @@ function renderDock() {
   }
   const d = $('dock'),
     row = d.querySelector('.dockrow');
-  if (html === dockKey && row) {
-    row.classList.toggle('min', tabMin); // the same bar: only its state, easing if it changed
-    tabPillPlace(row);
-    return;
-  }
+  if (html === dockKey && row) return;
   dockKey = html;
-  d.innerHTML = tabMin ? html.replace('class="dockrow"', 'class="dockrow min"') : html; // drawn in its state, no replay
-  tabPillPlace(d.querySelector('.dockrow'));
+  // the highlight moves from the tab it was on to the new one (the bar is drawn again, so it starts where it was)
+  const old = d.querySelector('.pk-tabbar'),
+    from = old ? old.style.getPropertyValue('--pk-i') : '';
+  d.innerHTML = html;
+  const bar = d.querySelector('.pk-tabbar');
+  if (!bar || from === '') return;
+  const its = [...bar.querySelectorAll(':scope > .pk-tab')],
+    i = its.findIndex((t) => t.classList.contains('on'));
+  bar.style.setProperty('--pk-n', its.length);
+  bar.style.setProperty('--pk-i', from);
+  if (i < 0 || String(i) === from) return;
+  void bar.offsetWidth;
+  bar.style.setProperty('--pk-i', i);
 }
 function renderDock1() {
   if (U.sheet) {
@@ -323,40 +340,38 @@ function renderDock1() {
     $('dock').innerHTML = '';
     return null;
   }
-  // never left collapsed at the top of a page, on Search, on a page too short to scroll, or in landscape (3.23)
-  if (window.scrollY < 60 || U.tab === 'find' || !tabRoom() || !document.body.classList.contains('phone')) tabMin = false;
-  const cur = tabOf(U.tab),
-    curTab = TABS().find((t) => t[0] === cur);
+  const cur = tabOf(U.tab);
+  // Q41 (D01, D02) the parts kit's tab bar: its highlight slides on a spring and can be dragged; it never folds, and
+  // the search circle sits 8 pt from it (tabBar.searchGap)
   const nav =
-    '<nav class="tabbar glass" aria-label="Tabs">' +
+    '<nav class="pk-tabbar pk-glass" aria-label="Tabs" data-name="tab-bar"><span class="pk-tab-ind" aria-hidden="true"></span>' +
     TABS()
       .map(
         (t) =>
-          '<button class="' +
-          (cur === t[0] ? 'on' : '') +
+          '<button class="pk-tab' +
+          (cur === t[0] ? ' on' : '') +
           '" data-a="tab" data-v="' +
           t[0] +
           '" aria-current="' +
           (cur === t[0] ? 'page' : 'false') +
           '">' +
           t[2] +
+          '<span>' +
           t[1] +
-          '</button>'
+          '</span></button>'
       )
       .join('') +
     '</nav>';
-  // 3.23 (Q08) iPhone upright: the collapsed tab bar, a pill at the left edge holding the active tab's icon. Tapping it
-  // brings the bar back
-  const pill =
-    document.body.classList.contains('phone') && curTab
-      ? '<button class="tabpill glass" data-a="tab" data-v="' + cur + '" aria-label="Show tabs"><span>' + curTab[2] + '</span></button>'
-      : '';
   // 3.22 Search: its own circle beside the tab bar, on every screen that has the tab bar
-  return '<div class="dockrow">' + nav + pill + FIND.circle() + '</div>';
+  // on Search no tab is the page: the kit always keeps one tab marked, so its highlight steps back (app.css)
+  return '<div class="dockrow pk-dock pk-inline' + (cur === 'find' ? ' vs-notab' : '') + '">' + nav + FIND.circle() + '</div>';
 }
-function sheetWrap(title, body, label, tools) {
+// Q41 kind: 'alert' (confirmSheet) or 'choices' (choiceSheet) shows the sheet as the parts kit's alert or action sheet
+function sheetWrap(title, body, label, tools, kind) {
   return (
-    '<div class="scrim" data-a="close"><div class="sheet glass" role="dialog" aria-modal="true" aria-label="' +
+    '<div class="scrim" data-a="close"><div class="sheet glass"' +
+    (kind ? ' data-pk="' + kind + '"' : '') +
+    ' role="dialog" aria-modal="true" aria-label="' +
     esc(label || title) +
     '"><div class="shead"><div class="grab"></div><div class="shrow"><h2>' +
     title +
@@ -389,8 +404,14 @@ const confirmSheet = (title, text, btn, action, k, cancel) =>
       btn +
       '</button><button class="ghost" data-a="close">' +
       (cancel || 'Cancel') +
-      '</button>'
+      '</button>',
+    '',
+    '',
+    'alert' // Q41 (D08) every "Are you sure?" is the parts kit's alert: Cancel and a red action
   );
+// Q41 (D07) a sheet that is only a list of choices shows as the parts kit's action sheet: each button[data-a] is one
+// choice (its .lbl, red with .dng), in order; the sheet's title and its .note are the action sheet's title
+const choiceSheet = (title, body, label) => sheetWrap(title, body, label, '', 'choices');
 const noteTarget = () => (U.sd && U.sd.src === 'edit' ? E : X);
 function selArr() {
   const s = U.sheet;
@@ -667,9 +688,9 @@ function renderSheet() {
         P.noRec +
         '"><span class="lbl">Exclude recordings<small>' +
         exportSizes(P) +
-        ' Restoring it keeps the recordings already on the device.</small></span><span class="tgl" aria-checked="' +
-        P.noRec +
-        '" aria-hidden="true"></span></button></div>' +
+        ' Restoring it keeps the recordings already on the device.</small></span>' +
+        switchHTML(P.noRec) +
+        '</button></div>' +
         '<p class="note" style="margin-top:10px">Choose <b>Save to Files</b>, then <b>iCloud Drive › Vocal Sessions › Backups</b>.' +
         (first ? '' : ' If Files asks, tap Replace to update this month’s backup.') +
         '</p>' +
@@ -731,27 +752,30 @@ function renderSheet() {
   // Q22 the session clock (sclock.js): over a running session's step, or the Session saved screen it finished onto
   if (!h && U.clock && SCLOCK.can()) h = SCLOCK.html();
   const key = h ? (U.sheet ? U.sheet + '|' + (k || '') : 'clock') : '';
-  const prev = $('layer').querySelector('.sheet, .clock'),
-    st = prev ? prev.scrollTop : 0,
-    swap = DET.inPlace(lastLayerKey, key), // Preparing backup becomes Backup ready in the same sheet
-    oldH = swap && prev ? prev.getBoundingClientRect().height : 0,
-    same = !!key && (key === lastLayerKey || swap);
+  const swap = DET.inPlace(lastLayerKey, key); // Preparing backup becomes Backup ready in the same sheet
   lastLayerKey = key;
-  $('layer').innerHTML = h;
-  if (same) {
-    $('layer')
-      .querySelectorAll('.scrim,.sheet,.clock,.clockscrim')
-      .forEach((x) => x.classList.add('still'));
-    const ns = $('layer').querySelector('.sheet, .clock');
-    if (ns) ns.scrollTop = st;
-    if (swap) DET.sheetSwap(oldH);
+  // Q41 the sheet goes to the parts kit (HOST below); the session clock stays the app's own, in #lyc
+  HOST.show(U.sheet ? h : '', key, swap);
+  if (s === 'sgNew' && sgNewFull()) HOST.grow(); // D10 New song grows to full once a file is picked or Manually is chosen
+  const ly = $('lyc'),
+    clock = !U.sheet && h ? h : '',
+    cst = ly.firstElementChild ? (ly.querySelector('.clock') || {}).scrollTop || 0 : 0,
+    still = !!clock && ly.dataset.k === key;
+  if (ly.dataset.k !== key || !clock) {
+    ly.innerHTML = clock;
+    ly.dataset.k = clock ? key : '';
+  } else {
+    ly.innerHTML = clock;
+    ly.querySelectorAll('.clock,.clockscrim').forEach((x) => x.classList.add('still'));
+    const c = ly.querySelector('.clock');
+    if (c) c.scrollTop = cst;
   }
+  if (!still && clock) ly.querySelectorAll('.clock,.clockscrim').forEach((x) => x.classList.remove('still'));
   const open = !!h && !!U.sheet;
   if (open && !document.body.classList.contains('sheet-open'))
     $('app').parentNode.style.transformOrigin = '50% ' + (window.scrollY + 120) + 'px';
   document.body.classList.toggle('sheet-open', open);
   SCR.sheet(); // Q36 the sheet's screen ID and part names
-  if (h) placeKnobs($('layer'));
   if (s === 'addEx')
     setTimeout(() => {
       const i = $('exName');
@@ -1085,7 +1109,7 @@ function editSheet() {
     const tot = +E.mins || 0,
       ef = E.split && !E.mixed ? E.split : null;
     b +=
-      '<div class="hdr">Time per step</div><div class="grp"><div class="row" style="display:block;padding:10px 16px 12px"><div class="seg wide" role="group" aria-label="How it was tracked"><span class="knob" aria-hidden="true"></span><button data-a="esplit" data-v="timed" class="' +
+      '<div class="hdr">Time per step</div><div class="grp"><div class="row" style="display:block;padding:10px 16px 12px"><div class="seg pk-seg wide" role="group" aria-label="How it was tracked"><span class="pk-seg-ind" aria-hidden="true"></span><button data-a="esplit" data-v="timed" class="' +
       (ef ? 'on' : '') +
       '">Timed</button><button data-a="esplit" data-v="mixed" class="' +
       (ef ? '' : 'on') +
@@ -1193,7 +1217,6 @@ function render(keepScroll) {
   renderDock();
   renderSide();
   if (keepScroll) window.scrollTo(0, y);
-  placeKnobs();
   edgeFades();
   if (HINT.on && !HINT.on.isConnected) hintHide(); // Q10 a hover hint never outlives its button
   logReveal();
@@ -1259,9 +1282,11 @@ const SCR = (() => {
     name(s, [$('app'), $('bar'), $('dock'), $('side')]);
     label();
   }
+  const OVER = ':is(.sheet, .pk-alert, .pk-actions):not(.pk-leaving), .clock';
   // the sheet (or the session clock) over the screen: renderSheet()
   function sheet() {
-    const el = $('layer').querySelector('.sheet, .clock');
+    // Q41 the kit's sheet, alert or action sheet (not one leaving), or the app's session clock
+    const el = $('layer').querySelector(OVER);
     if (el) {
       const s = entry(U.sheet ? 'sheet:' + U.sheet : 'overlay:clock');
       el.dataset.screen = s ? s.id : 'VS-???';
@@ -1289,7 +1314,7 @@ const SCR = (() => {
       el.setAttribute('aria-hidden', 'true');
       document.body.appendChild(el);
     }
-    const over = $('layer').querySelector('.sheet[data-screen], .clock[data-screen]');
+    const over = [...$('layer').querySelectorAll(OVER)].find((x) => x.dataset.screen);
     el.textContent = $('app').dataset.screen + (over ? ' · ' + over.dataset.screen : '');
   }
   return { viewKey, id, screen, sheet, mark, label, BY };
@@ -1309,82 +1334,507 @@ function go(fn) {
   COACH.stepped(was); // a session's step changing cues the coach video to the new step, paused
   ZOOM.after(z); // a card zoom or Back into a card (zoom.js)
 }
-var toastT = null;
-// cls 'long' (Q11) lets a longer message wrap onto a second line instead of being cut off
-function toast(t, ms, cls) {
-  clearTimeout(toastT);
-  const o = document.querySelector('.toast');
-  if (o) o.remove();
-  const el = document.createElement('div');
-  el.className = 'toast glass' + (cls ? ' ' + cls : '');
-  el.setAttribute('role', 'status');
-  el.textContent = t;
-  document.body.appendChild(el);
-  toastT = setTimeout(() => el.remove(), ms || 1900);
-  return el;
-}
-// a toast with one button (Q11: Retry), in the same style as Song Clock's Undo toasts; gone() runs if it times out
-function toastBtn(t, label, fn, ms, gone) {
-  const el = toast(t, ms || 4500, 'ckundo long');
-  const b = document.createElement('button');
-  b.className = 'ckub';
-  b.textContent = label;
-  b.addEventListener('click', (e) => {
-    e.stopPropagation();
-    clearTimeout(toastT);
-    el.remove();
-    fn();
-  });
-  el.appendChild(b);
-  if (gone) {
-    clearTimeout(toastT);
-    toastT = setTimeout(() => {
-      el.remove();
-      gone();
-    }, ms || 4500);
+/* ===== Q41 The sheet host: the app's sheets, alerts and action sheets on the parts kit =====
+   The app still decides which sheet is open (U.sheet, renderSheet(), back between sheets with U.sd.ret, one at a time)
+   and draws its contents; the host shows them with the kit's parts, inside #layer (the kit's root):
+   - a sheet inside the kit's sheet (Parts.sheet): corners 46 (D17), dragged from its head, or from its content when
+     that's at the top, a flick closes it (D14: no shrinking), strong glass (D15). New song opens at the 45% stop and
+     grows to full (D09, D10); the Marks key opens as a full-screen cover (D10). The app's own head (.shead: title,
+     tools, ✕) takes the kit's head's place, and its content goes in the kit's body, which scrolls.
+   - a confirmSheet() as the kit's alert (Parts.confirm, D08), and a choiceSheet() as its action sheet (Parts.choices,
+     D07). Their buttons run the app's own action, as if its button had been tapped (fire()).
+   The kit's sheet is measured when it opens; when the app redraws it with content of another height, it's opened
+   again in place, with no movement (refit). Closing it the kit's way (✕, a flick, the dim, Escape) is closeSheet(). */
+const HOST = (() => {
+  let cur = null; // { key, kind, ctl, resolved }
+  let seq = 0;
+  // run an app action as if its button had been tapped: a hidden button with the same data- attributes, clicked
+  function fire(src) {
+    const b = document.createElement('button');
+    [...src.attributes].forEach((a) => /^data-/.test(a.name) && b.setAttribute(a.name, a.value));
+    b.hidden = true;
+    document.body.appendChild(b);
+    b.click();
+    b.remove();
   }
-  return el;
+  const text = (el) => (el ? el.textContent.replace(/\s+/g, ' ').trim() : '');
+  // a choice's label: its .lbl without the small print under it
+  function label(b) {
+    const l = b.querySelector('.lbl') || b;
+    return [...l.childNodes]
+      .filter((n) => n.nodeType === 3 || (n.nodeType === 1 && n.tagName !== 'SMALL' && n.tagName !== 'svg'))
+      .map((n) => n.textContent)
+      .join('')
+      .replace(/[…\s]+$/, '')
+      .trim();
+  }
+  const titleOf = (sh) => text(sh.querySelector('.shead h2, h2'));
+  // the app's sheet (.sheet) into the kit's: its classes and labels on the kit's element, its head in the kit's head
+  function dress(ctl, sh) {
+    const el = ctl.el;
+    sh.classList.forEach((c) => c !== 'glass' && el.classList.add(c));
+    el.classList.add('vs-sheet');
+    ['aria-label', 'aria-modal'].forEach((a) => sh.hasAttribute(a) && el.setAttribute(a, sh.getAttribute(a)));
+    head(ctl, sh);
+  }
+  // the app's head (grabber aside: the kit's is used) where the kit's title and ✕ were; a cover keeps it in its body
+  function head(ctl, sh) {
+    const el = ctl.el,
+      hd = sh.querySelector(':scope > .shead'),
+      kh = el.querySelector(':scope > .pk-sheet-head');
+    if (kh) {
+      kh.querySelectorAll(':scope > :not(.pk-grabber)').forEach((x) => x.remove());
+      if (hd) kh.appendChild(hd);
+      kh.classList.toggle('vs-own', !!hd);
+    } else if (hd) {
+      const slot = el.querySelector(':scope > .pk-bar-slot');
+      if (slot) slot.remove();
+      ctl.body.prepend(hd);
+    }
+  }
+  // the sheet's content, without its head
+  function inner(sh) {
+    const c = sh.cloneNode(true),
+      hd = c.querySelector(':scope > .shead');
+    if (hd) hd.remove();
+    return c.innerHTML;
+  }
+  // the kit's sheet's height for what it holds now (a sheet that fits its content)
+  function natural(ctl) {
+    const kh = ctl.el.querySelector(':scope > .pk-sheet-head');
+    return Math.min(window.innerHeight - Parts.N.topInset, (kh ? kh.offsetHeight : 0) + ctl.body.scrollHeight);
+  }
+  const fits = (k) => !(Parts.current.sheet.withStops.includes(k) || Parts.current.sheet.fullScreen.includes(k));
+  // no movement: whatever the kit started (the rise, the dim fading in) jumps to its end
+  function settle(ctl) {
+    [ctl.el, ...document.querySelectorAll('#layer .pk-dim')].forEach((x) =>
+      x.getAnimations().forEach((a) => {
+        try {
+          a.finish();
+        } catch (e) {}
+      })
+    );
+  }
+  // the content goes in as the kit opens it, so the kit measures the sheet at its real height (the app's head is the
+  // kit's head's height, 60 pt: app.css › Q41)
+  function openSheet(sh, key, still) {
+    const k = U.sheet,
+      id = ++seq;
+    const ctl = Parts.sheet({
+      key: k,
+      name: sh.getAttribute('aria-label') || titleOf(sh) || 'Sheet',
+      html: inner(sh),
+      onClose: (why) => gone(id, why),
+    });
+    dress(ctl, sh);
+    cur = { key, kind: 'sheet', ctl, id, k };
+    if (still) settle(ctl);
+  }
+  // take a sheet away at once (no movement), without telling the app
+  function drop(ctl) {
+    ctl.dropped = true;
+    ctl.close('app');
+    ctl.el.remove();
+    document.querySelectorAll('#layer .pk-dim:not(.pk-on)').forEach((d) => d.remove());
+  }
+  function gone(id, why) {
+    if (!cur || cur.id !== id) return;
+    const c = cur;
+    cur = null;
+    if (why !== 'app' && U.sheet && U.sheet === c.k) closeSheet();
+  }
+  function openAlert(sh, key) {
+    const id = ++seq,
+      act = sh.querySelector('.cta.red'),
+      no = sh.querySelector('button.ghost[data-a=close]');
+    cur = { key, kind: 'alert', id, k: U.sheet };
+    Parts.confirm({
+      title: titleOf(sh),
+      message: text(sh.querySelector('.note')),
+      action: text(act),
+      cancel: no ? text(no) : 'Cancel',
+      red: true,
+      name: sh.getAttribute('aria-label') || titleOf(sh),
+    }).then((yes) => {
+      if (!cur || cur.id !== id || cur.resolved) return;
+      cur.resolved = true;
+      if (yes && act) fire(act);
+      else if (U.sheet === cur.k) closeSheet();
+      if (cur && cur.id === id && U.sheet !== cur.k) cur = null;
+    });
+  }
+  // the choices carry their buttons' data-a, data-v and data-k, so a tap runs the app's action as before (the
+  // document's click listener); a choice that leaves this sheet open closes it after
+  function openChoices(sh, key) {
+    const id = ++seq,
+      btns = [...sh.querySelectorAll('button[data-a]')].filter((b) => b.dataset.a !== 'close'),
+      note = sh.querySelector('.note');
+    cur = { key, kind: 'choices', id, k: U.sheet };
+    Parts.choices({
+      title: titleOf(sh) + (note ? ' · ' + text(note) : ''),
+      actions: btns.map((b, i) => ({ label: label(b), red: !!b.querySelector('.dng') || b.classList.contains('dng'), value: i })),
+      name: sh.getAttribute('aria-label') || titleOf(sh),
+    }).then(() =>
+      // after the tap's own action (the document's click listener runs after this promise settles)
+      setTimeout(() => {
+        if (!cur || cur.id !== id || cur.resolved) return;
+        cur.resolved = true;
+        if (U.sheet === cur.k) closeSheet();
+        if (cur && cur.id === id) cur = null;
+      }, 0)
+    );
+    const el = [...document.querySelectorAll('#layer .pk-actions:not(.pk-leaving)')].pop();
+    if (el)
+      el.querySelectorAll('.pk-action[data-i]').forEach((b) => {
+        const src = btns[+b.dataset.i];
+        if (src) [...src.attributes].forEach((a) => /^data-/.test(a.name) && a.name !== 'data-i' && b.setAttribute(a.name, a.value));
+      });
+  }
+  // an alert or action sheet the app no longer wants: its Cancel
+  function cancelOverlay() {
+    const el = [...document.querySelectorAll('#layer .pk-alert:not(.pk-leaving), #layer .pk-actions:not(.pk-leaving)')].pop();
+    if (!el) return;
+    const b = el.querySelector('[data-a=no], .pk-cancel');
+    if (b) b.click();
+    // with motion off nothing moves, so it goes at once
+    if (!Parts.motion.speed()) {
+      el.remove();
+      document.querySelectorAll('#layer .pk-dim:not(.pk-on)').forEach((d) => d.remove());
+    }
+  }
+  function shut(now) {
+    if (!cur) return;
+    const c = cur;
+    cur = null;
+    // with motion off (speed 0) nothing moves, so it goes at once
+    if (c.kind === 'sheet') now || !Parts.motion.speed() ? drop(c.ctl) : c.ctl.close('app');
+    else if (!c.resolved) cancelOverlay();
+  }
+  // h: the app's markup for the open sheet ('' for none); key: which sheet (U.sheet|k); swap: the same sheet changing
+  // in place (Preparing backup becoming Backup ready)
+  function show(h, key, swap) {
+    if (!h) return shut();
+    const t = document.createElement('div');
+    t.innerHTML = h;
+    const sh = t.querySelector('.sheet');
+    if (!sh) return shut();
+    const kind = sh.dataset.pk || 'sheet';
+    if (cur && cur.kind === kind && (cur.key === key || (swap && kind === 'sheet'))) {
+      if (kind !== 'sheet') return;
+      cur.key = key;
+      cur.k = U.sheet;
+      return refill(sh, swap);
+    }
+    // another sheet: the one before leaves (an alert or action sheet not yet answered is cancelled)
+    shut();
+    if (kind === 'alert') return openAlert(sh, key);
+    if (kind === 'choices') return openChoices(sh, key);
+    openSheet(sh, key, false);
+  }
+  // the same sheet drawn again: its content changes, its scroll stays; a new height opens it again in place
+  function refill(sh, swap) {
+    const c = cur.ctl,
+      st = c.body.scrollTop,
+      oldH = c.el.offsetHeight;
+    const cp = sh.cloneNode(true); // the head moves into the kit's sheet; sh stays whole in case it opens again
+    head(c, cp);
+    c.body.innerHTML = inner(sh);
+    if (!c.el.querySelector(':scope > .pk-sheet-head')) head(c, sh.cloneNode(true));
+    c.body.scrollTop = st;
+    if (!fits(cur.k) || Math.abs(natural(c) - oldH) <= 2) return;
+    const key = cur.key;
+    drop(c);
+    cur = null;
+    openSheet(sh, key, true);
+    cur.ctl.body.scrollTop = st;
+    if (swap) DET.sheetSwap(oldH);
+  }
+  // At the top of a sheet's content the kit takes the finger for pulling the sheet down, so the page can't scroll it,
+  // and it leaves alone a finger that lands on a button: a swipe up that starts on a button scrolls the content here
+  // (and isn't a tap). A kit fix for a later version; this goes when it ships.
+  let lift = null;
+  document.addEventListener('pointerdown', (e) => {
+    const body = e.target.closest && e.target.closest('.vs-sheet .pk-sheet-body.pk-at-top');
+    lift = body && e.target.closest('button, a') && !e.target.closest('[data-own-gesture]') ? { body, y: e.clientY, id: e.pointerId, on: false } : null;
+  });
+  document.addEventListener('pointermove', (e) => {
+    const l = lift;
+    if (!l || e.pointerId !== l.id) return;
+    const dy = e.clientY - l.y;
+    if (!l.on && dy > -6) return;
+    l.on = true;
+    l.body.scrollTop -= dy;
+    l.y = e.clientY;
+  });
+  const lifted = (e) => {
+    const l = lift;
+    lift = null;
+    if (l && l.on && e.type === 'pointerup') l.done = performance.now();
+    if (l && l.on) lastLift = l;
+  };
+  let lastLift = null;
+  document.addEventListener('pointerup', lifted);
+  document.addEventListener('pointercancel', lifted);
+  document.addEventListener(
+    'click',
+    (e) => {
+      if (lastLift && lastLift.done && performance.now() - lastLift.done < 400 && lastLift.body.contains(e.target)) {
+        e.stopPropagation();
+        e.preventDefault();
+      }
+      lastLift = null;
+    },
+    true
+  );
+  return {
+    show,
+    // the kit's sheet now, for code that moves it on (New song growing to full: D10)
+    ctl: () => (cur && cur.kind === 'sheet' ? cur.ctl : null),
+    grow: () => !!(cur && cur.kind === 'sheet' && cur.ctl.stop !== 'full' && cur.ctl.grow && cur.ctl.grow()),
+    // take the sheet away at once, with no movement (a zoom takes its place)
+    drop: () => shut(true),
+    kind: () => (cur ? cur.kind : null),
+    fire,
+  };
+})();
+/* ===== Q41 Switches: the parts kit's (.pk-switch: 380 ms, drag or flick at 200 px/s) =====
+   A switch sits in its row (a button with role="switch", aria-checked and the app's data-a), and a tap anywhere on the
+   row runs the row's action as before. The page is drawn again after it, so the new switch is set to how it was and
+   then moved by the kit (Parts.setSwitch), which is the knob sliding. A drag that lets the knob go back changes
+   nothing. */
+const switchHTML = (on) =>
+  '<span class="pk-switch' + (on ? ' on' : '') + '" aria-hidden="true"><span class="pk-switch-knob"></span></span>';
+(() => {
+  let was = null;
+  const sel = (row) =>
+    '[role=switch]' +
+    ['data-a', 'data-v', 'data-k']
+      .filter((a) => row.hasAttribute(a))
+      .map((a) => '[' + a + '="' + CSS.escape(row.getAttribute(a)) + '"]')
+      .join('');
+  window.addEventListener(
+    'click',
+    (e) => {
+      was = null;
+      const row = e.target.closest && e.target.closest('[role=switch][data-a]');
+      const sw = row && row.querySelector('.pk-switch');
+      if (!sw) return;
+      const on = row.getAttribute('aria-checked') === 'true';
+      if (e.target.closest('.pk-switch') && sw._pkJust && performance.now() - sw._pkJust < 500 && sw.classList.contains('on') === on) {
+        e.stopPropagation();
+        e.preventDefault();
+        return;
+      }
+      was = { sel: sel(row), on };
+    },
+    true
+  );
+  window.addEventListener('click', () => {
+    if (!was) return;
+    const w = was;
+    was = null;
+    const sw = (document.querySelector(w.sel) || document.createElement('i')).querySelector('.pk-switch');
+    if (!sw || sw.classList.contains('on') === w.on || !Parts.motion.on()) return;
+    const now = sw.classList.contains('on'),
+      k = sw.querySelector('.pk-switch-knob');
+    [sw, k].forEach((x) => x && (x.style.transition = 'none'));
+    sw.classList.toggle('on', w.on);
+    void sw.offsetWidth;
+    [sw, k].forEach((x) => x && (x.style.transition = ''));
+    void sw.offsetWidth;
+    Parts.setSwitch(sw, now, true);
+  });
+})();
+
+/* ===== Q41 Menus on the parts kit (D16) =====
+   Every menu is the kit's, in one style with 20 corners (--r-card): pull-down menus grow out of their button
+   (Parts.menu), and long-press menus lift their row (Parts.contextMenu: lifts from 200 ms, opens at 700 ms, dims the
+   page 20% / 25% with no blur, closes in 170 ms). The app still decides which menu is open and draws its buttons;
+   KMENU.sync() opens the kit's menu for it with the same buttons (their data-a, data-v and data-k, so a tap runs the
+   app's action as before) and the same id. Closing it without a pick (the dim, Escape) runs the menu's close action. */
+const KMENU = (() => {
+  const open = {}; // id → { ctl, picked, app }
+  // the app's menu markup as the kit's items: each button[data-a] a row (its text, its icon, red with .dng), and a
+  // heading (.pmh) starting a group of the rows after it
+  function items(html) {
+    const t = document.createElement('div');
+    t.innerHTML = html;
+    const btns = [...t.querySelectorAll('button[data-a]')];
+    const item = (b) => {
+      const svg = b.querySelector('svg');
+      const label = [...b.childNodes]
+        .filter((n) => n.nodeType === 3 || (n.nodeType === 1 && !n.matches('svg, .acc, .pmck') && n.textContent.trim()))
+        .map((n) => n.textContent)
+        .join('')
+        .trim();
+      return { label, icon: svg ? svg.outerHTML : '', red: b.classList.contains('dng'), value: btns.indexOf(b), disabled: b.disabled };
+    };
+    const out = [];
+    let group = null;
+    [...t.children].forEach((n) => {
+      if (n.matches('.pmh')) out.push((group = { label: n.textContent.trim(), sub: [] }));
+      else if (n.matches('button[data-a]')) (group ? group.sub : out).push(item(n));
+    });
+    return { btns, items: out };
+  }
+  // the app's buttons' attributes on the kit's rows, so a tap is the app's own action
+  function dress(el, btns) {
+    el.querySelectorAll('.pk-menu-item').forEach((b) => {
+      const src = btns[+b.dataset.i];
+      if (!src) return;
+      [...src.attributes].forEach((a) => {
+        if ((/^data-/.test(a.name) && a.name !== 'data-i') || a.name === 'role' || a.name === 'aria-checked')
+          b.setAttribute(a.name, a.value);
+      });
+    });
+  }
+  // menus: [{ id, html, anchor (element), kind: 'pull' | 'row', close: the app's close action, name }]
+  function sync(menus) {
+    const want = new Set(menus.filter((m) => m.anchor).map((m) => m.id));
+    Object.keys(open).forEach((id) => {
+      if (want.has(id)) return;
+      const o = open[id];
+      delete open[id];
+      o.shut();
+    });
+    menus.forEach((m) => {
+      if (open[m.id] || !m.anchor) return;
+      open[m.id] = make(m);
+    });
+  }
+  // one menu: m as in sync(), plus onClose(picked) when it's gone
+  function make(m) {
+    const { btns, items: its } = items(m.html);
+    const o = { picked: false, app: false };
+    const opts = { name: m.name, key: m.id };
+    o.ctl = m.kind === 'row' ? Parts.contextMenu(m.anchor, its, opts) : Parts.menu(m.anchor, its, opts);
+    const el = o.ctl.el;
+    el.id = m.id;
+    el.classList.add(m.id);
+    el.setAttribute('aria-label', m.name);
+    dress(el, btns);
+    el.addEventListener('click', (e) => e.target.closest('.pk-menu-item') && (o.picked = true), true);
+    const anchor = m.anchor;
+    const onClose = (e) => {
+      if (e.target !== anchor) return;
+      anchor.removeEventListener('pk:close', onClose);
+      if (open[m.id] === o) delete open[m.id];
+      if (!o.picked && !o.app && m.close) HOST.fire(closer(m.close));
+      if (m.onClose) m.onClose(o.picked);
+    };
+    anchor.addEventListener('pk:close', onClose);
+    // take it away (no close action): the app closed it
+    o.shut = () => {
+      o.app = true;
+      o.ctl.close();
+      if (!Parts.motion.speed()) el.remove();
+    };
+    return o;
+  }
+  const closer = (a) => {
+    const b = document.createElement('button');
+    b.dataset.a = a;
+    return b;
+  };
+  return { sync, open: make, isOpen: (id) => !!open[id], items };
+})();
+
+/* Q41 toasts are the parts kit's (Parts.toast): they drop in from the top and stay 3 s (timing.toast) unless the call
+   says otherwise, one at a time. Their callers are unchanged: toast(text, ms) returns the toast's element */
+var toastT = null; // the current toast's controller (Parts.toast)
+function toast(t, ms, cls) {
+  if (toastT) {
+    toastT.closedByNew = true;
+    toastT.close();
+  }
+  toastT = Parts.toast(t, { ms: ms || undefined, name: 'Toast' });
+  if (cls) toastT.el.classList.add(...cls.split(' ').map((c) => 'vs-' + c));
+  return toastT.el;
+}
+// a toast with one button (Q11: Retry; Song Clock's Undo): the kit's toast with its button labelled; gone() runs if
+// it times out without the button being pressed
+function toastBtn(t, label, fn, ms, gone) {
+  if (toastT) {
+    toastT.closedByNew = true;
+    toastT.close();
+  }
+  let pressed = false;
+  const c = Parts.toast(t, {
+    ms: ms || 4500,
+    undo: () => {
+      pressed = true;
+      fn();
+    },
+    undoLabel: label,
+    name: 'Toast',
+  });
+  c.el.classList.add('vs-long');
+  // its button is the toast's own: the tap goes no further (a tap elsewhere would end a selection, close a menu …)
+  const ub = c.el.querySelector('.pk-toast-undo');
+  if (ub) ub.addEventListener('click', (e) => e.stopPropagation());
+  toastT = c;
+  if (gone)
+    setTimeout(
+      () => {
+        if (!pressed && !c.closedByNew) gone();
+      },
+      (ms || 4500) * Math.max(1, Parts.motion.speed())
+    );
+  return c.el;
 }
 
-/* ===== Sliding knobs ===== */
-function placeKnob(sg, animate) {
-  const on = sg.querySelector('button.on'),
-    k = sg.querySelector('.knob');
-  if (!k) return;
-  if (!on) {
-    k.classList.remove('set');
-    return;
-  }
-  const firstTime = !k.classList.contains('set');
-  if (firstTime) {
-    k.style.transition = 'none';
-  }
-  k.style.width = on.offsetWidth + 'px';
-  k.style.transform = 'translateX(' + on.offsetLeft + 'px)';
-  k.classList.add('set');
-  if (firstTime) {
-    void k.offsetWidth;
-    k.style.transition = '';
-  }
-  if (animate) {
-    k.classList.remove('squish');
-    void k.offsetWidth;
-    k.classList.add('squish');
-  }
-}
-function placeKnobs(root) {
-  (root || document).querySelectorAll('.seg').forEach((sg) => placeKnob(sg, false));
-}
+/* ===== Segmented controls (and the tab bar): the parts kit's (Q41, D04: .seg.pk-seg, a 350 ms spring knob that swells
+   to glass and can be dragged; no squish) =====
+   A tap's click lands on its button and runs its data-a action as before (the kit's hold on the finger is let go, so
+   the click isn't sent to the control instead), and its segPick(el) moves the kit's knob there. After a drag, the
+   button the knob settled on is clicked here. */
 function segPick(el) {
   const sg = el.closest('.seg');
-  sg.querySelectorAll('button').forEach((b) => {
-    const on = b === el;
-    b.classList.toggle('on', on);
-    b.setAttribute('aria-pressed', on);
-  });
-  placeKnob(sg, true);
+  if (!sg) return;
+  const its = [...sg.querySelectorAll(':scope > button')];
+  its.forEach((b) => b.setAttribute('aria-pressed', b === el));
+  Parts.select(sg, its.indexOf(el));
 }
-window.addEventListener('resize', () => placeKnobs());
+(() => {
+  let down = null;
+  const BARS = '.seg.pk-seg, #dock .pk-tabbar';
+  document.addEventListener(
+    'pointerdown',
+    (e) => {
+      const bar = e.button > 0 ? null : e.target.closest && e.target.closest(BARS);
+      down = bar ? { bar, b: e.target.closest('button'), x: e.clientX, clicked: false, moved: false } : null;
+    },
+    true
+  );
+  // the kit follows the finger from the page's pointer events, so letting go of its hold changes nothing for a drag,
+  // and a tap's click lands on its button straight away
+  window.addEventListener('pointerdown', (e) => {
+    if (!down || !down.b) return;
+    try {
+      if (down.bar.hasPointerCapture(e.pointerId)) down.bar.releasePointerCapture(e.pointerId);
+    } catch (er) {}
+  });
+  document.addEventListener('pointermove', (e) => down && Math.abs(e.clientX - down.x) > 6 && (down.moved = true), true);
+  document.addEventListener(
+    'click',
+    (e) => {
+      if (down && e.target.closest && e.target.closest('button') && down.bar.contains(e.target)) down.clicked = true;
+    },
+    true
+  );
+  const up = (e) => {
+    const d = down;
+    if (!d || e.type === 'pointercancel') return (down = null);
+    setTimeout(() => {
+      if (down === d) down = null;
+      if (d.clicked) return;
+      const b = d.moved ? d.bar.querySelector(':scope > button.on') : d.b;
+      if (b && b.isConnected && !b.disabled) b.click();
+    }, 0);
+  };
+  document.addEventListener('pointerup', up, true);
+  document.addEventListener('pointercancel', up, true);
+})();
 
 /* ===== Q10 Sideways scroll hints =====
    A row that scrolls sideways (marked data-edge-fade) gets a soft fade on whichever edge has more behind it:

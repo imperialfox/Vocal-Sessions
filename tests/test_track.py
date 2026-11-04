@@ -126,7 +126,7 @@ def importing(b, t):
     with pg.expect_file_chooser() as fc: pg.click('#app [data-a=trkAdd]')
     fc.value.set_files(bad)
     pg.wait_for_function("!TRACK.busy()", timeout=10000); pg.wait_for_timeout(200)
-    ok('can’t be opened. Try an MP3 or M4A from Files' in pg.inner_text('.toast'), 'a file that won’t decode says so: ' + pg.inner_text('.toast'))
+    ok('can’t be opened. Try an MP3 or M4A from Files' in pg.inner_text('.pk-toast'), 'a file that won’t decode says so: ' + pg.inner_text('.pk-toast'))
     ok(not pg.evaluate("TRACK.has('g_2')") and not pg.evaluate("songById('g_2').track"), 'and nothing is saved')
     # over 60 MB: ask once first
     pg.evaluate("""()=>{TRACK.expect('g_2');const f=new File([new Uint8Array(61*1048576)],'big.mp3',{type:'audio/mpeg'}),dt=new DataTransfer();
@@ -238,7 +238,7 @@ def loops(b, t):
     xi = x_of(pg, 11.5); pg.mouse.click(xi, y); pg.mouse.click(xi, y); pg.wait_for_timeout(150)
     ok(loop(pg) is not None, 'a double-tap inside the loop keeps it')
     xo = x_of(pg, 9); pg.mouse.click(xo, y); pg.mouse.click(xo, y); pg.wait_for_timeout(150)
-    ok(loop(pg) is None and 'Loop cleared' in pg.inner_text('.toast'), 'a double-tap outside the loop clears it')
+    ok(loop(pg) is None and 'Loop cleared' in pg.inner_text('.pk-toast'), 'a double-tap outside the loop clears it')
     # scrubbing the strip: the waveform follows the finger, the playhead stays
     pg.evaluate("TRACK.seek(20)")
     drag(pg, 200, y, 140, y)
@@ -246,7 +246,7 @@ def loops(b, t):
        f'dragging the strip left moves later by the distance ({pg.evaluate("TRACK.now()")})')
     # Loop with no loop set
     pg.click('#trkLoopB'); pg.wait_for_timeout(100)
-    ok('Set a start and end' in pg.inner_text('.toast'), 'Loop with nothing set says to set a start and end')
+    ok('Set a start and end' in pg.inner_text('.pk-toast'), 'Loop with nothing set says to set a start and end')
     t.shot(pg, 'loop')
     pg.context.close()
 
@@ -412,7 +412,7 @@ def data(b, t):
     fc.value.set_files(track()); loaded(pg, sid)
     ok(pg.evaluate("id=>JSON.stringify(songById(id).loop)", sid) == '{"start":4,"end":7.5,"on":true}' and pg.evaluate("TRACK.state().id") == sid,
        're-importing the same file brings the player back with the same loop')
-    ok('different length' not in (pg.inner_text('.toast') if pg.locator('.toast').count() else ''), 'with no length note for the same file')
+    ok('different length' not in (pg.inner_text('.pk-toast') if pg.locator('.pk-toast').count() else ''), 'with no length note for the same file')
     # a different length: a quiet note
     pg.click('#barR [data-a=trkMenu]'); pg.wait_for_timeout(250)
     ok('Replace track' in pg.inner_text('.sheet') and 'Remove track' in pg.inner_text('.sheet') and 'isn’t included in backups' in pg.inner_text('.sheet'),
@@ -420,7 +420,7 @@ def data(b, t):
     with pg.expect_file_chooser() as fc: pg.click('.sheet [data-a=trkReplace]')
     fc.value.set_files(F('Paper Boats long.wav', 63)); pg.wait_for_function("id=>!TRACK.busy()&&TRACK.state().id===id&&TRACK.state().dur>62", arg=sid, timeout=15000)
     pg.wait_for_timeout(200)
-    ok('different length, so timings may be off' in pg.inner_text('.toast'), 'replacing with a track of another length says timings may be off')
+    ok('different length, so timings may be off' in pg.inner_text('.pk-toast'), 'replacing with a track of another length says timings may be off')
     SLOTS = "id=>JSON.stringify(songById(id).timing.slots)"
     ok(pg.evaluate(SLOTS, sid) == json.dumps(json.loads(timing)['slots'], separators=(',', ':')) and pg.evaluate("id=>songById(id).loop.end", sid) == 7.5,
        'Replace keeps the loop and timings')
@@ -429,8 +429,8 @@ def data(b, t):
     # Remove track
     pg.click('#barR [data-a=trkMenu]'); pg.wait_for_timeout(250)
     pg.click('.sheet [data-a=sheet][data-v=trkDel]'); pg.wait_for_timeout(250)
-    ok('Remove the track?' in pg.inner_text('.sheet'), 'Remove track asks first')
-    pg.click('.sheet [data-a=trkRemove]'); pg.wait_for_timeout(500)
+    ok('Remove the track?' in pg.inner_text('#layer .pk-alert'), 'Remove track asks first')
+    pg.click('#layer .pk-alert .pk-red'); pg.wait_for_timeout(500)
     ok(not pg.evaluate("id=>TRACK.has(id)", sid) and not pg.evaluate("id=>songById(id).track", sid) and pg.evaluate(NIDB) == [0, 0],
        'Remove deletes the audio and peaks and clears the song’s track')
     ok(pg.evaluate("id=>songById(id).loop.end", sid) == 7.5 and pg.evaluate(SLOTS, sid) == json.dumps(json.loads(timing)['slots'], separators=(',', ':')),

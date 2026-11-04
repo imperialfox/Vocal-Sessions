@@ -2102,7 +2102,7 @@ const TRACK = (() => {
     const m = have.get(sg.id);
     return (
       '<div class="trk">' +
-      '<div class="seg wide trklv" role="group" aria-label="Zoom"><span class="knob" aria-hidden="true"></span>' +
+      '<div class="seg pk-seg wide trklv" role="group" aria-label="Zoom"><span class="pk-seg-ind" aria-hidden="true"></span>' +
       TRK_LEVELS.map(
         (l, i) =>
           '<button data-a="trkLevel" data-v="' +
@@ -2332,7 +2332,7 @@ const TRACK = (() => {
       const n = sg.markers.indexOf(m) + 1;
       const row = (a, l, cls) =>
         '<button class="row" data-a="' + a + '" data-k="' + m.id + '"><span class="lbl' + (cls ? ' ' + cls : '') + '">' + l + '</span></button>';
-      return sheetWrap(
+      return choiceSheet( // Q41 (D07) the parts kit's action sheet
         'Marker ' + n,
         // Q02: the first door from a marker into the song's timing
         (hasLyrics(sg)
@@ -2753,20 +2753,25 @@ const TRACK = (() => {
       mkHold = null;
     }
   });
-  let mkHeldAt = 0;
+  let mkHeldAt = 0,
+    mkUp = null;
   ['pointerup', 'pointercancel'].forEach((t) =>
-    document.addEventListener(t, () => {
+    document.addEventListener(t, (e) => {
       if (!mkHold) return;
-      if (mkHold.done) mkHeldAt = Date.now();
+      if (mkHold.done) {
+        mkHeldAt = Date.now();
+        mkUp = { x: e.clientX, y: e.clientY };
+      }
       else clearTimeout(mkHold.t);
       mkHold = null;
     })
   );
-  // a hold that opened the menu isn't also a tap (on the chip, or on the menu that rose under the finger)
+  // a hold that opened the menu isn't also a tap (on the chip, or on the menu that rose under the finger): the click
+  // the lift makes, where the finger let go (Q41: a tap elsewhere, on the action sheet, is a real tap)
   document.addEventListener(
     'click',
     (e) => {
-      if (Date.now() - mkHeldAt < 400) {
+      if (Date.now() - mkHeldAt < 400 && mkUp && Math.hypot(e.clientX - mkUp.x, e.clientY - mkUp.y) < 10) {
         e.stopPropagation();
         e.preventDefault();
       }

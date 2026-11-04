@@ -204,9 +204,9 @@ const APPL = (() => {
         h +=
           '<button class="row aptrk" data-a="apOver" role="switch" aria-checked="' +
           overOn() +
-          '"><span class="lbl">♪ Sing over the track</span><span class="tgl" aria-checked="' +
-          overOn() +
-          '" aria-hidden="true"></span></button>';
+          '"><span class="lbl">♪ Sing over the track</span>' +
+          switchHTML(overOn()) +
+          '</button>';
       h +=
         '<button class="apsing" data-a="apSing"><span class="dot" aria-hidden="true"></span>Sing</button>' +
         '<div class="aplinks">' +
@@ -358,7 +358,7 @@ const APPL = (() => {
   function cmpHTML(t, prev, prevName) {
     const on = playingId === prev.id ? 1 : 0;
     return (
-      '<div class="seg apcmp" role="group" aria-label="Compare"><span class="knob" aria-hidden="true"></span>' +
+      '<div class="seg pk-seg apcmp" role="group" aria-label="Compare"><span class="pk-seg-ind" aria-hidden="true"></span>' +
       '<button data-a="apCmp" data-v="0" data-k="' +
       t.id +
       '" class="' +
@@ -387,7 +387,7 @@ const APPL = (() => {
   function modeSeg(sg) {
     const on = ladderOn(sg);
     return (
-      '<div class="seg wide apmode" role="group" aria-label="How to sing it"><span class="knob" aria-hidden="true"></span>' +
+      '<div class="seg pk-seg wide apmode" role="group" aria-label="How to sing it"><span class="pk-seg-ind" aria-hidden="true"></span>' +
       '<button data-a="apMode" data-v="straight" class="' +
       (on ? '' : 'on') +
       '" aria-pressed="' +
@@ -496,9 +496,9 @@ const APPL = (() => {
         (TRACK.has(c.sg.id)
           ? '<button class="row aptrk" data-a="apOver" role="switch" aria-checked="' +
             overOn() +
-            '"><span class="lbl">♪ Sing over the track</span><span class="tgl" aria-checked="' +
-            overOn() +
-            '" aria-hidden="true"></span></button>'
+            '"><span class="lbl">♪ Sing over the track</span>' +
+            switchHTML(overOn()) +
+            '</button>'
           : '') +
         '<button class="apsing" data-a="apSing"><span class="dot" aria-hidden="true"></span>Sing · ' +
         esc(r.short) +
@@ -1021,8 +1021,8 @@ const APPL = (() => {
       saveSGP();
       const on = overOn();
       el.setAttribute('aria-checked', on);
-      const t = el.querySelector('.tgl');
-      if (t) t.setAttribute('aria-checked', on);
+      const t = el.querySelector('.pk-switch');
+      if (t) Parts.setSwitch(t, on, true); // Q41 the parts kit's switch, moving in place
     },
     apCmp: (el) => cmp(el),
     apSort: (el) => sortMenu(el),

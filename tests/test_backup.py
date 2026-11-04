@@ -69,7 +69,7 @@ def run(b, t):
     # ---- export, check, restore, undo
     pg = t.page(b); pg.evaluate(ADD_TAKE, 't1')
     ok(pg.evaluate("deviceName()") == 'iPhone', 'the device is named iPhone')
-    pg.evaluate("tabMin=false;U.tab='settings';U.view='set';U.setPg='backup';U.sheet=null;render()"); pg.wait_for_timeout(300)
+    pg.evaluate("U.tab='settings';U.view='set';U.setPg='backup';U.sheet=null;render()"); pg.wait_for_timeout(300)
     pg.click('[data-a=exportPrep]'); pg.wait_for_function("U.sheet==='exportReady'", timeout=10000)
     ok(pg.evaluate("pendingExport.verified"), 'the backup is read back and verified before saving')
     ok(pg.locator('[data-a=bkGuideFrom]').count() == 1, 'the first backup offers the folder guide')
@@ -115,7 +115,7 @@ def run(b, t):
     pg.click('[data-a=importYes]'); pg.wait_for_function("U.sheet===null", timeout=10000); pg.wait_for_timeout(300)
     ok(pg.evaluate("D.sessions.length") == 3 and not pg.evaluate("D.sessions.some(s=>s.id==='snew')"), 'restore replaces the data')
     ok(pg.evaluate("!!UNDO&&UNDO.takes.length===1"), 'an undo copy is kept, with recordings')
-    pg.evaluate("tabMin=false;U.tab='settings';U.view='set';U.setPg='backup';U.sheet=null;render()"); pg.wait_for_timeout(300); ok(pg.locator('[data-v=undoRestore]').count() == 1, 'Settings › Backup shows Undo last restore')
+    pg.evaluate("U.tab='settings';U.view='set';U.setPg='backup';U.sheet=null;render()"); pg.wait_for_timeout(300); ok(pg.locator('[data-v=undoRestore]').count() == 1, 'Settings › Backup shows Undo last restore')
     pg.evaluate("D.sessions.push({id:'safter',date:new Date().toISOString(),mins:10,f:{},rot:{},xn:{},rate:{},takes:[],how:[],howNote:''});save();rerender()")
     pg.click('[data-v=undoRestore]'); pg.wait_for_timeout(400); ok('1 session since then' in pg.inner_text('.sheet'), 'undo warns about sessions logged since')
     pg.click('[data-a=undoYes]'); pg.wait_for_function("U.sheet===null", timeout=10000); pg.wait_for_timeout(300)
@@ -127,17 +127,17 @@ def run(b, t):
     pg.evaluate("(async()=>{const u=await getUndo();u.at=Date.now()-31*864e5;await putUndo(u);})()"); pg.wait_for_timeout(300); pg.reload(); ready(pg)
     ok(pg.evaluate("UNDO") is None, 'the undo copy is removed after 30 days')
 
-    pg.evaluate("tabMin=false;U.tab='settings';U.view='set';U.setPg='backup';U.sheet=null;render()"); pg.wait_for_timeout(300); pg.click('[data-v=bkLog]'); pg.wait_for_timeout(400)
+    pg.evaluate("U.tab='settings';U.view='set';U.setPg='backup';U.sheet=null;render()"); pg.wait_for_timeout(300); pg.click('[data-v=bkLog]'); pg.wait_for_timeout(400)
     ok(pg.locator('.sheet .row').count() >= 1, 'Backup history lists backups'); close(pg)
     with pg.expect_download() as dl: pg.click('main [data-a=saveReadme]')
     rp = os.path.join(F, dl.value.suggested_filename); dl.value.save_as(rp); rt = open(rp, encoding='utf-8').read()
     ok(dl.value.suggested_filename == 'READ ME – Vocal Sessions backups.txt' and 'HOW TO RESTORE' in rt, 'the read-me file is saved')
 
     pick(pg, 'importPick', bk); pg.click('[data-a=importYes]'); pg.wait_for_function("U.sheet===null", timeout=10000)
-    pg.evaluate("tabMin=false;U.tab='settings';U.view=null;U.sheet=null;render()"); pg.wait_for_timeout(200)
+    pg.evaluate("U.tab='settings';U.view=null;U.sheet=null;render()"); pg.wait_for_timeout(200)
     pg.click('[data-v=resetAll]'); pg.wait_for_timeout(300); pg.click('[data-a=resetAll]'); pg.wait_for_timeout(800)
     ok(pg.evaluate("UNDO") is None and pg.evaluate("loadLog().length") == 0, 'Reset all data clears the undo copy and Backup history')
-    pg.evaluate("tabMin=false;U.tab='settings';U.view='set';U.setPg='backup';U.sheet=null;render()"); pg.wait_for_timeout(300)
+    pg.evaluate("U.tab='settings';U.view='set';U.setPg='backup';U.sheet=null;render()"); pg.wait_for_timeout(300)
     pick(pg, 'importPick', bk); ok('has no practice saved yet' in pg.inner_text('.sheet'), 'an empty device says so')
     pg.click('[data-a=importYes]'); pg.wait_for_function("U.sheet===null", timeout=10000); ok(pg.evaluate("D.sessions.length") == 3, 'restoring into an empty app works')
 

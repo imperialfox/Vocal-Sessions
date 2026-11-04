@@ -68,7 +68,7 @@ def lane_y(pg):
     return pg.evaluate("(()=>{const r=document.getElementById('trkLane').getBoundingClientRect();return r.top+r.height/2})()")
 
 
-def hold(pg, sel, ms=650):
+def hold(pg, sel, ms=900):  # Q41 the parts kit's long-press: the menu at 700 ms
     pg.hover(sel); pg.mouse.down(); pg.wait_for_timeout(ms); pg.mouse.up(); pg.wait_for_timeout(250)
 
 
@@ -84,13 +84,13 @@ def undo_per_song(b, t):
     pg.evaluate(OPEN, a); until(pg, "id=>U.songId===id&&!!document.querySelector('.ckrow')", arg=a)
     # a change to the song on screen, with its toast; then a quiet change to another song while the toast is up
     pg.evaluate("id=>ckSetLines(songById(id),{1:[3,5]})", a)
-    ok(until(pg, "!!document.querySelector('.toast .ckub')"), 'a change to the song shows a toast with Undo')
+    ok(until(pg, "!!document.querySelector('.pk-toast .pk-toast-undo')"), 'a change to the song shows a toast with Undo')
     a1 = pg.evaluate(T, a)
     pg.evaluate("id=>ckSetLines(songById(id),{2:[7,9]},true)", b2)
     b1 = pg.evaluate(T, b2)
     ok(a1 != a0 and b1 != b0 and pg.evaluate("id=>CLOCK.undos(id)", a) == 1 and pg.evaluate("id=>CLOCK.undos(id)", b2) == 1,
        'each song keeps its own Undo step')
-    pg.click('.toast .ckub')
+    pg.click('.pk-toast .pk-toast-undo')
     ok(until(pg, "([id,t])=>JSON.stringify(songById(id).timing)===t", arg=[a, a0]), 'the toast’s Undo puts back the song it was shown for')
     ok(pg.evaluate(T, b2) == b1 and pg.evaluate("id=>CLOCK.undos(id)", b2) == 1, 'and leaves the other song’s timing and its Undo alone')
     # Undo with nothing left for that song changes nothing anywhere
@@ -151,7 +151,7 @@ def run(b, t):
     lb.click(); pg.wait_for_timeout(250)
     pg.evaluate("(()=>{const c=document.querySelectorAll('#ckpk .ckwcol');c[0].scrollTop=3*36;c[1].scrollTop=58*36})()"); pg.wait_for_timeout(200)
     pg.click('#ckpk [data-a=ckPickSet]'); pg.wait_for_timeout(300)
-    ok(tl(pg)['len'] == 238 and 'Song length 3:58' in pg.inner_text('.toast'), 'Set saves the length')
+    ok(tl(pg)['len'] == 238 and 'Song length 3:58' in pg.inner_text('.pk-toast'), 'Set saves the length')
 
     # the pencil: title and artist in place, Edit lyrics, Marks, Done
     ok(pg.locator('.ckerow [data-a=ckHeadLyrics]').count() == 1 and pg.locator('.ckerow [data-a=ckHeadMarks]').count() == 1 and
@@ -184,7 +184,7 @@ def run(b, t):
     pg.click('.sheet [data-a=ckTile][data-v=check]'); pg.wait_for_timeout(200)
     ok('3 of 3 pinned' in pg.inner_text('.sheet'), 'tapping a tile in Edit pins it')
     pg.click('.sheet [data-a=ckTile][data-v=blur]'); pg.wait_for_timeout(200)
-    ok('3 is the most' in pg.inner_text('.toast') and '3 of 3 pinned' in pg.inner_text('.sheet'), 'no more than 3 can be pinned')
+    ok('3 is the most' in pg.inner_text('.pk-toast') and '3 of 3 pinned' in pg.inner_text('.sheet'), 'no more than 3 can be pinned')
     pg.click('.sheet [data-a=ckTile][data-v=key]'); pg.wait_for_timeout(200)
     pg.click('.sheet [data-a=ckGridEdit]'); pg.wait_for_timeout(200)
     pg.click('.sheet [data-a=close]'); pg.wait_for_timeout(300)
@@ -290,8 +290,8 @@ def run(b, t):
     ok(abs((e1 - M2['T'][1][1]) * pps - 20) < 4 or abs(M2['T'][1][1] - (e1 - 1)) < 0.02,
        f'dragging a block\'s edge moves it (or snaps to the playhead) ({e1:.2f} → {M2["T"][1][1]:.2f})')
     ok(not M2['est'][1] and all(M2['est'][i] for i in range(len(M2['est'])) if i != 1), 'that line is placed now (solid); the rest stay estimated')
-    ok('Re-timed' in pg.inner_text('.toast') and pg.locator('.toast .ckub').count() == 1, 'with a toast and Undo')
-    pg.click('.toast .ckub'); pg.wait_for_timeout(300)
+    ok('Re-timed' in pg.inner_text('.pk-toast') and pg.locator('.pk-toast .pk-toast-undo').count() == 1, 'with a toast and Undo')
+    pg.click('.pk-toast .pk-toast-undo'); pg.wait_for_timeout(300)
     ok(abs(model(pg)['T'][1][1] - e1) < 0.002 and all(model(pg)['est']), 'Undo puts it back')
     # snapping: an edge dropped near the playhead lands on it
     pg.evaluate("TRACK.seek(%f)" % (e1 + 0.15)); pg.wait_for_timeout(150)
@@ -314,7 +314,7 @@ def run(b, t):
     pg.mouse.move(x0, y); pg.mouse.down(); pg.mouse.move(x0 + 25, y, steps=6); pg.mouse.up(); pg.wait_for_timeout(250)
     r = model(pg)['raw']
     ok(abs(r[0][1] - r[1][0]) < 0.002 and r[0][1] > 4.5, f'one handle moves the end of one line and the start of the next together ({r[0]}, {r[1]})')
-    ok('Moved' in pg.inner_text('.toast'), 'with a toast and Undo')
+    ok('Moved' in pg.inner_text('.pk-toast'), 'with a toast and Undo')
     pg.evaluate("ckUndo()"); pg.wait_for_timeout(250)
     # never past a neighbour
     x0 = lane_x(pg, 4)
@@ -336,7 +336,7 @@ def run(b, t):
     ok(abs(r[1][1] - 8.4) < 0.01, f'End here sets its end at the playhead ({r[1]})')
     pg.evaluate("TRACK.seek(4)"); pg.wait_for_timeout(100)
     pg.click('#trkInfo [data-a=trkLnEnd]'); pg.wait_for_timeout(250)
-    ok('past the line’s start' in pg.inner_text('.toast') and abs(model(pg)['raw'][1][1] - 8.4) < 0.01, 'End here before the start says so and changes nothing')
+    ok('past the line’s start' in pg.inner_text('.pk-toast') and abs(model(pg)['raw'][1][1] - 8.4) < 0.01, 'End here before the start says so and changes nothing')
     pg.click('#trkInfo [data-a=trkLnX]'); pg.wait_for_timeout(150)
     ok(pg.evaluate("TRACK.laneSel()") == -1 and 'tap a line below to select it' in pg.inner_text('#trkInfo'), '✕ clears the selection')
     ok(pg.locator('#trkLane[data-own-gesture]').count() == 1, 'the lane has its own gesture, so a drag never swipes back')
@@ -400,14 +400,14 @@ def run(b, t):
     pg.click('.cktr [data-v="0.2"]'); pg.wait_for_timeout(150)
     after = pg.evaluate("CLOCK.model().T.map(x=>x[0])")
     ok(all(abs(a - b - 0.2) < 0.002 for a, b in zip(after, before)), '+0.2 moves every line 0.2 s later')
-    ok('Lyrics 0.2 s later' in pg.inner_text('.toast') and pg.locator('.toast .ckub').count() == 1, 'with a toast and Undo')
+    ok('Lyrics 0.2 s later' in pg.inner_text('.pk-toast') and pg.locator('.pk-toast .pk-toast-undo').count() == 1, 'with a toast and Undo')
     saved = json.loads(pg.evaluate("localStorage.getItem('vocalTracker')"))
     ok(any(s.get('timing') and s['timing'].get('slots') and abs(list(s['timing']['slots'].values())[0]['lines'][0][0] - 0.2) < 0.002 for s in saved['songs']), 'the nudge is saved')
-    pg.click('.toast .ckub'); pg.wait_for_timeout(150)
+    pg.click('.pk-toast .pk-toast-undo'); pg.wait_for_timeout(150)
     ok(pg.evaluate("CLOCK.model().T.map(x=>x[0])") == before and pg.evaluate("CLOCK.state().run"), 'Undo puts the lyrics back (and the clock keeps running)')
     pg.click('.cktr [data-v="-0.2"]'); pg.wait_for_timeout(150)
     ok(abs(pg.evaluate("CLOCK.model().T[3][0]") - (before[3] - 0.2)) < 0.002, '−0.2 moves every line earlier')
-    pg.click('.toast .ckub'); pg.wait_for_timeout(150)
+    pg.click('.pk-toast .pk-toast-undo'); pg.wait_for_timeout(150)
 
     # ---------- Q05 punch-in ----------
     M = model(pg)
@@ -424,9 +424,9 @@ def run(b, t):
     ok(abs(r['raw'][2][0] - (t_press - 0.15)) < 0.01 and abs(r['raw'][2][1] - (t_press + 2.5 - 0.15)) < 0.01,
        f'the line starts where the finger went down and ends where it let go (less the finger\'s 0.15 s) ({r["raw"][2]} vs {t_press:.2f})')
     ok(not r['est'][2] and r['est'][3], 'that line is placed; the others stay estimated')
-    ok('Re-timed “Hold on hold on to the sound”' in pg.inner_text('.toast') and pg.locator('.toast .ckub').count() == 1, 'a toast says Re-timed, with Undo')
+    ok('Re-timed “Hold on hold on to the sound”' in pg.inner_text('.pk-toast') and pg.locator('.pk-toast .pk-toast-undo').count() == 1, 'a toast says Re-timed, with Undo')
     ok(pg.evaluate("CLOCK.state().run") and pg.evaluate("document.querySelector('#ckpa .ckl.now')") is not None, 'play-along carries on')
-    pg.click('.toast .ckub'); pg.wait_for_timeout(200)
+    pg.click('.pk-toast .pk-toast-undo'); pg.wait_for_timeout(200)
     ok(abs(model(pg)['raw'][2][0] - M['raw'][2][0]) < 0.002, 'Undo puts the line back')
     # a quick tap still jumps (no punch-in)
     pg.mouse.click(lb3['x'] + 40, lb3['y'] + 10); pg.wait_for_timeout(150)
@@ -439,8 +439,8 @@ def run(b, t):
     pg.click('.cktr [data-a=ckFlag]'); pg.wait_for_timeout(200)
     mk = pg.evaluate("JSON.parse(JSON.stringify(songById(U.songId).markers||[]))")
     ok(len(mk) == 1 and abs(mk[0]['t'] - (tf - 0.15)) < 0.02, f'Flag adds a marker on the track at the current time ({mk})')
-    ok('Marker 1 at' in pg.inner_text('.toast') and pg.locator('.toast .ckub').count() == 1, 'with a toast and Undo')
-    pg.click('.toast .ckub'); pg.wait_for_timeout(200)
+    ok('Marker 1 at' in pg.inner_text('.pk-toast') and pg.locator('.pk-toast .pk-toast-undo').count() == 1, 'with a toast and Undo')
+    pg.click('.pk-toast .pk-toast-undo'); pg.wait_for_timeout(200)
     ok(not pg.evaluate("songById(U.songId).markers"), 'Undo takes the marker away')
 
     # pause shows the song page with the current line highlighted, where the eye was
@@ -512,15 +512,15 @@ def run(b, t):
     line = '#app .sgl[data-o="%s"][data-li="1"]' % pg.evaluate("songById(U.songId).order[1].o")
     hold(pg, line)
     ok(pg.evaluate("CLOCK.lineMenu()") is not None and pg.locator('#lmenu [role=menuitem]').count() == 3,
-       'holding a line half a second opens its menu: Retime line, Play from here, Annotate')
+       'holding a line (700 ms, the parts kit\'s long-press) opens its menu: Retime line, Play from here, Annotate')
     ok([x.strip() for x in pg.evaluate("[...document.querySelectorAll('#lmenu button')].map(b=>b.textContent)")] == ['Retime line', 'Play from here', 'Annotate'],
        'in that order')
-    ok(pg.locator(line + '.lifted').count() == 1 and pg.evaluate("document.body.classList.contains('lmopen')") and
-       float(pg.evaluate("getComputedStyle(document.querySelector('#app .sgl:not(.lifted)')).opacity")) < 0.6, 'the line lifts and the others dim')
+    ok(pg.locator('#layer .pk-lift-clone.sgl').count() == 1 and pg.locator('#layer .pk-dim.pk-soft.pk-on').count() == 1,
+       'the line lifts (the kit\'s lifted copy) and the page dims')
     ok(pg.evaluate("U.sSec") is None, 'the hold doesn\'t also focus the section')
     t.shot(pg, 'hold-menu')
-    pg.click('.ctxback'); pg.wait_for_timeout(200)
-    ok(pg.evaluate("CLOCK.lineMenu()") is None and pg.locator('#lmenu').count() == 0 and pg.locator('.sgl.lifted').count() == 0, 'tapping away closes it')
+    pg.click('#layer .pk-dim', position={'x': 20, 'y': 200}); pg.wait_for_timeout(200)
+    ok(pg.evaluate("CLOCK.lineMenu()") is None and pg.locator('#lmenu').count() == 0 and pg.locator('#layer .pk-lift-clone').count() == 0, 'tapping away closes it')
     # a short press is still a tap (section focus), and a moving finger (a scroll) never opens it
     pg.mouse.move(*[pg.locator(line).bounding_box()[k] + 20 for k in ('x', 'y')]); pg.mouse.down(); pg.wait_for_timeout(100); pg.mouse.up(); pg.wait_for_timeout(300)
     ok(pg.evaluate("CLOCK.lineMenu()") is None and pg.evaluate("U.sSec") is not None, 'a quick tap focuses the section as before')
@@ -572,8 +572,8 @@ def run(b, t):
     ok(any(m['type'] == 'breath' and m['line'] == 1 and m['w0'] == len(sec['lines'][1]) - 1 for m in sec['marks']),
        'tapping it makes a real Breath mark on the line\'s last word')
     ok(pg.locator('.sgsb').count() == 0 and not (tl(pg)['slots'][o0].get('sb')), 'and the suggestion goes')
-    ok('Added Breath' in pg.inner_text('.toast') and pg.locator('.toast .ckub').count() == 1, 'with Undo')
-    pg.click('.toast .ckub'); pg.wait_for_timeout(300)
+    ok('Added Breath' in pg.inner_text('.pk-toast') and pg.locator('.pk-toast .pk-toast-undo').count() == 1, 'with Undo')
+    pg.click('.pk-toast .pk-toast-undo'); pg.wait_for_timeout(300)
     ok(pg.locator('.sgsb').count() == 1, 'Undo brings the suggestion back')
     pg.click('[data-a=sgDone]'); pg.wait_for_timeout(300)
     ok(pg.locator('.sgsb').count() == 0, 'never outside the Marks side')

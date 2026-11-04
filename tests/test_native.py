@@ -23,7 +23,7 @@ WHERE = "U.tab+'|'+(U.view||'')"
 PUSH = """(()=>{const l=document.querySelector('.zm.push');if(!l)return null;const m=e=>new DOMMatrix(getComputedStyle(e).transform).m41;
   return {page:m(l.querySelector('.zm-page')),under:m(l.querySelector('.zm-under')),dim:+getComputedStyle(l.querySelector('.zm-dim')).opacity,
   ghost:!!document.querySelector('.zm .zm-ghost'),n:document.querySelectorAll('.zm').length}})()"""
-MEAS = """(()=>{const r=e=>e.getBoundingClientRect();const tb=document.querySelector('#dock .tabbar'),sc=document.querySelector('#dock .scirc'),
+MEAS = """(()=>{const r=e=>e.getBoundingClientRect();const tb=document.querySelector('#dock .pk-tabbar'),sc=document.querySelector('#dock .scirc'),
   g=document.querySelector('#barL .circ,#barR .circ');const o={};
   if(tb){const b=r(tb);o.bot=innerHeight-b.bottom;o.l=b.left;o.h=b.height;o.btn=[...tb.querySelectorAll('button')].map(x=>Math.round(r(x).width))}
   if(sc){const c=r(sc);o.cr=innerWidth-c.right;o.ch=c.height;o.cw=c.width;o.gap=tb?c.left-r(tb).right:null;o.mid=tb?Math.abs((c.top+c.bottom)/2-(r(tb).top+r(tb).bottom)/2):null}
@@ -69,7 +69,7 @@ def layout(b, t):
             ok(abs(m['bot'] - 21) < 0.6, f'{tag}: the tab bar sits 21 pt from the bottom edge ({m["bot"]})')
             ok(abs(m['l'] - 21) < 0.6 and abs(m['cr'] - 21) < 0.6, f'{tag}: with 21 pt margins either side (bar {m["l"]}, circle {m["cr"]})')
             ok(abs(m['h'] - m['ch']) < 0.6 and abs(m['cw'] - m['ch']) < 0.6 and m['mid'] < 0.6, f'{tag}: the search circle is as tall as the bar ({m["ch"]} vs {m["h"]}) and centred on it')
-            ok(abs(m['gap'] - 12) < 0.6, f'{tag}: 12 pt between the bar and the circle, as in Notes ({m["gap"]})')
+            ok(abs(m['gap'] - 8) < 0.6, f'{tag}: 8 pt between the bar and the search circle (Q41, D02: {m["gap"]})')
             ok(max(m['btn']) - min(m['btn']) <= 1, f'{tag}: the four tabs share the bar\'s width equally ({m["btn"]})')
             ok(abs(m['top'] - 84) < 0.6 and abs(m['th'] - 44) < 0.6, f'{tag}: the top circles are 44 pt, centred 84 pt from the top ({m["top"]})')
             ok(not m['side'], f'{tag}: nothing scrolls sideways')
@@ -101,7 +101,7 @@ def layout(b, t):
             pg.evaluate("go(()=>{U.tab='exercises';U.view=null})"); pg.mouse.move(400, 200)
             for _ in range(20): pg.mouse.wheel(0, 20); pg.wait_for_timeout(20)
             pg.wait_for_timeout(150)
-            ok(not pg.evaluate("tabMin") and pg.locator('#dock .dockrow.min').count() == 0, f'{name}: the tab bar never collapses')
+            ok(pg.locator('#dock .pk-dock.pk-folded').count() == 0, f'{name}: the tab bar never collapses')
         pg.context.close()
 
 
@@ -390,118 +390,25 @@ def push(b, t):
 
 # ---------------------------------------------------------------------------------------------------------------------
 def collapse(b, t):
-    """6 · The tab bar's collapse: when it may, how far, what it looks like, and what it leaves alone."""
+    """6 · Q41 (D01) the tab bar never folds away: the parts kit's tabBar.fold is off, so scrolling a tall page down
+    and up leaves the bar as it is (3.23's collapse is gone)."""
     ok = t.ok
-    S = "(()=>({y:Math.round(scrollY),min:tabMin,cls:!!document.querySelector('#dock .dockrow.min')}))()"
     pg = t.page(b, 390, 844, data=data())
     pg.evaluate(IPHONE)
     pg.mouse.move(200, 500)
-
-    def wheel(dy, n=1, gap=40):
-        for _ in range(n):
-            pg.mouse.wheel(0, dy); pg.wait_for_timeout(gap)
-        pg.wait_for_timeout(80)
-
-    # a short page never collapses
-    pg.evaluate("go(()=>{U.tab='settings';U.view='set';U.setPg='recall'})")
-    wheel(40, 8)
-    ok(not pg.evaluate(S)['cls'] and not pg.evaluate("tabRoom()"), 'a short page (Settings › Recall) never collapses')
-    # a tall page: not in the first 120 pt; about 30 pt down collapses, 20 pt up expands
+    ok(pg.evaluate("Parts.current.tabBar.fold") is False, 'the kit\'s tab bar is set never to fold (D01)')
     pg.evaluate("go(()=>{U.tab='exercises';U.view=null})")
-    ok(pg.evaluate("tabRoom()"), 'the Exercises list has room to scroll (a third of the screen)')
-    wheel(20, 5)
-    ok(pg.evaluate(S)['y'] == 100 and not pg.evaluate(S)['cls'], 'the first 120 pt never collapse it')
-    pg.evaluate("scrollTo(0,200)"); pg.wait_for_timeout(80)
-    wheel(10, 2)
-    ok(not pg.evaluate(S)['cls'], '20 pt of scrolling down isn’t enough')
-    wheel(10)
-    ok(pg.evaluate(S)['cls'], 'about 30 pt of steady scrolling down collapses it')
-    wheel(-10)
-    ok(pg.evaluate(S)['cls'], 'a 10 pt nudge up doesn’t bring it back')
-    wheel(-10)
-    ok(not pg.evaluate(S)['cls'], 'about 20 pt up expands it')
-    # collapsed: a pill at the left with the active tab's icon, the circle at the right, the same height
-    wheel(10, 4)
-    r = pg.evaluate("(()=>{const p=document.querySelector('#dock .tabpill').getBoundingClientRect(),c=document.querySelector('#dock .scirc').getBoundingClientRect();return {pl:p.left,cr:innerWidth-c.right,ph:p.height,ch:c.height,pm:(p.top+p.bottom)/2,cm:(c.top+c.bottom)/2,bot:innerHeight-p.bottom}})()")
-    ok(abs(r['pl'] - 21) < 0.6 and abs(r['cr'] - 21) < 0.6 and abs(r['ph'] - r['ch']) < 0.6 and abs(r['pm'] - r['cm']) < 0.6 and abs(r['bot'] - 21) < 0.6,
-       f'collapsed: a pill at the left edge and the circle at the right, the same height, 21 pt in ({r})')
-    ok(pg.locator('#dock .tabpill svg').count() == 1 and pg.evaluate("document.querySelector('#dock .tabpill').dataset.v") == 'exercises', 'the pill holds the active tab’s icon')
-    ok(pg.evaluate("+getComputedStyle(document.querySelector('#dock .tabbar')).opacity") == 0 and pg.evaluate("getComputedStyle(document.querySelector('#dock .tabbar')).pointerEvents") == 'none', 'the full bar has gone')
-    t.shot(pg, 'collapsed')
-    # it survives a redraw: the same row, still collapsed
-    pg.evaluate("document.querySelector('#dock .dockrow')._k=1;rerender()")
-    ok(pg.evaluate(S)['cls'] and pg.evaluate("document.querySelector('#dock .dockrow')._k") == 1, 'a redraw keeps the same collapsed bar (nothing replayed or snapped)')
-    # nothing resting on the bar moves
-    b1 = pg.evaluate("fwBounds().b")
-    pg.click('#dock .tabpill'); pg.wait_for_timeout(100)
-    ok(not pg.evaluate(S)['cls'] and pg.evaluate(WHERE) == 'exercises|', 'tapping the pill expands it, without switching tabs')
-    ok(pg.evaluate("fwBounds().b") == b1, 'the floating window’s room above the bar is the same collapsed or not')
-    # scrolls the app makes itself don't toggle it
-    wheel(10, 4)
-    pg.evaluate("scrollTo(0,40)"); pg.wait_for_timeout(100)
-    ok(not pg.evaluate(S)['cls'], 'within 60 pt of the top it’s always expanded')
-    pg.evaluate("scrollTo(0,300)"); pg.wait_for_timeout(100)
-    ok(not pg.evaluate(S)['cls'], 'a scroll the app makes (here down 260 pt) doesn’t collapse it')
-    wheel(10, 4)
-    pg.evaluate("scrollTo(0,150)"); pg.wait_for_timeout(100)
-    ok(pg.evaluate(S)['cls'], 'and one up doesn’t expand it')
-    # Back's scroll restore: open an exercise from the list further down, and Back
-    pg.evaluate("scrollTo(0,0)"); pg.wait_for_timeout(80)
-    pg.locator('#app [data-zk="ex:flex"]').scroll_into_view_if_needed(); pg.wait_for_timeout(80)
-    y0 = pg.evaluate("scrollY")
-    wheel(10, 4)
-    collapsed = pg.evaluate(S)['cls']
-    pg.click('#app [data-zk="ex:flex"]'); pg.wait_for_timeout(100)
-    ok(not pg.evaluate(S)['cls'], 'a new page starts expanded')
-    pg.click(BACK); pg.wait_for_timeout(150)
-    ok(pg.evaluate("scrollY") > 120 and not pg.evaluate(S)['cls'], f'Back puts the list back ({pg.evaluate("scrollY")} pt down, collapsed before: {collapsed}) and the bar stays expanded')
-    # a tab switch starts expanded
-    pg.evaluate("scrollTo(0,200)"); wheel(10, 4)
-    pg.click('#dock .tabpill'); pg.wait_for_timeout(60)
-    pg.click('#dock .tabbar [data-v=history]'); pg.wait_for_timeout(100)
-    ok(not pg.evaluate(S)['cls'], 'switching tabs starts expanded')
-    # height changes: a page that becomes too short expands it and stays expanded
-    pg.evaluate("go(()=>{U.tab='exercises';U.view=null})"); wheel(10, 20)
-    ok(pg.evaluate(S)['cls'], '(collapsed again)')
-    pg.evaluate("document.getElementById('app').style.cssText='height:120px;overflow:hidden;padding-bottom:0'"); pg.wait_for_timeout(200)
-    ok(not pg.evaluate(S)['cls'], 'the page becoming too short brings the bar back')
-    wheel(10, 6)
-    ok(not pg.evaluate(S)['cls'], 'and it stays expanded')
-    pg.evaluate("document.getElementById('app').style.cssText=''"); pg.wait_for_timeout(150)
-    pg.evaluate("scrollTo(0,200)"); wheel(10, 4)
-    ok(pg.evaluate(S)['cls'], 'tall again: collapsing is allowed again')
-    # never while typing, with a sheet open, or on Search
-    pg.click('#dock .tabpill'); pg.wait_for_timeout(60)
-    pg.evaluate("document.getElementById('app').insertAdjacentHTML('afterbegin','<input id=tq>');document.getElementById('tq').focus({preventScroll:true})")
-    wheel(10, 6)
-    ok(not pg.evaluate(S)['cls'], 'never while typing (the keyboard is up)')
-    pg.evaluate("document.getElementById('tq').blur()"); wheel(10, 4)
-    ok(pg.evaluate(S)['cls'], '(collapsed after the field lets go)')
-    pg.evaluate("document.getElementById('tq').focus({preventScroll:true})"); pg.wait_for_timeout(80)
-    ok(not pg.evaluate(S)['cls'], 'a field getting the keyboard brings the bar back')
-    pg.evaluate("document.getElementById('tq').remove()")
-    pg.evaluate("U.sheet='calendar';rerender()"); pg.wait_for_timeout(100)
-    ok(not pg.evaluate("tabMayMin()"), 'never with a sheet open')
-    pg.evaluate("U.sheet=null;rerender()")
-    pg.evaluate("FIND.open()"); pg.wait_for_timeout(100)
-    pg.evaluate("document.activeElement.blur()")
-    ok(not pg.evaluate("tabMayMin()") and not pg.evaluate(S)['cls'], 'never on Search')
-    pg.context.close()
-    # with motion on: transforms and opacity only, on the gentle spring, and a redraw doesn't snap it
-    pg = t.page(b, 390, 844, data=data(), init=ON)
-    pg.evaluate("go(()=>{U.tab='exercises';U.view=null})"); pg.wait_for_timeout(200)
-    pg.evaluate("scrollTo(0,300);setTabMin(true)"); pg.wait_for_timeout(50)
-    props = pg.evaluate("[...document.querySelectorAll('#dock .tabbar,#dock .tabpill,#dock .tabbar button,#dock .scirc')].flatMap(e=>e.getAnimations()).map(a=>a.transitionProperty)")
-    ok(props and set(props) <= {'transform', 'opacity'}, f'collapsing moves transforms and opacity only ({sorted(set(props))})')
-    pg.evaluate("rerender()")
-    ok(pg.evaluate("document.querySelector('#dock .tabbar').getAnimations().length") > 0, 'a redraw mid-collapse lets it carry on')
-    pg.wait_for_function("!document.querySelector('#dock .tabbar').getAnimations().length", timeout=10000)
-    ok(pg.evaluate("+getComputedStyle(document.querySelector('#dock .tabpill')).opacity") == 1, 'and it lands collapsed')
+    for _ in range(20): pg.mouse.wheel(0, 30); pg.wait_for_timeout(30)
+    pg.wait_for_timeout(150)
+    ok(pg.evaluate("scrollY") > 200 and pg.locator('#dock .pk-dock.pk-folded, #dock .pk-tab-pill').count() == 0
+       and pg.locator('#dock .pk-tabbar').is_visible(), 'scrolling down a tall page leaves the whole tab bar')
+    w = pg.evaluate("document.querySelector('#dock .pk-tabbar').getBoundingClientRect().width")
+    for _ in range(5): pg.mouse.wheel(0, -30); pg.wait_for_timeout(30)
+    ok(abs(pg.evaluate("document.querySelector('#dock .pk-tabbar').getBoundingClientRect().width") - w) < 0.5, 'and scrolling up again changes nothing')
+    t.shot(pg, 'never-folds')
     pg.context.close()
 
 
-# ---------------------------------------------------------------------------------------------------------------------
-# anything with its own text or a button that sits under the status bar (the glow and the soft edge are meant to)
 UNDER = """(sat)=>{const bad=[];for(const e of document.querySelectorAll('body *')){
   if(e.closest('.tgrad,.edge,#splash'))continue;
   const own=[...e.childNodes].some(n=>n.nodeType==3&&n.textContent.trim())||['BUTTON','INPUT','IMG','svg','CANVAS','VIDEO'].includes(e.tagName);
@@ -550,9 +457,9 @@ def status(b, t):
 
 # ---------------------------------------------------------------------------------------------------------------------
 # Q27: each tab's label (its text node), icon and box, the bar and the search circle, and the space either side
-FIT = """(()=>{const r=e=>e.getBoundingClientRect();const tb=document.querySelector('#dock .tabbar'),sc=document.querySelector('#dock .scirc');
+FIT = """(()=>{const r=e=>e.getBoundingClientRect();const tb=document.querySelector('#dock .pk-tabbar'),sc=document.querySelector('#dock .scirc');
   if(!tb||!sc)return null;const bar=r(tb),c=r(sc);
-  return {bar:[bar.left,bar.right],circ:c.left,tabs:[...tb.querySelectorAll('button')].map(b=>{const n=[...b.childNodes].find(x=>x.nodeType===3&&x.textContent.trim());
+  return {bar:[bar.left,bar.right],circ:c.left,tabs:[...tb.querySelectorAll('button')].map(b=>{const n=b.querySelector('span');
     const g=document.createRange();g.selectNodeContents(n);const t=g.getBoundingClientRect(),x=r(b),i=r(b.querySelector('svg'));
     return {name:n.textContent.trim(),l:x.left,r:x.right,tl:t.left,tr:t.right,il:i.left,size:getComputedStyle(b).fontSize,
       full:b.scrollWidth<=b.clientWidth+0.5}}),side:document.documentElement.scrollWidth>innerWidth+1}})()"""
@@ -572,16 +479,18 @@ def fits(m):
 
 def landfit(b, t):
     """Q27 · The iPhone on its side: every tab's label in full beside the search circle (at 844 × 390 "Exercises" read
-    "Exerc"). The tabs tighten (their side spacers shrink) only when the bar is short of room; labels keep their size."""
+    "Exerc"). Since Q41 the tabs are the parts kit's, equal in width, with the label beside a smaller icon."""
     ok = t.ok
     # the label size with room to spare, to compare against
     pg = t.page(b, 852, 393, data=data())
-    size = pg.evaluate("getComputedStyle(document.querySelector('#dock .tabbar button')).fontSize")
+    size = pg.evaluate("getComputedStyle(document.querySelector('#dock .pk-tab')).fontSize")
     # room to spare (the dock widened for the test): the tabs exactly as before Q27, 14 pt either side
     pg.add_style_tag(content='.dock .in{max-width:760px !important}'); pg.wait_for_timeout(150)
     m = pg.evaluate(FIT)
     pads = [round(x['il'] - x['l'], 1) for x in m['tabs']] + [round(x['r'] - x['tr'], 1) for x in m['tabs']]
-    ok(all(abs(p - 14) < 0.6 for p in pads), f'with room to spare the tabs keep their 14 pt either side ({pads})')
+    # Q41 the tabs are the parts kit's: equal, so its highlight lines up; each label centred in its tab
+    ok(all(abs(m['tabs'][i]['r'] - m['tabs'][i]['l'] - (m['tabs'][0]['r'] - m['tabs'][0]['l'])) < 0.6 for i in range(4)) and
+       all(abs((x['il'] - x['l']) - (x['r'] - x['tr'])) < 1 for x in m['tabs']), f'with room to spare the tabs are equal, each label centred ({pads})')
     pg.context.close()
     for w, h in ((844, 390), (812, 375), (667, 375)):
         for sc in ('light', 'dark'):
@@ -601,7 +510,7 @@ def landfit(b, t):
             pg.context.close()
     # a wider font than this machine's (GitHub's runner and the iPhone's differ): still no label cut off
     pg = t.page(b, 844, 390, touch=True, data=data())
-    pg.add_style_tag(content='#dock .tabbar button{letter-spacing:0.06em !important}'); pg.wait_for_timeout(150)
+    pg.add_style_tag(content='#dock .pk-tab{letter-spacing:0.06em !important}'); pg.wait_for_timeout(150)
     bad = fits(pg.evaluate(FIT))
     ok(not bad, f'with labels about 10% wider every tab still shows in full {bad or ""}')
     pg.context.close()

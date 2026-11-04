@@ -514,7 +514,7 @@ const TAKE = (() => {
       const t = TAKES.find((x) => x.id === sd.t);
       if (!t) return '';
       if (which === 'sgTakeMenu')
-        return sheetWrap(
+        return choiceSheet( // Q41 (D07) the parts kit's action sheet
           esc(nameOf(sg, t)),
           '<div class="grp"><button class="row" data-a="tkStar" data-k="' +
             t.id +
@@ -546,7 +546,7 @@ const TAKE = (() => {
       }
       const c = comments(sg, t.id)[sd.c];
       if (!c) return '';
-      return sheetWrap(
+      return choiceSheet( // Q41 (D07) the parts kit's action sheet
         'Comment at ' + fmt(c.t),
         '<p class="note">' +
           esc(c.text) +
@@ -566,7 +566,7 @@ const TAKE = (() => {
     let h = '';
     if (L.sec && secName)
       h +=
-        '<div class="seg wide tkseg" role="tablist"><span class="knob" aria-hidden="true"></span><button role="tab" data-a="tkTab" data-v="sec" class="' +
+        '<div class="seg pk-seg wide tkseg" role="tablist"><span class="pk-seg-ind" aria-hidden="true"></span><button role="tab" data-a="tkTab" data-v="sec" class="' +
         (L.on === 'sec' ? 'on' : '') +
         '" aria-selected="' +
         (L.on === 'sec') +

@@ -86,7 +86,7 @@ def levels(b, t):
        '+ Your own adds a word, kept for next time')
     # missing: the button says so and points at it
     pg.click('#dock [data-a=cta]'); pg.wait_for_timeout(200)
-    ok(pg.evaluate("U.view") == 'found' and 'Set a level or Skip for each exercise' in pg.inner_text('.toast'), 'Log foundation with exercises unset says so')
+    ok(pg.evaluate("U.view") == 'found' and 'Set a level or Skip for each exercise' in pg.inner_text('.pk-toast'), 'Log foundation with exercises unset says so')
     ok(pg.evaluate(f"document.querySelector('{ROW('f', 'lip')}').classList.contains('rneed')"), 'and flashes what’s missing')
     tap(pg, 'f', 'lip', 4); tap(pg, 'f', 'straw', 2)
     ok('tinted' in pg.get_attribute('#dock [data-a=cta]', 'class') and 'Next: Rotation' in pg.inner_text('#opHint'), 'all set: the button is ready, Next: Rotation')
@@ -194,7 +194,7 @@ def resume(b, t):
        'Rotation shows the level it had, and an exercise picked without one')
     ok(cta(pg) == 'Log 2 exercises', 'the button counts both')
     pg.click('#dock [data-a=cta]'); pg.wait_for_timeout(200)
-    ok(pg.evaluate("U.view") == 'rot' and 'Set a level for each exercise you picked' in pg.inner_text('.toast'), 'as before, each picked exercise needs a level')
+    ok(pg.evaluate("U.view") == 'rot' and 'Set a level for each exercise you picked' in pg.inner_text('.pk-toast'), 'as before, each picked exercise needs a level')
     tap(pg, 'r', 'falsetto')
     ok(pg.evaluate("X.rot.falsetto") == 1, 'tapping it gives it level 1')
     pg.click('#app .osec.folded [data-a=flowOpen]'); pg.wait_for_timeout(150)

@@ -106,8 +106,8 @@ def storage(b, t):
 
     settings(pg)
     pg.click('#app [data-a=sheet][data-v=coachDel]'); pg.wait_for_timeout(250)
-    ok(pg.locator('.sheet .cta.red[data-a=coachDel]').count() == 1, 'Remove video asks “Are you sure?” with a red button')
-    pg.click('.sheet [data-a=coachDel]'); pg.wait_for_function("!COACH.has()", timeout=5000); pg.wait_for_timeout(200)
+    ok(pg.locator('#layer .pk-alert .pk-red').count() == 1, 'Remove video asks “Are you sure?” with a red button')
+    pg.click('#layer .pk-alert .pk-red'); pg.wait_for_function("!COACH.has()", timeout=5000); pg.wait_for_timeout(200)
     ok(pg.locator('#app [data-a=coachAdd] .lbl').inner_text().strip() == 'Add coach video…', 'removed: Settings offers Add again')
     pg.reload(); t_ready(pg)
     ok(not pg.evaluate("COACH.has()"), 'and it stays gone after a reload')
@@ -126,7 +126,7 @@ def backups(b, t):
     pg.evaluate("SET.open('backup')"); pg.wait_for_timeout(200); pg.click('[data-a=exportPrep]'); pg.wait_for_function("U.sheet==='exportReady'", timeout=15000)
     txt = pg.evaluate("pendingExport.file.text()")
     ok('coach-chapters' not in txt and 'video/webm' not in txt and len(txt) < 60000, 'a backup doesn’t contain the coach video')
-    pg.click('.xbtn'); pg.wait_for_timeout(300)
+    pg.click('#layer .sheet .xbtn'); pg.wait_for_timeout(300)
     p = OUT + '/coach-backup.json'
     open(p, 'w', encoding='utf-8').write(txt)
     with pg.expect_file_chooser() as fc: pg.click('[data-a=importPick]')

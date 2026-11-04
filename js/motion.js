@@ -1,92 +1,67 @@
-/* ===== Motion: the app's shared springs (3.11) =====
+/* ===== Motion: the app's shared helpers on the parts kit's springs (3.11; the kit runs the motion since Q41, D18) =====
    Everything that moves uses these, so the whole app feels made by the same hand.
-   - Springs: gentle (rows, capsules, sheets, fades), nav (card zoom, swiping back), ripple (peeks, small pops), and
-     (Q33) press and release for glass buttons (gestures.js, PRESS).
-     Each is a damping ratio and a frequency in Hz, turned into a CSS linear() easing and a duration.
-     CSS reads them as --ease-gentle / --dur-gentle and so on; JS uses MOTION.animate().
+   - Springs come from the parts kit (Parts.motion, js/parts-kit.js): gentle (rows, capsules, sheets, fades), nav (card
+     zoom, swiping back), ripple (peeks, small pops), press and release (the glass press, gestures.js PRESS) and the
+     kit's own (snap, sheet, menu-open …). The kit publishes them on <html> as --ease-<name> / --dur-<name>, and only
+     the kit writes those, .motion-off and .motion-reduced. An app spring that differs from the kit's is a line in
+     js/parts.settings.js (springs: {…}) with its decision ID; there are none today.
    - Stagger: words 30 ms apart, rows 45 ms, chart bars 30 ms.
-   - Reduce Motion (the iOS setting, or forced on or off in Settings › Accessibility): no movement or blur, just short
-     fades or nothing. <html> gets .motion-reduced, which is what the stylesheet follows (3.21; it used a media query).
-   - Speed: 1 normally, 4 for slow motion while tuning, 0 for motion off (the tests use 0).
-     Set on this device with MOTION.setSpeed(n); kept in localStorage 'vocalMotion', never in backups.
+   - Reduce Motion (the iOS setting, or forced on or off in Settings › Accessibility): the kit's Parts.motion.setReduced.
+     This device's choice is kept in localStorage 'vocalReduce' ('on' / 'off', absent = Match iPhone) and handed to
+     the kit at start-up, because the kit doesn't save it.
+   - Speed: 1 normally, 4 for slow motion while tuning, 0 for motion off (the tests use 0): Parts.motion.setSpeed,
+     kept in localStorage 'vocalMotion', never in backups.
    - Distance blur: the dim-and-blur used around a focused part of a song (and later Song Clock's Blur ahead). */
 const MOTION = (() => {
-  const SPRINGS = {
-    gentle: { z: 0.82, f: 1.9 },
-    nav: { z: 0.86, f: 2.2 },
-    ripple: { z: 0.6, f: 2.4 },
-    // Q33 the glass press, from iOS 27 measured at 120 fps: press grows quickly with a tiny overshoot; release comes
-    // back through rest with one small dip and no second wobble
-    press: { z: 0.75, f: 4 },
-    release: { z: 0.55, f: 3.6 },
-  };
+  const PM = Parts.motion;
+  // the springs in use (the kit's, with any of the app's springs: {…} lines on top)
+  const SPRINGS = PM.springs();
   // Q40 the named easings, the same three as app.css's --ease-pop, --ease-knob and --ease-out (test_values checks
   // they match): for code that needs a fixed-length move rather than a spring
   const EASE = { pop: 'cubic-bezier(.3,1.7,.45,1)', knob: 'cubic-bezier(.3,1.35,.5,1)', out: 'cubic-bezier(.2,.8,.2,1)' };
   const STAGGER = { word: 30, row: 45, bar: 30 };
   const BLUR_MAX = 1.5; // px. Ivan chose 1.5 over 2 so far lyrics stay recognisable
-  const KEY = 'vocalMotion';
-  const mq = window.matchMedia ? matchMedia('(prefers-reduced-motion: reduce)') : null;
-  const linearOK = !!(window.CSS && CSS.supports && CSS.supports('transition-timing-function', 'linear(0, 1)'));
-
-  // a spring's position over time, sampled into a linear() easing; ms is when it has settled
-  function curve(z, f) {
-    const w = 2 * Math.PI * f,
-      wd = w * Math.sqrt(1 - z * z),
-      T = Math.log(500) / (z * w),
-      n = 40,
-      p = [];
-    for (let i = 0; i <= n; i++) {
-      const t = (T * i) / n;
-      p.push(+(1 - Math.exp(-z * w * t) * (Math.cos(wd * t) + ((z * w) / wd) * Math.sin(wd * t))).toFixed(4));
-    }
-    p[n] = 1;
-    return { ease: linearOK ? 'linear(' + p.join(', ') + ')' : 'cubic-bezier(.25,.9,.3,1)', ms: Math.round(T * 1000) };
-  }
+  const KEY = 'vocalMotion',
+    RKEY = 'vocalReduce';
+  const curve = PM.curve;
   const C = {};
   Object.keys(SPRINGS).forEach((k) => (C[k] = curve(SPRINGS[k].z, SPRINGS[k].f)));
 
-  let speed = 1;
-  try {
-    const s = localStorage.getItem(KEY);
-    if (s !== null && !isNaN(+s)) speed = Math.max(0, Math.min(8, +s));
-  } catch (e) {}
-
-  // Settings › Accessibility › Reduce motion (3.21): 'on' or 'off' in localStorage 'vocalReduce', otherwise the system's
-  const forced = () => {
+  // this device's choices, handed to the kit at start-up (the kit doesn't save them)
+  const read = (k) => {
     try {
-      return localStorage.getItem('vocalReduce');
+      return localStorage.getItem(k);
     } catch (e) {
       return null;
     }
   };
-  const reduced = () => {
-    const f = forced();
-    return f === 'on' ? true : f === 'off' ? false : !!(mq && mq.matches);
-  };
-  const on = () => speed > 0 && !reduced();
-  const dur = (name) => (C[name] ? C[name].ms : C.gentle.ms) * speed;
+  function load() {
+    const s = read(KEY);
+    PM.setSpeed(s !== null && !isNaN(+s) ? Math.max(0, Math.min(8, +s)) : 1);
+    const f = read(RKEY);
+    PM.setReduced(f === 'on' ? true : f === 'off' ? false : null);
+  }
+  load();
+
+  const speed = () => PM.speed();
+  const reduced = () => PM.reduced();
+  const on = () => PM.on();
+  const dur = (name) => (C[name] ? C[name].ms : C.gentle.ms) * speed();
   const ease = (name) => (C[name] || C.gentle).ease;
   // the delay for item i, for MOTION.animate's delay (which applies the speed itself, so this doesn't)
   const stagger = (i, kind) => i * (STAGGER[kind] || STAGGER.row);
 
-  // CSS variables, so stylesheets use the same springs: transition: opacity var(--dur-gentle) var(--ease-gentle)
+  // the kit writes the CSS variables and classes; this re-reads this device's choices and asks it to
   function publish() {
-    const r = document.documentElement.style;
-    Object.keys(C).forEach((k) => {
-      r.setProperty('--ease-' + k, C[k].ease);
-      r.setProperty('--dur-' + k, (on() ? dur(k) : 0) + 'ms');
-    });
-    document.documentElement.classList.toggle('motion-off', !on());
-    document.documentElement.classList.toggle('motion-reduced', reduced());
+    load();
   }
   function setSpeed(n) {
-    speed = Math.max(0, Math.min(8, +n || 0));
+    const v = Math.max(0, Math.min(8, +n || 0));
     try {
-      if (speed === 1) localStorage.removeItem(KEY);
-      else localStorage.setItem(KEY, String(speed));
+      if (v === 1) localStorage.removeItem(KEY);
+      else localStorage.setItem(KEY, String(v));
     } catch (e) {}
-    publish();
+    PM.setSpeed(v);
   }
 
   // el.animate on a spring. With motion off or Reduce Motion it jumps to the end (or fades, if asked)
@@ -94,14 +69,14 @@ const MOTION = (() => {
     o = o || {};
     if (!el || !el.animate) return null;
     if (!on()) {
-      if (reduced() && o.fade && speed > 0)
+      if (reduced() && o.fade && speed() > 0)
         return el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 180, easing: 'ease-out' });
       return null;
     }
     const name = o.spring || 'gentle';
     return el.animate(frames, {
-      duration: o.ms ? o.ms * speed : dur(name),
-      delay: (o.delay || 0) * speed,
+      duration: o.ms ? o.ms * speed() : dur(name),
+      delay: (o.delay || 0) * speed(),
       easing: o.ms ? o.easing || EASE.out : ease(name),
       fill: o.fill || 'none',
     });
@@ -128,7 +103,7 @@ const MOTION = (() => {
     const t0 = performance.now();
     const step = (now) => {
       if (stop) return;
-      const t = (now - t0) / 1000 / speed,
+      const t = (now - t0) / 1000 / speed(),
         e = Math.exp(-s.z * w * t),
         p = {};
       let left = 0;
@@ -153,12 +128,6 @@ const MOTION = (() => {
   const dim = (d) => (d <= 0 ? 1 : +Math.max(0.3, 0.55 - 0.05 * d).toFixed(2));
   const dimLabel = (d) => (d <= 0 ? 1 : +Math.max(0.45, 0.7 - 0.05 * d).toFixed(2)); // labels only dim, never blur
 
-  if (mq) {
-    if (mq.addEventListener) mq.addEventListener('change', publish);
-    else if (mq.addListener) mq.addListener(publish);
-  }
-  publish();
-
   return {
     SPRINGS,
     EASE,
@@ -173,7 +142,7 @@ const MOTION = (() => {
     animate,
     spring,
     setSpeed,
-    speed: () => speed,
+    speed,
     publish,
     blur,
     dim,

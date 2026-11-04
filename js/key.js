@@ -462,7 +462,7 @@ const SONGKEY = (() => {
       'Song key',
       '<p class="note">' +
         esc(sg.name) +
-        '</p><div class="keymode"><div class="seg wide" role="group" aria-label="Major or minor"><span class="knob" aria-hidden="true"></span>' +
+        '</p><div class="keymode"><div class="seg pk-seg wide" role="group" aria-label="Major or minor"><span class="pk-seg-ind" aria-hidden="true"></span>' +
         MODES.map(
           (m) =>
             '<button data-a="keyMode" data-v="' +
