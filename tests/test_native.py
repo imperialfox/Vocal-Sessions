@@ -6,7 +6,7 @@ for the doors Ivan chose (and the zoom kept everywhere else), and the tab bar's 
 Q27 Landscape tab bar fit: with the iPhone on its side, every tab's label shows in full beside the search circle.
 VS_NATIVE=layout,edge,gradient,push,collapse,status,landfit runs only those parts."""
 import os
-from harness import with_song_practice, now, iso, fix
+from harness import with_song_practice, now, iso, fix, until
 from test_fuzz import TONES
 from test_songs import LYR, ADD
 from test_window import drag
@@ -123,8 +123,9 @@ def edge(b, t):
             ok('blur' in (e['bf'] or '') and 'gradient' in (e['mask'] or '') and e['h'] >= 62 + 56, f'{sc} {tab}: a backdrop blur that fades out at its lower edge, reaching past the bar')
             ok(pg.evaluate("document.querySelectorAll('#bar .circ.glass').length") >= 0, f'{sc} {tab}: circles stay glass')
             if tab == 'exercises': t.shot(pg, f'edge-{sc}')
-            pg.evaluate("scrollTo(0,0)"); pg.wait_for_timeout(300)
-            ok(pg.evaluate("+getComputedStyle(document.querySelector('.edge')).opacity") == 0, f'{sc} {tab}: back at the top, the edge goes')
+            pg.evaluate("scrollTo(0,0)")
+            # wait for the fade to finish rather than a fixed time (failed on GitHub with 3.54 while it was still fading)
+            ok(until(pg, "+getComputedStyle(document.querySelector('.edge')).opacity===0", 3000), f'{sc} {tab}: back at the top, the edge goes')
         pg.context.close()
 
 

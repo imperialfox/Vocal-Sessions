@@ -104,7 +104,7 @@ def session(b, t):
     # back to exactly where you were
     pg.click('#fw .fwopen'); pg.wait_for_timeout(300)
     ok(pg.evaluate("U.view") == 'rot', 'tapping it goes back to Rotation')
-    ok(abs(pg.evaluate("scrollY") - 320) < 2, 'at the same scroll')
+    ok(until(pg, "Math.abs(scrollY-320)<2", 3000), 'at the same scroll')  # a wait, not a fixed time (GitHub, 3.54)
     ok(not pg.evaluate(SHOWN), 'and it’s gone on its own screen')
     pg.evaluate("scrollTo(0,140)"); pg.wait_for_timeout(250)
     pg.evaluate(LEAVE); pg.wait_for_timeout(250)
