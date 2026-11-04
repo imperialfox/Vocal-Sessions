@@ -9360,6 +9360,125 @@ body.apprec #dock {
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+/* Q38 bridge-aware patterns: the band, ringed notes, your voice, the cue, the bridge line, Last time, Listen */
+.pdw {
+  position: relative;
+}
+.pdraw .pband rect {
+  fill: var(--warn);
+  opacity: 0.12;
+}
+.pdraw .pband text {
+  font-size: var(--t-caption2);
+  font-weight: 600;
+  fill: var(--warn);
+}
+.pdraw .pring {
+  fill: none;
+  stroke: var(--warn);
+  stroke-width: 2;
+}
+.pdraw .ptrail {
+  fill: none;
+  stroke: var(--fg);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.35;
+}
+.pdraw .pvoice {
+  fill: var(--fg);
+  stroke: var(--bg2);
+  stroke-width: 2;
+}
+.pcue {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--warnbg);
+  color: var(--warnfg);
+  font-size: var(--t-footnote);
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.pcue[hidden] {
+  display: none;
+}
+.pcue s {
+  opacity: 0.55;
+  font-weight: 400;
+}
+.pbridge {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: 8px;
+  font-size: var(--t-footnote);
+  line-height: 1.35;
+  color: var(--fg2);
+  text-align: left;
+  min-height: 24px;
+}
+.pbridge b {
+  color: var(--fg);
+  font-weight: 600;
+}
+.pbridge .pbgo {
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.plast {
+  margin-top: 6px;
+  font-size: var(--t-footnote);
+  color: var(--fg2);
+}
+.plast[hidden] {
+  display: none;
+}
+.plisten {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 0.5px solid var(--sep);
+  min-height: 44px;
+  text-align: left;
+  font-size: var(--t-subhead);
+}
+.plisten .lbl small {
+  display: block;
+  font-size: var(--t-footnote);
+  color: var(--fg2);
+}
+.bflive {
+  background: var(--bg2);
+  border-radius: var(--r-medium);
+  padding: 8px;
+  margin-bottom: 10px;
+}
+.pchart .pj {
+  fill: var(--warn);
+  stroke: var(--bg2);
+  stroke-width: 1.5;
+}
+.bfhint {
+  margin: 4px 0 12px;
+}
+.bftop {
+  margin-top: 4px;
+}
+.bfgrp {
+  margin-bottom: 12px;
+}
 /* the vowel cue: what to sing this round, and the next */
 .pvowel {
   display: flex;

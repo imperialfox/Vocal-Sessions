@@ -419,7 +419,8 @@ def data(b, t):
     ok(pg.evaluate("D.prefs.pat") is None, 'data from before 3.48 has no player choices')
     pg.evaluate(EX, 'humming')
     s = pg.evaluate(ST)
-    ok(s['pattern'] == 1 and s['speed'] == 1 and s['opts'] == {'sound': 'soft', 'drone': True, 'cue': True, 'ending': 'chord', 'vowel': 'ex', 'notes': 'dots', 'stopTop': False, 'ramp': False}
+    ok(s['pattern'] == 1 and s['speed'] == 1 and s['opts'] == {'sound': 'soft', 'drone': True, 'cue': True, 'ending': 'chord', 'vowel': 'ex', 'notes': 'dots', 'stopTop': False, 'ramp': False,
+                                                                       'stopLast': False, 'bcue': True, 'listen': False}
        and pg.evaluate("D.prefs.pat") is None, 'and the player starts on its defaults without saving anything')
     pg.context.close()
 

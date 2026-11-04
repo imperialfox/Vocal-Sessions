@@ -15,7 +15,7 @@ Exits with 1 if anything fails, so GitHub shows a red cross. Screenshots go to t
 import sys, os, time, json, importlib, traceback, subprocess, tempfile, concurrent.futures as cf
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-ORDER = ['release', 'content', 'flows', 'onepage', 'application', 'pitch', 'ladder', 'saved', 'sclock', 'progress', 'edge', 'backup', 'songs', 'data', 'safety', 'changelog', 'recording', 'sections', 'recall', 'fixes', 'lyrics', 'window', 'pip', 'details', 'launch', 'zoom', 'coach', 'clock', 'track', 'waveform', 'integrity', 'frames', 'batch12', 'settings', 'screens', 'search', 'keys', 'native', 'glass', 'hig', 'values', 'marks', 'guide', 'extras', 'patterns', 'layout', 'fuzz']
+ORDER = ['release', 'content', 'flows', 'onepage', 'application', 'pitch', 'ladder', 'bridge', 'saved', 'sclock', 'progress', 'edge', 'backup', 'songs', 'data', 'safety', 'changelog', 'recording', 'sections', 'recall', 'fixes', 'lyrics', 'window', 'pip', 'details', 'launch', 'zoom', 'coach', 'clock', 'track', 'waveform', 'integrity', 'frames', 'batch12', 'settings', 'screens', 'search', 'keys', 'native', 'glass', 'hig', 'values', 'marks', 'guide', 'extras', 'patterns', 'layout', 'fuzz']
 QUICK = [n for n in ORDER if n not in ('layout', 'fuzz')]
 HERE = os.path.abspath(__file__)
 

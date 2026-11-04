@@ -168,6 +168,9 @@ const PAT = (() => {
     notes: 'dots',
     stopTop: false,
     ramp: false,
+    stopLast: false, // Q38 Stop one past last time
+    bcue: true, // Q38 the bridge cue ("Thinner · quieter")
+    listen: false, // Q38 Listen while I sing
   };
   const isInt = (x, a, b) => Number.isInteger(x) && x >= a && x <= b;
   // checks what's saved, dropping only what's malformed and keeping anything it doesn't know (a newer version's)
@@ -187,6 +190,9 @@ const PAT = (() => {
           const c = Object.assign({}, e);
           if (c.p != null && !(isInt(c.p, 1, 999) && byN(c.p))) delete c.p;
           if (c.off != null && !isInt(c.off, -36, 36)) delete c.off;
+          // Q38 Last time: the highest round top held cleanly while listening, {m, at}
+          if (c.last != null && !(c.last && isInt(c.last.m, 24, 108) && isFinite(c.last.at) && c.last.at > 0)) delete c.last;
+          else if (c.last != null) c.last = Object.assign({}, c.last);
           o.ex[k] = c;
         }
       }
@@ -213,10 +219,18 @@ const PAT = (() => {
         !isInt(v.fal, 24, 108)
       )
         delete o.voice;
-      else o.voice = Object.assign({}, v);
+      else {
+        o.voice = Object.assign({}, v);
+        // Q38 your bridge, {lo, hi}: a bad one goes, the voice stays
+        const b = o.voice.bridge;
+        if (b != null) {
+          if (!b || !isInt(b.lo, 24, 108) || !isInt(b.hi, 24, 108) || b.lo > b.hi) delete o.voice.bridge;
+          else o.voice.bridge = Object.assign({}, b);
+        }
+      }
     }
     if (o.sound != null && typeof o.sound !== 'string') delete o.sound; // an unknown sound id falls back to Soft tone
-    ['drone', 'cue', 'stopTop', 'ramp'].forEach((k) => {
+    ['drone', 'cue', 'stopTop', 'ramp', 'stopLast', 'bcue', 'listen'].forEach((k) => {
       if (o[k] != null && typeof o[k] !== 'boolean') delete o[k];
     });
     if (o.ending != null && !ENDINGS.includes(o.ending)) delete o.ending;
@@ -247,6 +261,21 @@ const PAT = (() => {
     const f = D.prefs && D.prefs.pat && D.prefs.pat.fav;
     return Array.isArray(f) ? f : FAV_SEED.slice();
   };
+  // Q38 your bridge: {lo, hi} (MIDI), saved with Your voice, or null
+  const bridge = () => {
+    const b = voice().bridge;
+    return b && isFinite(b.lo) && isFinite(b.hi) ? b : null;
+  };
+  const inZone = (n) => {
+    const b = bridge();
+    return !!b && n >= b.lo && n <= b.hi;
+  };
+  const zoneName = (b) => nameOf(b.lo) + (b.hi === b.lo ? '' : '–' + nameOf(b.hi));
+  function setBridge(lo, hi) {
+    const o = Object.assign({}, voice());
+    o.bridge = { lo: Math.min(lo, hi), hi: Math.max(lo, hi) };
+    put('voice', o);
+  }
   const exPref = (k) => (D.prefs && D.prefs.pat && D.prefs.pat.ex && D.prefs.pat.ex[k]) || {};
   function putEx(k, f, v) {
     const p = P();
@@ -264,7 +293,7 @@ const PAT = (() => {
       def: the default pattern's number, syl: what you sing ('hmmm', 'hoo hee hoh'), vowels: sung on open vowels (the
       vowel cue shows with scale patterns), fal: high notes are in falsetto (checked against the falsetto top)} */
   let cfg = null;
-  const S = { playing: false, round: 0, hold: false, rampOff: 0, played: 0, preview: null, group: null, homeUntil: 0 };
+  const S = { playing: false, round: 0, hold: false, rampOff: 0, played: 0, preview: null, group: null, homeUntil: 0, lastSnap: null };
   function use(o) {
     const was = cfg;
     cfg = o || null;
@@ -293,13 +322,25 @@ const PAT = (() => {
     });
     return out;
   }
-  // Stop at my top note: the route ends before the first round that goes above your top (low dips come early)
+  // Q38 Last time on this exercise ({m, at}): while playing, as it was when Play was pressed, so the route holds still
+  const lastNow = () => (cfg ? exPref(cfg.key).last || null : null);
+  const lastFor = () => (S.playing ? S.lastSnap : lastNow());
+  // Stop at my top note: the route ends before the first round that goes above your top (low dips come early).
+  // Q38 Stop one past last time: it ends with the first round whose top goes past Last time. Both on: the earlier wins
   function route() {
-    const f = full();
-    if (!opt('stopTop')) return f;
-    const p = pat(),
-      ix = f.findIndex((k) => k + hi(p) > top());
-    return ix < 0 ? f : f.slice(0, Math.max(1, ix));
+    const f = full(),
+      p = pat();
+    let n = f.length;
+    if (opt('stopTop')) {
+      const ix = f.findIndex((k) => k + hi(p) > top());
+      if (ix >= 0) n = Math.min(n, Math.max(1, ix));
+    }
+    const lt = opt('stopLast') && lastFor();
+    if (lt) {
+      const ix = f.findIndex((k) => k + hi(p) > lt.m);
+      if (ix >= 0) n = Math.min(n, ix + 1);
+    }
+    return n < f.length ? f.slice(0, n) : f;
   }
   const keyNow = () => {
     const r = route();
@@ -548,8 +589,10 @@ const PAT = (() => {
   }
   const triad = (k, p) => [k - 12, k, k + (isMinor(p || pat()) ? 3 : 4), k + 7];
   const homeNotes = (k) => (opt('ending') === 'note' ? [k - 12, k] : triad(k));
-  // one round: the pattern on key k from t0 at beat b. Returns its notes' times (for the drawing) and when it ends
-  function round(k, t0, p, b) {
+  // one round: the pattern on key k from t0 at beat b. Returns its notes' times (for the drawing) and when it ends.
+  // soft (Q38, the exercise page): notes in your bridge play at BRIDGE_VOL and are marked br for the cue
+  const BRIDGE_VOL = 0.55;
+  function round(k, t0, p, b, soft) {
     const ns = [];
     let t = t0;
     p.semi.forEach((s, i) => {
@@ -560,9 +603,10 @@ const PAT = (() => {
       }
       const last = i === p.semi.length - 1,
         len = last ? b * 2.2 : b * lenOf(p, i),
-        q = quick(p, i);
-      note(k + s, t, last ? len : len * (q ? 1.1 : 0.92), bus, opt('sound'), q ? 0.6 : 1);
-      ns.push({ t, d: len, i });
+        q = quick(p, i),
+        br = !!soft && inZone(k + s);
+      note(k + s, t, last ? len : len * (q ? 1.1 : 0.92), bus, opt('sound'), (q ? 0.6 : 1) * (br ? BRIDGE_VOL : 1));
+      ns.push({ t, d: len, i, br, v: (q ? 0.6 : 1) * (br ? BRIDGE_VOL : 1) });
       t += len;
     });
     if (opt('drone')) {
@@ -589,6 +633,8 @@ const PAT = (() => {
     if (!audio()) return toast('This browser can’t play sounds');
     stopPreview(true);
     NOW.start('pattern', cfg.key, halt);
+    S.lastSnap = lastNow(); // Q38: the route holds still while Last time moves
+    S.headX = null;
     S.playing = true;
     S.rampOff = 0;
     S.played = 0;
@@ -596,6 +642,7 @@ const PAT = (() => {
     newBus();
     AWAKE.set('pat', true);
     next(AC.currentTime + 0.08);
+    listenStart(); // Q38, in the tap
     paintAll();
     tick();
   }
@@ -613,9 +660,15 @@ const PAT = (() => {
       chord(triad(k, p), t0, b * 1.6, bus, 0.55); // the new key's chord, then the pattern two beats later
       st = t0 + b * 2;
     }
-    const res = round(k, st, p, b);
+    const res = round(k, st, p, b, true);
     sched = res.ns;
-    runs.push({ k, n: p.n, spd: SPEEDS[spdIx()], hold: S.hold, at: Date.now() });
+    // Q38 what the voice is checked against this round: its top note, held cleanly
+    S.rTop = k + hi(p);
+    S.rKey = k;
+    HOLD.on = false;
+    HOLD.done = false;
+    if (LS) LS.trail.length = 0;
+    runs.push({ k, n: p.n, spd: SPEEDS[spdIx()], hold: S.hold, at: Date.now(), vols: res.ns.filter(Boolean).map((x) => x.v) });
     if (runs.length > 40) runs.shift();
     lastLit = -2;
     redraw();
@@ -641,6 +694,10 @@ const PAT = (() => {
     clearTimeout(timer);
     cancelAnimationFrame(raf);
     sched = [];
+    listenStop(); // Q38
+    S.rTop = null;
+    S.rKey = null;
+    S.cue = false;
     AWAKE.set('pat', false);
     if (AC && bus) bus.gain.setTargetAtTime(0, AC.currentTime, 0.12);
     if (!quiet) NOW.ended('pattern');
@@ -722,6 +779,300 @@ const PAT = (() => {
       } catch (e) {}
   }
   document.addEventListener('visibilitychange', () => document.hidden && toneStop());
+
+  /* ===== Listening (Q38): the microphone, for Find your bridge and Listen while I sing =====
+     Through the shared audio service (AUDIO.listen, its own context, which only ever hears the microphone) and the
+     pitch listener (PITCH.live on one 2048 analyser, on the shared frame clock). The pattern's sound stays on this
+     player's own context. Nothing is recorded. While the microphone is open the page's audio session is
+     'play-and-record' (where Safari has navigator.audioSession), then back to 'playback'. */
+  const session = (t) => {
+    try {
+      if (navigator.audioSession) navigator.audioSession.type = t;
+    } catch (e) {}
+  };
+  const MIC_OPTS = { channelCount: 1, echoCancellation: false, noiseSuppression: false, autoGainControl: false };
+  // fn(points, last) as PITCH.live gives them; onFail('blocked' | 'none'). Call it in a tap. Returns stop()
+  function micOpen(fn, onFail) {
+    const me = { off: false, stop: null },
+      back = () => session(AC ? 'playback' : 'auto'),
+      fail = (why) => {
+        if (me.off) return;
+        me.off = true;
+        back();
+        if (onFail) onFail(why);
+      };
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !PITCH.has()) {
+      setTimeout(() => fail('none'));
+      return () => (me.off = true);
+    }
+    AUDIO.wake(); // in the tap: iOS only starts a context from one
+    session('play-and-record');
+    navigator.mediaDevices
+      .getUserMedia({ audio: MIC_OPTS })
+      .then((stream) => {
+        const drop = () => stream.getTracks().forEach((t) => t.stop());
+        if (me.off) return drop();
+        const mic = AUDIO.listen(stream);
+        if (!mic) {
+          drop();
+          return fail('none');
+        }
+        const off = PITCH.live(mic.analyser(2048), fn);
+        me.stop = () => {
+          off();
+          mic.close();
+          drop();
+        };
+      })
+      .catch(() => fail('blocked'));
+    return () => {
+      if (me.off) return;
+      me.off = true;
+      if (me.stop) me.stop();
+      me.stop = null;
+      back();
+    };
+  }
+
+  /* Listen while I sing: while the pattern plays, your voice as a dot and a 1 s trail on the drawing (painted by
+     tick(), nothing looked up per frame), and Last time: the round's top held cleanly (HOLD) moves it up quietly */
+  let LS = null; // {stop, trail: [{x, y, at}], last: {m, at}, n}
+  const HOLD = { on: false, t0: 0, lastT: 0, done: false };
+  const MIC_FAIL = {
+    blocked: 'Microphone access was blocked. Allow it in Settings, then try again.',
+    none: 'Listening isn’t supported in this browser',
+  };
+  function listenStart() {
+    if (LS || !S.playing || !opt('listen')) return;
+    const me = { trail: [], last: null, n: 0, stop: null };
+    LS = me;
+    me.stop = micOpen(
+      (pts, p) => heard(me, p),
+      (why) => {
+        if (LS !== me) return;
+        LS = null;
+        toast(MIC_FAIL[why] || MIC_FAIL.none);
+      }
+    );
+  }
+  function listenStop() {
+    const l = LS;
+    LS = null;
+    HOLD.on = false;
+    if (l && l.stop) l.stop();
+  }
+  // a note's height on the drawing of the round now playing (as geom() places the pattern's notes)
+  function yOfNote(m) {
+    const p = pat(),
+      l = lo(p),
+      h = hi(p),
+      s = m - (S.rKey == null ? keyNow() : S.rKey),
+      y = h === l ? H / 2 - (s - l) * 8 : 96 - ((s - l) * 80) / (h - l);
+    return Math.max(4, Math.min(H - 8, y));
+  }
+  function heard(me, p) {
+    if (LS !== me || !S.playing) return;
+    if (!p) {
+      me.last = null;
+      HOLD.on = false;
+      return;
+    }
+    me.n++;
+    me.last = { m: p.m, at: performance.now() };
+    me.trail.push({ x: S.headX == null ? 14 : S.headX, y: yOfNote(p.m), at: me.last.at });
+    while (me.trail.length && me.last.at - me.trail[0].at > 1000) me.trail.shift();
+    // Last time: 250 ms or more within 1 semitone of the round's top, no gap, no jump
+    if (S.rTop == null || !cfg) return;
+    if (Math.abs(p.m - S.rTop) <= HOLD_WITHIN) {
+      if (!HOLD.on || p.t - HOLD.lastT > 0.06) {
+        HOLD.on = true;
+        HOLD.t0 = p.t;
+      }
+      HOLD.lastT = p.t;
+      if (!HOLD.done && p.t - HOLD.t0 >= HOLD_MIN) {
+        HOLD.done = true;
+        heldTop(S.rTop);
+      }
+    } else HOLD.on = false;
+  }
+  const HOLD_MIN = 0.25,
+    HOLD_WITHIN = 1;
+  // a round's top held cleanly: Last time moves up, quietly (no message, no celebration)
+  function heldTop(m) {
+    const cur = lastNow();
+    if (cur && cur.m >= m) return;
+    putEx(cfg.key, 'last', { m, at: Date.now() });
+    paint();
+  }
+
+  /* ===== Find your bridge (Q38): the sheet VS-096 =====
+     One slow slide on "ee", drawn live with jump markers (PITCH.jumps on the line as it comes in). The first jump
+     suggests the zone: 2 semitones below its lower note to 1 above. From and To steppers, Use this bridge, Try again.
+     With no jump, you set it by feel. Doors: the exercise page's bridge line and Settings › Your voice. */
+  const FB_MAX = 20, // s: listening stops itself
+    FB_HOP = 0.01;
+  const FB = { phase: 'ready', why: '', s: null, n: 0, li: -1, pts: [], t0: 0, t: 0, jumps: [], jump: null, top: null, lo: 0, hi: 0, stop: null, me: null, el: null, drawn: 0, feel: false };
+  const defZone = () => ({ lo: voice().hi - 5, hi: voice().hi - 2 });
+  function fbStop() {
+    const st = FB.stop;
+    FB.stop = null;
+    FB.me = null;
+    if (st) st();
+  }
+  function fbReset() {
+    fbStop();
+    const b = bridge() || defZone();
+    Object.assign(FB, { phase: 'ready', why: '', s: null, n: 0, li: -1, pts: [], t: 0, jumps: [], jump: null, top: null, el: null, feel: false, lo: b.lo, hi: b.hi });
+  }
+  function fbOpen() {
+    if (S.playing) end(false);
+    toneStop();
+    stopPreview(true);
+    fbReset();
+    U.sheet = 'bridge';
+    U.sd = {};
+    rerender();
+  }
+  function fbStart() {
+    fbStop();
+    NOW.stop(); // one sound at a time: whatever plays stops, so the microphone hears only you
+    const me = {},
+      b = bridge() || defZone();
+    Object.assign(FB, { phase: 'listening', why: '', s: new Float32Array(Math.round(FB_MAX / FB_HOP) + 60).fill(NaN), n: 0, li: -1, pts: [], t0: performance.now(), t: 0, jumps: [], jump: null, top: null, el: null, drawn: 0, feel: false, lo: b.lo, hi: b.hi, me });
+    FB.stop = micOpen(
+      (pts, p) => fbHeard(me, pts, p),
+      (why) => {
+        if (FB.me !== me) return;
+        FB.stop = null;
+        FB.me = null;
+        FB.phase = 'blocked';
+        FB.why = why;
+        rerender();
+      }
+    );
+    rerender();
+  }
+  function fbHeard(me, pts, p) {
+    if (FB.me !== me || FB.phase !== 'listening') return;
+    FB.pts = pts;
+    if (p) {
+      // the line at 10 ms steps, as PITCH.jumps reads it: readings come once a frame, so a short gap holds the reading
+      // before it (never drawn in between, which would smooth a jump away)
+      const i = Math.round(p.t / FB_HOP);
+      if (i < FB.s.length) {
+        if (FB.li >= 0 && i > FB.li + 1 && i - FB.li <= 6) FB.s.fill(FB.s[FB.li], FB.li + 1, i);
+        FB.s[i] = p.m;
+        FB.li = i;
+        FB.n = Math.max(FB.n, i + 1);
+      }
+      FB.t = p.t;
+    }
+    const now = performance.now();
+    if ((now - FB.t0) / 1000 >= FB_MAX) return fbDone();
+    if (now - FB.drawn >= 100) {
+      FB.drawn = now;
+      fbFind();
+      fbDraw();
+    }
+  }
+  function fbFind() {
+    FB.jumps = FB.n ? PITCH.jumps({ s: FB.s, n: FB.n, hop: FB_HOP, firstT: 0 }) : [];
+  }
+  function fbChart() {
+    const v = voice(),
+      ms = FB.pts.map((q) => q.m),
+      lo = Math.floor(Math.min(v.lo - 2, ...ms)),
+      hi = Math.ceil(Math.max(v.fal + 2, ...ms));
+    return PITCH.svg([{ a: FB.pts, col: 'var(--accent)' }], {
+      w: 340,
+      h: 170,
+      lo,
+      hi,
+      dur: Math.max(6, Math.ceil(FB.t + 0.5)),
+      dots: FB.jumps.map((j) => ({ t: j.t, m: j.to })),
+      label: 'Your slide' + (FB.jumps.length ? ', with ' + FB.jumps.length + (FB.jumps.length === 1 ? ' jump' : ' jumps') : ''),
+    });
+  }
+  // in place, about ten times a second; the box is looked up again only once it's gone
+  function fbDraw() {
+    if (!FB.el || !FB.el.isConnected) FB.el = document.getElementById('bfLive');
+    if (FB.el) FB.el.innerHTML = fbChart();
+  }
+  function fbDone() {
+    if (FB.phase !== 'listening') return;
+    fbStop();
+    fbFind();
+    const ms = FB.pts.map((q) => q.m).sort((a, b) => a - b);
+    FB.top = ms.length ? Math.round(ms[Math.min(ms.length - 1, Math.floor(ms.length * 0.98))]) : null;
+    FB.jump = FB.jumps[0] || null;
+    if (FB.jump) {
+      const low = Math.round(Math.min(FB.jump.from, FB.jump.to));
+      FB.lo = low - 2;
+      FB.hi = low + 1;
+    }
+    FB.phase = 'done';
+    rerender();
+  }
+  const fbStepper = (k, l) =>
+    '<div class="row pvrow"><span class="lbl">' +
+    l +
+    '</span><span class="pvstep"><button data-a="bfStep" data-v="' +
+    k +
+    '" data-k="-1" aria-label="' +
+    l +
+    ' lower">−</button><b id="bf_' +
+    k +
+    '">' +
+    nameOf(FB[k]) +
+    '</b><button data-a="bfStep" data-v="' +
+    k +
+    '" data-k="1" aria-label="' +
+    l +
+    ' higher">+</button></span></div>';
+  function fbResult() {
+    const j = FB.jump,
+      heardAny = FB.pts.length > 0;
+    let t = '';
+    if (FB.phase === 'blocked') t = MIC_FAIL[FB.why] || MIC_FAIL.none;
+    else if (FB.feel) t = 'Set it by feel: where does your voice start to feel thin or tight?';
+    else if (!heardAny) t = 'Nothing was heard. Check the microphone and try again, or set it by feel.';
+    else if (j)
+      t =
+        'Your voice jumped at ' +
+        nameOf(Math.round(j.from)) +
+        (j.to > j.from ? ', up to ' : ', down to ') +
+        nameOf(Math.round(j.to)) +
+        '. Your bridge is suggested around it.';
+    else t = 'No jump this time: your voice stayed smooth. Set it by feel: where does it start to feel thin or tight?';
+    return (
+      '<p class="note bfres">' +
+      t +
+      '</p>' +
+      (FB.top != null ? '<p class="note bftop">Highest note: ' + nameOf(FB.top) + '</p>' : '') +
+      '<div class="grp setgap bfgrp">' +
+      fbStepper('lo', 'From') +
+      fbStepper('hi', 'To') +
+      '</div>' +
+      '<button class="cta" data-a="bfUse">Use this bridge</button>' +
+      '<button class="ghost" data-a="bfStart">Try again</button>'
+    );
+  }
+  function bridgeSheet() {
+    let b = '';
+    if (FB.phase === 'ready')
+      b =
+        '<p class="note">Slide slowly up on “ee”, from a low note to as high as is easy, like a siren. Take about five seconds. Where your voice jumps is your bridge.</p>' +
+        '<p class="note bfhint">Nothing plays while it listens, and nothing is recorded.</p>' +
+        '<button class="cta" data-a="bfStart">Start</button>' +
+        '<button class="ghost" data-a="bfFeel">Set it by feel</button>';
+    else if (FB.phase === 'listening')
+      b =
+        '<div class="bflive" id="bfLive">' +
+        fbChart() +
+        '</div><p class="note bfres">Listening… slide up on “ee”.</p><button class="cta" data-a="bfStop">Done</button>';
+    else b = (FB.phase === 'done' && !FB.feel && FB.pts.length ? '<div class="bflive">' + fbChart() + '</div>' : '') + fbResult();
+    return sheetWrap('Find your bridge', b);
+  }
 
   /* ===== The Patterns page's window: previewing one pattern ===== */
   let pvNotes = [],
@@ -805,7 +1156,8 @@ const PAT = (() => {
       '">' +
       '<line x1="0" y1="100" x2="' +
       W +
-      '" y2="100" class="pbase"/>';
+      '" y2="100" class="pbase"/>' +
+      (pre === 'pc' && k != null ? bandSVG(p, k) : '');
     segs.forEach((s) => (h += '<polyline points="' + s.join(' ') + '" class="pline"/>'));
     pts.forEach((q) => {
       if (!q) return;
@@ -865,12 +1217,66 @@ const PAT = (() => {
           '" text-anchor="middle" class="pout">' +
           nameOf(n) +
           '</text>';
+      // Q38 a note in your bridge is ringed
+      if (pre === 'pc' && n != null && inZone(n))
+        h +=
+          '<circle class="pring" data-i="' +
+          q.i +
+          '" cx="' +
+          q.x.toFixed(1) +
+          '" cy="' +
+          q.y.toFixed(1) +
+          '" r="' +
+          (qk ? 6.5 : 10.5) +
+          '"/>';
     });
+    // Q38 your voice while listening: a 1 s trail and a dot, painted by tick()
+    if (pre === 'pc') h += '<polyline class="ptrail" points=""/><circle class="pvoice" r="5" cx="0" cy="0" style="display:none"/>';
     return (
       h +
       '<g class="prips"></g><g class="phead" style="display:none"><line x1="0" y1="2" x2="0" y2="' +
       (H - 6) +
       '"/><circle cx="0" cy="3" r="4"/></g></svg>'
+    );
+  }
+  // Q38 the bridge band behind the drawing, for the round on key k: only where it meets the round's notes
+  function bandSVG(p, k) {
+    const b = bridge();
+    if (!b) return '';
+    const l = lo(p),
+      h = hi(p),
+      flat = h === l,
+      u = flat ? 8 : 80 / (h - l),
+      y = (s) => (flat ? H / 2 : 96) - (s - l) * u,
+      zl = b.lo - k,
+      zh = b.hi - k;
+    if (zh < l || zl > h) return '';
+    const t = Math.max(4, y(zh + 0.5)),
+      bt = Math.min(104, y(zl - 0.5)),
+      // the label goes to whichever end has no ringed note near it
+      // (or just above the band when both ends have one)
+      g = geom(p),
+      ringAt = (f) => g.some((q) => q && inZone(k + p.semi[q.i]) && f(q.x)),
+      near = ringAt((x) => x > W - 96),
+      left = near && !ringAt((x) => x < 96),
+      above = near && !left && t >= 16,
+      ty = above ? t - 4 : t + 11;
+    return (
+      '<g class="pband"><rect x="0" y="' +
+      t.toFixed(1) +
+      '" width="' +
+      W +
+      '" height="' +
+      (bt - t).toFixed(1) +
+      '" rx="4"/><text x="' +
+      (left ? 4 : W - 4) +
+      '" y="' +
+      ty.toFixed(1) +
+      '" text-anchor="' +
+      (left ? 'start' : 'end') +
+      '">Bridge ' +
+      zoneName(b) +
+      '</text></g>'
     );
   }
   // the playhead moving through the notes, the current dot growing and lit, earlier dots staying lit, a ripple on each
@@ -896,6 +1302,10 @@ const PAT = (() => {
               head: el.querySelector('.phead'),
               rips: el.querySelector('.prips'),
               dots: [...el.querySelectorAll('.pdot')],
+              voice: el.querySelector('.pvoice'),
+              trail: el.querySelector('.ptrail'),
+              cue: main ? document.getElementById('pcCue') : null,
+              vOn: false,
             }
           : null;
       }
@@ -921,8 +1331,18 @@ const PAT = (() => {
         }
         els.head.style.display = x == null ? 'none' : '';
         if (x != null) els.head.setAttribute('transform', 'translate(' + x.toFixed(1) + ',0)');
+        if (main && x != null) S.headX = x;
+        if (main && els.voice) paintVoice(els);
         if (cur !== lastLit) {
           lastLit = cur;
+          // Q38 the cue, while a note in your bridge plays
+          if (main && els.cue) {
+            const a = cur >= 0 ? ns.find((n) => n.i === cur) : null,
+              on = !!(a && a.br && opt('bcue'));
+            if (on) els.cue.innerHTML = cueHTML();
+            els.cue.hidden = !on;
+            S.cue = on;
+          }
           els.dots.forEach((d) => {
             const i = +d.dataset.i,
               on = i === cur,
@@ -947,6 +1367,57 @@ const PAT = (() => {
       raf = requestAnimationFrame(step);
     };
     raf = requestAnimationFrame(step);
+  }
+
+  // Q38 your voice on the drawing: the last second as a trail, and a dot while it's still sounding
+  function paintVoice(els) {
+    const l = LS;
+    if (!l) {
+      if (els.vOn) {
+        els.voice.style.display = 'none';
+        els.trail.setAttribute('points', '');
+        els.vOn = false;
+      }
+      return;
+    }
+    const now = performance.now();
+    let pts = '';
+    for (let i = 0; i < l.trail.length; i++) {
+      const q = l.trail[i];
+      if (now - q.at <= 1000) pts += (pts ? ' ' : '') + q.x.toFixed(1) + ',' + q.y.toFixed(1);
+    }
+    els.trail.setAttribute('points', pts);
+    const fresh = !!l.last && now - l.last.at < 200 && l.trail.length;
+    els.voice.style.display = fresh ? '' : 'none';
+    if (fresh) {
+      const q = l.trail[l.trail.length - 1];
+      els.voice.setAttribute('cx', q.x.toFixed(1));
+      els.voice.setAttribute('cy', q.y.toFixed(1));
+    }
+    els.vOn = true;
+  }
+  // Q38 the cue's words: a hum (hmmm, ng, a trill, oo) gets "Thinner · quieter"; an open vowel its narrower one
+  const NARROW = [
+    [/ay|ey|eh/, 'eh', 'ih'],
+    [/oh|oe|ow/, 'oh', 'uh'],
+    [/ah|a$/, 'ah', 'uh'],
+    [/ee|e$/, 'ee', 'ih'],
+  ];
+  const cueOf = (w) => {
+    const x = NARROW.find(([re]) => re.test(String(w || '').toLowerCase()));
+    return x ? { from: x[1], to: x[2] } : null;
+  };
+  function cueWord() {
+    const v = vowelList();
+    if (v.length) return v[S.round % v.length];
+    const w = String((cfg && cfg.syl) || '')
+      .split(/\s+/)
+      .filter(Boolean);
+    return w.length === 1 ? w[0] : '';
+  }
+  function cueHTML() {
+    const c = cueOf(cueWord());
+    return c ? '<s>' + c.from + '</s> ' + c.to + ' · quieter' : 'Thinner · quieter';
   }
 
   /* ===== What the card says ===== */
@@ -1060,6 +1531,45 @@ const PAT = (() => {
         '</span>',
     };
   }
+  // Q38 the bridge line: where your bridge is and which rounds cross it, a door to Find your bridge
+  function bridgeHTML() {
+    const b = bridge();
+    if (!b) return '<span><b>Find your bridge</b></span><span class="pbgo">Find it</span>';
+    const p = pat(),
+      xs = [];
+    route().forEach((k, i) => {
+      if (p.semi.some((v) => v !== null && inZone(k + v))) xs.push(i + 1);
+    });
+    const where = !xs.length
+      ? 'no round crosses it.'
+      : xs.length === 1
+        ? 'round ' + xs[0] + ' crosses it. Those notes play softer.'
+        : 'rounds ' + xs[0] + '–' + xs[xs.length - 1] + ' cross it. Those notes play softer.';
+    return '<span>Bridge ' + zoneName(b) + ' · ' + where + '</span><span class="pbgo">Change</span>';
+  }
+  // Q38 Last time on this exercise: a fact, never a score
+  function lastHTML() {
+    const lt = lastNow();
+    if (lt)
+      return (
+        'Last time: ' +
+        nameOf(lt.m) +
+        ' · ' +
+        relDay(new Date(lt.at)) +
+        (opt('stopLast') ? ' · stops one round past it' : '')
+      );
+    return opt('stopLast') ? 'Last time: not yet. Listen while you sing to set it.' : '';
+  }
+  function listenHTML() {
+    const on = !!opt('listen');
+    return (
+      '<span class="lbl">Listen while I sing' +
+      (on ? '<small>Headphones in, so it only hears you</small>' : '') +
+      '</span><span class="tgl" aria-checked="' +
+      on +
+      '" aria-hidden="true"></span>'
+    );
+  }
   // update the card and dock in place (no redraw of the page while playing)
   function paint() {
     const st = document.getElementById('pcStat');
@@ -1075,6 +1585,19 @@ const PAT = (() => {
       const r = rangeHTML();
       rg.innerHTML = r.h;
       rg.classList.toggle('bad', r.bad);
+    }
+    const br = document.getElementById('pcBridge');
+    if (br) br.innerHTML = bridgeHTML();
+    const ls = document.getElementById('pcLast');
+    if (ls) {
+      const h = lastHTML();
+      ls.textContent = h;
+      ls.hidden = !h;
+    }
+    const li = document.getElementById('pcListen');
+    if (li) {
+      li.innerHTML = listenHTML();
+      li.setAttribute('aria-checked', !!opt('listen'));
     }
   }
   function paintAll() {
@@ -1101,7 +1624,9 @@ const PAT = (() => {
       '>' +
       v +
       '</div>' +
+      '<div class="pdw">' +
       svg(pat(), 'pc', keyNow(), cfg.col, 'Pitch shape of ' + pat().name.replace(/&amp;/g, '&')) +
+      '<div class="pcue" id="pcCue" role="status" hidden></div></div>' +
       '<div class="pstat" id="pcStat" aria-live="polite">' +
       statusHTML() +
       '</div>' +
@@ -1109,6 +1634,21 @@ const PAT = (() => {
       (r.bad ? ' bad' : '') +
       '" id="pcRange" data-a="patVoice" data-zk="set:voice" data-push aria-label="Your voice range. Open Your voice">' +
       r.h +
+      '</button>' +
+      '<button class="pbridge" id="pcBridge" data-a="patBridge" aria-label="' +
+      (bridge() ? 'Your bridge, ' + zoneName(bridge()) + '. Change it' : 'Find your bridge') +
+      '">' +
+      bridgeHTML() +
+      '</button>' +
+      '<p class="plast" id="pcLast"' +
+      (lastHTML() ? '' : ' hidden') +
+      '>' +
+      esc(lastHTML()) +
+      '</p>' +
+      '<button class="plisten" id="pcListen" data-a="patListen" role="switch" aria-checked="' +
+      !!opt('listen') +
+      '">' +
+      listenHTML() +
       '</button>' +
       '</div>'
     );
@@ -1666,8 +2206,15 @@ const PAT = (() => {
       '</div><p class="foot">Changing a note makes your voice type Custom. Falsetto voice, Squeaky hinge, Upper to lower voice and the Flips patterns are checked against your falsetto top; everything else against your highest comfortable note.</p>' +
       '<div class="grp setgap">' +
       sw('patStopTop', !!opt('stopTop'), 'Stop at my top note') +
+      sw('patStopLast', !!opt('stopLast'), 'Stop one past last time') +
       '</div>' +
-      '<p class="foot">Off: the exercise only warns you. On: it ends before any round goes above your top.</p>'
+      '<p class="foot">Stop at my top note: off, the exercise only warns you; on, it ends before any round goes above your top. Stop one past last time: it ends one round past the highest top you last held cleanly while listening. When both are on, the earlier stop wins.</p>' +
+      '<div class="grp setgap"><button class="row" data-a="patBridge"><span class="lbl">Your bridge</span><span class="mut">' +
+      (v.bridge ? zoneName(v.bridge) : 'Not set') +
+      '</span>' +
+      chev +
+      '</button></div>' +
+      '<p class="foot">Where your voice flips. On the exercise pages it’s shaded on the drawing, and its notes play softer.</p>'
     );
   }
   function playerPage() {
@@ -1694,6 +2241,10 @@ const PAT = (() => {
         'Chord before each round',
         'The new key’s chord, then the pattern, like a teacher setting up each round'
       ) +
+      '</div>' +
+      '<div class="hdr">Your bridge</div><div class="grp">' +
+      sw('patBCue', !!opt('bcue'), 'Bridge cue', 'Thinner · quieter, while a note in your bridge plays') +
+      sw('patListen', !!opt('listen'), 'Listen while I sing', 'Your voice as a dot on the drawing. Headphones in, so it only hears you') +
       '</div>' +
       '<div class="hdr">Ending</div><div class="psetbox">' +
       segH(
@@ -1858,12 +2409,15 @@ const PAT = (() => {
       if (U.view === 'pat' && S.playing) end(false);
     }
     if (U.view === 'pat') placeKnobs();
+    // Q38 Find your bridge lets go of the microphone once its sheet goes
+    if (U.sheet !== 'bridge' && (FB.stop || FB.phase !== 'ready')) fbReset();
   }
   document.addEventListener('visibilitychange', () => {
     if (!document.hidden) return;
     if (keep) keep.pause(); // the silent-switch loop never plays in the background
     if (S.playing) end(false);
     if (S.preview != null) stopPreview();
+    if (FB.phase === 'listening') fbDone();
   });
 
   /* ===== Actions ===== */
@@ -1935,7 +2489,7 @@ const PAT = (() => {
         (k) => {
           const v = VOICES[k];
           if (!v) return;
-          put('voice', { type: k, lo: v[0], hi: v[1], fal: v[2] });
+          put('voice', Object.assign({}, voice(), { type: k, lo: v[0], hi: v[1], fal: v[2] })); // the bridge stays
           rerender();
         }
       ),
@@ -1950,6 +2504,50 @@ const PAT = (() => {
       put('stopTop', !opt('stopTop'));
       S.round = 0;
       rerender();
+    },
+    // Q38
+    patStopLast: () => {
+      put('stopLast', !opt('stopLast'));
+      S.round = 0;
+      rerender();
+    },
+    patBCue: () => {
+      put('bcue', !opt('bcue'));
+      rerender();
+    },
+    patListen: () => {
+      put('listen', !opt('listen'));
+      if (!opt('listen')) listenStop();
+      else listenStart(); // only while playing; in this tap
+      if (U.view === 'set') rerender();
+      else paint(); // nothing redrawn while playing
+    },
+    patBridge: () => fbOpen(),
+    bfStart: () => fbStart(),
+    bfStop: () => fbDone(),
+    bfFeel: () => {
+      fbStop();
+      FB.phase = 'done';
+      FB.feel = true;
+      rerender();
+    },
+    bfStep: (el, v, k) => {
+      if (v !== 'lo' && v !== 'hi') return;
+      FB[v] = Math.max(24, Math.min(108, FB[v] + +k));
+      if (FB.lo > FB.hi) {
+        if (v === 'lo') FB.hi = FB.lo;
+        else FB.lo = FB.hi;
+      }
+      ['lo', 'hi'].forEach((x) => {
+        const b = document.getElementById('bf_' + x);
+        if (b) b.textContent = nameOf(FB[x]);
+      });
+    },
+    bfUse: () => {
+      setBridge(FB.lo, FB.hi);
+      fbReset();
+      toast('Bridge set · ' + zoneName(bridge()));
+      closeSheet();
     },
     patSoundPick: (el, v) => {
       put('sound', v);
@@ -2053,6 +2651,21 @@ const PAT = (() => {
     tone,
     toneStop,
     toneState: () => (toneNow ? { m: toneNow.m, repeat: toneNow.repeat, strikes: toneNow.strikes || 0 } : null),
+    // Q38
+    bridge,
+    setBridge,
+    bridgeSheet,
+    cueOf,
+    BRIDGE_VOL,
+    fbState: () => ({
+      phase: FB.phase,
+      listening: !!FB.stop,
+      lo: FB.lo,
+      hi: FB.hi,
+      jumps: FB.jumps.map((j) => ({ t: j.t, from: j.from, to: j.to })),
+      top: FB.top,
+      points: FB.pts.length,
+    }),
     // for the tests
     state: () => ({
       playing: S.playing,
@@ -2072,6 +2685,11 @@ const PAT = (() => {
       hud: hudOn,
       runs: runs.slice(),
       key: cfg ? cfg.key : null,
+      bridge: bridge(),
+      last: lastNow(),
+      listening: !!LS,
+      heard: LS ? LS.n : 0,
+      cue: !!S.cue,
     }),
     triad,
     homeNotes,

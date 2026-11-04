@@ -253,6 +253,8 @@ const SCREENS = {
         { name: 'page-picker', sel: '[data-a="exTab"]' },
         { name: 'level-button', sel: '[data-a="exLevel"]' },
         { name: 'more-button', sel: '[data-a="exMore"]' },
+        { name: 'bridge-line', sel: '#pcBridge' },
+        { name: 'listen-switch', sel: '#pcListen' },
       ],
     },
     {
@@ -373,6 +375,8 @@ const SCREENS = {
       parts: [
         { name: 'voice-type-row', sel: '[data-a="patVoiceType"]' },
         { name: 'stop-at-top-switch', sel: '[data-a="patStopTop"]' },
+        { name: 'stop-past-last-switch', sel: '[data-a="patStopLast"]' },
+        { name: 'bridge-row', sel: '[data-a="patBridge"]' },
       ],
     },
     {
@@ -388,6 +392,8 @@ const SCREENS = {
         { name: 'sound-row', sel: '[data-a="patSoundPick"]' },
         { name: 'drone-switch', sel: '[data-a="patDrone"]' },
         { name: 'chord-switch', sel: '[data-a="patCue"]' },
+        { name: 'bridge-cue-switch', sel: '[data-a="patBCue"]' },
+        { name: 'listen-switch', sel: '[data-a="patListen"]' },
       ],
     },
     {
@@ -1229,6 +1235,24 @@ const SCREENS = {
       parts: [
         { name: 'close-button', sel: '[data-a="gdPeekClose"]' },
         { name: 'learn-more-button', sel: '[data-a="gdPeekMore"]' },
+      ],
+    },
+    {
+      id: 'VS-096',
+      name: 'Find your bridge',
+      area: 'Exercises',
+      kind: 'Sheet',
+      key: 'sheet:bridge',
+      aliases: ['Sheet:bridge'],
+      docs: 'MAINTAINING.md#bridge-aware-patterns-353-q38',
+      status: 'Live',
+      parts: [
+        { name: 'start-button', sel: '[data-a="bfStart"]' },
+        { name: 'by-feel-button', sel: '[data-a="bfFeel"]' },
+        { name: 'done-button', sel: '[data-a="bfStop"]' },
+        { name: 'from-stepper', sel: '[data-a="bfStep"][data-v="lo"]' },
+        { name: 'to-stepper', sel: '[data-a="bfStep"][data-v="hi"]' },
+        { name: 'use-button', sel: '[data-a="bfUse"]' },
       ],
     },
   ],

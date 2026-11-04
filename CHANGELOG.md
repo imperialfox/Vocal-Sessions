@@ -9,6 +9,32 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.53 · 4 Nov 2026
+*Bridge-aware patterns: find your bridge and get guided through it (Q38)*
+<!-- area: practice -->
+
+The pattern player now knows where your voice flips, and guides you through it, thinner and quieter, instead of letting you push.
+
+**Find your bridge**
+- A new sheet listens to one slow slide on "ee", draws it as you sing and marks where your voice jumps.
+- It suggests your bridge from the first jump: two notes below to one above. Change it with From and To, then **Use this bridge**. **Try again** listens again.
+- No jump, or you'd rather not sing it? Set it by feel. It also shows the highest note you reached.
+- Open it from the exercise page's bridge line or from **Settings › Your voice › Your bridge**. Your bridge is saved with Your voice and goes in your backups.
+
+**On the exercise page**
+- The bridge is shaded on the drawing, and its notes are ringed in orange.
+- A line under the drawing says which rounds cross it ("Bridge E4–G4 · rounds 11–14 cross it"), with Change.
+- Those reference notes play softer, at about half volume.
+- While one plays, a cue says **Thinner · quieter** on a hum, or the narrower vowel and quieter on a vowel (ah → uh, ee → ih). Switch it off in Settings › Pattern player › Bridge cue.
+
+**Listen while I sing**
+- Off to start. With it on, the microphone shows your voice as a dot and a short trail on the drawing while the pattern plays. Put headphones in, so it only hears you. Nothing is recorded.
+- When you hold a round's top note cleanly, **Last time** moves up quietly ("Last time: F4 · today"). Without listening it never changes.
+- **Stop one past last time** (Settings › Your voice, next to Stop at my top note) ends the exercise one round past it. With both on, the earlier stop wins.
+- No scores and no right or wrong anywhere.
+
+Screens: VS-014, VS-023, VS-024, VS-096
+
 ## 3.52 · 4 Nov 2026
 *The song ladder: sing a section four ways (Q37)*
 <!-- area: practice -->

@@ -4,9 +4,9 @@
 
 It's a web app styled like a native iOS app: a single HTML file with no install, no backend and no account, designed to live on your iPhone Home Screen. It runs on its own, with no other apps needed.
 
-![Version 3.52](https://img.shields.io/badge/version-3.52-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
+![Version 3.53](https://img.shields.io/badge/version-3.53-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
 
-**Current version: 3.52 · 4 Nov 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
+**Current version: 3.53 · 4 Nov 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
 
 ---
 
@@ -135,6 +135,8 @@ And **Songs**, for learning a song: paste the lyrics, and they're split into lab
   - **Hear it:** the app plays the pattern itself, with piano-like notes it makes (no recordings), starting on the coach's notes for the level and moving up a key each round. A chord sets up each key, a low note holds underneath, and it ends back on the starting key. The dock has the pattern, its speed (a slider from 0.5× to 2×, or speeding up each round), the sound (Soft tone, Piano-ish, Electric piano), the starting note, Stay on this key and Play. It plays with the silent switch on and keeps the screen awake. Vocal slides has a picture instead.
   - **Patterns:** tap the pattern to choose from 60: Warm-ups, Agility, Riffs and runs (short riffs, turns and slingshots, long runs, minor, blues and gospel) and Flips (full voice into falsetto), plus your ★ Favourites. Tap one to hear it; press and hold to see what it trains. Each exercise remembers its pattern, starting note and speeds.
   - **Your voice:** the card warns when a pattern goes above or below your range (set in **Settings › Your voice**), and can stop at your top note.
+  - **Your bridge** (3.53), where your voice flips: **Find your bridge** listens to one slow slide on "ee", draws it as you go and marks where your voice jumps, then suggests a zone around it (two notes below to one above) that you can change before **Use this bridge**. No jump? Set it by feel. Once it's set, the drawing shades the bridge and rings its notes, the line under it says which rounds cross it, those reference notes play softer, and while one plays a cue says **Thinner · quieter** (on a hum) or the narrower vowel (ah → uh, ee → ih) and quieter. The cue can be switched off in Settings › Pattern player.
+  - **Listen while I sing** (off to start): while the pattern plays, the microphone shows your voice as a dot with a short trail on the drawing. Headphones in, so it only hears you. Nothing is recorded. When you hold a round's top note cleanly, **Last time** moves up quietly ("Last time: F4 · today"), and **Stop one past last time** (Settings › Your voice) ends the exercise one round past it. No scores, no right or wrong.
   - **History:** a chart of your level over time, plus every session it was in, with your notes
 - Add your own exercises (with an optional description). Swipe left to delete them.
 
@@ -150,8 +152,8 @@ And **Songs**, for learning a song: paste the lyrics, and they're split into lab
 - **Storage** (a page with a short explanation at the top): one bar showing what's using space (recordings, song tracks, the coach video, and sessions and songs), then recordings (how many takes and how much space), **Review old takes** (unstarred takes with no comments, oldest first, to clear by hand: nothing is ever removed for you), and **Storage protection**, which shows whether iOS has agreed not to clear the app's data when space runs low
 - **Recall › Peek length:** how long a tapped line shows in Recall (1, 2, 3 or 5 seconds)
 - **Coach video:** add, replace or remove it (see Coach video below)
-- **Your voice:** your voice type (Bass to Soprano, tenor to start) and its lowest and highest comfortable notes and falsetto top, which the exercise pages check patterns against, and **Stop at my top note**. In backups.
-- **Pattern player:** the sound, the held note underneath, the chord before each round, the ending (home chord, home note or off), the vowel cue and dots or music notes on the drawing. In backups.
+- **Your voice:** your voice type (Bass to Soprano, tenor to start) and its lowest and highest comfortable notes and falsetto top, which the exercise pages check patterns against, **Stop at my top note** and **Stop one past last time** (when both are on, the earlier stop wins), and **Your bridge**, which opens Find your bridge. In backups.
+- **Pattern player:** the sound, the held note underneath, the chord before each round, the ending (home chord, home note or off), the vowel cue, dots or music notes on the drawing, the **Bridge cue** and **Listen while I sing**. In backups.
 - **Appearance:** **Gradient background**, the soft moving wash behind Today's header, on unless you switch it off, and (3.50) **Show screen IDs**, a small label in the corner with each screen's permanent ID (such as VS-001 for Today), for pointing at a screen in a note. Both are for this device only, not in backups.
 - **Accessibility:** **Reduce motion** (Match iPhone, On or Off) swaps zooms and slides for short fades; **Reduce transparency** makes the glass more solid, so what's on it is easier to read; **Slow motion** plays every animation four times slower, for checking how it feels. All are for this device only and aren't in backups.
 - **Changelog:** every version on a timeline, with a growth chart of improvements by area. It's built from [CHANGELOG.md](CHANGELOG.md).

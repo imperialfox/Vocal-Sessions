@@ -419,6 +419,7 @@ function renderSheet() {
   else if (s === 'ckGrid') h = CLOCK.gridSheet();
   else if (s === 'recOver') h = recOverSheet(); // Q16: recording while the track plays
   else if (s === 'away') h = SCLOCK.awaySheet(); // Q22: "You were away N min"
+  else if (s === 'bridge') h = PAT.bridgeSheet(); // Q38 Find your bridge
   else if (s && /^trk/.test(s)) h = TRACK.sheet(s);
   else if (s === 'how' && X) {
     h =

@@ -370,7 +370,7 @@ const PITCH = (() => {
     }
     return d;
   }
-  // lines overlaid on note rows: [{a, col, on}], o: {w, h, lo, hi, dur, marker: {t, label}, label}
+  // lines overlaid on note rows: [{a, col, on}], o: {w, h, lo, hi, dur, marker: {t, label}, dots: [{t, m}], label}
   function svg(list, o) {
     o = o || {};
     const W = o.w || 340,
@@ -409,6 +409,10 @@ const PITCH = (() => {
         '" stroke-linecap="round" stroke-linejoin="round"' +
         (l.key ? ' data-ln="' + l.key + '"' : '') +
         '/>';
+    });
+    // Q38 points to mark on the lines (Find your bridge's jumps): [{t, m}]
+    (o.dots || []).forEach((d) => {
+      g += '<circle class="pj" cx="' + x(d.t).toFixed(1) + '" cy="' + y(d.m).toFixed(1) + '" r="4.5"/>';
     });
     if (o.marker) {
       const xx = x(o.marker.t).toFixed(1);
