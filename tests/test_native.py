@@ -4,7 +4,7 @@ when scrolling, Today's gradient and its switch in Settings › Appearance, the 
 for the doors Ivan chose (and the zoom kept everywhere else), and the tab bar's collapse into a pill at the left.
 3.33 Status bar glow (Q23): the page runs behind the status bar, and nothing sits under the clock.
 Q27 Landscape tab bar fit: with the iPhone on its side, every tab's label shows in full beside the search circle.
-VS_NATIVE=layout,edge,gradient,push,collapse,status,landfit runs only those parts."""
+VS_NATIVE=layout,edge,gradient,push,collapse,status,landfit,rests runs only those parts."""
 import os
 from harness import with_song_practice, now, iso, fix, until
 from test_fuzz import TONES
@@ -515,6 +515,75 @@ def landfit(b, t):
     ok(not bad, f'with labels about 10% wider every tab still shows in full {bad or ""}')
     pg.context.close()
 
+# ---------------------------------------------------------------------------------------------------------------------
+def rests(b, t):
+    """Q44 resting: Today's background shapes hold still (where they are) under a sheet, during a zoom, while the page
+    scrolls and when they're out of view, and drift again afterwards; VS-014's glow pulses three times, carries on across
+    redraws instead of starting again, and stops where it is when the pattern player starts."""
+    ok = t.ok
+    STATE = "[...document.querySelectorAll('#app .tgrad i')].map(i=>i.getAnimations()[0]&&i.getAnimations()[0].playState).join()"
+    RUN, PAUSED = 'running,running,running', 'paused,paused,paused'
+    # (a short screen, so Today scrolls far enough for the shapes to leave it)
+    pg = t.page(b, 390, 600, 'light', touch=True, data=data(), init="try{localStorage.setItem('vocalMotion','1')}catch(e){}")
+    ok(until(pg, f"{STATE}==='{RUN}'"), 'Today at rest: the shapes drift')
+    # a sheet (the calendar)
+    pg.click('.titlerow [data-a=openCal]')
+    ok(until(pg, "document.body.classList.contains('sheet-open')") and pg.evaluate(STATE) == PAUSED, 'under a sheet they hold still')
+    pg.keyboard.press('Escape')
+    ok(until(pg, "!document.body.classList.contains('sheet-open')") and until(pg, f"{STATE}==='{RUN}'"), 'and drift again once it closes')
+    # a zoom from Today (slow, so it's still on screen when looked at)
+    pg.evaluate("MOTION.setSpeed(4)")
+    pg.click('.dash [data-zk^="ex:"]')
+    ok(pg.locator('.zm').count() == 1 and pg.evaluate("[...document.querySelectorAll('.tgrad i')].every(i=>getComputedStyle(i).animationPlayState==='paused')"),
+       'while a zoom is on screen they hold still (the copies too)')
+    ok(until(pg, "!document.querySelector('.zm')", 15000), 'the zoom ends')
+    pg.click('#barL [aria-label^="Back"]')
+    until(pg, "!document.querySelector('.zm')", 15000)
+    pg.evaluate("scrollTo(0,0)")  # (Back puts the list where it was, which on this short screen hides them)
+    ok(until(pg, f"{STATE}==='{RUN}'"), 'back on Today, they drift again')
+    pg.evaluate("MOTION.setSpeed(1)")
+    # scrolling: held while it moves, drifting again once it stops; out of view, held until it's back
+    # (read from inside the scroll itself: a jump scroll has ended by the time a test could look)
+    DURING = "y=>new Promise(r=>{addEventListener('scroll',()=>r(" + STATE + "),{once:true});scrollTo(0,y)})"
+    ok(pg.evaluate(DURING, 40) == PAUSED, 'while the page scrolls they hold still')
+    ok(until(pg, f"{STATE}==='{RUN}'", 3000), 'and drift again once it stops, still in view')
+    pg.evaluate("scrollTo(0,document.documentElement.scrollHeight)")
+    away = until(pg, "document.body.classList.contains('tg-away')&&!document.body.classList.contains('scrolling')", 3000)
+    ok(away and pg.evaluate(STATE) == PAUSED, f'scrolled out of view, they stay still (scrolled {pg.evaluate("scrollY")} of {pg.evaluate("document.documentElement.scrollHeight")})')
+    pg.evaluate("scrollTo(0,0)")
+    ok(until(pg, f"!document.body.classList.contains('tg-away')&&{STATE}==='{RUN}'", 3000), 'back in view, they drift again')
+    pg.context.close()
+
+    # VS-014's glow
+    GLOW = "(()=>{const a=document.querySelector('#app .exglow').getAnimations()[0];return a?{n:a.effect.getTiming().iterations,t:a.currentTime-a.effect.getTiming().delay,s:a.playState}:null})()"
+    pg = t.page(b, 390, 844, 'light', touch=True, data=data(), init="try{localStorage.setItem('vocalMotion','1')}catch(e){}")
+    pg.evaluate("go(()=>{U.tab='exercises';U.view=null})")
+    pg.locator('#app [data-push][data-zk^="ex:"]').first.click()
+    ok(until(pg, "!document.querySelector('.zm')&&!!document.querySelector('#app .exglow')", 10000), 'an exercise page with its glow')
+    g = pg.evaluate(GLOW)
+    ok(g and g['n'] == 3 and g['s'] == 'running', f'the glow pulses three times, not forever ({g})')
+    pg.wait_for_timeout(1200)
+    pg.evaluate("rerender()")
+    g2 = pg.evaluate(GLOW)
+    ok(g2 and g2['t'] >= 1100, f'a redraw doesn\'t start it again: it carries on ({g2})')
+    d = pg.evaluate("document.querySelector('#app .exglow').getAnimations()[0].effect.getComputedTiming().activeDuration")
+    ok(abs(d - 3 * 2800) < 1, f'and ends after 8.4 s ({d})')
+    pg.evaluate("exGlowStop()") if not pg.locator('#pPlay').count() else pg.click('#pPlay')
+    ok(until(pg, "getComputedStyle(document.querySelector('#app .exglow')).animationPlayState==='paused'", 3000), 'the pattern player starting stops it where it is')
+    at = pg.evaluate("parseFloat(getComputedStyle(document.querySelector('#app .exglow')).opacity)")
+    pg.evaluate("rerender()")
+    ok(pg.evaluate("getComputedStyle(document.querySelector('#app .exglow')).animationPlayState") == 'paused' and
+       abs(pg.evaluate("parseFloat(getComputedStyle(document.querySelector('#app .exglow')).opacity)") - at) < 0.02, 'and it stays stopped, in the same place, across a redraw')
+    if pg.locator('#pPlay').count(): pg.click('#pPlay')
+    # leaving and coming back pulses again
+    pg.click('#barL [aria-label^="Back"]')
+    until(pg, "!document.querySelector('.zm')", 10000)
+    pg.locator('#app [data-push][data-zk^="ex:"]').first.click()
+    until(pg, "!document.querySelector('.zm')&&!!document.querySelector('#app .exglow')", 10000)
+    g3 = pg.evaluate(GLOW)
+    ok(g3 and g3['s'] == 'running' and g3['t'] < 2000, f'opening the page again pulses again ({g3})')
+    pg.context.close()
+
 
 def run(b, t):
     if wanted('layout'): layout(b, t)
@@ -524,3 +593,4 @@ def run(b, t):
     if wanted('collapse'): collapse(b, t)
     if wanted('status'): status(b, t)
     if wanted('landfit'): landfit(b, t)
+    if wanted('rests'): rests(b, t)

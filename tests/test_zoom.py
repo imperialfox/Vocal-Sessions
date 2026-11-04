@@ -500,7 +500,99 @@ def sizes(b, t):
         pg.context.close()
 
 
+def handoff(b, t):
+    """Q44 the hand-off: the still copy a zoom or push moves is drawn exactly where the real page is, so nothing jumps
+    when the copy goes. With an iPhone's 59 pt top area (the top bar is pulled up 6 pt there, --barup) and with none,
+    for a push, a zoom and a Back: the copy's title on the first and last frames is within 0.5 pt of the real one."""
+    ok = t.ok
+    SAT = ("document.documentElement.style.setProperty('--sat','%dpx');"
+           "document.documentElement.style.setProperty('--sab','34px');rerender()")
+    TOP = "s=>{const e=document.querySelector(s);return e?e.getBoundingClientRect().top:null}"
+    END = "Math.max(...window._an.map(a=>a.effect.getComputedTiming().endTime))"
+    near = lambda a, b: a is not None and b is not None and abs(a - b) <= 0.5
+    CASES = [
+        ('a push (Exercises row into VS-014)', "go(()=>{U.tab='exercises';U.view=null})", '#app [data-push][data-zk^="ex:"]', '.zm-page'),
+        ('a zoom (Today\'s suggestion into VS-014)', TODAY, SUG, '.zm-win'),
+        ('a zoom (Show all sessions)', "go(()=>{U.tab='history';U.view=null})", '[data-zk="all:sessions"]', '.zm-win'),
+    ]
+    for sat in (59, 0):
+        pg = page(b, t)
+        quiet(pg)
+        pg.evaluate(SAT % sat)
+        for name, to, card, new in CASES:
+            tag = f'{sat} pt top area, {name}'
+            pg.evaluate(to)
+            quiet(pg)
+            was = pg.evaluate(TOP, '#app h1')
+            pg.locator(card).first.click()
+            pg.evaluate(FREEZE, '')
+            end = pg.evaluate(END)
+            pg.evaluate(AT, 0)
+            ok(near(pg.evaluate(TOP, '.zm .zm-under h1'), was), f'{tag}: first frame, the copy of the page you left is where it was')
+            pg.evaluate(AT, end - 1)
+            last = pg.evaluate(TOP, '.zm ' + new + ' h1')
+            pg.evaluate(PLAY)
+            quiet(pg)
+            now = pg.evaluate(TOP, '#app h1')
+            ok(near(last, now), f'{tag}: last frame, the copy\'s title is where the real page\'s is ({last} and {now})')
+            # Back: the page you leave starts where it was, and the page underneath lands where the real one is
+            pg.click(BACK)
+            pg.evaluate(FREEZE, '')
+            end = pg.evaluate(END)
+            pg.evaluate(AT, 0)
+            first = pg.evaluate(TOP, '.zm ' + new + ' h1')
+            ok(near(first, now), f'{tag}, Back: first frame, the copy is where the page was ({first} and {now})')
+            pg.evaluate(AT, end - 1)
+            under = pg.evaluate(TOP, '.zm .zm-under h1') if new == '.zm-page' else None
+            pg.evaluate(PLAY)
+            quiet(pg)
+            back = pg.evaluate(TOP, '#app h1')
+            if new == '.zm-page':
+                ok(near(under, back), f'{tag}, Back: last frame, the page underneath is where the real one is ({under} and {back})')
+            ok(near(back, was), f'{tag}, Back: the list\'s title is back where it was')
+        # every page's title sits level, the exercise page's too (its row had a 4 pt top margin before Q44)
+        tops = []
+        for to in ("go(()=>{U.tab='exercises';U.view=null})", TODAY, "go(()=>{U.tab='history';U.view=null})"):
+            pg.evaluate(to)
+            quiet(pg)
+            tops.append(pg.evaluate(TOP, '#app h1'))
+        pg.evaluate("go(()=>{U.tab='exercises';U.view=null})")
+        quiet(pg)
+        pg.locator('#app [data-push][data-zk^="ex:"]').first.click()
+        quiet(pg)
+        ex = pg.evaluate(TOP, '#app .exti')  # the title row (the title is centred beside its tile)
+        ok(all(near(x, tops[0]) for x in tops) and near(ex, tops[0]), f'{sat} pt top area: VS-014\'s title row sits level with the tabs\' titles ({ex} and {tops})')
+        # swipe back uses the same copy: lifted by a finger moving sideways, the pushed page's copy starts where it is
+        here = pg.evaluate(TOP, '#app h1')
+        fy = pg.evaluate("(()=>{const r=document.querySelector('#app h1').getBoundingClientRect();return r.top+r.height/2})()")
+        cdp = pg.context.new_cdp_session(pg)
+        cdp.send('Input.dispatchTouchEvent', {'type': 'touchStart', 'touchPoints': [{'x': 120, 'y': fy}]})
+        for i in (1, 2):
+            cdp.send('Input.dispatchTouchEvent', {'type': 'touchMove', 'touchPoints': [{'x': 120 + 12 * i, 'y': fy}]})
+            pg.wait_for_timeout(16)
+        lifted = pg.evaluate(TOP, '.zm .zm-page h1')
+        cdp.send('Input.dispatchTouchEvent', {'type': 'touchEnd', 'touchPoints': []})
+        cdp.detach()
+        quiet(pg)
+        ok(near(lifted, here), f'{sat} pt top area, swipe back: the lifted copy\'s title is where the page\'s was ({lifted} and {here})')
+        pg.context.close()
+        # Reduce Motion fades the same copy in: it sits where the real page lands
+        pg = page(b, t, ctx_args={'reduced_motion': 'reduce'})
+        quiet(pg)
+        pg.evaluate(SAT % sat)
+        pg.evaluate("go(()=>{U.tab='exercises';U.view=null})")
+        quiet(pg)
+        pg.locator('#app [data-push][data-zk^="ex:"]').first.click()
+        pg.wait_for_function("!!document.querySelector('.zm .zm-page h1')", timeout=5000)
+        faded = pg.evaluate(TOP, '.zm .zm-page h1')
+        quiet(pg)
+        now = pg.evaluate(TOP, '#app h1')
+        ok(near(faded, now), f'{sat} pt top area, Reduce Motion: the fading copy\'s title is where the real page\'s is ({faded} and {now})')
+        pg.context.close()
+
+
 def run(b, t):
+    handoff(b, t)
     cards(b, t)
     interrupt(b, t)
     swipes(b, t)

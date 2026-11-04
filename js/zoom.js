@@ -39,8 +39,10 @@ const ZOOM = (() => {
   let Z = null; // the zoom (or swipe) on screen now
   let SB = null; // a swipe back in progress
   let swipedAt = 0;
+  let tabbing = false; // Q44: the tap was on a tab, so the change can't zoom
+  let W0 = 0; // Q44: the screen width, read once and kept (reading it while a change was drawn forced a layout)
 
-  const vw = () => document.documentElement.clientWidth,
+  const vw = () => W0 || (W0 = document.documentElement.clientWidth),
     vh = () => document.documentElement.clientHeight;
   const busy = () => typeof LAUNCH !== 'undefined' && LAUNCH.busy();
   const moving = () => MOTION.speed() > 0 && !busy(); // zooms draw (as fades with Reduce Motion)
@@ -133,9 +135,25 @@ const ZOOM = (() => {
   }
   // a still of the screen as it is now (top bar and page), placed exactly where it is. hide: the card being zoomed,
   // left empty in the copy
-  function shot(hide) {
+  // Q44: where .wrap and its top bar sit. They're the same on every page, so before() reads them once, before the
+  // redraw, and the copies made after it reuse them (reading them after the redraw made the browser lay the whole new
+  // page out in the middle of the tap)
+  function measure() {
+    const wrap = document.querySelector('.wrap'),
+      bar = wrap && wrap.querySelector('.bar');
+    if (!wrap) return null;
+    return {
+      top: wrap.offsetTop,
+      left: wrap.offsetLeft,
+      w: wrap.offsetWidth,
+      barTop: bar ? parseFloat(getComputedStyle(bar).top) || 0 : 0,
+      barOff: bar ? bar.offsetTop : 0,
+    };
+  }
+  function shot(hide, m) {
     const wrap = document.querySelector('.wrap');
     if (!wrap) return null;
+    m = m || measure();
     if (hide) hide.setAttribute('data-zsrc', '');
     const c = wrap.cloneNode(true);
     if (hide) hide.removeAttribute('data-zsrc');
@@ -145,19 +163,17 @@ const ZOOM = (() => {
       hid.classList.add('zm-hid');
     }
     scrub(c);
-    const T = wrap.offsetTop - window.scrollY;
+    const T = m.top - window.scrollY;
     c.style.position = 'absolute';
-    c.style.left = wrap.offsetLeft + 'px';
+    c.style.left = m.left + 'px';
     c.style.top = T + 'px';
-    c.style.width = wrap.offsetWidth + 'px';
+    c.style.width = m.w + 'px';
     c.style.margin = '0';
     // the top bar sticks to the top of the screen: in the copy it's put where it is now
-    const bar = wrap.querySelector('.bar'),
-      cb = c.querySelector('.bar');
-    if (bar && cb) {
-      const top = parseFloat(getComputedStyle(bar).top) || 0;
+    const cb = c.querySelector('.bar');
+    if (cb) {
       cb.style.position = 'relative';
-      cb.style.top = Math.max(0, top - (T + bar.offsetTop)) + 'px';
+      cb.style.top = Math.max(0, m.barTop - (T + m.barOff)) + 'px';
     }
     const b = document.createElement('div');
     b.className = 'zm-shot';
@@ -344,7 +360,7 @@ const ZOOM = (() => {
     const a = ctx.armed,
       R = a.R,
       title = titleOf(),
-      page = shot();
+      page = shot(null, ctx.m);
     if (!page || !ctx.shot) return false;
     const z = build({ under: ctx.shot, page, title, rad: a.rad, tint: a.tint });
     z.kind = 'open';
@@ -520,7 +536,7 @@ const ZOOM = (() => {
     z.stop = null;
   }
   function pushOpen(ctx) {
-    const page = shot();
+    const page = shot(null, ctx.m);
     if (!page || !ctx.shot) return false;
     const z = pbuild(ctx.shot, page);
     z.kind = 'push';
@@ -537,14 +553,12 @@ const ZOOM = (() => {
       return true;
     }
     pset(z, vw());
-    // a frame later (the copies are built and painted), it slides in
-    requestAnimationFrame(() =>
-      requestAnimationFrame(() => {
-        if (Z !== z || z.ended || z.drag || z.closing) return;
-        pset(z, 0, { spring: 'nav' });
-        whenDone(z, () => end(z));
-      })
-    );
+    // the next frame (Q44: one, not two; the copies are built in this one), it slides in
+    requestAnimationFrame(() => {
+      if (Z !== z || z.ended || z.drag || z.closing) return;
+      pset(z, 0, { spring: 'nav' });
+      whenDone(z, () => end(z));
+    });
     return true;
   }
   // Back: the pushed page slides away to the right, from wherever it is (mid-push, or let go of by a swipe, carrying
@@ -554,7 +568,7 @@ const ZOOM = (() => {
     if (z && !z.push) return close(ctx, null); // (a zoom caught by Back: shrink as a zoom does)
     if (!z) {
       if (!ctx.shot) return false;
-      z = pbuild(shot(), ctx.shot);
+      z = pbuild(shot(null, ctx.m), ctx.shot);
       pset(z, 0);
     } else hold(z);
     z.kind = 'push';
@@ -609,8 +623,11 @@ const ZOOM = (() => {
   // just before the change: what's on screen now
   function before() {
     const ctx = { place: here(), sp: stackHere(), y: window.scrollY, back: backing, armed, dock: ($('dock') || {}).innerHTML };
+    // Q44: a change that can't zoom (a tab, or a sheet's button, with no card and no Back) takes no still of the screen
+    const still = !!(armed || backing) || !(tabbing || U.sheet);
     armed = null;
     backing = false;
+    tabbing = false;
     // a Back while a zoom or a swipe is on screen carries on from there; anything else clears it away
     if (Z && !(ctx.back && (Z.drag || Z.kind === 'open' || Z.kind === 'push'))) end(Z);
     ctx.z = Z;
@@ -622,9 +639,10 @@ const ZOOM = (() => {
       a.rad = radiusOf(a.el, a.R);
       a.tint = colourOf(a.el);
     }
-    if (!ctx.z) {
+    if (!ctx.z && still) {
+      ctx.m = measure(); // read once, before the redraw, for this copy and the ones after() makes
       ctx.title = titleOf();
-      ctx.shot = shot(a && a.R ? a.el : null);
+      ctx.shot = shot(a && a.R ? a.el : null, ctx.m);
     }
     return ctx;
   }
@@ -673,9 +691,11 @@ const ZOOM = (() => {
       el.closest &&
       ((el.closest('#barL') && /^Back/.test(el.getAttribute('aria-label') || '')) || el.closest('[data-pop]'))
     );
+    tabbing = !!(el && el.closest && el.closest('[data-a="tab"]'));
     setTimeout(() => {
       armed = null;
       backing = false;
+      tabbing = false;
     }, 0);
   }
   // for code that opens a page itself (the new song's row): this card is the one to zoom from
@@ -966,7 +986,10 @@ const ZOOM = (() => {
     },
     { passive: true }
   );
-  window.addEventListener('resize', () => Z && end(Z));
+  window.addEventListener('resize', () => {
+    W0 = 0; // Q44: the width is read again
+    if (Z) end(Z);
+  });
   document.addEventListener('visibilitychange', () => document.hidden && Z && end(Z));
 
   return {

@@ -786,6 +786,7 @@ const PAT = (() => {
     if (!audio()) return toast('This browser can’t play sounds');
     stopPreview(true);
     NOW.start('pattern', cfg.key, halt);
+    if (typeof exGlowStop === 'function') exGlowStop(); // Q44: the exercise page's glow stops where it is
     S.lastSnap = lastNow(); // Q38: the route holds still while Last time moves
     S.headX = null;
     S.playing = true;

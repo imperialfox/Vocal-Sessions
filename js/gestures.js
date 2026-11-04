@@ -223,6 +223,14 @@ setInterval(() => {
   SCLOCK.tick(); // Q22: the session clock's ring and numbers, in place
 }, 1000);
 /* Q41 (D01) the tab bar never folds away (the parts kit's tabBar.fold is off): scrolling only brings the soft edge */
+// Q44 Today rests: its background shapes (.tgrad) hold still while the page scrolls (body.scrolling, until no scroll
+// has come for SCROLL_REST ms, or scrollend) and while they're scrolled out of view (body.tg-away). app.css pauses them
+const SCROLL_REST = 150;
+let scrollRest = 0;
+const scrolled = () => {
+  clearTimeout(scrollRest);
+  document.body.classList.remove('scrolling');
+};
 window.addEventListener(
   'scroll',
   () => {
@@ -230,9 +238,15 @@ window.addEventListener(
     const sc = window.scrollY > 36;
     $('bar').classList.toggle('scrolled', sc);
     document.body.classList.toggle('scrolled', sc);
+    document.body.classList.add('scrolling');
+    clearTimeout(scrollRest);
+    scrollRest = setTimeout(scrolled, SCROLL_REST);
+    const g = document.querySelector('#app .tgrad');
+    document.body.classList.toggle('tg-away', !!g && g.getBoundingClientRect().bottom <= 0);
   },
   { passive: true }
 );
+window.addEventListener('scrollend', scrolled, { passive: true });
 // iOS pauses the mic when you leave the app, so stop and save the take, then say so on return
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) {

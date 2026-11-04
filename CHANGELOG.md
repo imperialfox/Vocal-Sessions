@@ -9,6 +9,27 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.58 · 4 Nov 2026
+*Smoother page changes, with no jump at the end (Q44)*
+<!-- area: look -->
+
+Opening a page from a card, a row or Back now starts moving sooner and lands without a jump. Every spring and timing is as it was.
+
+**No more drop at the end**
+- On an iPhone, every zoom, push and Back ended with the whole page dropping 6 pt. The picture of the page that moves during the change now sits exactly where the real page is, so nothing moves when it's swapped in. The same goes for swipe back and Reduce Motion's fade.
+- The exercise page's title row sits level with every other page's title, 4 pt higher than before.
+
+**A quicker start**
+- Opening an exercise starts moving about one frame sooner (about 30 ms after the tap in the test browser, down from about 45 ms).
+- Tapping a tab, or a button in a sheet, no longer copies the screen first, since nothing zooms from there.
+
+**Resting**
+- Today's background shapes hold still while a sheet is open, a page change plays, the page scrolls or they're out of view, then carry on from where they were. At rest on Today they drift as before.
+- The glow on the exercise page pulses three times, then rests. It stops at once when you start the pattern player.
+- The page behind a sheet no longer animates its (invisible) corners as it shrinks.
+
+Screens: VS-001, VS-002, VS-003, VS-004, VS-006, VS-007, VS-008, VS-009, VS-010, VS-011, VS-012, VS-013, VS-014, VS-018, VS-019, VS-020, VS-021, VS-022, VS-023, VS-024, VS-025, VS-026, VS-027, VS-028, VS-029, VS-030, VS-097
+
 ## 3.57 · 4 Nov 2026
 *A recorded piano, a smoother Soft tone and no more pops (Q43)*
 <!-- area: practice -->

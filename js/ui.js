@@ -773,8 +773,10 @@ function renderSheet() {
   }
   if (!still && clock) ly.querySelectorAll('.clock,.clockscrim').forEach((x) => x.classList.remove('still'));
   const open = !!h && !!U.sheet;
+  // the page behind shrinks about a point near the top of the screen (Q44: less the top bar's pull-up, since .wrap's
+  // box now starts below it, so that's the same point as before)
   if (open && !document.body.classList.contains('sheet-open'))
-    $('app').parentNode.style.transformOrigin = '50% ' + (window.scrollY + 120) + 'px';
+    $('app').parentNode.style.transformOrigin = '50% calc(' + (window.scrollY + 120) + 'px - var(--barup))';
   document.body.classList.toggle('sheet-open', open);
   SCR.sheet(); // Q36 the sheet's screen ID and part names
   if (s === 'addEx')

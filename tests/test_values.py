@@ -290,7 +290,6 @@ KNOWN = [
     'ease · .pt · transition · cubic-bezier(0.3, 1.5, 0.5, 1)',
     'duration · .edge · transition · 0.25s',
     'duration · .wrap · transition · 0.45s',
-    'duration · .wrap · transition · 0.45s',
     'duration · #lgchart .ar · transition · 0.25s',
     'duration · .tl-card · transition · 0.4s',
     'duration · .tl-more svg.i · transition · 0.3s',

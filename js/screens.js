@@ -1014,6 +1014,25 @@ function exInk(col) {
   while (1.05 / (lum(k) + 0.05) < 4.5 && p < 0.8) k = mix(hex, (p += 0.02));
   return '#' + k;
 }
+// Q44 the glow on the spot pulses three times when the page opens, then rests. The page is redrawn on every tap, so
+// each new glow carries on from where the last one was (a negative delay), and the pattern player starting stops it
+// where it is (exGlowStop(), from PAT's play)
+const EXGLOW = { key: '', at: 0, stop: 0 };
+function exGlowStyle(key) {
+  // a fresh visit: no glow on the page being replaced, or a different exercise's
+  if (key !== EXGLOW.key || !document.querySelector('#app .exglow')) {
+    EXGLOW.key = key;
+    EXGLOW.at = performance.now();
+    EXGLOW.stop = 0;
+  }
+  const t = ((EXGLOW.stop || performance.now()) - EXGLOW.at) / 1000;
+  return 'animation-delay:-' + t.toFixed(3) + 's' + (EXGLOW.stop ? ';animation-play-state:paused' : '');
+}
+function exGlowStop() {
+  if (EXGLOW.stop || !EXGLOW.at) return;
+  EXGLOW.stop = performance.now();
+  document.querySelectorAll('#app .exglow').forEach((g) => (g.style.animationPlayState = 'paused'));
+}
 // Where you feel it: a head in profile with a glow on the spot
 function exHead(spot, col) {
   const P = { mask: [96, 66], palate: [90, 86], nose: [108, 70], lips: [106, 98], head: [66, 52], centre: [70, 64] }[
@@ -1021,7 +1040,9 @@ function exHead(spot, col) {
   ] || [90, 86];
   return (
     '<svg class="exhead" viewBox="0 0 150 150" aria-hidden="true"><path d="M66 16 C38 16 22 38 22 66 C22 88 30 102 42 110 L42 140 L88 140 L90 120 C100 120 108 117 110 108 L112 98 L119 94 L112 88 L114 82 L124 74 L112 64 C112 36 94 16 66 16 Z" class="exhd"/>' +
-    '<circle class="exglow" cx="' +
+    '<circle class="exglow" style="' +
+    exGlowStyle([U.view, U.exId, spot, col].join('|')) +
+    '" cx="' +
     P[0] +
     '" cy="' +
     P[1] +

@@ -300,6 +300,9 @@ svg.i {
   max-width: 430px;
   margin: 0 auto;
   position: relative;
+  /* Q44: the top bar's pull-up (--barup) stays inside .wrap instead of passing out of it, so the zoom's still copy
+     (an absolute box, where it can't pass out) lands exactly where the real page is */
+  display: flow-root;
 }
 
 .glass {
@@ -391,9 +394,9 @@ body.scrolled .edge {
   opacity: 1;
 }
 .wrap {
-  transition:
-    transform 0.45s cubic-bezier(0.3, 1.3, 0.5, 1),
-    border-radius 0.45s;
+  /* Q44: the corner isn't animated any more (.wrap has no background or clipping, so it never showed, but cost a
+     repaint every frame) */
+  transition: transform 0.45s cubic-bezier(0.3, 1.3, 0.5, 1);
 }
 body.sheet-open .wrap {
   transform: scale(0.94);
@@ -7001,7 +7004,8 @@ body:has(.tgrad) {
 .tgrad {
   position: absolute;
   z-index: -1;
-  top: calc(-1 * var(--sat));
+  /* Q44: less the top bar's pull-up, which now stays inside .wrap (flow-root), so the wash keeps its place */
+  top: calc(-1 * var(--sat) - var(--barup));
   left: calc(50% - 50vw);
   width: 100vw;
   height: 300px;
@@ -7066,6 +7070,15 @@ body:has(.tgrad) {
 html.motion-reduced .tgrad i,
 html.motion-off .tgrad i {
   animation: none;
+}
+/* Q44 Today rests: the shapes hold still (where they are) while a sheet is open, a zoom or push is on screen, the page
+   is scrolling, or they're scrolled out of view, so the glass over them isn't blurred again every frame while
+   something else moves. They carry on from there afterwards */
+body.sheet-open .tgrad i,
+body:has(> .zm) .tgrad i,
+body.scrolling .tgrad i,
+body.tg-away .tgrad i {
+  animation-play-state: paused;
 }
 /* in a zoom's or a push's still copy the wash sits behind the copied page, not behind the whole layer */
 .zm main {
@@ -9035,7 +9048,7 @@ body.apprec #dock {
   display: flex;
   align-items: center;
   gap: 14px;
-  margin: 4px 0 8px;
+  margin: 0 0 8px; /* Q44: no top margin, so VS-014's title sits level with every other page's */
 }
 .exti .tile.big {
   margin: 0 0 0 4px;
@@ -9439,7 +9452,9 @@ body.apprec #dock {
 }
 .exglow {
   opacity: 0.35;
-  animation: exglow 2.8s ease-in-out infinite;
+  /* Q44: three pulses, then it rests on the pulse's own low point (no jump); exHead() carries the pulses on across
+     redraws, and stops them where they are when the pattern player starts */
+  animation: exglow 2.8s ease-in-out 3 forwards;
 }
 @keyframes exglow {
   0%,
