@@ -342,6 +342,7 @@ def pip(b, t):
     ok(not clean['bar'] and not clean['txt'] and not pg.evaluate(CTL), f'a clean picture: no bar, no words, no controls showing ({clean})')
     t.shot(pg, 'pip-clean')
     pg.tap('#fw .fwvopen')
+    t0 = time.time()  # the 3 s starts at the tap, not after the checks and screenshot below (slow on GitHub, Q38)
     ok(until(pg, CTL, 1000), 'one tap shows the controls over the dimmed picture')
     at = pg.evaluate(PARTS_AT)
     ok(at.get('fwX', {}).get('x', 99) <= 6 and at['fwX']['y'] <= 6 and at.get('fwOpen', {}).get('r', 99) <= 6 and at['fwOpen']['y'] <= 6,
@@ -349,7 +350,6 @@ def pip(b, t):
     ok('fwToggle' in at and 'fwSkip-10' not in at and all(f'fwLv{l}' in at for l in (1, 2, 3)),
        f'small: play/pause along the top, no ±10, and L1 L2 L3 along the bottom ({sorted(at)})')
     t.shot(pg, 'pip-small-controls')
-    t0 = time.time()
     ok(until(pg, "!FW.ctl", 5000) and 2.5 < time.time() - t0 < 4.5, f'they fade after about 3 s ({time.time() - t0:.1f} s)')
     pg.tap('#fw .fwvopen'); until(pg, CTL, 1000)
     pg.wait_for_timeout(400)
