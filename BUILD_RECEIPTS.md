@@ -4,6 +4,7 @@ What each Build cost, logged at its end (the receipt), so the effort guessed at 
 
 | Date | Item | Version | Guess | Real | Steps | Written | Re-read | Full test runs | Biggest share |
 |---|---|---|---|---|---|---|---|---|---|
+| 4 Nov 2026 | Q43 | 3.57 | Medium | Light to medium | 65 | 50k | 16.2M | 1 | Instructions 65% |
 | 4 Nov 2026 | Q42 | 3.56 | Heavy | Heavy | 194 | 226k | 98.8M | 1 | Instructions 57% |
 | 4 Nov 2026 | Q41 · Interface: Parts Kit Move | 3.55 | Heavy | Heavy | 369 | 251k | 182.3M | 1 | Instructions (62%) |
 | 4 Nov 2026 | Q39 · Songs: Key and Scale Lanes | 3.54 | Heavy | Medium | 177 | 108k | 58.6M | 2 | Instructions (64%) |
