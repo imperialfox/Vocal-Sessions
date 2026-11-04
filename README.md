@@ -4,9 +4,9 @@
 
 It's a web app styled like a native iOS app: a single HTML file with no install, no backend and no account, designed to live on your iPhone Home Screen. It runs on its own, with no other apps needed.
 
-![Version 3.56](https://img.shields.io/badge/version-3.56-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
+![Version 3.57](https://img.shields.io/badge/version-3.57-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
 
-**Current version: 3.56 · 4 Nov 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
+**Current version: 3.57 · 4 Nov 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
 
 ---
 
@@ -133,7 +133,7 @@ And **Songs**, for learning a song: paste the lyrics, and they're split into lab
 - Every exercise with its own glyph (coloured by focus area) and when you last did it
 - Tap an exercise for its own page:
   - **Summary:** the exercise explained and ready to sing. A drawing of the pattern with a red playhead, three facts for the level, a fix tip, **How to do it**, **Where you feel it**, the level dots (on the level you last logged), why it helps and where it shows up in songs.
-  - **Hear it:** the app plays the pattern itself, with piano-like notes it makes (no recordings), starting on the coach's notes for the level and moving up a key each round. A chord sets up each key, a low note holds underneath, and it ends back on the starting key. The dock has the pattern, its speed (a slider from 0.5× to 2×, or speeding up each round), the sound (Soft tone, Piano-ish, Electric piano), the starting note, Stay on this key and Play. It plays with the silent switch on and keeps the screen awake. Vocal slides has a picture instead.
+  - **Hear it:** the app plays the pattern itself, with a recorded piano (or notes it makes itself), starting on the coach's notes for the level and moving up a key each round. A chord sets up each key, a low note holds underneath, and it ends back on the starting key. The dock has the pattern, its speed (a slider from 0.5× to 2×, or speeding up each round), the sound (Piano, the default, Soft tone or Electric piano), the starting note, Stay on this key and Play. It plays with the silent switch on and keeps the screen awake. Vocal slides has a picture instead.
   - **Patterns:** tap the pattern to choose from 60: Warm-ups, Agility, Riffs and runs (short riffs, turns and slingshots, long runs, minor, blues and gospel) and Flips (full voice into falsetto), plus your ★ Favourites. Tap one to hear it; press and hold to see what it trains. Each exercise remembers its pattern, starting note and speeds.
   - **Your voice:** the card warns when a pattern goes above or below your range (set in **Settings › Your voice**), and can stop at your top note.
   - **Your bridge** (3.53), where your voice flips: **Find your bridge** listens to one slow slide on "ee", draws it as you go and marks where your voice jumps, then suggests a zone around it (two notes below to one above) that you can change before **Use this bridge**. No jump? Set it by feel. Once it's set, the drawing shades the bridge and rings its notes, the line under it says which rounds cross it, those reference notes play softer, and while one plays a cue says **Thinner · quieter** (on a hum) or the narrower vowel (ah → uh, ee → ih) and quieter. The cue can be switched off in Settings › Pattern player.
@@ -328,7 +328,7 @@ See [MAINTAINING.md](MAINTAINING.md) for how the app is built, where data lives,
 
 MIT
 
-`js/vendor/pdfjs-4.10.38/` is pdf.js 4.10.38 (Copyright Mozilla Foundation), under the Apache License 2.0, unchanged, with its `LICENSE` in the same folder. `js/pitchy.js` is pitchy 4.1.0 (Copyright 2018-2021 Ian Johnson) with fft.js 4.0.4 (Copyright Fedor Indutny, 2017), both under the MIT License; their notices are at the top of the file. `js/musictheory.js` is part of musictheoryjs 3.2.2 (Copyright 2020-2026 Zach Moore, ISC License) and `js/tonal.js` is part of tonal 6.5.1 (Copyright 2015 danigb, MIT License); each notice is at the top of its file.
+`js/vendor/pdfjs-4.10.38/` is pdf.js 4.10.38 (Copyright Mozilla Foundation), under the Apache License 2.0, unchanged, with its `LICENSE` in the same folder. `js/pitchy.js` is pitchy 4.1.0 (Copyright 2018-2021 Ian Johnson) with fft.js 4.0.4 (Copyright Fedor Indutny, 2017), both under the MIT License; their notices are at the top of the file. `js/musictheory.js` is part of musictheoryjs 3.2.2 (Copyright 2020-2026 Zach Moore, ISC License) and `js/tonal.js` is part of tonal 6.5.1 (Copyright 2015 danigb, MIT License); each notice is at the top of its file. The piano notes in `audio/piano/` are from [piano-sound-samples](https://github.com/Leethring/piano-sound-samples) (Copyright 2020 Liam Lee, made with MuseScore), under the MIT License, trimmed and levelled; the licence is in the same folder.
 
 ---
 

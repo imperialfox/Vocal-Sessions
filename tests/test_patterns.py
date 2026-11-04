@@ -352,8 +352,8 @@ def settings(b, t):
     ok = t.ok
     pg = t.page(b, w=375, h=812)
     pg.evaluate("go(()=>{U.tab='settings';U.view=null})"); pg.wait_for_timeout(100)
-    ok(pg.inner_text('#app [data-zk="set:voice"] .mut') == 'Tenor' and pg.inner_text('#app [data-zk="set:player"] .mut') == 'Soft tone',
-       'Settings lists Your voice (Tenor) and Pattern player (Soft tone)')
+    ok(pg.inner_text('#app [data-zk="set:voice"] .mut') == 'Tenor' and pg.inner_text('#app [data-zk="set:player"] .mut') == 'Piano',
+       'Settings lists Your voice (Tenor) and Pattern player (Piano, the default since Q43)')
     pg.click('#app [data-zk="set:voice"]'); pg.wait_for_timeout(200)
     ok(pg.locator('#app h1').inner_text() == 'Your voice' and [pg.inner_text(f'#pv_{k}') for k in ('lo', 'hi', 'fal')] == ['G♯2', 'A4', 'D5'], 'Your voice: G♯2 · A4 · D5')
     pg.click('[data-a=patVoiceType]'); pg.wait_for_timeout(100)
@@ -366,8 +366,8 @@ def settings(b, t):
     pg.click('#barL [aria-label^=Back]'); pg.wait_for_timeout(200)
     ok(pg.inner_text('#app [data-zk="set:voice"] .mut') == 'Custom', 'Back to Settings, showing Custom')
     pg.click('#app [data-zk="set:player"]'); pg.wait_for_timeout(200)
-    pg.click('[data-a=patSoundPick][data-v=piano]'); pg.wait_for_timeout(100)
-    ok(pg.evaluate("D.prefs.pat.sound") == 'piano' and pg.locator('[data-a=patSoundPick][aria-checked=true]').inner_text().strip() == 'Piano-ish', 'Pattern player: the sound')
+    pg.click('[data-a=patSoundPick][data-v=soft]'); pg.wait_for_timeout(100)
+    ok(pg.evaluate("D.prefs.pat.sound") == 'soft' and pg.locator('[data-a=patSoundPick][aria-checked=true]').inner_text().strip() == 'Soft tone', 'Pattern player: the sound')
     pg.click('[data-a=patDrone]'); pg.click('[data-a=patCue]'); pg.wait_for_timeout(100)
     ok(pg.evaluate("[D.prefs.pat.drone,D.prefs.pat.cue]") == [False, False], 'Held note underneath and Chord before each round switch off')
     pg.click('[data-a=patEnding][data-v=note]'); pg.click('[data-a=patVowel][data-v=all]'); pg.click('[data-a=patNotes][data-v=notes]'); pg.wait_for_timeout(100)
@@ -377,7 +377,7 @@ def settings(b, t):
     pg.evaluate(EX, 'humming')
     pg.click('#pSnd'); pg.wait_for_timeout(100)
     items = pg.evaluate("[...document.querySelectorAll('.pmenu button')].map(b=>(b.querySelector('svg')?'✓':'')+b.textContent)")
-    ok(items == ['Soft tone', '✓Piano-ish', 'Electric piano', 'Held note underneath'],
+    ok(items == ['✓Soft tone', 'Piano', 'Electric piano', 'Held note underneath'],
        f'the sound pill opens a menu with a ✓, and Held note underneath under it ({items})')
     pg.click('.pmenu [data-v=ep]'); pg.wait_for_timeout(100)
     ok(pg.evaluate("D.prefs.pat.sound") == 'ep' and 'Electric piano' in pg.inner_text('#pSnd'), 'picking one changes the pill')
@@ -420,7 +420,7 @@ def data(b, t):
     ok(pg.evaluate("D.prefs.pat") is None, 'data from before 3.48 has no player choices')
     pg.evaluate(EX, 'humming')
     s = pg.evaluate(ST)
-    ok(s['pattern'] == 1 and s['speed'] == 1 and s['opts'] == {'sound': 'soft', 'drone': True, 'cue': True, 'ending': 'chord', 'vowel': 'ex', 'notes': 'dots', 'stopTop': False, 'ramp': False,
+    ok(s['pattern'] == 1 and s['speed'] == 1 and s['opts'] == {'sound': 'piano', 'drone': True, 'cue': True, 'ending': 'chord', 'vowel': 'ex', 'notes': 'dots', 'stopTop': False, 'ramp': False,
                                                                        'stopLast': False, 'bcue': True, 'listen': False}
        and pg.evaluate("D.prefs.pat") is None, 'and the player starts on its defaults without saving anything')
     pg.context.close()

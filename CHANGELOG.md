@@ -9,6 +9,29 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.57 · 4 Nov 2026
+*A recorded piano, a smoother Soft tone and no more pops (Q43)*
+<!-- area: practice -->
+
+The pattern player's notes are more pleasant to sing against, and they never click, pop or distort.
+
+**Piano**
+- Piano-ish is now Piano: a real recorded piano, warm and in stereo, instead of notes made in code. It's the default sound. If you chose Soft tone or Electric piano before, you keep it.
+- Each note is held for as long as it's sung, then fades gently. The click at the end of every Piano-ish note is gone.
+- The recordings download the first time the player makes a sound (about 1.4 MB, once) and are kept for offline. Until they've arrived, the piano plays Soft tone.
+
+**Soft tone**
+- Rounder and warmer: a gentler start and end, and a slight vibrato on notes longer than half a second. The held note underneath uses it too.
+
+**Chords**
+- The player's output has room for the chord before each round, so it no longer distorts. Piano and Soft tone have a small room echo.
+
+Everywhere the player plays a note gets the new sounds: the exercise pages, the Patterns page, the song ladder's notes, Practise in a key and the Sound choice in Settings › Pattern player.
+
+The piano notes are from Liam Lee's piano samples, under the MIT licence (credited in the README).
+
+Screens: VS-014, VS-018, VS-024
+
 ## 3.56 · 4 Nov 2026
 *Sheet music from your Ultimate Guitar prints (Q42)*
 <!-- area: songs -->

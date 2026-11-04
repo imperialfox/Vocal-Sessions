@@ -1,6 +1,7 @@
 /* Vocal Sessions · patterns.js (3.48, Q32)
-   The shared pattern player (PAT): piano-like notes the app makes itself, from a library of 60 practice patterns.
-   It owns everything about playing a pattern: the sound library and the notes it makes (Web Audio, no recordings),
+   The shared pattern player (PAT): piano and soft notes, from a library of 60 practice patterns.
+   It owns everything about playing a pattern: the sound library and the notes it makes (Web Audio; Q43: the piano is
+   17 recorded notes in audio/piano/, MIT licence, the rest is made in code),
    the pattern library, the drawing with its red playhead, the dock and its pills, the Patterns page, the speed slider,
    the range check against your voice, the vowel cue, the chord before each round, the held note underneath and the
    home ending. A page that uses it passes in only what it knows (use()): a route (the key notes of each round, or none),
@@ -160,7 +161,7 @@ const PAT = (() => {
   const VOWELS = ['ex', 'all', 'off'];
   const DRAWN = ['dots', 'notes'];
   const DEF = {
-    sound: 'soft',
+    sound: 'piano', // Q43: the recorded piano (before 3.57: Soft tone)
     drone: true,
     cue: true,
     ending: 'chord',
@@ -410,7 +411,8 @@ const PAT = (() => {
 
   /* ===== Sound ===== */
   let AC = null,
-    master = null,
+    master = null, // the output's input (Q43: output())
+    room = null, // the room echo's input (Q43)
     bus = null,
     keep = null;
   // a tiny silent WAV, looped, so iOS treats the page as playing media and the silent switch doesn't mute it
@@ -464,81 +466,201 @@ const PAT = (() => {
       } catch (e) {
         return null;
       }
-      const comp = AC.createDynamicsCompressor();
-      comp.threshold.value = -14;
-      comp.ratio.value = 4;
-      master = AC.createGain();
-      master.gain.value = 0.9;
-      master.connect(comp);
-      comp.connect(AC.destination);
+      const o = output(AC);
+      master = o.input;
+      room = o.echo;
     }
+    if (PIANO.state === 'none' || (PIANO.state === 'failed' && Date.now() - PIANO.at > 20000)) PIANO.load(AC);
     if (AC.state !== 'running')
       try {
         Promise.resolve(AC.resume()).catch(() => {});
       } catch (e) {}
     return AC;
   }
+  /* The output (Q43): everything goes in at 0.55, through a fast limiter, then a gentle tanh ceiling, so a rolled chord
+     can't clip or distort. The room echo (Small) is made from noise at start-up, no file, and goes back into the input.
+     made for C, the player's context (or the tests' OfflineAudioContext) */
+  function output(C) {
+    const pre = C.createGain(),
+      lim = C.createDynamicsCompressor(),
+      post = C.createGain(),
+      clip = C.createWaveShaper(),
+      n = 2048,
+      curve = new Float32Array(n);
+    pre.gain.value = 0.55;
+    lim.threshold.value = -12;
+    lim.knee.value = 6;
+    lim.ratio.value = 12;
+    lim.attack.value = 0.001;
+    lim.release.value = 0.2;
+    post.gain.value = 1;
+    for (let i = 0; i < n; i++) curve[i] = Math.tanh(1.4 * ((i / (n - 1)) * 2 - 1)) / Math.tanh(1.4);
+    clip.curve = curve;
+    clip.oversample = '2x';
+    pre.connect(lim);
+    lim.connect(post);
+    post.connect(clip);
+    clip.connect(C.destination);
+    // the room: stereo noise, smoothed, dying away over 1.4 s, with a 40-sample fade-in. The noise is seeded, so the
+    // room sounds the same at every launch (and the tests measure the same room every time)
+    const verb = C.createConvolver(),
+      wet = C.createGain(),
+      len = Math.round(C.sampleRate * 1.4),
+      ir = C.createBuffer(2, len, C.sampleRate);
+    let seed = 0x9e3779b9;
+    const rnd = () => {
+      seed = (seed + 0x6d2b79f5) | 0;
+      let z = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      z = (z + Math.imul(z ^ (z >>> 7), 61 | z)) ^ z;
+      return ((z ^ (z >>> 14)) >>> 0) / 4294967296;
+    };
+    for (let ch = 0; ch < 2; ch++) {
+      const x = ir.getChannelData(ch);
+      let lp = 0;
+      for (let i = 0; i < len; i++) {
+        lp += 0.35 * (rnd() * 2 - 1 - lp);
+        x[i] = lp * Math.pow(1 - i / len, 3.2) * (i < 40 ? i / 40 : 1);
+      }
+    }
+    verb.buffer = ir;
+    wet.gain.value = 0.22;
+    verb.connect(wet);
+    wet.connect(pre);
+    return { input: pre, echo: verb };
+  }
   const hz = (m) => 440 * Math.pow(2, (m - 69) / 12);
-  /* The sound library. Each sound is one entry: an id that's saved, a name, and play(), which makes one note:
-     frequency f, start t, length d, into the gain node out, at volume v. Adding a sound is adding an entry here. */
+  /* The recorded piano (Q43): one note every three semitones from C2 to C6 in audio/piano/ (made by Leethring's MIT
+     piano samples, see the LICENSE.txt beside them). Fetched and decoded once, after the player's context is made in a
+     tap, and kept for the session; sw.js keeps the files for offline. Until they're ready, or if they fail, the piano
+     plays Soft tone, with no message. */
+  const PIANO = {
+    notes: [36, 39, 42, 45, 48, 51, 54, 57, 60, 63, 66, 69, 72, 75, 78, 81, 84],
+    buf: {},
+    state: 'none', // none · loading · ready · failed
+    at: 0,
+    file: (m) => 'audio/piano/' + ['C', 'Cs', 'D', 'Ds', 'E', 'F', 'Fs', 'G', 'Gs', 'A', 'As', 'B'][m % 12] + (Math.floor(m / 12) - 1) + '.mp3',
+    near(m) {
+      return this.notes.reduce((b, k) => (Math.abs(k - m) < Math.abs(b - m) ? k : b));
+    },
+    load(C) {
+      this.state = 'loading';
+      this.at = Date.now();
+      const dec = (ab) =>
+        new Promise((res, rej) => {
+          try {
+            const p = C.decodeAudioData(ab, res, rej);
+            if (p && p.catch) p.catch(rej);
+          } catch (e) {
+            rej(e);
+          }
+        });
+      return Promise.all(
+        this.notes.map((m) =>
+          fetch(this.file(m))
+            .then((r) => {
+              if (!r.ok) throw new Error('missing ' + this.file(m));
+              return r.arrayBuffer();
+            })
+            .then(dec)
+            .then((b) => (this.buf[m] = b))
+        )
+      ).then(
+        () => (this.state = 'ready'),
+        () => {
+          this.buf = {};
+          this.state = 'failed';
+          this.at = Date.now();
+        }
+      );
+    },
+  };
+  // a slow wobble in pitch on notes longer than half a second: nothing for a third of a second, then up to ±cents by 0.8 s
+  function vibrato(t, d, oscs, cents) {
+    if (d <= 0.5) return;
+    const lfo = AC.createOscillator(),
+      g = AC.createGain();
+    lfo.frequency.value = 5.4;
+    lfo.connect(g);
+    g.gain.setValueAtTime(0, t);
+    g.gain.setValueAtTime(0, t + 0.33);
+    g.gain.linearRampToValueAtTime(cents, Math.min(t + d, t + 0.8));
+    oscs.forEach((o) => g.connect(o.detune));
+    lfo.start(t);
+    lfo.stop(t + d + 0.6);
+  }
+  /* The sound library. Each sound is one entry: an id that's saved, a name, whether it sends to the room echo, and
+     play(), which makes one note: frequency f (MIDI note m), start t, length d, into the gain node out, at volume v.
+     Adding a sound is adding an entry here. */
   const SOUNDS = [
     {
       id: 'soft',
       name: 'Soft tone',
+      echo: true,
+      // Q43: a sine with two quiet overtones through a low-pass, a rounded start and end, and vibrato on held notes
       play(f, t, d, out, v) {
-        const o = AC.createOscillator(),
-          o2 = AC.createOscillator(),
-          g2 = AC.createGain();
-        o.type = 'sine';
-        o2.type = 'triangle';
-        o.frequency.value = f;
-        o2.frequency.value = f;
-        g2.gain.value = 0.18;
-        o.connect(out);
-        o2.connect(g2);
-        g2.connect(out);
+        const lp = AC.createBiquadFilter(),
+          L = 0.32 * v * 0.7,
+          end = t + d + 0.4;
+        lp.type = 'lowpass';
+        lp.frequency.value = Math.min(3200, f * 7);
+        lp.Q.value = 0.5;
+        lp.connect(out);
+        const oscs = [
+          [1, 1],
+          [2, 0.24],
+          [3, 0.07],
+        ].map(([n, a]) => {
+          const o = AC.createOscillator(),
+            g = AC.createGain();
+          o.frequency.value = f * n;
+          g.gain.value = a;
+          o.connect(g);
+          g.connect(lp);
+          return o;
+        });
         out.gain.setValueAtTime(0, t);
-        out.gain.linearRampToValueAtTime(0.32 * v, t + 0.03);
-        out.gain.setValueAtTime(0.32 * v, t + d);
-        out.gain.linearRampToValueAtTime(0, t + d + 0.09);
-        [o, o2].forEach((x) => {
-          x.start(t);
-          x.stop(t + d + 0.12);
+        out.gain.setTargetAtTime(L, t, 0.016);
+        out.gain.setTargetAtTime(0, t + d, 0.05);
+        vibrato(t, d, oscs, 16);
+        oscs.forEach((o) => {
+          o.start(t);
+          o.stop(end);
         });
       },
     },
     {
       id: 'piano',
-      name: 'Piano-ish',
-      play(f, t, d, out, v) {
-        const hold = Math.max(d, 0.25),
-          end = t + hold + 0.5,
-          low = f < 165;
-        out.gain.value = v;
-        [
-          [1, 1, 1.6],
-          [2, 0.55, 1.1],
-          [3, 0.32, 0.8],
-          [4, 0.2, 0.6],
-          [5, 0.12, 0.45],
-          [6, 0.07, 0.35],
-          [8, 0.035, 0.25],
-        ].forEach(([n, a, dec]) => {
-          const o = AC.createOscillator(),
-            pg = AC.createGain(),
-            peak = 0.3 * a,
-            rest = Math.max(peak * 0.18, 0.0004);
-          o.frequency.value = f * n * (1 + 0.00035 * n * n);
-          o.connect(pg);
-          pg.connect(out);
-          pg.gain.setValueAtTime(0, t);
-          pg.gain.linearRampToValueAtTime(peak, t + 0.004);
-          pg.gain.exponentialRampToValueAtTime(rest, t + dec * (low ? 1.4 : 1));
-          pg.gain.setValueAtTime(rest, t + hold);
-          pg.gain.exponentialRampToValueAtTime(0.0001, end);
-          o.start(t);
-          o.stop(end + 0.02);
-        });
+      name: 'Piano',
+      echo: true,
+      // Q43: the nearest recording, moved at most 1.5 semitones, in the Warm tone; held for the note, then let go
+      play(f, t, d, out, v, m) {
+        const near = PIANO.near(m),
+          buf = PIANO.buf[near],
+          src = AC.createBufferSource(),
+          rate = Math.pow(2, (m - near) / 12),
+          lo = AC.createBiquadFilter(),
+          hi = AC.createBiquadFilter(),
+          hold = Math.max(d, 0.15),
+          L = v * 0.85 * 1.03,
+          end = Math.min(t + hold + 0.65, t + buf.duration / rate);
+        src.buffer = buf;
+        src.playbackRate.value = rate;
+        lo.type = 'lowshelf';
+        lo.frequency.value = 220;
+        lo.Q.value = 0.7;
+        lo.gain.value = 3;
+        hi.type = 'highshelf';
+        hi.frequency.value = 2800;
+        hi.Q.value = 0.7;
+        hi.gain.value = -6;
+        src.connect(lo);
+        lo.connect(hi);
+        hi.connect(out);
+        out.gain.setValueAtTime(0, t);
+        out.gain.linearRampToValueAtTime(L, t + 0.008);
+        out.gain.setTargetAtTime(0, t + hold, 0.13);
+        src.start(t);
+        src.stop(end + 0.02);
       },
     },
     {
@@ -576,21 +698,40 @@ const PAT = (() => {
     },
   ];
   const soundOf = (id) => SOUNDS.find((x) => x.id === id) || SOUNDS[0];
-  function note(m, t, d, out, id, v) {
+  // one note; snd: where its room echo goes (the bus's own send unless given). The piano plays Soft tone until its
+  // recordings are ready (Q43).
+  function note(m, t, d, out, id, v, snd) {
+    let s = soundOf(id);
+    if (s.id === 'piano' && PIANO.state !== 'ready') s = SOUNDS[0];
     const g = AC.createGain();
     g.connect(out);
-    soundOf(id).play(hz(m), t, d, g, v || 1);
+    const e = snd || (bus && bus.send);
+    if (s.echo && e) g.connect(e);
+    s.play(hz(m), t, d, g, v || 1, m);
   }
   // a fresh output for what's about to play; the old one fades out (Stop: about a third of a second)
   function newBus(fade) {
     if (bus) {
       const b = bus;
       b.gain.setTargetAtTime(0, AC.currentTime, fade || 0.04);
-      setTimeout(() => b.disconnect(), 700);
+      if (b.send) b.send.gain.setTargetAtTime(0, AC.currentTime, fade || 0.04);
+      setTimeout(() => {
+        b.disconnect();
+        if (b.send) b.send.disconnect();
+      }, 700);
     }
     bus = AC.createGain();
     bus.connect(master);
+    // its own send to the room echo (Q43), so Stop fades the echo of notes still to come too
+    bus.send = AC.createGain();
+    bus.send.connect(room);
     return bus;
+  }
+  // fade what's playing (Stop), its room echo with it
+  function fadeBus(tc) {
+    if (!AC || !bus) return;
+    bus.gain.setTargetAtTime(0, AC.currentTime, tc);
+    if (bus.send) bus.send.gain.setTargetAtTime(0, AC.currentTime, tc);
   }
   // a chord, rolled slightly like a hand on the keys
   function chord(ns, t, d, out, v) {
@@ -619,10 +760,13 @@ const PAT = (() => {
       t += len;
     });
     if (opt('drone')) {
-      const dg = AC.createGain();
+      const dg = AC.createGain(),
+        ds = AC.createGain();
       dg.gain.value = 0.5;
       dg.connect(bus);
-      note(k - 12, t0, t - t0, dg, 'soft', 0.9); // the held note underneath: the key an octave down, in Soft tone
+      ds.gain.value = 0.5;
+      ds.connect(bus.send);
+      note(k - 12, t0, t - t0, dg, 'soft', 0.9, ds); // the held note underneath: the key an octave down, in Soft tone
     }
     return { ns, end: t };
   }
@@ -708,7 +852,7 @@ const PAT = (() => {
     S.rKey = null;
     S.cue = false;
     AWAKE.set('pat', false);
-    if (AC && bus) bus.gain.setTargetAtTime(0, AC.currentTime, 0.12);
+    fadeBus(0.12);
     if (!quiet) NOW.ended('pattern');
     if (done) {
       const n = route().length;
@@ -739,7 +883,7 @@ const PAT = (() => {
     if (!audio()) return;
     if (S.playing) return;
     stopPreview(true);
-    NOW.start('pattern', 'sample', () => bus && bus.gain.setTargetAtTime(0, AC.currentTime, 0.05));
+    NOW.start('pattern', 'sample', () => fadeBus(0.05));
     newBus();
     fn(AC.currentTime + 0.05);
   }
@@ -780,7 +924,7 @@ const PAT = (() => {
     const t = toneNow;
     if (!t) return;
     toneNow = null;
-    if (AC && bus) bus.gain.setTargetAtTime(0, AC.currentTime, 0.08);
+    fadeBus(0.08);
     if (!byNow) NOW.ended('pattern', 'tone');
     if (t.onEnd)
       try {
@@ -1118,7 +1262,7 @@ const PAT = (() => {
   };
   function stopPreview(quiet) {
     if (S.preview == null) return;
-    if (AC && bus) bus.gain.setTargetAtTime(0, AC.currentTime, 0.06);
+    fadeBus(0.06);
     S.preview = null;
     clearTimeout(pvT);
     if (!quiet) NOW.ended('pattern');
@@ -2729,5 +2873,27 @@ const PAT = (() => {
     triad,
     homeNotes,
     geom,
+    // Q43, for the tests: the piano's loading state, and offline(secs, fn), which renders what fn(t) schedules (through
+    // note(), chord() or round() into the bus) through a fresh output in an OfflineAudioContext; resolves the AudioBuffer
+    piano: () => PIANO.state,
+    note: (m, t, d, id, v) => note(m, t, d, bus, id || opt('sound'), v),
+    chord: (ns, t, d, v) => chord(ns, t, d, bus, v),
+    offline(secs, fn, rate) {
+      rate = rate || 48000;
+      const C = new OfflineAudioContext(2, Math.ceil(rate * secs), rate),
+        was = [AC, master, room, bus],
+        o = output(C);
+      AC = C;
+      master = o.input;
+      room = o.echo;
+      bus = null;
+      try {
+        newBus();
+        fn(0.05);
+      } finally {
+        [AC, master, room, bus] = was;
+      }
+      return C.startRendering();
+    },
   };
 })();
