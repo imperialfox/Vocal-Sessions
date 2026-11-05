@@ -4,7 +4,9 @@ when scrolling, Today's gradient and its switch in Settings › Appearance, the 
 for the doors Ivan chose (and the zoom kept everywhere else), and the tab bar's collapse into a pill at the left.
 3.33 Status bar glow (Q23): the page runs behind the status bar, and nothing sits under the clock.
 Q27 Landscape tab bar fit: with the iPhone on its side, every tab's label shows in full beside the search circle.
-VS_NATIVE=layout,edge,gradient,push,collapse,status,landfit,rests runs only those parts."""
+Q52 The page behind a sheet follows the sheet (D21), the push on kit part 10's numbers (D22) and the kit's 100 ms
+Reduce Motion fades (D20).
+VS_NATIVE=layout,edge,gradient,push,collapse,status,landfit,rests,behind runs only those parts."""
 import os
 from harness import with_song_practice, now, iso, fix, until
 from test_fuzz import TONES
@@ -18,6 +20,8 @@ IPHONE = "document.documentElement.style.setProperty('--sat','62px');document.do
 QUIET = "!document.getAnimations().some(a=>(a.playState==='running'||a.playState==='pending')&&a.effect.getTiming().iterations!==Infinity)&&!ZOOM.busy()"
 CLEAN = "!document.querySelector('.zm')&&!document.querySelector('.zm-src')&&!ZOOM.busy()"
 BACK = '#barL [aria-label^="Back"]'
+# Q52 the durations (ms, at speed 1) of the zoom layer's running opacity fades
+RMS = "[...new Set([...document.querySelectorAll('.zm, .zm *')].flatMap(e=>e.getAnimations()).filter(a=>a.playState!=='finished').map(a=>Math.round(a.effect.getTiming().duration)))]"
 WHERE = "U.tab+'|'+(U.view||'')"
 # the push layer now: the pushed page's and the page underneath's sideways offsets, and the dimming
 PUSH = """(()=>{const l=document.querySelector('.zm.push');if(!l)return null;const m=e=>new DOMMatrix(getComputedStyle(e).transform).m41;
@@ -261,7 +265,7 @@ def push(b, t):
         if pg.locator(BACK).count():
             pg.click(BACK); pg.wait_for_timeout(260)
             p = pg.evaluate(PUSH)
-            ok(p and p['page'] > 5 and p['under'] > -117, f'{name}: Back slides it away to the right ({p})')
+            ok(p and p['page'] > 5 and p['under'] > -129, f'{name}: Back slides it away to the right ({p})')
             quiet(pg)
             w, c, y = pg.evaluate(WHERE), pg.evaluate(CLEAN), pg.evaluate("scrollY")
             ok(w == back_to and c and abs(y - y0) < 2, f'{name}: back on {back_to}, where the list was, nothing left over ({w}, clean {c}, {y} vs {y0})')
@@ -375,7 +379,9 @@ def push(b, t):
         cdp.send('Input.dispatchTouchEvent', {'type': 'touchMove', 'touchPoints': [{'x': 120 + 10 * i, 'y': 502}]})
         pg.wait_for_timeout(16)
     p = pg.evaluate(PUSH)
-    ok(p and abs(p['page'] - 60) < 2 and abs(p['under'] + 0.3 * (390 - 60)) < 2, f'mid-swipe the page follows the finger and the one underneath starts sliding back ({p})')
+    ok(p and abs(p['page'] - 60) < 2 and abs(p['under'] + 0.33 * (390 - 60)) < 2, f'mid-swipe the page follows the finger and the one underneath starts sliding back ({p})')
+    # Q52 (D22): kit part 10's numbers, the page underneath 33% of the width left and the dim 10%, both in step with the page
+    ok(p and abs(p['dim'] - 0.1 * (390 - 60) / 390) < 0.004, f'mid-way the dim is 10% at full cover, in step ({p})')
     ok(pg.locator('.zm.push .zm-under .zm-shot').count() == 1, 'with the screen it came from shown underneath')
     cdp.send('Input.dispatchTouchEvent', {'type': 'touchEnd', 'touchPoints': []})
     cdp.detach()
@@ -403,12 +409,21 @@ def push(b, t):
     pg.wait_for_function("document.querySelector('.zm.push .zm-page')&&document.querySelector('.zm.push .zm-page').getAnimations().length>0", timeout=5000)
     keys = pg.evaluate("[...document.querySelectorAll('.zm, .zm *')].flatMap(e=>e.getAnimations()).flatMap(a=>Object.keys(a.effect.getKeyframes()[0])).filter(k=>!['offset','easing','composite','computedOffset'].includes(k))")
     ok(keys and set(keys) == {'opacity'}, f'Reduce Motion: a push is a short fade ({sorted(set(keys))})')
+    ok(pg.evaluate(RMS) == [100], f'Reduce Motion: the push fade is the kit\'s 100 ms (Q52, D20) ({pg.evaluate(RMS)})')
     quiet(pg)
     pg.click(BACK)
     keys = pg.evaluate("[...document.querySelectorAll('.zm, .zm *')].flatMap(e=>e.getAnimations()).flatMap(a=>Object.keys(a.effect.getKeyframes()[0])).filter(k=>!['offset','easing','composite','computedOffset'].includes(k))")
     ok(set(keys) <= {'opacity'}, 'and so is Back')
+    ok(pg.evaluate(RMS) in ([100], []), f'and Back\'s fade is 100 ms too ({pg.evaluate(RMS)})')
     quiet(pg)
     ok(pg.evaluate(WHERE) == 'songs|' and pg.evaluate(CLEAN), 'back on Songs')
+    # Q52 (D20): a kit sheet fades over the kit's 100 ms (the app's blanket rule used to stretch it to 200 ms), and so
+    # does every other Reduce Motion transition; the session flash keeps its cue length
+    pg.evaluate("U.calMonth=new Date(new Date().getFullYear(),new Date().getMonth(),1);U.calDay=null;U.sheet='calendar';U.sd={};render()")
+    until(pg, "!!document.querySelector('.pk-sheet')")
+    d = pg.evaluate("(()=>{const s=getComputedStyle(document.querySelector('.pk-sheet')),w=getComputedStyle(document.querySelector('.wrap'));const at=(st,p)=>{const ps=st.transitionProperty.split(','),ds=st.transitionDuration.split(',');const i=ps.findIndex(x=>x.trim()===p);return i<0?null:ds[i%ds.length].trim()};return {sheet:at(s,'opacity'),wrap:w.transitionDuration,ms:MOTION.reducedMs(),cue:MOTION.CUE.flash}})()")
+    ok(d['sheet'] == '0.1s' and d['wrap'] == '0.1s' and d['ms'] == 100 and d['cue'] == 650,
+       f'Reduce Motion: a kit sheet fades in 100 ms, the page behind too, and the cue keeps 650 ms ({d})')
     pg.context.close()
     pg = t.page(b, 390, 844, data=data())
     pg.evaluate("window._zm=0;new MutationObserver(m=>m.forEach(r=>r.addedNodes.forEach(n=>{if(n.classList&&n.classList.contains('zm'))window._zm++}))).observe(document.body,{childList:true})")
@@ -626,6 +641,44 @@ def rests(b, t):
     pg.context.close()
 
 
+def behind(b, t):
+    """Q52 (D21) · The page behind a sheet follows the sheet: it shrinks to 0.94 on the kit's sheet spring with no
+    overshoot, and comes back on the sheet's leave timing (the kit's --dur-leave and --ease-accel), in slow motion."""
+    ok = t.ok
+    pg = t.page(b, 390, 844, data=data(), init=ON)
+    quiet(pg)
+    SC = "(()=>{const m=new DOMMatrix(getComputedStyle(document.querySelector('.wrap')).transform);return Math.round(m.a*10000)/10000})()"
+    TR = "(()=>{const s=getComputedStyle(document.querySelector('.wrap'));return {d:s.transitionDuration,e:s.transitionTimingFunction}})()"
+    sq = lambda e: e.replace(' ', '')
+    rest = pg.evaluate(TR)
+    lv = pg.evaluate("(()=>{const h=getComputedStyle(document.documentElement);return {l:parseFloat(h.getPropertyValue('--dur-leave')),e:h.getPropertyValue('--ease-accel').trim()}})()")
+    ok(abs(float(rest['d'][:-1]) * 1000 - lv['l'] * SLOW) < 1 and sq(rest['e']) == sq(lv['e']),
+       f'at rest .wrap comes back on the kit sheet\'s leave timing, at the speed ({rest}, {lv})')
+
+    def sample(n=40):
+        out = []
+        for _ in range(n):
+            out.append(pg.evaluate(SC)); pg.wait_for_timeout(30)
+        return out
+    pg.evaluate("U.calMonth=new Date(new Date().getFullYear(),new Date().getMonth(),1);U.calDay=null;U.sheet='calendar';U.sd={};render()")
+    op = pg.evaluate(TR)
+    sp = pg.evaluate("(()=>{const h=getComputedStyle(document.documentElement);return {d:parseFloat(h.getPropertyValue('--dur-sheet')),e:h.getPropertyValue('--ease-sheet').trim()}})()")
+    # (the browser rewrites a linear() curve's numbers when it computes it, so the easing is checked as the spring's kind)
+    ok(abs(float(op['d'][:-1]) * 1000 - sp['d']) < 1 and sp['d'] > 0 and op['e'].startswith('linear(') and sp['e'].startswith('linear('),
+       f'opening, .wrap shrinks on the kit\'s sheet spring ({op["d"]}, {sp["d"]} ms)')
+    xs = sample()
+    ok(min(xs) >= 0.9395 and any(0.945 < x < 0.995 for x in xs) and all(xs[i + 1] <= xs[i] + 0.0005 for i in range(len(xs) - 1)),
+       f'it eases down to 0.94 with no overshoot ({xs[:12]}… {xs[-1]})')
+    quiet(pg)
+    pg.evaluate("U.sheet=null;render()")
+    ys = sample(60)
+    quiet(pg)
+    ys.append(pg.evaluate(SC))
+    ok(max(ys) <= 1.0005 and any(0.945 < y < 0.995 for y in ys) and all(ys[i + 1] >= ys[i] - 0.0005 for i in range(len(ys) - 1)) and ys[-1] == 1,
+       f'closing, it comes back to full size without passing it ({ys[:12]}… {ys[-1]})')
+    pg.context.close()
+
+
 def run(b, t):
     if wanted('layout'): layout(b, t)
     if wanted('edge'): edge(b, t)
@@ -635,3 +688,4 @@ def run(b, t):
     if wanted('status'): status(b, t)
     if wanted('landfit'): landfit(b, t)
     if wanted('rests'): rests(b, t)
+    if wanted('behind'): behind(b, t)

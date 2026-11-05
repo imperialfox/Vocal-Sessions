@@ -9,6 +9,27 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.65 · 5 Nov 2026
+*Sheets, pages and Reduce Motion move the kit's way (Q52)*
+<!-- area: look -->
+
+From the UI consistency audit of 3.62. Three moves now follow the parts kit, so the app has one feel everywhere and nothing settles after it should have stopped.
+
+**The page behind a sheet**
+- When a sheet opens, the page behind shrinks back on the same spring as the sheet, with no bounce at the end.
+- When the sheet closes, the page comes back on the sheet's own leaving timing, so the two move as one.
+
+**Opening a page from a list**
+- When a page slides in from the right, the page underneath moves a third of the way left and dims a little less, as iOS does.
+
+**Reduce Motion**
+- Fades that replace movement are quicker: 100 ms, the kit's length, in place of 200 ms. Sheets fade in and out in 100 ms again (the app was stretching them).
+- The green flash when a session step is done keeps a visible length (650 ms), since it's telling you something.
+
+Every page below can sit behind a sheet or slide in; every sheet's Reduce Motion fade changed too.
+
+Screens: VS-001, VS-002, VS-003, VS-004, VS-005, VS-006, VS-007, VS-008, VS-009, VS-010, VS-011, VS-012, VS-013, VS-014, VS-015, VS-016, VS-017, VS-018, VS-019, VS-020, VS-021, VS-022, VS-023, VS-024, VS-025, VS-026, VS-027, VS-028, VS-029, VS-030, VS-097, VS-108
+
 ## 3.64 · 5 Nov 2026
 *One search bar for Songs and Search (Q51)*
 <!-- area: songs -->

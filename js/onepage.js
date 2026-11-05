@@ -172,7 +172,7 @@ const OP = (() => {
             { opacity: 1, background: 'var(--rg-green)', offset: 0.3 },
             { opacity: 0, background: 'var(--rg-green)' },
           ],
-          { duration: 700, easing: 'ease-out' }
+          { duration: MOTION.CUE.flash * MOTION.speed(), easing: 'ease-out' } // Q52: a cue, one shared length
         );
       later(key, () => openBox(key), MOTION.speed() > 0 ? 300 : 0);
       return;

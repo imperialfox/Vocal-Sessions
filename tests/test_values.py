@@ -260,7 +260,6 @@ KNOWN = [
     'corner · .pplay · border-radius · 24px',
     'corner · .pwin · border-radius · 22px',
     'corner · .preset · border-radius · 16px',
-    'ease · .wrap · transition · cubic-bezier(0.3, 1.3, 0.5, 1)',
     'ease · .tl-in.seen · transition · ease',
     'ease · .sw .fg · transition · ease',
     'ease · .notebox · animation · ease',
@@ -286,7 +285,6 @@ KNOWN = [
     'ease · .pdraw .prip · animation · ease-out',
     'ease · .pvowel b.swap · animation · cubic-bezier(0.3, 1.4, 0.5, 1)',
     'ease · .pt · transition · cubic-bezier(0.3, 1.5, 0.5, 1)',
-    'duration · .wrap · transition · 0.45s',
     'duration · #lgchart .ar · transition · 0.25s',
     'duration · .tl-card · transition · 0.4s',
     'duration · .tl-more svg.i · transition · 0.3s',
@@ -378,9 +376,12 @@ def named(b, t):
     kit = kit[kit.index('const SPRINGS = {'):]
     kit = kit[:kit.index('};')]
     springs = re.findall(r"^\s{4}'?([\w-]+)'?: ", kit, re.M)
-    defined = set(got) | {f'{a}-{s}' for s in springs for a in ('ease', 'dur')}
+    # Q52 and the kit's own named timings (--dur-reduced, --dur-leave, --ease-accel …), from its defaults block
+    kcss = open(os.path.join(ROOT, 'css', 'parts-kit.css'), encoding='utf-8').read()
+    ktok = set(re.findall(r'^\s*--((?:ease|dur)-[a-z0-9-]+):', kcss, re.M))
+    defined = set(got) | {f'{a}-{s}' for s in springs for a in ('ease', 'dur')} | ktok
     used = set(re.findall(r'var\(--((?:r|ease|dur)-[a-z0-9-]+|press)\b', css))
-    ok(used <= defined, f'every named value used is defined, in app.css or as a parts kit spring ({used - defined})')
+    ok(used <= defined, f'every named value used is defined, in app.css, as a parts kit spring or a kit timing ({used - defined})')
     _, names = js_curves()
     ok(set(names) == {'pop', 'knob', 'out'} and all(same_curve(names[k], NAMED['ease-' + k]) for k in names),
        f'MOTION.EASE holds the same three easings for code ({names})')

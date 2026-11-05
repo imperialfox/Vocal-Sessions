@@ -367,12 +367,15 @@ html.glass-solid {
 }
 .wrap {
   /* Q44: the corner isn't animated any more (.wrap has no background or clipping, so it never showed, but cost a
-     repaint every frame) */
-  transition: transform 0.45s cubic-bezier(0.3, 1.3, 0.5, 1);
+     repaint every frame). Q52 (D21): the page behind a sheet follows the sheet. It comes back on the kit sheet's leave
+     timing (this rule, used when sheet-open goes) and shrinks on the kit's sheet spring (the rule below, used when it
+     comes), so no overshoot. --dur-sheet already carries the speed; --dur-leave takes it here, as the kit does. */
+  transition: transform calc(var(--dur-leave) * var(--pk-speed)) var(--ease-accel);
 }
 body.sheet-open .wrap {
   transform: scale(0.94);
   border-radius: 28px;
+  transition: transform var(--dur-sheet) var(--ease-sheet);
 }
 
 /* Q45 the top bar is the parts kit's (parts 2 and 51): #bar is a .pk-topbar holding its soft edge (.pk-edge: the page
@@ -2776,14 +2779,14 @@ body.reg .pgrid > div > .hdr:first-child {
   }
 }
 /* 3.14 Reduce Motion (3.21: on <html class="motion-reduced">, set by MOTION from the system or Settings ›
-   Accessibility): nothing moves, but changes still fade in and out over about 0.2 s (it used to switch every
-   animation and transition off, so things snapped). Only fades and colour changes are allowed to ease; anything that
+   Accessibility): nothing moves, but changes still fade in and out over the kit's --dur-reduced (100 ms since Q52,
+   D20; 0.2 s before; it used to switch every animation and transition off, so things snapped). Only fades and colour changes are allowed to ease; anything that
    used to slide, scale or pop now fades in its place. Timers, the level meter and the recording dot stay live. */
 html.motion-reduced *,
 html.motion-reduced *::before,
 html.motion-reduced *::after {
   transition-property: opacity, color, background-color, border-color, box-shadow, fill, stroke !important;
-  transition-duration: var(--dur-fade) !important;
+  transition-duration: calc(var(--dur-reduced) * var(--pk-speed)) !important; /* Q52 (D20): the kit's 100 ms */
   transition-delay: 0s !important;
   transition-timing-function: ease-out !important;
 }

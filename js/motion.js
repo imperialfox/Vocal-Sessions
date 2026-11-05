@@ -20,6 +20,9 @@ const MOTION = (() => {
   // they match): for code that needs a fixed-length move rather than a spring
   const EASE = { pop: 'cubic-bezier(.3,1.7,.45,1)', knob: 'cubic-bezier(.3,1.35,.5,1)', out: 'cubic-bezier(.2,.8,.2,1)' };
   const STAGGER = { word: 30, row: 45, bar: 30 };
+  // Q52 (D20) cues: a flash that tells you something happened (the session's green flash when a step is done), not a
+  // transition, so under Reduce Motion it keeps a visible length rather than the kit's 100 ms fade. Times the speed.
+  const CUE = { flash: 650 };
   const BLUR_MAX = 1.5; // px. Ivan chose 1.5 over 2 so far lyrics stay recognisable
   const KEY = 'vocalMotion',
     RKEY = 'vocalReduce';
@@ -50,6 +53,12 @@ const MOTION = (() => {
   const ease = (name) => (C[name] || C.gentle).ease;
   // the delay for item i, for MOTION.animate's delay (which applies the speed itself, so this doesn't)
   const stagger = (i, kind) => i * (STAGGER[kind] || STAGGER.row);
+  // Q52 (D20) the kit's Reduce Motion fade (--dur-reduced, 100 ms) in ms, before the speed: every fade that replaces
+  // movement under Reduce Motion uses it
+  const reducedMs = () => {
+    const m = /^([\d.]+)(ms|s)$/.exec(getComputedStyle(document.documentElement).getPropertyValue('--dur-reduced').trim());
+    return m ? +m[1] * (m[2] === 's' ? 1000 : 1) : 100;
+  };
 
   // the kit writes the CSS variables and classes; this re-reads this device's choices and asks it to
   function publish() {
@@ -70,7 +79,7 @@ const MOTION = (() => {
     if (!el || !el.animate) return null;
     if (!on()) {
       if (reduced() && o.fade && speed() > 0)
-        return el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 180, easing: 'ease-out' });
+        return el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: reducedMs() * speed(), easing: 'ease-out' });
       return null;
     }
     const name = o.spring || 'gentle';
@@ -132,6 +141,7 @@ const MOTION = (() => {
     SPRINGS,
     EASE,
     STAGGER,
+    CUE,
     BLUR_MAX,
     curve,
     on,
@@ -139,6 +149,7 @@ const MOTION = (() => {
     dur,
     ease,
     stagger,
+    reducedMs,
     animate,
     spring,
     setSpeed,

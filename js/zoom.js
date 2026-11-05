@@ -26,8 +26,8 @@
 const ZOOM = (() => {
   const SWIPE_CLOSE = 0.22, // of the width
     FLICK = 0.45, // px per ms, to the right
-    PUSH_UNDER = 0.3, // how far left the page underneath moves, of the width
-    PUSH_DIM = 0.12; // and how much it dims
+    PUSH_UNDER = 0.33, // how far left the page underneath moves, of the width (Q52, D22: kit part 10)
+    PUSH_DIM = 0.1; // and how much it dims (kit part 10)
     // things with their own sideways gesture: a swipe back never starts on them
     OWN =
       '.sw, .srow, input, textarea, select, [contenteditable], .fw, #pchart, #lgchart, .chart, .seg, .dock, .crow, ' +
@@ -47,6 +47,8 @@ const ZOOM = (() => {
   const busy = () => typeof LAUNCH !== 'undefined' && LAUNCH.busy();
   const moving = () => MOTION.speed() > 0 && !busy(); // zooms draw (as fades with Reduce Motion)
   const reduced = () => MOTION.reduced();
+  // Q52 (D20): every Reduce Motion fade here is the kit's --dur-reduced (100 ms); to() applies the speed
+  const RM = () => MOTION.reducedMs();
   const navMs = () => MOTION.dur('nav') / Math.max(MOTION.speed(), 0.01); // the nav spring's length at normal speed
   const T2 = (x, y) => 'translate(' + x + 'px,' + y + 'px)';
 
@@ -374,7 +376,7 @@ const ZOOM = (() => {
     if (reduced()) {
       z.win.style.opacity = '0';
       requestAnimationFrame(() => {
-        to(z, z.win, 'opacity', '1', { ms: 200, easing: 'ease-out' });
+        to(z, z.win, 'opacity', '1', { ms: RM(), easing: 'ease-out' });
         whenDone(z, done);
       });
       return true;
@@ -486,7 +488,7 @@ const ZOOM = (() => {
       // a pushed page with nowhere to slide back to: it fades
       z.under.remove();
       z.dim.remove();
-      to(z, z.page, 'opacity', '0', { ms: reduced() ? 180 : 220, easing: 'ease-out' });
+      to(z, z.page, 'opacity', '0', { ms: reduced() ? RM() : 220, easing: 'ease-out' });
       whenDone(z, () => end(z));
       return true;
     }
@@ -495,7 +497,7 @@ const ZOOM = (() => {
       z.under = null;
     }
     const cur = getComputedStyle(z.win).transform;
-    to(z, z.win, 'opacity', '0', { ms: reduced() ? 180 : 240, easing: 'ease-out' });
+    to(z, z.win, 'opacity', '0', { ms: reduced() ? RM() : 240, easing: 'ease-out' });
     if (!reduced()) to(z, z.win, 'transform', (cur === 'none' ? '' : cur + ' ') + 'scale(0.94)', { ms: 240, easing: 'ease-out' });
     whenDone(z, () => end(z));
     return true;
@@ -549,7 +551,7 @@ const ZOOM = (() => {
     if (reduced()) {
       z.page.style.opacity = '0';
       requestAnimationFrame(() => {
-        to(z, z.page, 'opacity', '1', { ms: 200, easing: 'ease-out' });
+        to(z, z.page, 'opacity', '1', { ms: RM(), easing: 'ease-out' });
         whenDone(z, () => end(z));
       });
       return true;
@@ -581,7 +583,7 @@ const ZOOM = (() => {
     if (reduced()) {
       to(z, z.under, 'transform', 'none');
       to(z, z.dim, 'opacity', '0');
-      to(z, z.page, 'opacity', '0', { ms: 180, easing: 'ease-out' });
+      to(z, z.page, 'opacity', '0', { ms: RM(), easing: 'ease-out' });
       whenDone(z, () => end(z));
       return true;
     }
@@ -771,7 +773,7 @@ const ZOOM = (() => {
     z.ghost.style.opacity = '0';
     z.layer.appendChild(z.ghost);
     if (reduced()) {
-      to(z, z.win, 'opacity', '0', { ms: 180, easing: 'ease-out' });
+      to(z, z.win, 'opacity', '0', { ms: RM(), easing: 'ease-out' });
       whenDone(z, () => end(z));
       return;
     }

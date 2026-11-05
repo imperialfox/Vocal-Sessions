@@ -884,7 +884,7 @@ const APPL = (() => {
           { opacity: 1, background: 'var(--rg-green)', offset: 0.3 },
           { opacity: 0, background: 'var(--rg-green)' },
         ],
-        { duration: 600, easing: 'ease-out' }
+        { duration: MOTION.CUE.flash * MOTION.speed(), easing: 'ease-out' } // Q52: a cue, one shared length
       );
       return later(fin, 450);
     }
