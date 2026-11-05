@@ -254,7 +254,7 @@ const SET = (() => {
       '</button>' +
       '<a class="row" href="' +
       REPO +
-      '" target="_blank" rel="noopener">' +
+      '" target="_blank" rel="noopener" id="githubLink">' +
       ico('code') +
       '<span class="lbl">View on GitHub</span><span class="mut">' +
       out +

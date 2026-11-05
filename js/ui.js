@@ -168,7 +168,7 @@ function renderBar1() {
         ? ''
         : '<a class="circ glass" href="' +
           VIDEO +
-          '" target="_blank" rel="noopener" aria-label="Open coach video">' +
+          '" target="_blank" rel="noopener" id="coachVideoLink" aria-label="Open coach video">' +
           ICON.video +
           '</a>') +
       (unstarted()
@@ -431,7 +431,7 @@ const confirmSheet = (title, text, btn, action, k, cancel) =>
       esc(k || '') +
       '">' +
       btn +
-      '</button><button class="ghost" data-a="close">' +
+      '</button><button class="ghost" data-a="close" data-v="cancel">' +
       (cancel || 'Cancel') +
       '</button>',
     '',
@@ -519,7 +519,7 @@ function renderSheet() {
         '<p class="note">Tap words that describe how it went. These are just for this exercise.</p>' +
           chipsHTML(wordList('x_' + k, EX_WORDS[k] || EX_WORDS_DEFAULT), n.w, 'x_' + k) +
           noteBlock('xnText', n.t, 'More detail on ' + e.name.toLowerCase()) +
-          '<div style="margin-top:14px"><button class="cta" data-a="close">Done</button></div>' +
+          '<div style="margin-top:14px"><button class="cta" data-a="close" data-v="done">Done</button></div>' +
           (n.w.length || n.t
             ? '<button class="ghost" data-a="xnClear" style="color:var(--danger)">Clear notes</button>'
             : ''),
@@ -535,7 +535,7 @@ function renderSheet() {
         '<p class="note">Tap words that describe this take.</p>' +
           chipsHTML(wordList('take', TAKE_WORDS), t.note.w, 'take') +
           noteBlock('tnText', t.note.t, 'More detail on this take') +
-          '<div style="margin-top:14px"><button class="cta" data-a="close">Done</button></div>' +
+          '<div style="margin-top:14px"><button class="cta" data-a="close" data-v="done">Done</button></div>' +
           // Q20: the take's row is play, name, waveform and star; saving it and deleting it are here
           '<button class="ghost" data-a="shareTake" data-k="' +
           esc(t.id) +
@@ -548,7 +548,7 @@ function renderSheet() {
   } else if (s === 'addWord')
     h = sheetWrap(
       'Your own words',
-      '<p class="note">It’s saved as a chip for next time.</p><input class="field" id="wordIn" maxlength="30" placeholder="Felt it in my chest" autocomplete="off"><div style="margin-top:14px"><button class="cta" data-a="saveWord">Add</button></div><button class="ghost" data-a="close">Cancel</button>'
+      '<p class="note">It’s saved as a chip for next time.</p><input class="field" id="wordIn" maxlength="30" placeholder="Felt it in my chest" autocomplete="off"><div style="margin-top:14px"><button class="cta" data-a="saveWord">Add</button></div><button class="ghost" data-a="close" data-v="cancel">Cancel</button>'
     );
   else if (s === 'edit' && E) h = editSheet();
   else if (s === 'addEx')
@@ -559,7 +559,7 @@ function renderSheet() {
           (f, i) =>
             '<button class="chip' + (i === 0 ? ' on' : '') + '" data-a="focus" data-v="' + f + '">' + f + '</button>'
         ).join('') +
-        '</div><div class="hdr">What it is (optional)</div><textarea class="field" id="exWhat" maxlength="400" placeholder="Slide up and down on ng, keeping it light"></textarea><div style="margin-top:14px"><button class="cta" data-a="saveEx">Add exercise</button></div><button class="ghost" data-a="close">Cancel</button>'
+        '</div><div class="hdr">What it is (optional)</div><textarea class="field" id="exWhat" maxlength="400" placeholder="Slide up and down on ng, keeping it light"></textarea><div style="margin-top:14px"><button class="cta" data-a="saveEx">Add exercise</button></div><button class="ghost" data-a="close" data-v="cancel">Cancel</button>'
     );
   else if (s === 'editWhat') {
     const e = exById(k) || {};
@@ -569,12 +569,12 @@ function renderSheet() {
         esc(e.what || '') +
         '</textarea><div style="margin-top:14px"><button class="cta" data-a="saveWhat" data-k="' +
         esc(k) +
-        '">Save</button></div><button class="ghost" data-a="close">Cancel</button>'
+        '">Save</button></div><button class="ghost" data-a="close" data-v="cancel">Cancel</button>'
     );
   } else if (s === 'addSong')
     h = sheetWrap(
       'Add song',
-      '<input class="field" id="songIn" maxlength="60" placeholder="Versace on the Floor · bridge" autocomplete="off"><div class="err" id="songErr" hidden></div><p class="note" style="margin-top:8px">Include the section you’re working on, so takes stay grouped.</p><div style="margin-top:8px"><button class="cta" data-a="saveSong">Add song</button></div><button class="ghost" data-a="close">Cancel</button>'
+      '<input class="field" id="songIn" maxlength="60" placeholder="Versace on the Floor · bridge" autocomplete="off"><div class="err" id="songErr" hidden></div><p class="note" style="margin-top:8px">Include the section you’re working on, so takes stay grouped.</p><div style="margin-top:8px"><button class="cta" data-a="saveSong">Add song</button></div><button class="ghost" data-a="close" data-v="cancel">Cancel</button>'
     );
   else if (s === 'delEx') {
     const e = exById(k);
@@ -635,7 +635,7 @@ function renderSheet() {
         (size / 1048576).toFixed(1) +
         ' MB</span></div><div class="row"><span class="lbl">Starred</span><span class="mut">' +
         TAKES.filter((t) => t.star).length +
-        '</span></div></div><p class="note" style="margin-top:10px">Recordings live on this phone and in your backups. Use Share on a take to save it to iCloud Drive on its own.</p><button class="cta red" data-a="sheet" data-v="clearRec">Delete all recordings</button><button class="ghost" data-a="close">Done</button>'
+        '</span></div></div><p class="note" style="margin-top:10px">Recordings live on this phone and in your backups. Use Share on a take to save it to iCloud Drive on its own.</p><button class="cta red" data-a="sheet" data-v="clearRec">Delete all recordings</button><button class="ghost" data-a="close" data-v="done">Done</button>'
     );
   } else if (s === 'clearRec')
     h = confirmSheet(
@@ -671,7 +671,7 @@ function renderSheet() {
   else if (s === 'resetAll')
     h = sheetWrap(
       'Reset all data?',
-      '<p class="note">Deletes your history, minutes, streak, custom exercises, songs, song practice and recordings on this phone. This can’t be undone.</p><button class="cta" data-a="exportPrep" style="margin-bottom:10px">Export a backup first</button><button class="cta red" data-a="resetAll">Delete everything</button><button class="ghost" data-a="close">Cancel</button>'
+      '<p class="note">Deletes your history, minutes, streak, custom exercises, songs, song practice and recordings on this phone. This can’t be undone.</p><button class="cta" data-a="exportPrep" style="margin-bottom:10px">Export a backup first</button><button class="cta red" data-a="resetAll">Delete everything</button><button class="ghost" data-a="close" data-v="cancel">Cancel</button>'
     );
   else if (s === 'discard')
     h = isSong()
@@ -731,7 +731,7 @@ function renderSheet() {
           : '') +
         '<button class="cta" data-a="exportSave"' +
         (P.busy ? ' disabled' : '') +
-        '>Save backup</button><button class="ghost" data-a="close">Cancel</button>'
+        '>Save backup</button><button class="ghost" data-a="close" data-v="cancel">Cancel</button>'
     );
   } else if (s === 'persist') {
     const on = PERSIST === true;
@@ -755,7 +755,7 @@ function renderSheet() {
         ' is very low on space, iOS can clear data saved by websites and web apps. Vocal Sessions asks iOS to protect its sessions and recordings from that.</p>' +
         '<p class="note">Either way, your backups in iCloud Drive are what keep everything safe.</p>' +
         (PERSIST === false ? '<button class="cta" data-a="persistAsk">Ask again</button>' : '') +
-        '<button class="ghost" data-a="exportPrep">Back up now</button><button class="ghost" data-a="close">Done</button>'
+        '<button class="ghost" data-a="exportPrep">Back up now</button><button class="ghost" data-a="close" data-v="done">Done</button>'
     );
   } else if (s === 'bkReport' && pendingImport) h = bkReportHTML(pendingImport, U.sd.mode);
   else if (s === 'bkGuide') h = bkGuideHTML();
@@ -947,7 +947,7 @@ function calendarSheet() {
         hm(sm) +
         '</span></div>'
       : '') +
-    '</div><button class="ghost" data-a="close">Done</button>';
+    '</div><button class="ghost" data-a="close" data-v="done">Done</button>';
   return sheetWrap('Practice calendar', b);
 }
 const editBtn = (id, lab) =>
@@ -1036,7 +1036,7 @@ function sessionBody(ss, mode) {
           '</div>'
         : '') +
       '</div>';
-  if (done) b += '<button class="ghost" data-a="close">Done</button>';
+  if (done) b += '<button class="ghost" data-a="close" data-v="done">Done</button>';
   if (!done)
     b +=
       '<button class="ghost" data-a="sheet" data-v="delSession" data-k="' +
@@ -1090,7 +1090,7 @@ function songSessionBody(ss, mode) {
   else if ((ss.takes || []).length) b += '<p class="foot">This practice’s takes are no longer on this phone.</p>';
   b +=
     '<p class="foot">Kept out of your focused goal and streak.</p>' +
-    (done ? '<button class="ghost" data-a="close">Done</button>' : '') +
+    (done ? '<button class="ghost" data-a="close" data-v="done">Done</button>' : '') +
     (done
       ? ''
       : '<button class="ghost" data-a="sheet" data-v="delSongSess" data-k="' +
@@ -1169,7 +1169,7 @@ function editSheet() {
     chipsHTML(wordList('how', HOW_WORDS), E.how, 'how') +
     noteBlock('edHowNote', E.howNote, 'Anything else about this ' + (song ? 'practice' : 'session'));
   b +=
-    '<p class="foot">Changing the minutes or date updates your monthly totals, streak and last-done dates.</p><div style="margin-top:14px"><button class="cta" data-a="saveEdit">Save changes</button></div><button class="ghost" data-a="close">Cancel</button>';
+    '<p class="foot">Changing the minutes or date updates your monthly totals, streak and last-done dates.</p><div style="margin-top:14px"><button class="cta" data-a="saveEdit">Save changes</button></div><button class="ghost" data-a="close" data-v="cancel">Cancel</button>';
   return sheetWrap('Edit ' + (song ? 'song practice' : 'session'), b);
 }
 
@@ -1304,11 +1304,28 @@ const SCR = (() => {
     return null;
   }
   const id = (key) => (entry(key) || { id: 'VS-???' }).id;
-  // data-name on the register's parts for this screen (and the shared ones) inside these elements
+  // Q48 names by action (SCREENS.actions): one lookup by data-a (and data-v), built once, so naming every button
+  // costs one pass over the buttons instead of one search per name
+  const live = (p) => !p.status || p.status === 'Live';
+  const BYACT = {};
+  SCREENS.actions.filter(live).forEach((p) => {
+    const m = p.sel.match(/^\[data-a="([^"]+)"\](?:\[data-v="([^"]+)"\])?$/);
+    if (m) BYACT[m[1] + (m[2] === undefined ? '' : '\u0000' + m[2])] = p.name;
+  });
+  const OWN = {}; // each screen's own list (shared, then its parts), built the first time it draws
+  const own = (s) => OWN[s ? s.id : ''] || (OWN[s ? s.id : ''] = SCREENS.shared.concat(s ? s.parts : []).filter(live));
+  // data-name on the named buttons inside these elements: by action first, then shared, then the screen's own parts,
+  // so a screen's own name wins
   function name(s, roots) {
-    const parts = SCREENS.shared.concat(s ? s.parts : []);
+    const parts = own(s);
     roots.forEach((r) => {
       if (!r) return;
+      (r.dataset.a ? [r, ...r.querySelectorAll('[data-a]')] : r.querySelectorAll('[data-a]')).forEach((el) => {
+        const a = el.dataset.a,
+          v = el.dataset.v,
+          n = (v !== undefined && BYACT[a + '\u0000' + v]) || BYACT[a];
+        if (n) el.dataset.name = n;
+      });
       parts.forEach((p) => r.querySelectorAll(p.sel).forEach((el) => (el.dataset.name = p.name)));
     });
   }
@@ -1354,7 +1371,9 @@ const SCR = (() => {
     const over = [...$('layer').querySelectorAll(OVER)].find((x) => x.dataset.screen);
     el.textContent = $('app').dataset.screen + (over ? ' · ' + over.dataset.screen : '');
   }
-  return { viewKey, id, screen, sheet, mark, label, BY };
+  // a button drawn on its own, outside any screen (the floating window's tab): its name only
+  const named = (el) => el && name(null, [el]);
+  return { viewKey, id, screen, sheet, mark, label, named, BY };
 })();
 
 function go(fn) {

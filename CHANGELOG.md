@@ -9,6 +9,25 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.61 · 5 Nov 2026
+*Every button has a name (Q48)*
+<!-- area: fixes -->
+
+Nothing changes on screen. Behind the scenes, every button and control in the app now has a permanent name, so notes, tests and the Visual App Atlas can point at it (`VS-009 › song-row`) and still find it after a redesign moves it.
+
+**Names**
+- About 280 new names, and the existing ones used wherever their button shows: every button, field, link, row and option, named by what it does or holds, never by where it sits or what it says.
+- Most are named by their action, so a button gets the same name on every screen it shows on. Back, Close, Done, Cancel and the parts kit's own buttons get one standard name each.
+- The Songs list's search button is now `song-search-field` (it was `search-field`, the name kept as an old name), since the app's own search field shows there too.
+- Settings › Delete everything: its confirm name pointed at the backup button beside it as well. It now points only at Delete everything.
+
+**Checks**
+- A new test fails if any button in the code has no name, if a name is the wrong shape or found by its position, or if one name points at two different buttons on a screen.
+- The Atlas taps by name, only while the right screen or sheet is showing, and finds the parts kit's sheets again, which it lost at 3.55.
+- `reference/elements.md` lists every name, written from the register.
+
+Screens: none
+
 ## 3.60 · 5 Nov 2026
 *Sheet music you can hear: dots, the print and a guide (Q47)*
 <!-- area: songs -->

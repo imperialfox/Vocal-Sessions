@@ -97,11 +97,11 @@ def register(b, t):
     # every part is in the code: its data-a / data-v value or its #id
     nopart = []
     for s in S:
-        for p in s['parts'] + ([] if s is not S[0] else R['shared']):
+        for p in s['parts'] + ([] if s is not S[0] else R['shared'] + R['actions']):
             for a in re.findall(r'data-a="([A-Za-z]+)"', p['sel']):
                 if not re.search(r'data-a=\\?"' + a + r'\\?"|\'' + a + r'\'', allsrc): nopart.append(s['id'] + ' › ' + p['name'])
             for i in re.findall(r'#([A-Za-z]+)', p['sel']):
-                if not re.search(r'id=\\?"' + i + r'\\?"|\.id = \'' + i + "'", allsrc) and i not in ('dock', 'barL', 'app'): nopart.append(s['id'] + ' › ' + p['name'])
+                if not re.search(r'id=\\?"' + i + r'\\?"|\.id = \'' + i + "'|'" + i + "'", allsrc) and i not in ('dock', 'barL', 'app'): nopart.append(s['id'] + ' › ' + p['name'])
     ok(not nopart, f'every named part’s button is still in the code ({nopart})')
     # docs links point at real headings
     secs = {s['file'] + '#' + s['anchor'] for s in ATLAS_DOCS.doc_sections(ROOT, INV.DOC_FILES)}
@@ -284,8 +284,111 @@ def saved_data(b, t):
     ok(look and all('`{' + f in row for f in look), f'every vocalLook field is in its row ({sorted(look)})')
 
 
+# ---------- Q48 every button and control has a name (MAINTAINING › Screen IDs › Naming rules) ----------
+# The kind word every new name ends in (rule 2), and the names from before Q48 that don't, kept as they are (rule 7).
+KIND_WORDS = ('button', 'row', 'switch', 'picker', 'field', 'slider', 'stepper', 'tile', 'card', 'tab', 'pill', 'chip', 'menu',
+              'line', 'bar', 'link', 'option', 'item', 'word', 'dot', 'grabber')
+OLD_NAMES = {'backup-nudge', 'week-goal', 'more-exercises-sort', 'step-summary', 'songs-sort', 'sheet-music-door', 'times',
+             'loop-strip', 'dots-view', 'sheet-view'}
+# actions that aren't buttons, each with why
+NOT_BUTTONS = {
+    'ckPickCancel': 'tap outside the length picker to close it; its Set button is named',
+    'clockClose': 'tap outside the session clock to close it; the clock’s own buttons are named',
+    'patHudClose': 'tap outside the speed panel to close it; its buttons are named',
+}
+# a router action: one action that opens different screens, so each value is its own button
+ROUTERS = {'sheet'}
+# standard roles (rule 6) may be different actions on one screen; every other name is one action per screen
+ROLES = {'back-button', 'close-button', 'cancel-button', 'confirm-button', 'done-button', 'save-button'}
+INTERACTIVE = "button,[data-a],input,select,textarea,a[href],[role=button],[role=switch],[role=slider],[role=tab],.pk-slider"
+UNNAMED_JS = """o=>{const out=[],dup={},quiet=[];const re=/^[a-z0-9]+(-[a-z0-9]+)*$/;
+ for(const r of o.roots.map(x=>document.querySelector(x)).filter(Boolean))for(const e of r.querySelectorAll(o.sel)){
+  const b=e.getBoundingClientRect();if(!b.width||!b.height||e.disabled||e.closest('[aria-hidden=true]'))continue;
+  if(o.skip.includes(e.dataset.a))continue;const n=e.dataset.name||'';
+  if(!re.test(n)){out.push((e.dataset.a||e.id||e.tagName.toLowerCase())+(e.dataset.v?'='+e.dataset.v:'')+' “'+(e.getAttribute('aria-label')||e.innerText||'').trim().slice(0,24)+'”');continue}
+  (dup[n]=dup[n]||new Set()).add(e.dataset.a||e.id||e.className);
+  if(e.matches('button,[role=button]')&&!e.getAttribute('aria-label')&&!(e.innerText||'').trim()&&!e.title)quiet.push(n)}
+ return {unnamed:out,dup:Object.entries(dup).filter(([n,s])=>s.size>1&&!o.roles.includes(n)).map(([n,s])=>n+' ('+[...s].join(', ')+')'),quiet}}"""
+
+
+def actions_in_code():
+    """Every data-a in the app's code (not the register, not js/vendor), and for a router each data-v it's written with."""
+    src = src_all() + open(os.path.join(ROOT, 'index.html'), encoding='utf-8').read()
+    acts, routed = set(), set()
+    for m in re.finditer(r'data-a=\\?"([A-Za-z][\w-]*)\\?"(?:\s*data-v=\\?"([A-Za-z][\w-]*)\\?")?', src):
+        acts.add(m.group(1))
+        if m.group(1) in ROUTERS and m.group(2): routed.add(m.group(1) + '=' + m.group(2))
+    acts |= set(re.findall(r"dataset\.a = '([A-Za-z]\w*)'", src))
+    return acts, routed
+
+
+def coverage(b, t):
+    ok = t.ok
+    pg = t.page(b)
+    R = pg.evaluate(REG)
+    live = lambda p: p.get('status', 'Live') == 'Live'
+    allp = [('shared', p) for p in R['shared']] + [('actions', p) for p in R['actions']] + [(s['id'], p) for s in R['screens'] if s['status'] == 'Live' for p in s['parts']]
+    sels = ' '.join(p['sel'] for _, p in allp if live(p))
+    acts, routed = actions_in_code()
+    named = set(re.findall(r'data-a="([^"]+)"', sels))
+    named_routes = {a + '=' + v for a, v in re.findall(r'data-a="([^"]+)"\]\[data-v="([^"]+)"', sels)}
+    miss = sorted(a for a in acts if a not in named and a not in NOT_BUTTONS and a not in ROUTERS)
+    miss += sorted(r for r in routed if r not in named_routes)
+    ok(not miss, f'every button in the code has a name: each data-a named in the register or on NOT_BUTTONS with a reason, each sheet it opens by its own name ({len(acts)} actions, {len(routed)} sheets opened by data-v; missing: {miss})')
+    ok(all(a in acts for a in NOT_BUTTONS), f'every NOT_BUTTONS action is still in the code ({[a for a in NOT_BUTTONS if a not in acts]})')
+    bad = [w + ' › ' + p['name'] for w, p in allp if live(p) and not (PART_RE.match(p['name']) and (p['name'] in OLD_NAMES or any(p['name'] == k or p['name'].endswith('-' + k) for k in KIND_WORDS)))]
+    ok(not bad, f'every name is lower case with hyphens and ends in a kind word (button, row, switch…), older names aside ({bad})')
+    pos = [w + ' › ' + p['name'] for w, p in allp if re.search(r':nth-|:first-child|:last-child|:first-of-type|:last-of-type', p['sel'])]
+    ok(not pos, f'no part is found by its position ({pos})')
+    st = [w + ' › ' + p['name'] for w, p in allp if not (live(p) or re.fullmatch(r'Retired in \d+\.\d+(\.\d+)?', p.get('status', '')))]
+    ok(not st, f'a part’s status is Live or Retired in a version ({st})')
+    clash = []
+    for s in R['screens']:
+        names = [p['name'] for p in s['parts'] if live(p)]
+        old = [w for p in s['parts'] for w in p.get('was', [])]
+        clash += [s['id'] + ' › ' + w for w in old if w in names]
+        clash += [s['id'] + ' › ' + p['name'] for p in s['parts'] if not live(p) and p['name'] in names]
+    ok(not clash, f'an old or retired name is never reused for another part on its screen ({clash})')
+    import subprocess
+    chk = subprocess.run([sys.executable, os.path.join(ROOT, 'tools', 'reference', 'elements.py'), '--check'], capture_output=True, text=True)
+    ok(chk.returncode == 0, 'reference/elements.md is up to date with the register (python3 tools/reference/elements.py writes it)')
+    pg.context.close()
+    # on screen: every visible control on every screen and sheet the sample data reaches carries a name
+    pg = t.page(b)
+    song(pg, marks=True)
+    S = R['screens']
+    unnamed, dups, quiet = [], [], set()
+    opt = {'sel': INTERACTIVE, 'skip': list(NOT_BUTTONS), 'roles': sorted(ROLES)}
+    for s in S:
+        if s['kind'] not in ('Tab', 'Screen', 'Sub-page') or s['status'] != 'Live': continue
+        pg.evaluate(state_js(s['key'])); pg.wait_for_timeout(60)
+        if pg.evaluate("document.getElementById('app').dataset.screen") != s['id']: continue
+        r = pg.evaluate(UNNAMED_JS, dict(opt, roots=['#app', '#bar', '#dock', '#side']))
+        unnamed += [s['id'] + ' ' + x for x in r['unnamed']]; dups += [s['id'] + ' ' + x for x in r['dup']]; quiet |= {s['id'] + ' › ' + x for x in r['quiet']}
+    nsh = 0
+    for s in S:
+        if s['kind'] not in ('Sheet', 'Alert', 'Action sheet') or s['status'] != 'Live': continue
+        got = pg.evaluate("""k=>{const ks=[null,'g_1','s0','s2','sp1',FOUND[0].id,'c0_x'];
+          for(const withX of [false,true]){if(withX&&!X)newSession();
+            for(const kk of ks){U.view=null;U.tab='today';U.sheet=k;U.sd={k:kk};try{render()}catch(e){}
+              const sh=document.querySelector('#layer :is(.sheet,.pk-alert,.pk-actions):not(.pk-leaving)');if(U.sheet===k&&sh)return sh.dataset.screen}}
+          return null}""", s['key'][6:])
+        if got == s['id']:
+            nsh += 1
+            pg.wait_for_timeout(60)
+            r = pg.evaluate(UNNAMED_JS, dict(opt, roots=["#layer :is(.sheet,.pk-alert,.pk-actions):not(.pk-leaving)"]))
+            unnamed += [s['id'] + ' ' + x for x in r['unnamed']]; dups += [s['id'] + ' ' + x for x in r['dup']]; quiet |= {s['id'] + ' › ' + x for x in r['quiet']}
+        pg.evaluate("(()=>{document.querySelectorAll('#layer .pk-alert,#layer .pk-actions').forEach(e=>e.remove());U.sheet=null;U.sd={};if(X){X=null;saveDraft()}render()})()")
+        pg.wait_for_timeout(30)
+    ok(not unnamed and nsh >= 30, f'on every screen and the {nsh} sheets the sample data opens, every visible control carries its name ({unnamed})')
+    ok(not dups, f'one name is one action on a screen, rows and standard roles aside ({dups})')
+    if quiet: print('  note  named buttons with no label or text for VoiceOver: ' + ', '.join(sorted(quiet)), flush=True)
+    pg.context.close()
+
+
 def run(b, t):
     register(b, t)
+    coverage(b, t)
     on_page(b, t)
     overlays(b, t)
     missing_entry(b, t)

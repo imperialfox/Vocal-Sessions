@@ -906,6 +906,7 @@ function fwTab() {
   t.id = 'fwtab';
   t.className = 'fwtab';
   t.dataset.a = 'fwTab';
+  SCR.named(t); // Q48 tucked-window-tab
   t.hidden = true;
   t.innerHTML = '<span class="fwtabin" aria-hidden="true">' + ICON.fwd + '<i class="fwtabdot"></i></span>';
   document.body.appendChild(t);

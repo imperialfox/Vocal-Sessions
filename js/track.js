@@ -2427,7 +2427,7 @@ const TRACK = (() => {
           mb(big.file.size) +
           '. Reading it may take a while and uses space on your ' +
           deviceName() +
-          '.</p><button class="cta" data-a="trkBigYes">Import it</button><button class="ghost" data-a="close">Cancel</button>'
+          '.</p><button class="cta" data-a="trkBigYes">Import it</button><button class="ghost" data-a="close" data-v="cancel">Cancel</button>'
       );
     return '';
   }

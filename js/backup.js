@@ -535,7 +535,7 @@ function bkReportHTML(r, mode) {
         esc(r.name) +
         '</small></span><span class="mut">' +
         mb(r.size) +
-        '</span></div></div><button class="ghost" data-a="close">Done</button>'
+        '</span></div></div><button class="ghost" data-a="close" data-v="done">Done</button>'
     );
   const S = r.sum,
     recs = (x) => (r.noRec ? 'Not included' : x);
@@ -646,7 +646,7 @@ function bkReportHTML(r, mode) {
       UNDO_DAYS +
       ' days.</p><button class="cta red" data-a="importYes">' +
       (r.status === 'changed' ? 'Restore anyway' : 'Replace and restore') +
-      '</button><button class="ghost" data-a="close">Cancel</button>';
+      '</button><button class="ghost" data-a="close" data-v="cancel">Cancel</button>';
     return sheetWrap('Restore this backup?', b);
   }
   b +=
@@ -664,7 +664,7 @@ function bkReportHTML(r, mode) {
     '</div>' +
     '<p class="note" style="margin-top:10px">Nothing has been changed on ' +
     thisDev() +
-    '.</p><button class="cta" data-a="bkToImport">Restore from this backup</button><button class="ghost" data-a="close">Done</button>';
+    '.</p><button class="cta" data-a="bkToImport">Restore from this backup</button><button class="ghost" data-a="close" data-v="done">Done</button>';
   return sheetWrap('Backup check', b);
 }
 function bkGuideHTML() {
@@ -681,7 +681,7 @@ function bkGuideHTML() {
       '.json</span></div></div>' +
       '<p class="foot">One file per month for each device. If you back up again in the same month, Files asks whether to replace it. Tap <b>Replace</b> to keep one per month, or <b>Keep Both</b> for an extra copy.</p>' +
       '<div class="hdr">If you find them later</div><p class="note">Each backup starts with a short note in plain English saying what it is and how to restore it. You can also save a read-me file into the Backups folder.</p>' +
-      '<button class="cta" data-a="saveReadme">Save a read-me file</button><button class="ghost" data-a="close">Done</button>'
+      '<button class="cta" data-a="saveReadme">Save a read-me file</button><button class="ghost" data-a="close" data-v="done">Done</button>'
   );
 }
 function bkLogHTML() {
@@ -712,7 +712,7 @@ function bkLogHTML() {
       : '<p class="note">No backups made on ' + thisDev() + ' yet.</p>') +
       '<p class="foot">This list is kept on ' +
       thisDev() +
-      '. The files are wherever you saved them, ideally iCloud Drive › Vocal Sessions › Backups.</p><button class="ghost" data-a="close">Done</button>'
+      '. The files are wherever you saved them, ideally iCloud Drive › Vocal Sessions › Backups.</p><button class="ghost" data-a="close" data-v="done">Done</button>'
   );
 }
 function undoHTML() {
@@ -737,6 +737,6 @@ function undoHTML() {
         : '') +
       '<p class="note">The backup file stays in Files, so you can restore it again. Undo is available until ' +
       fileDate(until) +
-      '.</p><button class="cta red" data-a="undoYes">Undo restore</button><button class="ghost" data-a="close">Cancel</button>'
+      '.</p><button class="cta red" data-a="undoYes">Undo restore</button><button class="ghost" data-a="close" data-v="cancel">Cancel</button>'
   );
 }

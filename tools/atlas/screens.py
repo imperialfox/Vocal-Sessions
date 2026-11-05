@@ -166,6 +166,46 @@ def HOLD(sel, ms=700):
             'await new Promise(r=>setTimeout(r,150))}')
 
 
+
+# ---------- Q48: tapping a part by its name (MAINTAINING › Screen IDs › Naming rules) ----------
+# NAME('VS-009 › song-row', k='{song}') is the selector for that part, only while VS-009 is showing: a screen's parts are
+# looked for in the screen, the bar, the dock and the sidebar; a sheet's inside that sheet (#layer, by its data-screen).
+# '› settings-button' is a shared part, wherever it shows. k picks a row by its key (data-k), v an option by its value
+# (data-v) and text a row by what it says; never by its place in the list. An old name (a part's `was`) still works,
+# with a warning. When Atlas kit 1.2.0 arrives, its own ('tap', 'VS-009 › song-row') replaces this (Q46).
+def _register():
+    src = open(os.path.join(REPO, 'js', 'register.js'), encoding='utf-8').read()
+    kinds, was = {}, {}
+    for blk in re.split(r"\n {6}id: '", src)[1:]:
+        sid = 'VS-' + blk[3:6] if blk.startswith('VS-') else None
+        m = re.search(r"kind: '([^']+)'", blk)
+        if not sid or not m: continue
+        kinds[sid] = m.group(1)
+        for nm, old in re.findall(r"name: '([a-z0-9-]+)', sel: '[^']*', was: \[([^\]]*)\]", blk):
+            for o in re.findall(r"'([a-z0-9-]+)'", old): was[(sid, o)] = nm
+    return kinds, was
+
+
+_KINDS, _WAS = _register()
+
+
+def NAME(ref, k=None, v=None, text=None):
+    screen, _, part = (x.strip() for x in ref.partition('›'))
+    if (screen, part) in _WAS:
+        print('Atlas: ' + ref + ' is an old name; it is ' + screen + ' › ' + _WAS[(screen, part)] + ' now', file=sys.stderr)
+        part = _WAS[(screen, part)]
+    css = '[data-name="' + part + '"]' + ('[data-k="' + k + '"]' if k else '') + ('[data-v="' + v + '"]' if v else '')
+    if not screen: out = css
+    elif _KINDS.get(screen) in ('Sheet', 'Alert', 'Action sheet'): out = '#layer [data-screen="' + screen + '"] ' + css
+    elif screen in _KINDS: out = 'body:has(#app[data-screen="' + screen + '"]) :is(#app, #bar, #dock, #side) ' + css
+    else: raise ValueError('Atlas: no screen ' + screen + ' in js/register.js (' + ref + ')')
+    return out + (':has-text("' + text + '")' if text else '')
+
+
+def TAP(ref, **kw):
+    return ('tap', NAME(ref, **kw))
+
+
 def version(app_dir):
     m = re.search(r"APP_VERSION\s*=\s*'([^']+)'", open(os.path.join(app_dir, 'index.html'), encoding='utf-8').read())
     return m.group(1) if m else None
@@ -173,15 +213,15 @@ def version(app_dir):
 
 # ---------- where the scan starts ----------
 # Steps: ('tap', css) taps a real button; ('js', code) is a shortcut, used only for set-up the app has no button for.
-TAB = lambda v: ('tap', '[data-a="tab"][data-v="' + v + '"]')
-SONG_PAGE = [TAB('songs'), ('tap', '[data-a="sgOpen"][data-k="{song}"]')]  # {song}: the sample song's id
+TAB = lambda v: TAP('› ' + {'history': 'progress'}.get(v, v) + '-tab')
+SONG_PAGE = [TAB('songs'), TAP('VS-008 › song-row', k='{song}')]  # {song}: the sample song's id
 # Q35: Application with the sample song picked, then Sing, waiting until it records; Stop, waiting for the nth take
 APPL_REC = UNTIL("!!rec&&!!document.querySelector('#apcard.rec')", 'the recording didn’t start')
-APPL_SING = [('tap', '[data-a="resume"]'), ('tap', '#app [data-a="apSong"][data-k="{song}"]'), ('tap', '#apcard [data-a="apSing"]'), APPL_REC]
-APPL_STOP = lambda n: [('wait', 1200), ('tap', '#apcard [data-a="apStop"]'),
+APPL_SING = [TAP('VS-001 › resume-session-button'), TAP('VS-004 › song-row', k='{song}'), TAP('VS-004 › sing-button'), APPL_REC]
+APPL_STOP = lambda n: [('wait', 1200), TAP('VS-004 › stop-button'),
                        UNTIL("!rec&&TAKES.length===" + str(n) + "&&!document.querySelector('#apcard .tkwv.wait')", 'take ' + str(n) + ' wasn’t saved')]
-CHECK_TIMING = SONG_PAGE + [('tap', '#app [data-a="ckGrid"]'), ('tap', '.scrim .sheet [data-a="ckTile"][data-v="check"]')]
-BACKUP = [('tap', '[data-a="openSettings"]'), ('tap', '#app [data-a="setPg"][data-v="backup"]')]
+CHECK_TIMING = SONG_PAGE + [TAP('VS-009 › controls-button'), TAP('VS-050 › control-tile', v='check')]
+BACKUP = [TAP('› settings-button'), TAP('VS-018 › settings-row', v='backup')]
 
 # id, title, area, kind, the code-list key, steps, set-up, docs ((file, section label), ...), and for a state: state_of, state
 ROOTS = [
@@ -194,20 +234,20 @@ ROOTS = [
     dict(id='progress', title='Progress', area='Progress', kind='Tab', key='Tab:history', steps=[TAB('history')], setup=[]),
     dict(id='songs', title='Songs', area='Songs', kind='Tab', key='Tab:songs', steps=[TAB('songs')], setup=[]),
     dict(id='exercises', title='Exercises', area='Exercises', kind='Tab', key='Tab:exercises', steps=[TAB('exercises')], setup=[]),
-    dict(id='search', title='Search', area='Search', kind='Tab', key='Tab:find', steps=[('tap', '[data-a="findOpen"]')], setup=[]),
-    dict(id='settings', title='Settings', area='Settings', kind='Tab', key='Tab:settings', steps=[('tap', '[data-a="openSettings"]')], setup=[]),
+    dict(id='search', title='Search', area='Search', kind='Tab', key='Tab:find', steps=[TAP('› search-button')], setup=[]),
+    dict(id='settings', title='Settings', area='Settings', kind='Tab', key='Tab:settings', steps=[TAP('› settings-button')], setup=[]),
     # the session's later steps, through Today's real Resume button with a session part-way through
-    dict(id='session-rotation', title='Session · Rotation', area='Session', kind='Screen', key='Screen:rot', steps=[('tap', '[data-a="resume"]')], setup=['found-done']),
-    dict(id='session-application', title='Session · Application', area='Session', kind='Screen', key='Screen:app', steps=[('tap', '[data-a="resume"]')], setup=['rot-done']),
+    dict(id='session-rotation', title='Session · Rotation', area='Session', kind='Screen', key='Screen:rot', steps=[TAP('VS-001 › resume-session-button')], setup=['found-done']),
+    dict(id='session-application', title='Session · Application', area='Session', kind='Screen', key='Screen:app', steps=[TAP('VS-001 › resume-session-button')], setup=['rot-done']),
     # a song with everything on it: its track (added through the real Add track button) and three takes
     dict(id='song-page', title='Song page', area='Songs', kind='Screen', key='Screen:lyr', steps=SONG_PAGE, setup=['track', 'takes']),
     dict(id='song-section', title='Song page · section selected', area='Songs', kind='State', key='Screen:lyr',
-         steps=SONG_PAGE + [('tap', '[data-a="sgSec"]')], setup=['track', 'takes'], state_of='song-page', state='section selected', taps=True),
+         steps=SONG_PAGE + [TAP('VS-009 › section-row')], setup=['track', 'takes'], state_of='song-page', state='section selected', taps=True),
 ] + [
     # ----- Q35 · Atlas: Starting States: screens no tap from the starting screens above can reach -----
     # VS-015 · Coach video: the player, with the tests' made-up video added (the real door is a file picker)
     dict(id='coach-video', title='Coach video', area='Exercises', kind='Screen', key='Screen:coach',
-         steps=[TAB('exercises'), ('tap', '#app [data-a="openCoach"]'), UNTIL('COACH.has()&&!COACH.busy()', 'the coach video didn’t load')],
+         steps=[TAB('exercises'), TAP('VS-013 › coach-video-row'), UNTIL('COACH.has()&&!COACH.busy()', 'the coach video didn’t load')],
          setup=['coach'], docs=[('MAINTAINING.md', 'The coach video')]),
     # VS-004 · Application: recording, its take, and two takes to compare (a made-up microphone; no track, so no Sing over the track)
     dict(id='session-recording', title='Session · Application · recording', area='Session', kind='State', key='Screen:app',
@@ -215,15 +255,15 @@ ROOTS = [
     dict(id='session-takes', title='Session · Application · takes', area='Session', kind='State', key='Screen:app',
          steps=APPL_SING + APPL_STOP(1), setup=['rot-done', 'mic'], state_of='session-application', state='takes'),
     dict(id='session-compare', title='Session · Application · compare', area='Session', kind='State', key='Screen:app',
-         steps=APPL_SING + APPL_STOP(1) + [('tap', '#apcard [data-a="apSing"]'), APPL_REC] + APPL_STOP(2),
+         steps=APPL_SING + APPL_STOP(1) + [TAP('VS-004 › sing-button'), APPL_REC] + APPL_STOP(2),
          setup=['rot-done', 'mic'], state_of='session-application', state='compare'),
     # VS-031 · How did it go?: song practice of the sample song with a take, then its real Save button. Its own buttons
     # (Save, Skip) then open VS-044 · Song practice saved
     dict(id='song-how', title='How did it go?', area='Songs', kind='Sheet', key='Sheet:how',
-         steps=SONG_PAGE + [('tap', '#app [data-a="sgPractise"]'), ('tap', '#dock [data-a="cta"]')], setup=['takes', 'song-draft']),
+         steps=SONG_PAGE + [TAP('VS-009 › song-practice-row'), TAP('VS-012 › save-button')], setup=['takes', 'song-draft']),
     # VS-095 · Peek card: on the Marks side, tap a word, then hold the Peak mark button
     dict(id='peek-card', title='Peek card', area='Songs', kind='Overlay', key='Screen:lyr',
-         steps=SONG_PAGE + [('tap', '[data-a="ckPencil"]'), ('tap', '[data-a="ckHeadMarks"]'), ('tap', '#app .w >> nth=1'),
+         steps=SONG_PAGE + [TAP('VS-009 › edit-timing-button'), TAP('VS-009 › marks-tab'), ('tap', '#app .w >> nth=1'),
                             HOLD('#mksheet .mkb[data-v="peak"]'), UNTIL("!!document.getElementById('mkpeek')", 'the peek card didn’t show')],
          setup=['track', 'takes'], docs=[('MAINTAINING.md', 'Marks guide')]),
     # VS-011 · Check timing, and its Overlaps state: every line placed by hand, then a timed section moved
@@ -232,7 +272,7 @@ ROOTS = [
          steps=CHECK_TIMING, setup=['track', 'takes', 'timed', 'moved'], state_of='check-timing', state='overlaps'),
     # VS-072 · Past the new end: the track replaced through the track menu with a 20 s file, with lines and a marker past it
     dict(id='track-past-end', title='Past the new end', area='Songs', kind='Sheet', key='Sheet:trkPast',
-         steps=SONG_PAGE + [('tap', '#app [data-a="trkOpen"]'), ('tap', '[data-a="trkMenu"]'), ('tap', '.scrim .sheet [data-a="trkReplace"]'),
+         steps=SONG_PAGE + [TAP('VS-009 › open-track-button'), TAP('VS-010 › track-settings-button'), TAP('VS-066 › replace-track-button'),
                             UNTIL("U.sheet==='trkPast'", 'the shorter track didn’t ask about what’s past its end', 20000)],
          setup=['track', 'timed', 'late-marker', 'short-track']),
     # VS-019 · Settings › Backup, and with a rescued copy of saved data that couldn't be read; and VS-080 · Delete the
@@ -243,19 +283,21 @@ ROOTS = [
          steps=BACKUP, setup=['damaged'], state_of='settings-backup', state='rescued data', taps=True,
          docs=[('MAINTAINING.md', 'Save safety (3.29, Q11)')]),
     dict(id='rescued-delete', title='Delete the rescued copy', area='Settings', kind='Sheet', key='Sheet:rescueDel',
-         steps=BACKUP + [('tap', '#app [data-a="sheet"][data-v="rescueDel"]')], setup=['damaged']),
+         steps=BACKUP + [TAP('VS-019 › delete-copy-button')], setup=['damaged']),
     # Q42: VS-100 · Sheet music read, after the Song page's Add sheet music row is given a made-up print; VS-099 · Sheet
     # music, from the row once it's saved; VS-105 · Remove the prints?, from Settings › Storage with a print kept
     dict(id='sheet-music-read', title='Sheet music read', area='Songs', kind='Sheet', key='Sheet:melRead',
-         steps=SONG_PAGE + [('tap', '#app [data-a="melAdd"]'), UNTIL("['melRead','melTitle'].includes(U.sheet)", 'the print wasn’t read', 20000)],
+         # Q48: the made-up print's title isn't the sample song's, so VS-102 asks first; its This song goes on to VS-100
+         steps=SONG_PAGE + [TAP('VS-009 › sheet-music-row'), UNTIL("U.sheet==='melTitle'", 'the print wasn’t read', 20000),
+                            TAP('VS-102 › this-song-button'), UNTIL("U.sheet==='melRead'", 'the read print didn’t show')],
          setup=['pdf-next']),
     # Q47: the row opens VS-108 · Sheet music page; its top bar circle opens VS-099
     dict(id='sheet-music-page', title='Sheet music page', area='Songs', kind='Screen', key='Screen:mel',
-         steps=SONG_PAGE + [('tap', '#app [data-a="melOpen"]')], setup=['sheet']),
+         steps=SONG_PAGE + [TAP('VS-009 › sheet-music-row')], setup=['sheet']),
     dict(id='sheet-music', title='Sheet music', area='Songs', kind='Sheet', key='Sheet:melSheet',
-         steps=SONG_PAGE + [('tap', '#app [data-a="melOpen"]'), ('tap', '#barR [data-a="melInfo"]')], setup=['sheet']),
+         steps=SONG_PAGE + [TAP('VS-009 › sheet-music-row'), TAP('VS-108 › sheet-settings-button')], setup=['sheet']),
     dict(id='sheet-prints-delete', title='Remove the prints?', area='Settings', kind='Sheet', key='Sheet:melPrintsDel',
-         steps=[('tap', '[data-a="openSettings"]'), ('tap', '#app [data-a="setPg"][data-v="storage"]'), ('tap', '#app [data-v="melPrintsDel"]')], setup=['sheet']),
+         steps=[TAP('› settings-button'), TAP('VS-018 › settings-row', v='storage'), TAP('VS-020 › remove-prints-row')], setup=['sheet']),
 ]
 
 # ---------- captions (Q35): one plain line per screen, by screen ID (a state by its ID, then ~ and the state) ----------
@@ -360,32 +402,32 @@ RIVER = ':has-text("River Song")'   # the sample song made in prepare()
 FLOWS = [
     dict(id='F-01', title='Focused session', start='today', setup=['mic'], start_moment='Today',
          caption='A whole session on one page: Foundation, Rotation, then a song in Application, saved',
-         steps=[dict(tap='#app [data-a="start"]', moment='Foundation, fresh'),
-                dict(tap='#app [data-a="ring"][data-k="slides"]', capture=False),
-                dict(tap='#app [data-a="ring"][data-k="humming"]', capture=False),
-                dict(tap='#app [data-a="ring"][data-k="lip"]', capture=False),
-                dict(tap='#app [data-a="ring"][data-k="straw"]', label='Tap each row’s level', moment='levels set'),
-                dict(tap='#dock [data-a="cta"]', moment='Rotation'),
-                dict(tap='#dock [data-a="cta"]', moment='Application'),
-                dict(tap='#app [data-a="apSong"]' + RIVER, moment='a song picked'),
-                dict(tap='#apcard [data-a="apSing"]', capture=False),
+         steps=[dict(tap=NAME('VS-001 › start-session-button'), moment='Foundation, fresh'),
+                dict(tap=NAME('VS-002 › exercise-row', k='slides'), capture=False),
+                dict(tap=NAME('VS-002 › exercise-row', k='humming'), capture=False),
+                dict(tap=NAME('VS-002 › exercise-row', k='lip'), capture=False),
+                dict(tap=NAME('VS-002 › exercise-row', k='straw'), label='Tap each row’s level', moment='levels set'),
+                dict(tap=NAME('VS-002 › step-button'), moment='Rotation'),
+                dict(tap=NAME('VS-003 › step-button'), moment='Application'),
+                dict(tap=NAME('VS-004 › song-row', text='River Song'), moment='a song picked'),
+                dict(tap=NAME('VS-004 › sing-button'), capture=False),
                 dict(js=_wait("!!rec&&!!document.querySelector('#apcard.rec')", 'the recording didn’t start'), wait=1200, label='Sing', moment='recording'),
-                dict(tap='#apcard [data-a="apStop"]', capture=False),
+                dict(tap=NAME('VS-004 › stop-button'), capture=False),
                 dict(js=_wait("!rec&&TAKES.length===1&&!document.querySelector('#apcard .tkwv.wait')", 'the take wasn’t saved'), label='Stop', moment='takes'),
-                dict(tap='#apcard [data-a="apDone"]', moment='song done'),
-                dict(tap='#dock [data-a="cta"]', moment='Session saved'),
-                dict(tap='#app [data-name="done-button"]', moment='back on Today')]),
+                dict(tap=NAME('VS-004 › done-button'), moment='song done'),
+                dict(tap=NAME('VS-004 › step-button'), moment='Session saved'),
+                dict(tap=NAME('VS-005 › done-button'), moment='back on Today')]),
     dict(id='F-02', title='Song practice', start='today', setup=['mic'], start_moment='Today',
          caption='Pick a song, record a take, say how it went, saved',
-         steps=[dict(tap='#app [data-a="songStart"]', moment='pick a song'),
-                dict(tap='#app [data-a="sgOpen"]' + RIVER, moment='the song'),
-                dict(tap='#app [data-a="sgPractise"]', moment='Song practice'),
-                dict(tap='#app [data-a="rec"]', capture=False),
+         steps=[dict(tap=NAME('VS-001 › song-practice-card'), moment='pick a song'),
+                dict(tap=NAME('VS-008 › song-row', text='River Song'), moment='the song'),
+                dict(tap=NAME('VS-009 › song-practice-row'), moment='Song practice'),
+                dict(tap=NAME('VS-012 › record-button'), capture=False),
                 dict(js=_wait('!!rec', 'the recording didn’t start'), wait=1200, label='Record', moment='recording'),
-                dict(tap='#app [data-a="rec"]', capture=False),
+                dict(tap=NAME('VS-012 › record-button'), capture=False),
                 dict(js=_wait('!rec&&TAKES.length===1', 'the take wasn’t saved'), label='Stop', moment='a take recorded'),
-                dict(tap='#dock [data-a="cta"]', moment='How did it go?'),
-                dict(tap='.scrim .sheet [data-a="saveHow"]', moment='saved')]),
+                dict(tap=NAME('VS-012 › save-button'), moment='How did it go?'),
+                dict(tap=NAME('VS-031 › save-button'), moment='saved')]),
 ]
 
 TAB_AREA = {'today': 'Today', 'history': 'Progress', 'songs': 'Songs', 'exercises': 'Exercises', 'find': 'Search', 'settings': 'Settings'}
@@ -540,9 +582,9 @@ def link_kind(l):
 # ---------- what the scan sees and taps ----------
 # a sheet's own buttons are looked for inside it, so a row underneath can't be tapped instead. The peek card (#mkpeek,
 # VS-095) counts as one too (Q35): it's drawn over the song page with its own ID and buttons, like a sheet
-SHEET = '.scrim .sheet, #mkpeek'
+SHEET = '#layer :is(.sheet, .pk-alert, .pk-actions):not(.pk-leaving), #mkpeek'
 BUTTONS = '[data-a]'
-TITLE_JS = """()=>{const sh=document.querySelector('.scrim .sheet');if(sh){const h=sh.querySelector('h1,h2,.stitle,.shtitle');
+TITLE_JS = """()=>{const sh=document.querySelector('#layer :is(.sheet, .pk-alert, .pk-actions):not(.pk-leaving)');if(sh){const h=sh.querySelector('h1,h2,.stitle,.shtitle');
   return (sh.getAttribute('aria-label')||(h&&h.innerText)||'').replace(/\\s+/g,' ').trim()}
   const h=document.querySelector('#app h1,#app .ntitle,#app h2');return h?h.innerText.replace(/\\s+/g,' ').trim():''}"""
 # buttons behind a swipe (a row's Delete) or hidden from view: "Not tested: only shows after a swipe, a hold or a menu"

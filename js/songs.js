@@ -1504,7 +1504,7 @@ function songSheet(s) {
         fmtLen(L) +
         '.</p><button class="cta" data-a="sgLenRelinkYes" data-k="' +
         esc(sd.k || '') +
-        '">Relink</button><button class="ghost" data-a="close">Cancel</button>'
+        '">Relink</button><button class="ghost" data-a="close" data-v="cancel">Cancel</button>'
     );
   }
   if (!sg && s !== 'sgDel' && s !== 'sgPinFull' && s !== 'sgRename') return '';
@@ -1527,7 +1527,7 @@ function songSheet(s) {
         esc(occLabel(sg, i)) +
         ' gets its own copy of the lyrics and marks. Changes to it will no longer affect the other ' +
         esc(sg.sections[sg.order[i].sid].label.toLowerCase()) +
-        ' sections. This can’t be linked back.</p><button class="cta" data-a="sgDoUnlink">Unlink</button><button class="ghost" data-a="close">Cancel</button>'
+        ' sections. This can’t be linked back.</p><button class="cta" data-a="sgDoUnlink">Unlink</button><button class="ghost" data-a="close" data-v="cancel">Cancel</button>'
     );
   }
   if (s === 'sgPinFull') {
@@ -1582,7 +1582,7 @@ function songSheet(s) {
         (r ? ', marks and ' + r + ' recording' + (r > 1 ? 's' : '') : ' and marks') +
         ' will be deleted. Song practice already logged stays in Progress. This can’t be undone.</p><button class="cta red" data-a="sgDoDel">Delete' +
         (one ? '' : ' ' + list.length + ' songs') +
-        '</button><button class="ghost" data-a="close">Cancel</button>',
+        '</button><button class="ghost" data-a="close" data-v="cancel">Cancel</button>',
       one ? 'Delete song' : 'Delete songs'
     );
   }

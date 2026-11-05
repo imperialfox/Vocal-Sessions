@@ -827,10 +827,34 @@ Since 3.50 (Q36) every screen, sub-page, sheet and overlay has a permanent ID, `
 - **Adding a screen:** give it the next number at the end of `screens` (whatever its area: the grouping by area was for the first numbering only), with its key, name, area, docs heading and parts. Add it to a flow if it's on one.
 - **Renaming or moving one:** change its `name`, `key` or `docs` on its line, and put the old key in `aliases`. Never change its `id`.
 - **Retiring one:** set `status: 'Retired in 3.xx'` and leave the line. IDs and flow IDs are never reused or renumbered.
-- **Parts:** lower case with hyphens, named by what the part is (`done-button`, not `bottom-right-button`). A part that moves keeps its name; change its `sel`.
+- **Parts:** every button and control has a name (3.61, Q48), by the rules below. A part that moves keeps its name; change its `sel`.
 - **The changelog:** each version's `Screens:` line lists the screens it changed (see The Changelog page).
 - The register is public: screen names and code keys only, never personal data.
-- Tests: `tests/test_screens.py` (the register's shape, every screen the code can show has an entry and the right `data-screen`, part names, docs links, flows, the label, the Changelog's Screens line, and the saved-data list against every storage key in the code).
+- Tests: `tests/test_screens.py` (the register's shape, every screen the code can show has an entry and the right `data-screen`, part names, docs links, flows, the label, the Changelog's Screens line, and the saved-data list against every storage key in the code; and since Q48 `coverage`: every button named, the name shape, no position selectors, old names never reused, every visible control on every screen and sheet the sample data reaches named, one name one action per screen, and `reference/elements.md` up to date).
+
+### Naming rules
+
+Since 3.61 (Q48) every button and control has a part name. The rules come from what Apple, Google, the web test tools and the big design systems agree on (Ivan's Recon of 5 Nov 2026, `name_every_button_recon_2026-11-05.md` in his project notes).
+
+1. **A name is never the wording.** `data-name` is never shown or read aloud; VoiceOver keeps its `aria-label`. A wording change never changes a name.
+2. **Shape: what, then kind.** Lower case with hyphens: one to three words for what it does (buttons) or what it holds (rows, cards, fields), then a kind word: `button`, `row`, `switch`, `picker`, `field`, `slider`, `stepper`, `tile`, `card`, `tab`, `pill`, `chip`, `menu`, `line`, `bar`, `link`, `option` (one choice in a picker), `item` (a menu row), `word`, `dot`, `grabber`. Don't repeat the screen's own subject (`play-button` on the track player). Ten older names without a kind word stay as they are (`OLD_NAMES` in the test).
+3. **No position, no state.** Never `top-`, `second-`, `-on`, `-playing`. A Play button that shows Pause is one part.
+4. **Scope is the screen.** A name is unique on its screen; the same name elsewhere means the same role.
+5. **Rows share a name.** Every row of one kind has the same name, told apart by its key (`data-k`) or text, never by a number. In a note: `VS-054 › take-row (Take 3) › star-button`.
+6. **Standard roles, standard names:** `back-button`, `close-button`, `cancel-button`, `confirm-button`, `done-button`, `save-button`, `grabber`. A text Close button carries `data-v="done"` or `data-v="cancel"` for its role.
+7. **A name is a promise.** Never reused for another part on its screen. Renaming keeps the old one in the part's `was: []` (the Atlas still finds it, with a warning); retiring sets `status: 'Retired in 3.xx'` and leaves the line.
+8. **Selectors point at meaning:** the action (`data-a`, `data-v`), an `id`, or a class that names the part (the kit's `pk-` classes). Never `nth-child`, `nth-of-type` or a tag path.
+9. **Checked:** `test_screens.py` › `coverage` fails on any of the above.
+
+**Where a name goes in the register:**
+- **`actions`**, for most buttons: one line per action (`{ name: 'loop-button', sel: '[data-a="trkLoop"]' }`, or with `[data-v="…"]` for one value), and the button gets that name wherever the action shows. `SCR` looks these up by action in one pass over the buttons.
+- **`shared`**, for parts found another way that show in many places: Back, Close, the kit's roles (by their `pk-` class), fields and links by their `id`.
+- **A screen's `parts`**, when that screen calls the part something else, or finds it by an `id` or class. These win over `shared`, which wins over `actions`.
+
+**Adding a button:** give it a `data-a` (or an `id`), then a line in `actions` (or in its screen's `parts`). The test names the action and file if you forget. Then `python3 tools/reference/elements.py` rewrites `reference/elements.md`.
+**Not a button:** a tap-outside layer whose sheet has its own named Close goes on `NOT_BUTTONS` in the test, with why.
+**The Atlas** taps by name through `NAME()` and `TAP()` in `tools/atlas/screens.py` (`TAP('VS-009 › song-row', k='{song}')`, `TAP('› settings-button')`), only while that screen or sheet is showing.
+
 
 ## Tests
 
@@ -902,6 +926,7 @@ The tests run with motion off (see Motion above), so nothing waits on a spring. 
 Running side by side, each layout size and each random-tap seed is its own job, every job has its own browser and test web server, and `VS_JOBS` sets how many run at once (default: twice the processor count). Results are shown per job as each one finishes.
 
 **Known test issues:** what fails, where, and why. If one comes back, fix it in the test by waiting for the condition it needs (`harness.until(pg, js)`), not by re-running.
+- **Q48's full run (5 Nov 2026):** `test_search` › recents (a click timing out at line 198) and "ipad: a lyric opens with its section focused" failed in the full side-by-side run on Claude's 2-processor workspace and passed when `search` ran on its own (149 passed). Q48 doesn't touch Search. Both are load timing, as in the Q23 and Q47 entries below.
 - **Q47's run (5 Nov 2026):** GitHub's run of 3.60 failed `test_search` › "ipad: a lyric opens with its section focused" once (it passed locally in the full suite). It waited a fixed 400 ms after tapping the result; it now waits for the focused section (`until`). Locally, Playwright 1.56's own browser build couldn't be downloaded in Claude's workspace, so the suite ran on the workspace's newer headless Chromium linked in its place: 5,037 passed, 1 failed (the changelog's Screens line, fixed).
 - **Q45's runs (5 Nov 2026):** GitHub's run on 3.59 failed three checks. `test_zoom` › "VS-014's title row sits level with the tabs' titles" compared against Today, whose large title now sits 17 pt lower by design; it now compares against Songs instead (fixed in 3.59.1). `test_layout` › iphone-se "recording label missing or cut off" failed only on GitHub's wider fonts: the bar's small title kept the kit's 70 pt sides with no buttons there (fixed in 3.59.1, the title takes the bar's width when it has no buttons). `test_ladder` › "Failed to load resource: net::ERR_FILE_NOT_FOUND" also fails locally on 3.58 (`258b95f`), before Q45, so it came in with Q43 or Q44 and isn't Q45's; not yet looked into.
 - `test_bridge` › "with a marker where the voice jumps" (then an IndexError) and `test_sclock` › "Reduce Motion: it fades in" each failed once in Q42's full side-by-side run (4 Nov 2026, Claude's 2-processor workspace) and passed when run on their own and at 3.55. `test_bridge`'s also failed GitHub's first run of 3.56 and passed on its re-run: the fake microphone's slide is timed in real time, so a busy runner can miss the jump. Worth giving it a wait on the condition if it comes back.
