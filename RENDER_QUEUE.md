@@ -282,6 +282,15 @@ Each idea has its priority, the date it was added and a *Why* line. New ideas go
   *Why:* behind the scenes; every app on the kit gets steady names without listing them itself.
 - **Atlas kit: doors by name (5 Nov 2026).** The Atlas kit's button finder records a door by its action even when the button has a name. Next kit version: prefer `data-name` when there is one, so found doors read `VS-009 › song-row`. An Atlas kit version, with its own Render and Build.
   *Why:* behind the scenes; the map and suggested states speak the same names as Ivan's notes.
+- **Your own voice as the guide sound (4 Nov 2026; pinned by Ivan, added 5 Nov 2026).** A guide sound made from Ivan's own singing, beside Recorded piano and Soft tone, so pattern notes, Give me my note and the sheet music guide can play in his voice. Ways weighed (4 Nov 2026), cheapest and most real first:
+  1. **Record a note set (the suggested start):** about 10 held "oo" notes, one every three semitones from G♯2 to A4, plus 2 or 3 falsetto notes up to D5, about 4 s each. Each is tuned to its exact pitch (vibrato kept), trimmed, evened out and looped in its steady middle, then played like the recorded piano (notes in between shifted from the nearest). About 1 MB. Later, a "Record your guide voice" screen could play each note in headphones, check it's within about 20 cents and keep the steadiest part.
+  2. **Fewer recordings:** 4 or 5 notes shifted to fill the gaps, keeping the voice's shape. Starts to sound less like him beyond about 3 semitones.
+  3. **His own "Ooh":** the resonances of his "oo" measured from one or two long notes and used by the sound test's Ooh voice. Any note, any length, a few hundred numbers; less real than recordings, a cheap extra after 1.
+  4. **AI voice cloning** (RVC, so-vits-svc, an OpenUtau voice): sings whole melodies with words, but needs 10 to 30 minutes of clean singing and a graphics card to train, models of 50 to 200 MB that often warble on held notes. Too heavy for a guide note. Online cloning services are ruled out (his voice would go to another company).
+  - **Privacy:** voice files are imported and kept on the phone only, like song tracks, never in this public repo, its tests or another service.
+  - **Recording tips:** Voice Memos with lossless quality on, a quiet room, the phone 20 to 30 cm away, headphones so the reference note doesn't get into the recording. A short guide track (each target note in the headphones with a gap to sing into) would let it be recorded in one take.
+  - **Research behind it** (project note `claude/sound_test_2026-11-04.md` › What singers practise with): people match recordings of their own voice best, voices beat piano for finding single notes, and same sex and octave helps.
+  *Why:* a guide that sounds like you is easier to match than any instrument, so finding notes gets easier; practice works without it, since Recorded piano and Soft tone already do the job.
 
 ### Priority 3 · Polish
 
