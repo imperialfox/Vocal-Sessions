@@ -405,7 +405,7 @@ body.reg .bar > .pk-edge {
   left: -100vw;
   right: -100vw;
 }
-/* the small title is centred between the slots, kept clear of the wider side (renderBar0 sets --bar-in) */
+/* the small title is centred between the slots, kept clear of the wider side (renderBar0 sets --bar-in; the kit's 70) */
 .bar .mt {
   left: var(--bar-in, 70px);
   right: var(--bar-in, 70px);

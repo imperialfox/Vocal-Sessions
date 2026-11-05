@@ -552,7 +552,8 @@ def handoff(b, t):
             ok(near(back, was), f'{tag}, Back: the list\'s title is back where it was')
         # every page's title sits level, the exercise page's too (its row had a 4 pt top margin before Q44)
         tops = []
-        for to in ("go(()=>{U.tab='exercises';U.view=null})", TODAY, "go(()=>{U.tab='history';U.view=null})"):
+        # Q45: not Today, whose large title (parts kit part 3) sits 17 pt lower by design, under its date
+        for to in ("go(()=>{U.tab='exercises';U.view=null})", "go(()=>{U.tab='songs';U.view=null})", "go(()=>{U.tab='history';U.view=null})"):
             pg.evaluate(to)
             quiet(pg)
             tops.append(pg.evaluate(TOP, '#app h1'))

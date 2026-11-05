@@ -9,6 +9,14 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.59.1 · 5 Nov 2026
+*A fix for 3.59's top bar (Q45)*
+<!-- area: fixes -->
+
+- A title in the top bar with no buttons beside it, such as the recording label, gets the bar's whole width again, so it isn't cut short on a small iPhone.
+
+Screens: VS-009
+
 ## 3.59 · 5 Nov 2026
 *The top bar, Today's title and search from the parts kit (Q45)*
 <!-- area: look -->

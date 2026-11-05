@@ -43,12 +43,13 @@ function renderBar() {
     });
   });
 }
-// Q45 the small title is centred, kept clear of the wider side's buttons (the kit's 70 pt at the least)
+// Q45 the small title is centred, kept 10 pt clear of the wider side's buttons (the kit's 70 pt with one circle); with
+// no buttons it takes the bar's width, so a long title such as the recording label isn't cut short on a small iPhone
 function renderBar0() {
   renderBar1();
   const bar = $('bar'),
     w = Math.max($('barL').offsetWidth, $('barR').offsetWidth);
-  bar.style.setProperty('--bar-in', Math.max(70, 16 + w + 10) + 'px');
+  bar.style.setProperty('--bar-in', 16 + w + 10 + 'px');
 }
 function renderBar1() {
   const bar = $('bar');
