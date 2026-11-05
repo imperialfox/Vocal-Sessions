@@ -237,6 +237,12 @@ def push(b, t):
         ('Accessibility in Settings', "go(()=>{U.tab='settings';U.view=null})", '#app [data-zk="set:access"]', 'settings|set'),
         ('the Changelog row', "go(()=>{U.tab='settings';U.view=null})", '#app .row[data-zk="log"]', 'settings|log'),
         ('the version footer', "go(()=>{U.tab='settings';U.view=null})", '#app .setfoot', 'settings|log'),
+        # Q50 the door rule: rows push, a top bar button that opens a page pushes, Back returns to the tab you were on
+        ('Today\'s suggested rotation', "go(()=>{U.tab='today';U.view=null})", '#app .dash [data-zk^="ex:"]', 'today|ex'),
+        ('Show all sessions', "go(()=>{U.tab='history';U.view=null})", '#app [data-zk="all:sessions"]', 'history|all'),
+        ('Show all song practice', "go(()=>{U.tab='history';U.view=null})", '#app [data-zk="all:songs"]', 'history|all'),
+        ('the gear into Settings', "go(()=>{U.tab='today';U.view=null})", '#barR [data-a=openSettings]', 'settings|'),
+        ('Add coach video on Exercises', "go(()=>{U.tab='exercises';U.view=null})", '#app [data-a=coachSettings]', 'exercises|set'),
     ]
     for name, to, door, dest in DOORS:
         pg.evaluate(to); quiet(pg)
@@ -297,19 +303,28 @@ def push(b, t):
     ok(pg.evaluate(PUSH) is not None, 'Check timing\'s Done slides back to the song')
     quiet(pg)
     ok(pg.evaluate("U.view") == 'lyr' and pg.evaluate(CLEAN), 'and lands on it with nothing left over')
+    # Q50 Song practice on a song page pushes, and Back returns to the song page (it went to Today before)
+    pg.evaluate("id=>openSong(id)", sid); quiet(pg)
+    pg.locator(f'#app [data-zk="sgp:{sid}"]').first.scroll_into_view_if_needed(); pg.wait_for_timeout(80)
+    pg.locator(f'#app [data-zk="sgp:{sid}"]').first.click(); pg.wait_for_timeout(320)
+    p = pg.evaluate(PUSH)
+    ok(p and not p['ghost'] and 1 < p['page'] < 389, f'Song practice on a song page pushes ({p})')
+    quiet(pg)
+    ok(pg.evaluate(WHERE) == 'songs|song', f'and opens Song practice ({pg.evaluate(WHERE)})')
+    pg.click(BACK); pg.wait_for_timeout(260)
+    ok(pg.evaluate(PUSH) is not None, 'Song practice\'s Back slides it away')
+    quiet(pg)
+    ok(pg.evaluate(WHERE) == 'songs|lyr' and pg.evaluate(CLEAN), f'back on the song page ({pg.evaluate(WHERE)})')
     # doors that keep the card zoom (a track and the coach video added, so their rows are there)
     pg.evaluate("id=>TRACK.expect(id)", sid); pg.set_input_files('#trackIn', TONES)
     pg.wait_for_function("id=>TRACK.has(id)&&!TRACK.busy()", arg=sid, timeout=15000)
     pg.set_input_files('#coachIn', fix('coach-chapters.webm'))
     pg.wait_for_function("COACH.has()&&!COACH.busy()", timeout=15000)
     ZOOMS = [
-        ('Song practice on a song page', "id=>openSong(id)", f'#app [data-zk="sgp:{sid}"]'),
         ('the track on a song page', "id=>openSong(id)", f'#app [data-zk="trk:{sid}"]'),
         ('the coach video on Exercises', "()=>go(()=>{U.tab='exercises';U.view=null})", '#app [data-zk="coach"]'),
         ('Start session', "()=>go(()=>{U.tab='today';U.view=null})", '#app [data-zk="start"]'),
         ('the weekly goal arch', "()=>go(()=>{U.tab='today';U.view=null})", '#app [data-zk="goal"]'),
-        ('Show all sessions', "()=>go(()=>{U.tab='history';U.view=null})", '#app [data-zk="all:sessions"]'),
-        ('Today\'s suggested rotation', "()=>go(()=>{U.tab='today';U.view=null})", '#app .dash [data-zk^="ex:"]'),
     ]
     for name, to, door in ZOOMS:
         pg.evaluate(to, sid); quiet(pg)
@@ -321,11 +336,6 @@ def push(b, t):
         quiet(pg)
         if pg.evaluate("U.view") in ('found',):
             pg.evaluate("go(()=>{U.tab='today';U.view=null})"); quiet(pg)
-    # the gear into Settings doesn't push
-    pg.evaluate("go(()=>{U.tab='today';U.view=null})"); quiet(pg)
-    pg.click('#barR [data-a=openSettings]'); pg.wait_for_timeout(60)
-    ok(pg.locator('.zm.push').count() == 0, 'the gear into Settings doesn’t push')
-    quiet(pg)
     # interrupting: Back mid-push turns it round from where it is, one layer, nothing left
     pg.evaluate("go(()=>{U.tab='songs';U.view=null})"); quiet(pg)
     for wait, label in ((0, 'straight away'), (300, 'part way'), (1400, 'nearly there')):

@@ -508,7 +508,7 @@ const COACH = (() => {
   function exercisesRow() {
     if (!has())
       return (
-        '<div class="grp" style="margin-top:8px"><button class="row cvrow" data-a="coachSettings">' +
+        '<div class="grp" style="margin-top:8px"><button class="row cvrow" data-zk="set:coach" data-push data-a="coachSettings">' +
         thumb() +
         '<span class="lbl"><span class="acc">Add coach video</span><small>Watch it here, kept on this ' +
         deviceName() +
@@ -581,7 +581,7 @@ const COACH = (() => {
         sumTxt() +
         '</p><div class="grp"><div class="empty">Add the coach video from Files to watch it here. It stays on this ' +
         deviceName() +
-        ' and isn’t put online.</div><button class="row acc" data-a="coachSettings"><span class="lbl">Add coach video…</span>' +
+        ' and isn’t put online.</div><button class="row acc" data-zk="set:coach" data-push data-a="coachSettings"><span class="lbl">Add coach video…</span>' +
         chev +
         '</button></div>'
       );
@@ -852,9 +852,17 @@ const COACH = (() => {
     });
   }
   // the player's empty state: Settings › Coach video (3.21: its own page)
+  // Q50 opened from Exercises (VS-013), Coach video (VS-022) is pushed on the Exercises tab and Back returns there, the
+  // way Your voice opens from an exercise (U.setFrom); its row carries data-zk and data-push. Anywhere else it's
+  // Settings' own page, as before
   function toSettings() {
     U.coachBack = null;
-    SET.open('coach');
+    if (U.tab === 'settings') return SET.open('coach');
+    go(() => {
+      U.setFrom = { tab: U.tab, view: U.view };
+      U.view = 'set';
+      U.setPg = 'coach';
+    });
   }
   // Q19 the one-page session: in Foundation and Rotation the video sits in the floating window (cued to the step's
   // exercise, paused, the first time it shows: X.cv on the draft), and Application shows a "Coach ▸" pill instead.

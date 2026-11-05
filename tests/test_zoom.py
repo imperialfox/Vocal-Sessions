@@ -17,8 +17,8 @@ QUIET = "!document.getAnimations().some(a=>(a.playState==='running'||a.playState
 CLEAN = "!document.querySelector('.zm')&&!document.querySelector('.zm-src')&&!ZOOM.busy()"
 GROWING = "(()=>{const c=document.querySelector('.zm .zm-c');return !!c&&c.getAnimations().length>0})()"
 BACK = '#barL [aria-label^="Back"]'
-# 3.23 (Q08): the Exercises list, songs and Settings rows push (test_native.py); Today's suggested rotation still zooms
-# into an exercise page, so the zoom's own checks start there
+# 3.23 (Q08): the Exercises list, songs and Settings rows push (test_native.py); the zoom's own checks start from Today's
+# suggested rotation, armed as a zoom (AS_ZOOM, Q50)
 SUG = '.dash [data-zk^="ex:"]'
 TODAY = "go(()=>{U.tab='today';U.view=null})"
 # freeze every animation (after the zoom's first frames), to look at exact moments
@@ -31,8 +31,18 @@ COVER = """()=>{const z=document.querySelector('.zm');if(!z)return null;const o=
   return 1-(1-o('.zm-tint'))*(1-o('.zm-body'))*(1-o('.zm-ghost'))}"""
 
 
+# Q50: Today's suggested rotation and Show all sessions / song practice push on iPhone now (the door rule, test_native.py).
+# Their zoom is the same code iPad and Mac still run for every row, so the zoom's own checks keep them as zooms here:
+# the tap is armed as it was before data-push was added. Exercises rows keep their push (the hand-off checks use it).
+AS_ZOOM = """(()=>{const T=ZOOM.tap;ZOOM.tap=el=>{const c=el&&el.closest&&el.closest('[data-zk][data-push]');
+  const z=!!c&&(!!c.closest('.dash')||/^all:/.test(c.dataset.zk));if(z)c.removeAttribute('data-push');
+  try{T(el)}finally{if(z)c.setAttribute('data-push','')}}})()"""
+
+
 def page(b, t, w=390, h=844, sc='light', data=None, init=ON, ctx_args=None):
-    return t.page(b, w=w, h=h, sc=sc, touch=True, data=data if data is not None else songs(), init=init, ctx_args=ctx_args)
+    pg = t.page(b, w=w, h=h, sc=sc, touch=True, data=data if data is not None else songs(), init=init, ctx_args=ctx_args)
+    pg.evaluate(AS_ZOOM)
+    return pg
 
 
 def songs():

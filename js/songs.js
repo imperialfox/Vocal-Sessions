@@ -1420,7 +1420,7 @@ function practiceRow(sg) {
   return (
     '<div class="hdr">Practice</div><div class="grp"><button class="row" data-zk="sgp:' +
     sg.id +
-    '" data-a="sgPractise" data-k="' +
+    '" data-push data-a="sgPractise" data-k="' +
     sg.id +
     '">' +
     songTile +
@@ -2761,6 +2761,8 @@ const SG_ACT = {
     stopPlayback();
     X.song = k;
     saveDraft();
+    // Q50 Back returns to the page it was opened from (the song page), not Today
+    U.spFrom = U.view === 'lyr' ? { tab: U.tab, view: 'lyr' } : null;
     go(() => {
       U.view = 'song';
     });

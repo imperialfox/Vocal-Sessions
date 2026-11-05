@@ -74,7 +74,7 @@ def storage(b, t):
     row = pg.locator('#app [data-a=coachSettings]')
     ok(row.count() == 1 and 'Add coach video' in row.inner_text(), 'with no video, the Exercises row reads Add coach video')
     row.click(); pg.wait_for_timeout(300)
-    ok(pg.evaluate("U.tab+'/'+U.view+'/'+U.setPg") == 'settings/set/coach', 'and opens Settings › Coach video')
+    ok(pg.evaluate("U.tab+'/'+U.view+'/'+U.setPg") == 'exercises/set/coach', 'and opens Settings › Coach video, still on the Exercises tab (Q50)')
     pg.evaluate("go(()=>{U.tab='exercises';U.view='coach'})"); pg.wait_for_timeout(200)
     ok(pg.locator('#app .empty').count() == 1 and pg.locator('#app [data-a=coachSettings]').count() == 1,
        'the player page with no video shows a short empty state with Add coach video…')

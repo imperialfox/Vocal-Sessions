@@ -9,6 +9,25 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.63 · 5 Nov 2026
+*Every door moves the same way (Q50)*
+<!-- area: fixes -->
+
+From the UI consistency audit of 3.62. One rule for every door: a row slides its page in from the right, a card zooms, and Back takes you back to where you were.
+
+**Doors that now slide in**
+- The gear on Today slides Settings in, and Back slides it away. It used to appear and disappear in one frame.
+- Today's suggested rotation opens its exercise the same way the Exercises list does.
+- Show all sessions and Show all song practice on Progress slide in, as Show all songs does on Today.
+- Song practice on a song page slides in, and Back now returns to the song. It used to go to Today.
+
+**Back to the right place**
+- Add coach video on Exercises opens Coach video and stays on the Exercises tab, so Back returns to Exercises. It used to jump to Settings.
+
+On iPad and Mac these doors zoom as before.
+
+Screens: VS-001, VS-006, VS-007, VS-009, VS-012, VS-013, VS-014, VS-018, VS-022
+
 ## 3.62 · 5 Nov 2026
 *Quicker screens and one Cancel (Q49)*
 <!-- area: fixes -->

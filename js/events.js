@@ -115,6 +115,9 @@ document.addEventListener('click', (e) => {
       break;
     case 'openSettings':
       U.clock = false;
+      // Q50 the door rule: a top bar button that opens a page pushes it (iPhone; iPad and Mac keep their own doors), and
+      // Back to Today (setBack) slides it away
+      if (!MQ.reg.matches) ZOOM.armPush('settings');
       go(() => {
         U.tab = 'settings';
         U.view = null;
@@ -193,13 +196,22 @@ document.addEventListener('click', (e) => {
         });
       else rerender();
       break;
-    case 'exit':
+    case 'exit': {
       U.clock = false;
+      // Q50 Song practice opened from a song page goes back there (and slides away); everything else goes to Today
+      const f = U.view === 'song' && U.spFrom && U.spFrom.tab === U.tab ? U.spFrom : null; // not after a Resume from Today
+      U.spFrom = null;
       go(() => {
+        if (f) {
+          U.tab = f.tab;
+          U.view = f.view;
+          return;
+        }
         U.view = null;
         U.tab = 'today';
       });
       break;
+    }
     case 'view':
       go(() => {
         U.view = v;

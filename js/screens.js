@@ -120,7 +120,7 @@ function scrToday() {
     '%"></i></div></div>' +
     '<button class="row" data-zk="ex:' +
     s.id +
-    '" data-a="openEx" data-k="' +
+    '" data-push data-a="openEx" data-k="' + // Q50 a row pushes, as from the Exercises list
     s.id +
     '">' +
     tile(s) +
@@ -575,7 +575,7 @@ function scrHistory() {
     (recent.length
       ? recent.map(sessRow).join('')
       : '<div class="empty">Your finished sessions will appear here.</div>') +
-    '<button class="row acc" data-zk="all:sessions" data-a="openAll" data-v="sessions"><span class="lbl">Show all sessions</span>' +
+    '<button class="row acc" data-zk="all:sessions" data-push data-a="openAll" data-v="sessions"><span class="lbl">Show all sessions</span>' +
     chev +
     '</button></div>';
   const timeB =
@@ -610,7 +610,7 @@ function scrHistory() {
       .slice(0, 3)
       .map((x) => songRow(x))
       .join('') +
-    '<button class="row acc" data-zk="all:songs" data-a="openAll" data-v="songs"><span class="lbl">Show all song practice</span>' +
+    '<button class="row acc" data-zk="all:songs" data-push data-a="openAll" data-v="songs"><span class="lbl">Show all song practice</span>' +
     chev +
     '</button></div>' +
     '<p class="foot">Kept apart from your focused practice time. You can also get here from Today, the calendar and each song in Exercises.</p>';
