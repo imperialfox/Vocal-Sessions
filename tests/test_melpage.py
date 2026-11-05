@@ -2,7 +2,7 @@
 lines, the guide playing the vocal line, a loop in bars, the speed, and the starting note in one tap.
 
 The prints are the made-up tunes from tools/make_melody_fixtures.py (tests/fixtures/melody/): no real music.
-Parts (VS_MELPAGE=page,guide,taps,loop,sheet,screens):
+Parts (VS_MELPAGE=page,guide,taps,loop,sheet,drawn,screens):
 - page: the Song page row opens VS-108 (and zooms from its card); the top bar's circle opens VS-099; Back returns to the
   Song page; the dots view has a line per few bars, bar numbers, flagged bars shaded, muted notes hollow, unsure marked;
   the bars stepper; a song with no score; the written line as 10 ms points (H35)
@@ -16,12 +16,14 @@ Parts (VS_MELPAGE=page,guide,taps,loop,sheet,screens):
 - sheet: the print's lines cut again from the kept print (decision 22), a button per bar on its line, the playhead on the
   bar, the fallback on the page when pdf.js won't load in the Worker, Print not on this device, only lines near the
   screen decoded (H47)
+- drawn (Q57): a score PDF's lines drawn from the PDF on the page at the view's width × the pixel ratio, a button per
+  bar in order on its line, a tap plays from there, the playhead in its bar, at 375 px and on iPad, light and dark
 - screens: VS-108 at 375 px and on iPad, light and dark, with Reduce Motion; the transport in the dock"""
 import os
 from harness import ready, until, OUT
 from test_melody import read_save, fresh
 
-PARTS = set((os.environ.get('VS_MELPAGE') or 'page,guide,taps,loop,sheet,screens').split(','))
+PARTS = set((os.environ.get('VS_MELPAGE') or 'page,guide,taps,loop,sheet,drawn,screens').split(','))
 SONG = "go(()=>{U.tab='songs';U.view='lyr';U.songId='g_1';U.sheet=null})"
 OPEN = "SG_ACT.melOpen(null,null,'g_1')"
 # a made-up score with no print: 8 bars of 4/4, two notes a beat, one muted and one unsure
@@ -200,6 +202,35 @@ def run(b, t):
         pg.evaluate("Object.assign(sgp(),{melView:'sheet'});saveSGP();go(()=>{U.view='mel';U.songId='g_1'})")
         t.ok(until(pg, "document.querySelector('#app').textContent.includes('Print not on this device')"), 'with the print removed: Print not on this device, and the dots still play')
         pg.close()
+
+    if 'drawn' in PARTS:
+        # Q57 a score PDF's lines are drawn from the PDF on the page (page.render), at the view's width × the pixel ratio
+        for (w, h, sc, name) in [(375, 812, 'light', '375-light'), (375, 812, 'dark', '375-dark'), (820, 1180, 'light', 'ipad'), (820, 1180, 'dark', 'ipad-dark')]:
+            pg = fresh(t, b, w=w, h=h, sc=sc)
+            pg.evaluate("songById('g_1').name='Lantern Walk';save()")
+            t.ok(read_save(pg, 'score-lantern-walk.pdf'), f'{name}: a score PDF read onto the song')
+            pg.evaluate("Object.assign(sgp(),{melView:'sheet'});saveSGP()")
+            pg.evaluate(OPEN)
+            until(pg, "U.view==='mel'")
+            t.ok(until(pg, ST + ".sheet.state==='ready'&&document.querySelectorAll('.mpsheet .mpimg').length===2", 20000), f'{name}: each of its 2 lines is drawn from the PDF')
+            t.ok(until(pg, "[...document.querySelectorAll('.mpsheet img')].every(i=>i.complete&&i.naturalWidth>0)"), f'{name}: and shown')
+            iw = pg.evaluate("Math.max(...[...document.querySelectorAll('.mpsheet img')].map(i=>i.naturalWidth))")
+            cw = pg.evaluate("document.querySelector('#mpBody').clientWidth*devicePixelRatio")
+            t.ok(abs(iw - cw) <= 2, f'{name}: drawn at the view\'s width × the pixel ratio ({iw} for {cw})')
+            nb = pg.evaluate("document.querySelectorAll('.mpsheet .mpbar').length")
+            t.ok(nb == pg.evaluate("MELODY.get('g_1').bars.length"), f'{name}: a button per bar, on its line ({nb})')
+            # the bar buttons sit between the line's bar lines: bar 2 starts right of bar 1, inside the picture
+            bx = pg.evaluate("[...document.querySelectorAll('.mpsheet .mpimg[data-pi=\"0\"] .mpbar')].map(e=>[e.offsetLeft,e.offsetWidth,e.parentNode.offsetWidth])")
+            t.ok(len(bx) == 4 and all(0 < a and a + w_ <= W + 1 for a, w_, W in bx) and all(bx[i][0] + bx[i][1] <= bx[i + 1][0] + 1 for i in range(3)), f'{name}: line 1\'s 4 bars in order inside its picture ({bx})')
+            pg.evaluate("document.querySelector('.mpbar[data-v=\"1\"]').dispatchEvent(new MouseEvent('click',{bubbles:true}))")
+            t.ok(until(pg, ST + ".on"), f'{name}: tapping a bar on the drawn line plays from there')
+            pg.click('#mpPP')
+            pg.evaluate("MELPLAY.paintHead&&MELPLAY.paintHead()")
+            hx = pg.evaluate("(()=>{const h=document.querySelector('#mpHead'),b=document.querySelector('.mpbar[data-v=\"1\"]'),r=b.getBoundingClientRect(),q=h.getBoundingClientRect();return [q.left-r.left,r.width,parseFloat(h.style.opacity)]})()")
+            t.ok(hx[2] == 1 and -1 <= hx[0] <= hx[1] + 1, f'{name}: the playhead sits in bar 2 on the print ({hx})')
+            t.ok(pg.evaluate("document.documentElement.scrollWidth<=innerWidth+1"), f'{name}: no sideways scroll')
+            t.shot(pg, 'melpage-drawn-' + name)
+            pg.close()
 
     if 'screens' in PARTS:
         for (w, h, sc, name) in [(375, 812, 'light', '375-light'), (375, 812, 'dark', '375-dark'), (820, 1180, 'light', 'ipad')]:

@@ -9,6 +9,35 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.66 · 5 Nov 2026
+*Sheet music from UG's own PDF download (Q57)*
+<!-- area: songs -->
+
+The app now reads the PDF that UG's Download PDF gives you, as well as the Safari print. No printing step, and the words come with it exactly.
+
+**Adding sheet music**
+- Choose the PDF from UG's Download PDF the same way as a print: from the song's Sheet music row, or Add sheet music on New song.
+- The app works out which kind of PDF it is from its first two pages. Safari prints read exactly as before.
+- A PDF it can't read says so: "This doesn't look like sheet music the app can read yet."
+
+**What comes with it**
+- The notes, rests and bars, read from the music itself rather than from pictures of it.
+- The words, saved on their notes. They'll show on the Sheet music page in a later milestone.
+- The title and artist from the top of page 1 fill New song's empty fields.
+- The tempo printed at the top is offered. On Sheet music read it starts in the Tempo field, and New song shows "tempo N from the print". Nothing is set until you save.
+- A print with no tab reads from its notation alone.
+
+**To check**
+- Tempo changes in a print are listed with their bars. Playback uses the first tempo.
+- A print with more than one part reads the staff with the words, and says the vocal line was guessed.
+- A guitar part (mostly chords) is turned away, as before.
+- The same PDF on another song is found by the file itself, or by its title and artist, since these PDFs have no UG link.
+
+**Sheet view**
+- For these PDFs, each line is drawn from the PDF itself at your screen's sharpness, so it's crisp on iPhone and iPad.
+
+Screens: VS-051, VS-099, VS-100, VS-101, VS-108
+
 ## 3.65 · 5 Nov 2026
 *Sheets, pages and Reduce Motion move the kit's way (Q52)*
 <!-- area: look -->

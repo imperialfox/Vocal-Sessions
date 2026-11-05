@@ -36,7 +36,7 @@ const MELODY = (() => {
      In the reader's Worker; if pdf.js won't load there, on the page. Resolves [{i, w, h, g, both}] at half size, or null
      when there's no print on this device or it can't be read. Nothing is stored. */
   let cutOpt = null; // tests: {nopdf: true}
-  async function cut(id) {
+  async function cut(id, width) {
     const rec = await MDB.tx('prints', 'readonly', (st) => st.get(id)).catch(() => null);
     if (!rec || !rec.blob) return null;
     let data;
@@ -45,6 +45,8 @@ const MELODY = (() => {
     } catch (e) {
       return null;
     }
+    const sc = scores.get(id);
+    if (sc && sc.fmt === 'score-pdf') return drawLines(sc, data, width);
     const src = (q('link[href^="js/melodyread.js"]') || { getAttribute: () => 'js/melodyread.js' }).getAttribute('href');
     const got = await new Promise((res) => {
       let w;
@@ -76,6 +78,53 @@ const MELODY = (() => {
       return await MELREAD.cutLines(lib, new Uint8Array(data));
     } catch (e) {
       return null;
+    }
+  }
+
+  /* Q57 a score PDF's lines for the sheet view: each one drawn from the PDF with pdf.js on the page (decision 6), into a
+     canvas at the view's width × the pixel ratio, clipped to the line's box (the notation's top less 5 spaces to the
+     tab's or staff's bottom plus 2). Drawn again each time the view opens (H42); nothing is stored. Resolves
+     [{i, w, h, both, url, W, ox}]: W and ox map the bars' PDF positions onto the picture. */
+  async function drawLines(sc, data, width) {
+    const boxes = Array.isArray(sc.boxes) ? sc.boxes : [];
+    if (!boxes.length) return null;
+    let doc = null;
+    const out = [];
+    try {
+      const lib = await libHere();
+      doc = await lib.getDocument(Object.assign({ data: new Uint8Array(data) }, MELREAD.PDF_OPTS)).promise;
+      const wv = typeof width === 'function' ? width() : width,
+        css = Math.max(200, Math.round(wv || Math.min(window.innerWidth, 900))),
+        dpr = Math.min(3, window.devicePixelRatio || 1);
+      for (let i = 0; i < boxes.length; i++) {
+        const b = boxes[i];
+        if (b.p > doc.numPages) continue;
+        const page = await doc.getPage(b.p),
+          W = b.x1 - b.x0,
+          k = (css * dpr) / W,
+          vp = page.getViewport({ scale: k, offsetX: -b.x0 * k, offsetY: -b.y0 * k }),
+          c = document.createElement('canvas');
+        c.width = Math.round(W * k);
+        c.height = Math.max(1, Math.round((b.y1 - b.y0) * k));
+        const cx = c.getContext('2d');
+        cx.fillStyle = '#fff';
+        cx.fillRect(0, 0, c.width, c.height);
+        await page.render({ canvasContext: cx, viewport: vp }).promise;
+        const url = await new Promise((res) => c.toBlob((bl) => res(bl ? URL.createObjectURL(bl) : ''), 'image/png'));
+        out.push({ i, w: c.width, h: c.height, both: true, url, W, ox: b.x0 });
+        c.width = c.height = 0;
+        try {
+          page.cleanup();
+        } catch (e) {}
+      }
+      return out;
+    } catch (e) {
+      out.forEach((l) => l.url && URL.revokeObjectURL(l.url));
+      return null;
+    } finally {
+      try {
+        if (doc) doc.destroy();
+      } catch (e) {}
     }
   }
 
@@ -119,6 +168,18 @@ const MELODY = (() => {
       o.anchors = Array.isArray(x.anchors) ? x.anchors.filter((a) => a && typeof a === 'object') : [];
       o.loop = x.loop && typeof x.loop === 'object' && !Array.isArray(x.loop) ? x.loop : null;
       if (x.ug != null && (typeof x.ug !== 'object' || Array.isArray(x.ug))) delete o.ug;
+      // Q57: which reader made it (unknown values kept, for a newer version's readers), every tempo mark, more than
+      // one part, and where each line is on the PDF (the sheet view draws a score-pdf's lines from these)
+      if (x.fmt != null && (typeof x.fmt !== 'string' || x.fmt.length > 40)) delete o.fmt;
+      if (x.tempos != null)
+        o.tempos = Array.isArray(x.tempos)
+          ? x.tempos.filter((t) => t && typeof t === 'object' && int(t.tick) && t.tick >= 0 && int(t.bpm) && t.bpm >= 20 && t.bpm <= 300).map((t) => Object.assign({}, t))
+          : [];
+      if (x.parts != null && typeof x.parts !== 'boolean') delete o.parts;
+      if (x.boxes != null)
+        o.boxes = Array.isArray(x.boxes)
+          ? x.boxes.filter((b) => b && typeof b === 'object' && int(b.p) && b.p >= 1 && ['x0', 'y0', 'x1', 'y1'].every((k) => typeof b[k] === 'number' && isFinite(b[k])) && b.x1 > b.x0 && b.y1 > b.y0)
+          : [];
       return o;
     } catch (e) {
       return null;
@@ -132,11 +193,14 @@ const MELODY = (() => {
     else {
       ext.melody = Object.assign({}, m);
       if (m.ug != null && typeof m.ug !== 'string') ext.melody.ug = null;
+      if (m.sha != null && (typeof m.sha !== 'string' || !/^[0-9a-f]{64}$/.test(m.sha))) delete ext.melody.sha; // Q57
     }
   }
   const noteOf = (sg) => (sg && sg.ext && sg.ext.melody) || null;
-  function setNote(sg, ug, at) {
-    sg.ext = Object.assign({}, sg.ext || {}, { melody: { ug: ug == null ? null : String(ug), at } });
+  function setNote(sg, ug, at, sha) {
+    const m = { ug: ug == null ? null : String(ug), at };
+    if (sha) m.sha = sha; // Q57: the print's SHA-256, for "same print on another song" when it has no UG id
+    sg.ext = Object.assign({}, sg.ext || {}, { melody: m });
   }
   // a score in an older shape: its old copy goes to the safety copies for 30 days, then each step runs in order
   async function upgrade(id, s) {
@@ -189,14 +253,14 @@ const MELODY = (() => {
     })();
     return loading;
   }
-  const metaOf = (v) => ({ name: String(v.name || ''), size: +v.size || 0, pages: +v.pages || 0, ug: v.ug || null, at: +v.at || 0 });
+  const metaOf = (v) => ({ name: String(v.name || ''), size: +v.size || 0, pages: +v.pages || 0, ug: v.ug || null, sha: typeof v.sha === 'string' ? v.sha : null, at: +v.at || 0 });
   // a score with no note on its song gets its note back (a crash between the two writes)
   function reconcile() {
     let changed = false;
     scores.forEach((s, id) => {
       const sg = songById(id);
       if (sg && !noteOf(sg)) {
-        setNote(sg, s.ug && s.ug.id, s.at);
+        setNote(sg, s.ug && s.ug.id, s.at, prints.has(id) ? prints.get(id).sha : null);
         changed = true;
       }
     });
@@ -271,7 +335,11 @@ const MELODY = (() => {
       loop: null,
       ug: r.ug || null,
       repeats: !!r.repeats,
+      fmt: r.fmt || 'ug-print',
     };
+    if (r.tempos && r.tempos.length) s.tempos = r.tempos;
+    if (r.parts) s.parts = true;
+    if (r.boxes && r.boxes.length) s.boxes = r.boxes;
     if (old) {
       // the score it replaces is kept for 30 days in the safety copies
       try {
@@ -279,13 +347,13 @@ const MELODY = (() => {
       } catch (e) {}
     }
     await put(id, s, old ? old.rev || 0 : 0);
-    setNote(sg, r.ug && r.ug.id, at);
+    setNote(sg, r.ug && r.ug.id, at, r.sha);
     save();
     try {
       await MDB.tx('prints', 'readwrite', (p) =>
-        p.put({ name: String(file.name || 'Sheet music.pdf').slice(0, 200), size: file.size, type: 'application/pdf', pages: r.pages || 0, ug: r.ug || null, at, blob: file }, id)
+        p.put({ name: String(file.name || 'Sheet music.pdf').slice(0, 200), size: file.size, type: 'application/pdf', pages: r.pages || 0, ug: r.ug || null, sha: r.sha || null, at, blob: file }, id)
       );
-      prints.set(id, { name: String(file.name || ''), size: file.size, pages: r.pages || 0, ug: r.ug || null, at });
+      prints.set(id, { name: String(file.name || ''), size: file.size, pages: r.pages || 0, ug: r.ug || null, sha: r.sha || null, at });
       return true;
     } catch (e) {
       prints.delete(id);
@@ -506,6 +574,13 @@ const MELODY = (() => {
         return Number.isInteger(b) ? String(b) : Number.isInteger(b * 2) ? Math.floor(b) + (Math.floor(b) ? ' and a half' : 'half a') : b.toFixed(2);
       };
     if (s.repeats) out.push({ n: null, why: 'This print uses repeats; the order may be wrong.' });
+    // Q57 a score PDF with more than one part, and tempo changes (playback uses the first tempo)
+    if (s.parts) out.push({ n: null, why: 'More than one part on this print; the vocal line was guessed.' });
+    const tm = Array.isArray(s.tempos) ? s.tempos : [];
+    if (tm.length > 1) {
+      out.push({ n: null, why: 'Tempo changes in this print. It plays at the first tempo, ' + tm[0].bpm + '.' });
+      tm.slice(1).forEach((t) => out.push({ n: t.n != null ? t.n : null, why: 'The print’s tempo changes to ' + t.bpm + ' here.' }));
+    }
     s.bars.forEach((b) => {
       const f = b.f || [];
       if (f.includes('sum')) out.push({ n: b.n, why: 'Adds up to ' + beats(b.len) + ' of ' + beats(b.exp || b.len) + ' beats. It plays as read.' });
@@ -551,6 +626,7 @@ const MELODY = (() => {
     guitar: 'This looks like a guitar part. Print the Vocals part.',
     toomuch: 'This print has more than a song’s worth of music, so it wasn’t read.',
     broken: 'Couldn’t read this print. Try printing it again from UG.',
+    unknown: 'This doesn’t look like sheet music the app can read yet. Use the PDF from UG’s Download PDF, or print it from UG.', // Q57
   };
   function errText(code, info) {
     if (code === 'view')
@@ -562,6 +638,31 @@ const MELODY = (() => {
         'Only ' + (info.ok || 0) + ' of ' + (info.bars || 0) + ' bars could be read, too few to keep. Check it’s the notation plus tab view.'
       );
     return ERR[code] || ERR.broken;
+  }
+  // Q57 the file's SHA-256 as hex (null where crypto.subtle isn't there, such as a page not on https)
+  async function sha256(data) {
+    try {
+      const h = new Uint8Array(await crypto.subtle.digest('SHA-256', data));
+      return [...h].map((b) => b.toString(16).padStart(2, '0')).join('');
+    } catch (e) {
+      return null;
+    }
+  }
+  // Q57 the same print on another song: its UG id, or else its title and artist (case and punctuation ignored) or the
+  // file's SHA-256
+  function sameOn(r, notId) {
+    const ugId = r.ug && r.ug.id;
+    if (ugId) return D.songs.find((s) => s.id !== notId && noteOf(s) && noteOf(s).ug === ugId) || null;
+    const t = words(r.ug && r.ug.title),
+      a = words(r.ug && r.ug.artist);
+    return (
+      D.songs.find((s) => {
+        if (s.id === notId || !noteOf(s)) return false;
+        if (r.sha && noteOf(s).sha === r.sha) return true;
+        const o = scores.get(s.id);
+        return !!(t && a && o && o.ug && words(o.ug.title) === t && words(o.ug.artist) === a);
+      }) || null
+    );
   }
   function pick(target) {
     if (rec) return toast('Finish the take first');
@@ -588,6 +689,7 @@ const MELODY = (() => {
     } catch (e) {}
     if (head !== '%PDF-') return toast(ERR.notpdf);
     const data = await file.arrayBuffer();
+    const sha = await sha256(data); // Q57: before the bytes go to the Worker
     const src = (q('link[href^="js/melodyread.js"]') || {}).getAttribute ? q('link[href^="js/melodyread.js"]').getAttribute('href') : 'js/melodyread.js';
     let w;
     try {
@@ -595,7 +697,7 @@ const MELODY = (() => {
     } catch (e) {
       return toast(ERR.broken);
     }
-    job = { target, file, w, f: 0, line: 0, lines: 0, draft: target.draft ? U.sDraft : null };
+    job = { target, file, w, f: 0, line: 0, lines: 0, draft: target.draft ? U.sDraft : null, sha };
     w.onmessage = (e) => onMsg(job && job.w === w ? job : null, e.data);
     w.onerror = () => end(job && job.w === w ? job : null, { type: 'fail', code: 'broken' });
     testOpt = opt || null;
@@ -647,12 +749,28 @@ const MELODY = (() => {
     return pdfHere;
   }
   async function pagesHere(j) {
+    let doc = null;
     try {
       const lib = await libHere(),
         data = new Uint8Array(await j.file.arrayBuffer());
-      await MELREAD.picturesFromPdf(lib, data, async (p, n, pics, text) => {
+      doc = await lib.getDocument(Object.assign({ data }, MELREAD.PDF_OPTS)).promise;
+      if (job !== j) return;
+      if (doc.numPages > 40 && !(await askHere(doc.numPages))) throw new Error('stopped');
+      // Q57 which reader: a score PDF is read here and the read sent over; pictures go over a page at a time
+      const first = await MELREAD.firstPages(lib, doc),
+        F = MELREAD.FORMATS.find((f) => f.detect(doc, first));
+      if (!F) return j.w.postMessage({ vs: 1, type: 'pages', fail: 'unknown' });
+      if (F.id !== 'ug-print') {
+        const r = await F.read(doc, (p, n) => {
+          if (job !== j) throw new Error('stopped');
+          j.f = 0.1 + (0.9 * p) / Math.max(1, n);
+          busy();
+        }, { pdfjs: lib, first });
+        r.fmt = F.id;
+        return j.w.postMessage({ vs: 1, type: 'pages', r });
+      }
+      await MELREAD.picturesFromDoc(lib, doc, async (p, n, pics, text) => {
         if (job !== j) throw new Error('stopped');
-        if (p === 0 && n > 40 && !(await askHere(n))) throw new Error('stopped');
         j.f = 0.04 + (0.16 * p) / Math.max(1, n);
         busy();
         if (pics && pics.length) j.w.postMessage({ vs: 1, type: 'page', pics, text }, pics.map((x) => x.g.buffer));
@@ -662,7 +780,12 @@ const MELODY = (() => {
     } catch (e) {
       if (job !== j) return;
       if (e && e.message === 'stopped') return cancel();
+      if (e instanceof MELREAD.Stop) return j.w.postMessage({ vs: 1, type: 'pages', fail: e.code, info: e.info });
       j.w.postMessage({ vs: 1, type: 'pages', fail: 'damaged' });
+    } finally {
+      try {
+        if (doc) doc.destroy();
+      } catch (e) {}
     }
   }
   let askRes = null;
@@ -751,6 +874,12 @@ const MELODY = (() => {
     }
     const r = m.r;
     r.pages = r.pages || 0;
+    if (j.sha) r.sha = j.sha;
+    if (r.lineBoxes) {
+      // Q57 a score PDF's lines, kept on the score for the sheet view
+      r.boxes = r.lineBoxes;
+      delete r.lineBoxes;
+    }
     // the read belongs to its song: dropped if the song (or the New song sheet it was for) has gone
     if (j.target.draft) {
       if (!U.sDraft || U.sDraft !== j.draft) return rerender();
@@ -779,10 +908,9 @@ const MELODY = (() => {
       held = null;
       return rerender();
     }
-    const ugId = h.r.ug && h.r.ug.id;
     if (h.step < 1) {
       h.step = 1;
-      const other = ugId && D.songs.find((s) => s.id !== sg.id && noteOf(s) && noteOf(s).ug === ugId);
+      const other = sameOn(h.r, sg.id);
       if (other) {
         U.sheet = 'melSame';
         U.sd = { k: other.id };
@@ -806,7 +934,8 @@ const MELODY = (() => {
       }
     }
     h.octave = h.octave != null ? h.octave : scores.has(sg.id) ? scores.get(sg.id).octave || 0 : suggest(h.r);
-    h.tempo = h.tempo || (scores.has(sg.id) ? scores.get(sg.id).tempo : 100);
+    // Q57 a tempo read from the print is offered here (Save keeps it); otherwise the score's own, or 100
+    h.tempo = h.tempo || h.r.tempo || (scores.has(sg.id) ? scores.get(sg.id).tempo : 100);
     U.sheet = 'melRead';
     U.sd = { k: sg.id };
     rerender();
@@ -825,8 +954,7 @@ const MELODY = (() => {
   // a read for the New song sheet: its title and artist fill empty fields, and the score is saved with the song
   function toDraft(r, file) {
     const d = U.sDraft;
-    const ugId = r.ug && r.ug.id,
-      other = ugId && D.songs.find((s) => noteOf(s) && noteOf(s).ug === ugId);
+    const other = sameOn(r, null);
     d.melody = { r, file, name: (r.ug && r.ug.title) || String(file.name || 'Sheet music').replace(/\.pdf$/i, '') };
     if (!d.title && r.ug && r.ug.title) d.title = r.ug.title;
     if (!d.artist && r.ug && r.ug.artist) d.artist = r.ug.artist;
@@ -842,7 +970,7 @@ const MELODY = (() => {
   async function attachDraft(sg, m) {
     if (!m || !m.r) return true;
     try {
-      await keep(sg, m.r, m.file, { octave: suggest(m.r), tempo: 100 });
+      await keep(sg, m.r, m.file, { octave: suggest(m.r), tempo: m.r.tempo || 100 }); // Q57 the print's tempo, shown on New song
       return true;
     } catch (e) {
       toast('Couldn’t save the sheet music. Storage may be full.', 4000, 'long');
@@ -946,7 +1074,7 @@ const MELODY = (() => {
     );
   }
   // the settings a read or a score has: the octave (Lower · As written · Higher) and the tempo (± by 1, or typed)
-  function controls(oct, tempo, note) {
+  function controls(oct, tempo, note, tfoot) {
     return (
       '<div class="hdr">Octave</div><div class="seg pk-seg wide meloct" role="group" aria-label="Octave"><span class="pk-seg-ind" aria-hidden="true"></span>' +
       [[-1, 'Lower'], [0, 'As written'], [1, 'Higher']]
@@ -957,7 +1085,7 @@ const MELODY = (() => {
       '<button class="shbtn glass" data-a="melTempo" data-v="-1" aria-label="Slower">−</button>' +
       '<input class="field" id="melTempoIn" type="number" inputmode="numeric" min="20" max="300" value="' + tempo + '" aria-label="Tempo">' +
       '<button class="shbtn glass" data-a="melTempo" data-v="1" aria-label="Faster">+</button></div></div>' +
-      '<p class="foot">Type the tempo printed at the top of the print, the number after ♩=.</p>'
+      '<p class="foot">' + (tfoot || 'Type the tempo printed at the top of the print, the number after ♩=.') + '</p>'
     );
   }
   function checkList(list, all) {
@@ -992,13 +1120,13 @@ const MELODY = (() => {
       const r = held.r,
         sg = songById(held.target.id);
       if (!sg) return '';
-      const pv = { notes: r.notes, bars: r.bars, octave: held.octave || 0, shift: 0, key: r.key, time: r.time, repeats: r.repeats };
+      const pv = { notes: r.notes, bars: r.bars, octave: held.octave || 0, shift: 0, key: r.key, time: r.time, repeats: r.repeats, parts: r.parts, tempos: r.tempos };
       const sug = suggest(r);
       return sheetWrap(
         'Sheet music read',
         '<p class="note">' + esc(r.ug && r.ug.title ? r.ug.title + (r.ug.artist ? ' by ' + r.ug.artist : '') : sg.name) + '</p>' +
           summary(pv) +
-          controls(held.octave || 0, held.tempo || 100, octNote(sug, voiceSet())) +
+          controls(held.octave || 0, held.tempo || 100, octNote(sug, voiceSet()), r.tempo ? 'Read from the print: ♩ = ' + r.tempo + '. Change it if it’s wrong.' : '') +
           '<div class="hdr">To check</div>' + checkList(checks(pv), sd.all) +
           '<div style="margin-top:14px"><button class="cta" data-a="melSave">Save sheet music</button></div><button class="ghost" data-a="melDrop">Cancel</button>',
         'Sheet music read'

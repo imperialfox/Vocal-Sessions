@@ -1,0 +1,202 @@
+{
+ "score-lantern-walk.pdf": {
+  "title": "Lantern Walk",
+  "artist": "The Made Up Band",
+  "key": 2,
+  "time": [
+   4,
+   4
+  ],
+  "tempo": 96,
+  "tempos": [
+   [
+    1,
+    96
+   ]
+  ],
+  "bars": [
+   "1:8|D4/2 D4/1 A3/1 F#4/2 A3/2|",
+   "2:8|G3/0.5 A3/0.5 B3/0.5 A3/0.5 G3/4 F#3/1|r1",
+   "3:8|E3/0.667 F#3/0.667 E3/0.667 D3/4|r2",
+   "4:8||r8",
+   "5:32||r32",
+   "9:8|E3/0.25 F#3/0.25 G3/0.5 A3/3 B3/2 C#4/2|",
+   "10:8|D4/6|r2"
+  ],
+  "words": [
+   "Moon-",
+   "light",
+   "on",
+   "the",
+   "hill",
+   "Lan-",
+   "terns",
+   "swing-",
+   "ing",
+   null,
+   "home",
+   "slow-",
+   "ly",
+   "we",
+   "go",
+   "Ev-",
+   "er-",
+   "y",
+   "step",
+   "we",
+   "climb",
+   "on"
+  ]
+ },
+ "score-ferry-lights.pdf": {
+  "title": "Ferry Lights",
+  "artist": "Nobody In Particular",
+  "key": -3,
+  "time": [
+   4,
+   4
+  ],
+  "tempo": 88,
+  "tempos": [
+   [
+    1,
+    88
+   ],
+   [
+    4,
+    120
+   ]
+  ],
+  "bars": [
+   "1:8|D#3/2 G3/2 A#3/2 B3/2|",
+   "2:8|A3/2 G#3/2 A3/2 G#3/2|",
+   "3:4|G3/2 F3/2|",
+   "4:8|D#3/1 G3/1 A#3/4|r2|repeat",
+   "5:8|D4/4 A#3/4|",
+   "6:8|D#4/8|"
+  ],
+  "words": [
+   "Lights",
+   "on",
+   "the",
+   "bay",
+   "ris-",
+   "ing",
+   "a-",
+   "gain",
+   "we",
+   "go",
+   "Out",
+   "to",
+   "sea",
+   "Home",
+   "late",
+   "now"
+  ]
+ },
+ "score-two-voices.pdf": {
+  "title": "Two Voices",
+  "artist": "The Pretend Duo",
+  "key": 0,
+  "time": [
+   4,
+   4
+  ],
+  "tempo": 100,
+  "tempos": [
+   [
+    1,
+    100
+   ]
+  ],
+  "bars": [
+   "1:8|C3/2 D3/2 E3/2 F3/2|",
+   "2:8|G3/4 A3/4|",
+   "3:8|G3/2 F3/2 E3/4|"
+  ],
+  "words": [
+   "One",
+   "two",
+   "three",
+   "four",
+   "and",
+   "more",
+   "end-",
+   "ing",
+   "now"
+  ]
+ },
+ "score-no-tab.pdf": {
+  "title": "Quiet Kitchen",
+  "artist": "Made Up Trio",
+  "key": 1,
+  "time": [
+   3,
+   4
+  ],
+  "tempo": 72,
+  "tempos": [
+   [
+    1,
+    72
+   ]
+  ],
+  "bars": [
+   "1:6|D4/2 G4/2 B4/2|",
+   "2:6|A4/3 G4/1 F#4/2|",
+   "3:6|G4/6|",
+   "4:6|B4/2 A4/1 G4/1 F#4/2|",
+   "5:6|E4/2 D4/4|",
+   "6:6|G4/6|"
+  ],
+  "words": [
+   "Ket-",
+   "tle",
+   "sings",
+   "soft-",
+   "ly",
+   "it",
+   "hums",
+   "Plates",
+   "are",
+   "stacked",
+   "up",
+   "Spoons",
+   "rest",
+   "here"
+  ]
+ },
+ "score-guitar-part.pdf": {
+  "title": "Strum Along",
+  "artist": "The Imaginary Guitars",
+  "key": 0,
+  "time": [
+   4,
+   4
+  ],
+  "tempo": 110,
+  "tempos": [
+   [
+    1,
+    110
+   ]
+  ],
+  "bars": [
+   "1:8|E3/2 G3/2 A3/2 G3/2|",
+   "2:8|C4/4 B3/4|",
+   "3:8|A3/2 G3/2 F3/2 E3/2|"
+  ],
+  "words": [
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null
+  ]
+ }
+}

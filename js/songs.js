@@ -1722,6 +1722,7 @@ function newSongSheet() {
         ICON.check +
         '<span>Sheet music · ' +
         esc(d.melody.name) +
+        (d.melody.r && d.melody.r.tempo ? ' · tempo ' + d.melody.r.tempo + ' from the print' : '') + // Q57 offered, kept on Save
         '</span></p><button class="lnkbtn sgswap" data-a="sgAddPdf">Choose a different print</button>';
     if (media && !d.media)
       h += '<button class="lnkbtn sgswap" data-a="sgAddPick">Add the track too</button>';

@@ -2,7 +2,7 @@
 part) read on the device, in a Worker, into a score kept on the song.
 
 The prints are made-up tunes drawn UG-style by tools/make_melody_fixtures.py (tests/fixtures/melody/): no real prints,
-music or words. Parts (VS_MELODY=read,catcher,clean,backup,guards,screens,offline):
+music or words. Parts (VS_MELODY=read,catcher,clean,backup,guards,screens,offline,score):
 - read: every fixture reads as intended through the real Worker (bars, notes, lengths, ties, triplets, dots, rests,
   multi-bar rests, the pickup, a 2/4 bar, bar numbers, two-digit frets, bend labels, grace notes, slides, a harmony
   stack, flat and sharp keys, repeats); the blip test; progress by line; Cancel; the app usable while it reads; the
@@ -16,12 +16,18 @@ music or words. Parts (VS_MELODY=read,catcher,clean,backup,guards,screens,offlin
 - guards: every input guard in MAINTAINING › Sheet music
 - screens: the Song page row (VS-009), VS-099, VS-100, the New song door (VS-051), Settings › Storage (VS-020), the key
   offered through VS-098, at 375 px and on iPad, light and dark, with Reduce Motion
-- offline: an import works offline after the first (pdf.js cached by the service worker)"""
+- offline: an import works offline after the first (pdf.js cached by the service worker)
+- score (Q57): UG's own Download PDF, read by the score reader from its symbols (tools/make_score_fixtures.py, Leland,
+  made-up tunes in score.json): every fixture's bars, words, title, artist and tempo marks; the reader chosen (fmt);
+  the blip test; no tab; more than one part and tempo changes in "to check"; a guitar part; the tempo offered on
+  VS-100 and New song; same print on another song by SHA-256 and by title and artist; the fallback on the page; fmt,
+  tempos, boxes and words through cleanMelody() and a backup round trip; old scores unchanged"""
 import os, json
 from harness import fix, ready, until, OUT, url, APP_PATH, SEED, UA_IPHONE, offline, online
 
 MEL = fix('melody')
-PARTS = set((os.environ.get('VS_MELODY') or 'read,catcher,clean,backup,guards,screens,offline').split(','))
+PARTS = set((os.environ.get('VS_MELODY') or 'read,catcher,clean,backup,guards,screens,offline,score').split(','))
+SCORE = json.load(open(os.path.join(MEL, 'score.json')))
 SONG = "go(()=>{U.tab='songs';U.view='lyr';U.songId='g_1'})"
 NAME = "n=>{songById('g_1').name=n;save();rerender()}"
 # hand a fixture to the reader as the file picker would (opt: test-only options for the Worker)
@@ -87,6 +93,7 @@ def run(b, t):
     if 'guards' in PARTS: part_guards(b, t, ok)
     if 'screens' in PARTS: part_screens(b, t, ok)
     if 'offline' in PARTS: part_offline(b, t, ok)
+    if 'score' in PARTS: part_score(b, t, ok)
 
 
 def part_read(b, t, ok):
@@ -110,7 +117,7 @@ def part_read(b, t, ok):
     got = pg.evaluate(BARS, 'g_1')
     ok(got == PAPER, 'Paper Lanterns reads as written: the pickup, the 4-bar rest, a tie across a bar line, the triplet, dots and double dots, a sixteenth rest, two-digit frets past a bend label, the grace note left out, the slide, the harmony stack’s top note, the 2/4 bar (%s)' % [g for g, w in zip(got, PAPER) if g != w])
     s = pg.evaluate("MELODY.get('g_1')")
-    ok(s['key'] == 2 and s['time'] == [4, 4] and s['shift'] == 0 and s['reader'] == 1 and s['v'] == 1 and s['src'] == 'sheet', 'its key (2 sharps), time (4/4), shift, reader and shape versions')
+    ok(s['key'] == 2 and s['time'] == [4, 4] and s['shift'] == 0 and s['reader'] == 2 and s['v'] == 1 and s['src'] == 'sheet' and s['fmt'] == 'ug-print', 'its key (2 sharps), time (4/4), shift, reader and shape versions, and the reader that made it (Q57: reader 2, fmt ug-print)')
     ok(all(isinstance(n['tick'], int) and isinstance(n['len'], int) for n in s['notes']) and s['bars'][1]['tick'] == 480, 'everything is in whole ticks, 480 a beat (the one-beat pickup is 480)')
     ok(s['ug'] == {'id': '9000001', 'title': 'Paper Lanterns', 'artist': 'The Made Up Band'}, 'the title, artist and tab id come from the UG footer')
     ok(pg.evaluate("JSON.stringify(songById('g_1').ext.melody)").startswith('{"ug":"9000001","at":'), 'the song carries only the note {ug, at}')
@@ -331,7 +338,7 @@ def part_guards(b, t, ok):
     ok(last() == 'This PDF can’t be opened.', 'a damaged PDF: "This PDF can’t be opened."')
     go('locked.pdf'); ok(last() == 'This PDF can’t be opened.', 'a locked PDF: "This PDF can’t be opened."')
     go('no-footer.pdf'); ok(last() == 'This doesn’t look like an Ultimate Guitar print. Print it from UG as notation plus tab.', 'no UG footer: not an Ultimate Guitar print')
-    go('no-music.pdf'); ok(last().startswith('This doesn’t look like an Ultimate Guitar print'), 'no music pictures: not an Ultimate Guitar print')
+    go('no-music.pdf'); ok(last() == 'This doesn’t look like sheet music the app can read yet. Use the PDF from UG’s Download PDF, or print it from UG.', 'no music pictures or symbols: no reader knows it (Q57\'s refusal)')
     go('notation-only.pdf'); ok(last() == 'This print has the notation but no tab. In UG choose notation plus tab, then print again.', 'notation only: says which view to print')
     go('tab-only.pdf'); ok(last() == 'This print has the tab but no notation. In UG choose notation plus tab, then print again.', 'tab only: says which view to print')
     go('guitar-part.pdf'); ok(last() == 'This looks like a guitar part. Print the Vocals part.', 'a guitar part: "Print the Vocals part"')
@@ -489,3 +496,104 @@ def part_offline(b, t, ok):
     finally:
         online(APP_PATH)
     ctx.close()
+
+
+def part_score(b, t, ok):
+    """Q57 · Songs: Sheet Music Formats. UG's own Download PDF (vector: music symbols in a SMuFL font) read by the score
+    reader, beside the picture reader."""
+    pg = fresh(t, b)
+    pg.evaluate(NAME, 'Lantern Walk'); pg.evaluate(SONG); pg.wait_for_timeout(200)
+    def last(): return (pg.evaluate("window.__toasts") or [''])[-1]
+    WORDS = "id=>MELODY.get(id).notes.map(n=>n.syl||null)"
+    sids = {'score-lantern-walk.pdf': 'g_1', 'score-ferry-lights.pdf': 'g_f', 'score-two-voices.pdf': 'g_t', 'score-no-tab.pdf': 'g_k'}
+    for name, sid in sids.items():
+        want = SCORE[name]
+        if sid != 'g_1': pg.evaluate("([id,n])=>{D.songs.push({id,name:n,added:Date.now()});save()}", [sid, want['title']])
+        ok(read_save(pg, name, sid), f'{name} reads and saves')
+        got = pg.evaluate(BARS, sid)
+        ok(got == want['bars'], f'{name} reads as written ({[(g, w) for g, w in zip(got, want["bars"]) if g != w]}{"" if len(got) == len(want["bars"]) else " bars %d of %d" % (len(got), len(want["bars"]))})')
+        ok(pg.evaluate(WORDS, sid) == want['words'], f'{name}: every word on its note, as printed ({pg.evaluate(WORDS, sid)})')
+        sc = pg.evaluate("id=>MELODY.get(id)", sid)
+        ok(sc['fmt'] == 'score-pdf' and sc['reader'] == 2 and sc['key'] == want['key'] and sc['time'] == want['time'], f'{name}: read by the score reader (fmt score-pdf), with its key and time')
+        ok(sc['ug'] == {'id': None, 'title': want['title'], 'artist': want['artist']}, f'{name}: the title and artist from the top two lines of page 1; no UG id')
+        ok(sc['tempo'] == want['tempo'] and [[x['n'], x['bpm']] for x in sc['tempos']] == want['tempos'], f'{name}: the tempo offered and saved, and every tempo mark with its bar ({sc.get("tempos")})')
+        ok(len(sc['boxes']) == len(set(b_['ln'] for b_ in sc['bars'])) and all(b_['pi'] == b_['ln'] for b_ in sc['bars']), f'{name}: each line keeps its place on the PDF (boxes), for the sheet view')
+        ok(blips(pg, sid) == 0, f'blip test: no one-note spike in what plays of {name}')
+    # what lantern-walk shows: sixteenths, beams of two and three, triplets, a grace note, a multi-bar rest, a chord's top note
+    ok(pg.evaluate("JSON.stringify(songById('g_1').ext.melody)").startswith('{"ug":null,"at":') and len(pg.evaluate("songById('g_1').ext.melody.sha")) == 64,
+       'no UG footer: accepted, and the song\'s note keeps the file\'s SHA-256 instead of a tab id')
+    ok(pg.evaluate("MELODY.checks(MELODY.get('g_1')).length") == 0, 'Lantern Walk: every bar adds up, nothing to check')
+    f = pg.evaluate("MELODY.checks(MELODY.get('g_f')).map(c=>(c.n==null?'*':c.n)+' '+c.why)")
+    ok('* Tempo changes in this print. It plays at the first tempo, 88.' in f and '4 The print’s tempo changes to 120 here.' in f, 'tempo changes: in "to check", with their bar; it plays at the first (%s)' % f)
+    ok('* This print uses repeats; the order may be wrong.' in f and pg.evaluate("MELODY.get('g_f').bars.filter(b=>(b.f||[]).includes('repeat')).length") == 1, 'Ferry Lights: the repeat, the ending and the coda are flagged, the repeat\'s bar once')
+    ok('* More than one part on this print; the vocal line was guessed.' in pg.evaluate("MELODY.checks(MELODY.get('g_t')).map(c=>(c.n==null?'*':c.n)+' '+c.why)"), 'two parts: the staff with the words is read, and "to check" says it was guessed')
+    ok(pg.evaluate("MELODY.get('g_k').notes.length") == 14, 'no tab: a score PDF reads from its notation alone')
+    ok(pg.evaluate("MELODY.get('g_1').notes.every(n=>n.flag!=='unsure')"), 'the tab agrees with the notation everywhere (nothing marked unsure)')
+    # the guards that changed
+    def go(name, opt=None):
+        pg.evaluate("window.__toasts=[]")
+        pg.evaluate(START, [name, {'id': 'g_1'}, opt, False]); pg.wait_for_timeout(100)
+        return until(pg, "MELODY.reading()===null&&!document.querySelector('.melbusy')", 20000)
+    go('score-guitar-part.pdf'); ok(last() == 'This looks like a guitar part. Print the Vocals part.', 'a guitar part in a score PDF (more than 40% of heads in chords): refused')
+    go('score-lantern-walk.pdf', {'limits': {'notes': 10}}); ok(last().startswith('This print has more than a song’s worth'), 'a score PDF over the limit of notes: the read stops')
+    # the tempo offered on VS-100, never set without Save
+    pg.evaluate("D.songs.push({id:'g_x',name:'Lantern Walk',added:Date.now()});save()")
+    pg.evaluate("id=>go(()=>{U.tab='songs';U.view='lyr';U.songId=id;U.sheet=null})", 'g_x')
+    pg.evaluate(START, ['score-lantern-walk.pdf', {'id': 'g_x'}, None, False])
+    ok(until(pg, "U.sheet==='melSame'", 20000) and pg.evaluate("U.sd.k") == 'g_1', 'the same print on another song (no UG id): found by its SHA-256, VS-101 asks')
+    pg.evaluate("SG_ACT.melSameGo()")
+    ok(until(pg, "U.sheet==='melRead'", 8000), 'Add it here too goes on to Sheet music read (VS-100)')
+    ok(pg.evaluate("document.querySelector('#melTempoIn').value") == '96' and 'Read from the print: ♩ = 96' in pg.inner_text('#layer'), 'VS-100 offers the print\'s tempo, and says where it came from')
+    ok(not pg.evaluate("MELODY.has('g_x')"), 'nothing is set before Save')
+    pg.evaluate("SG_ACT.melDrop()"); pg.evaluate("U.sheet=null;U.sd={};rerender()")
+    # same title and artist, a different file
+    pg.evaluate("D.songs.push({id:'g_y',name:'Lantern Walk',added:Date.now()});save()")
+    pg.evaluate("id=>go(()=>{U.tab='songs';U.view='lyr';U.songId=id;U.sheet=null})", 'g_y')
+    pg.evaluate("""async()=>{const r=await fetch('tests/fixtures/melody/score-lantern-walk.pdf');const b=new Uint8Array(await r.arrayBuffer());
+      const f=new File([b,new TextEncoder().encode(' % another download')],'lantern.pdf',{type:'application/pdf'});await MELODY.start(f,{id:'g_y'})}""")
+    ok(until(pg, "U.sheet==='melSame'", 20000) and pg.evaluate("U.sd.k") == 'g_1', 'a different file with the same title and artist (case and punctuation ignored): VS-101 asks too')
+    pg.evaluate("SG_ACT.melDrop()"); pg.evaluate("U.sheet=null;U.sd={};rerender()")
+    # New song: title and artist fill in, the tempo is shown and kept (Quiet Kitchen's song goes first, or VS-101 asks)
+    pg.evaluate("async()=>{await MELODY.forget(['g_k']);D.songs=D.songs.filter(s=>s.id!=='g_k');save()}")
+    pg.evaluate("go(()=>{U.tab='songs';U.view=null})")
+    pg.evaluate("U.sDraft={step:1,title:'',artist:'',text:'',mode:'media'};U.sheet='sgNew';U.sd={};rerender()"); pg.wait_for_timeout(300)
+    pg.evaluate(START, ['score-no-tab.pdf', {'draft': True}, None, False])
+    ok(until(pg, "U.sheet==='sgNew'&&U.sDraft&&U.sDraft.melody", 20000), 'a score PDF read for New song (VS-051)')
+    ok(pg.evaluate("U.sDraft.title") == 'Quiet Kitchen' and pg.evaluate("U.sDraft.artist") == 'Made Up Trio', 'its title and artist fill New song\'s empty fields')
+    ok('tempo 72 from the print' in pg.inner_text('#layer'), 'New song shows the tempo it will keep')
+    pg.click('#layer [data-a="sgSplit"]')
+    ok(until(pg, "D.songs.some(s=>s.name==='Quiet Kitchen'&&s.ext&&s.ext.melody)", 8000), 'Save song saves it with its sheet music')
+    nid = pg.evaluate("D.songs.find(s=>s.name==='Quiet Kitchen').id")
+    ok(until(pg, "id=>MELODY.has(id)&&MELODY.get(id).tempo===72", 5000, nid), 'with the print\'s tempo')
+    # the fallback: pdf.js won't load in the Worker, so the page reads the score PDF itself
+    pg.evaluate("U.sheet=null;U.sDraft=null;rerender()")
+    pg.evaluate("D.songs.push({id:'g_z',name:'Two Voices',added:Date.now()});save()")
+    pg.evaluate("id=>go(()=>{U.tab='songs';U.view='lyr';U.songId=id;U.sheet=null})", 'g_z')
+    pg.evaluate(START, ['score-two-voices.pdf', {'id': 'g_z'}, {'nopdf': True}, False])
+    ok(until(pg, "['melRead','melSame'].includes(U.sheet)", 20000), 'when pdf.js won\'t load in the Worker, the page reads the score PDF (%s)' % pg.evaluate("JSON.stringify([window.__toasts,U.sheet])"))
+    ok(pg.evaluate("MELODY.held().id") == 'g_z', '(for the right song)')
+    pg.evaluate("SG_ACT.melDrop()"); pg.evaluate("U.sheet=null;U.sd={};rerender()")
+    # cleanMelody(): fmt (unknown values kept), tempo marks, parts and boxes, record by record; old scores unchanged
+    c = pg.evaluate("""()=>{const s=JSON.parse(JSON.stringify(MELODY.get('g_f')));const C=MELODY.cleanMelody;
+      const a=C(Object.assign({},s,{fmt:'musicxml',tempos:[{tick:0,bpm:88},{tick:-4,bpm:90},{tick:960,bpm:999},'x',{tick:4800,bpm:120,n:4}],parts:'yes',boxes:[{p:1,x0:0,y0:0,x1:5,y1:5},{p:0,x0:0,y0:0,x1:5,y1:5},{p:1,x0:9,y0:0,x1:5,y1:5}]}));
+      const old=JSON.parse(JSON.stringify(s));['fmt','tempos','parts','boxes'].forEach(k=>delete old[k]);old.reader=1;const o=C(old);
+      return [a.fmt,a.tempos.length,'parts' in a,a.boxes.length,C(Object.assign({},s,{fmt:7})).fmt===undefined,['fmt','tempos','parts','boxes'].some(k=>k in o),o.reader]}""")
+    ok(c == ['musicxml', 2, False, 1, True, False, 1], 'cleanMelody(): fmt kept even when unknown, bad tempo marks and boxes dropped one by one, a bad parts dropped; a 3.65 score comes out with none of them (%s)' % c)
+    n = pg.evaluate("""()=>{const e={melody:{ug:null,at:1,sha:'nope'}};MELODY.cleanNote(e);const f={melody:{ug:null,at:1,sha:'a'.repeat(64)}};MELODY.cleanNote(f);return [('sha' in e.melody),f.melody.sha.length]}""")
+    ok(n == [False, 64], 'the song\'s note keeps a good SHA-256 and drops a bad one')
+    # a backup round trip keeps fmt, tempo marks, boxes and words
+    txt = export(pg)
+    p = json.loads(txt)
+    m = next(x for x in p['melodies'] if x['id'] == 'g_f')
+    ok(m['fmt'] == 'score-pdf' and len(m['tempos']) == 2 and m['boxes'] and any(n_.get('syl') for n_ in m['notes']), 'a backup carries fmt, the tempo marks, the boxes and the words')
+    F = os.path.join(OUT, 'melody-files'); os.makedirs(F, exist_ok=True)
+    good = os.path.join(F, 'with-score-pdf.json'); open(good, 'w').write(txt)
+    pg.evaluate("(()=>{const e=document.createElement('button');e.dataset.a='resetAll';document.body.appendChild(e);e.click();e.remove()})()")
+    until(pg, "D.songs.length===0", 5000)
+    pg.evaluate("async()=>{await MELODY.forget(['g_1','g_f','g_t','g_k'])}")
+    importing(pg, good)
+    ok(pg.evaluate("pendingImport.status") == 'good' and pg.evaluate("pendingImport.mel.state") == 'good', 'that backup checks as good')
+    pg.click('[data-a=importYes]'); until(pg, "U.sheet===null", 10000)
+    r = pg.evaluate("[MELODY.get('g_f').fmt,MELODY.get('g_f').tempos.length,MELODY.get('g_f').boxes.length,MELODY.get('g_f').notes.filter(n=>n.syl).length]")
+    ok(r[0] == 'score-pdf' and r[1] == 2 and r[2] == 2 and r[3] == len([w for w in SCORE['score-ferry-lights.pdf']['words'] if w]), 'restoring it brings fmt, the tempo marks, the boxes and the words back (%s)' % r)
+    pg.close()

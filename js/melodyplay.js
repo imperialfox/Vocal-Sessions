@@ -387,7 +387,8 @@ const MELPLAY = (() => {
       .forEach((pi) => {
         const ln = sheet.lines.find((l) => l.i === pi);
         if (!ln) return;
-        const W = ln.w * 2;
+        const W = ln.W || ln.w * 2,
+          ox = ln.ox || 0; // Q57 a drawn line (score PDF) maps its bars from PDF units; a cut picture from its pixels at full size
         out +=
           '<div class="mpimg" data-pi="' + pi + '" style="aspect-ratio:' + ln.w + ' / ' + ln.h + '"><img alt="" data-src="' + ln.url + '" draggable="false">' +
           byPic
@@ -398,7 +399,7 @@ const MELPLAY = (() => {
                 picked = pick && pick.step === 2 && i === pick.a;
               return (
                 '<button class="mpbar' + (flags.has(i) ? ' flag' : '') + (inLoop ? ' loop' : '') + (picked ? ' picked' : '') + '" data-a="mpBar" data-v="' + i +
-                '" style="left:' + ((b.x0 / W) * 100).toFixed(2) + '%;width:' + (((b.x1 - b.x0) / W) * 100).toFixed(2) + '%" aria-label="Bar ' + barNum(b, i) +
+                '" style="left:' + (((b.x0 - ox) / W) * 100).toFixed(2) + '%;width:' + (((b.x1 - b.x0) / W) * 100).toFixed(2) + '%" aria-label="Bar ' + barNum(b, i) +
                 (flags.has(i) ? ', to check' : '') + '"></button>'
               );
             })
@@ -412,7 +413,7 @@ const MELPLAY = (() => {
     if (sheet.id === id && sheet.state !== 'none') return;
     sheet.urls.forEach((u) => URL.revokeObjectURL(u));
     sheet = { id, state: 'cutting', lines: [], urls: [] };
-    const got = await MELODY.cut(id);
+    const got = await MELODY.cut(id, () => (q('#mpBody') || {}).clientWidth); // Q57 the view's width, read once it's drawn
     if (sheet.id !== id) return;
     if (!got) {
       sheet.state = 'fail';
@@ -420,8 +421,8 @@ const MELPLAY = (() => {
     }
     const out = [];
     for (const l of got) {
-      const url = await pngOf(l);
-      out.push({ i: l.i, w: l.w, h: l.h, both: l.both, url });
+      const url = l.url || (await pngOf(l)); // Q57 a score PDF's lines come drawn already
+      out.push({ i: l.i, w: l.w, h: l.h, both: l.both, url, W: l.W, ox: l.ox });
       if (url) sheet.urls.push(url);
       l.g = null; // let the grey pixels go (H47)
       await new Promise((r) => setTimeout(r, 0));
