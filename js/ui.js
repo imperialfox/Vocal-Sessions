@@ -366,8 +366,8 @@ function renderDock1() {
     return null;
   }
   const songList = U.tab === 'songs' && !U.view;
-  // iPhone: searching songs, selecting them or editing one takes the place of the tab bar
-  if ((songList && (U.sFocus || U.sList)) || (U.view === 'lyr' && U.sEdit)) {
+  // iPhone: selecting songs or editing one takes the place of the tab bar (Q51: searching them opens the dock's field)
+  if ((songList && U.sList) || (U.view === 'lyr' && U.sEdit)) {
     $('dock').innerHTML = '';
     return null;
   }

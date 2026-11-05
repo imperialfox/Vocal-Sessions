@@ -4,9 +4,9 @@
 
 It's a web app styled like a native iOS app: a single HTML file with no install, no backend and no account, designed to live on your iPhone Home Screen. It runs on its own, with no other apps needed.
 
-![Version 3.63](https://img.shields.io/badge/version-3.63-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
+![Version 3.64](https://img.shields.io/badge/version-3.64-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-blue) ![No dependencies](https://img.shields.io/badge/dependencies-none-brightgreen) ![Works offline](https://img.shields.io/badge/works-offline-blue) [![Tests](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml/badge.svg)](https://github.com/imperialfox/Vocal-Sessions/actions/workflows/tests.yml)
 
-**Current version: 3.63 · 5 Nov 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
+**Current version: 3.64 · 5 Nov 2026.** See the [changelog](CHANGELOG.md) for what changed in each release.
 
 ---
 
@@ -91,7 +91,7 @@ And **Songs**, for learning a song: paste the lyrics, and they're split into lab
 - **Lyrics:** paste lyrics from anywhere. Labels like `[Chorus]`, `Verse 2:` or `PRECHORUS` start sections, and blank lines split them too. Website clutter (links, "You might also like", "Embed") is removed, a chorus that repeats itself is split in two, and exact repeats are linked. Check the labels, change any marked **Guessed**, and save. The original paste is kept untouched.
 - **The list:** up to 3 pinned songs at the top, then the rest sorted by Recently practised, Recently added or Title A–Z (tap the heading). Each row says when you last practised it and how many takes it has ("Practised today · 2 takes", or "Not practised yet"), never graded, and has a **play button** for the song's track (greyed, with "Upload a track to play", when there's no track on this device).
   - Swipe right to pin, left to delete. Press and hold (or right-click) for Pin, Rename and Delete. **Edit** selects several songs to pin or delete.
-  - **Search songs** (the field under the title) filters the list by titles, artists and lyrics. It ignores case, punctuation and accents, finds words in any order, even across lines, and forgives a slipped letter in longer words. Lyric matches show the line with the words highlighted.
+  - **Search songs** (the field under the title) filters the list by titles, artists and lyrics. On iPhone it opens the same search bar as Search, at the bottom in the tab bar's place; ✕ closes it. It ignores case, punctuation and accents, finds words in any order, even across lines, and forgives a slipped letter in longer words. Lyric matches show the line with the words highlighted.
 - **A song:** one continuous page, one phrase per line, with a small label above each section, repeats numbered (Chorus 1, Chorus 2) and linked sections marked with a chain.
   - **Tap a section to focus it:** a soft patch appears behind it with **Record**, its takes and **Marks** (which opens the Marks side there). The rest of the song dims and softly blurs with distance, while labels stay sharp. Tap it again, or away from the lyrics, to clear it. With Reduce Motion on, the rest only dims.
   - **Takes** beside the title opens every take of the song (see Takes below).

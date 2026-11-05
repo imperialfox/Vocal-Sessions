@@ -117,7 +117,11 @@ def circle(b, t):
     # the Songs list keeps its own filter
     pg.evaluate("go(()=>{U.tab='songs';U.view=null})"); pg.wait_for_timeout(200)
     pg.click('#app .sgqbtn'); pg.wait_for_timeout(250)
-    ok(pg.evaluate("U.sFocus") and pg.evaluate("document.activeElement.id") == 'sgqb', 'the Songs list’s own search field still filters the list')
+    ok(pg.evaluate("U.sFocus") and pg.evaluate("document.activeElement.id") == 'fq' and pg.evaluate("U.tab") == 'songs'
+       and pg.evaluate("document.querySelector('#fq').placeholder") == 'Search songs', 'the Songs list’s own search uses the dock’s field and still filters the list (Q51)')
+    fq0 = pg.evaluate("U.fq")
+    pg.fill('#fq', 'zzzz'); pg.wait_for_timeout(150)
+    ok(pg.evaluate("U.sq") == 'zzzz' and pg.evaluate("U.fq") == fq0, 'typing there filters Songs, not Search')
     pg.evaluate("endSearch()"); pg.wait_for_timeout(150)
     pg.context.close()
 
@@ -377,7 +381,42 @@ def sizes(b, t):
             pg.context.close()
 
 
-PARTS = ['circle', 'groups', 'recents', 'opening', 'wide', 'window_clear', 'sizes']
+def songs_dock(b, t):
+    """Q51 the Songs list's own search opens the kit's field in the dock (part 6), on its pill spring, rides the keyboard
+    and gives the list Search's bottom room; ✕ brings the tab bar back. Motion on, as Ivan's iPhone runs it."""
+    ok = t.ok
+    pg = t.page(b, w=390, h=844, data=data(), init="try{localStorage.setItem('vocalMotion','1')}catch(e){}")
+    pg.evaluate("go(()=>{U.tab='songs';U.view=null})"); pg.wait_for_timeout(700)
+    rest = pg.evaluate("document.querySelector('#dock .dockrow').getBoundingClientRect().bottom")
+    pg.evaluate("window.__fo=[];const f=document.querySelector('#dock .pk-search-field'),t0=performance.now();(function s(){const n=performance.now()-t0;__fo.push([n,+getComputedStyle(f).opacity,f.getBoundingClientRect().width]);if(n<700)requestAnimationFrame(s)})()")
+    pg.click('#app [data-a=sgSearch]')
+    ok(until(pg, "document.activeElement&&document.activeElement.id==='fq'"), 'Songs: tapping the field under the title focuses the dock’s field (the keyboard comes up)')
+    pg.wait_for_timeout(750)
+    fo = pg.evaluate("__fo")
+    mid = [w for n, o, w in fo if 0 < o < 1]
+    ok(pg.evaluate("document.querySelector('#dock .pk-dock').classList.contains('pk-searching')") and len(mid) >= 2 and fo[-1][1] == 1,
+       f'Songs: the field opens in the tab bar’s place on the kit’s spring, eased over several frames ({len(mid)} mid frames)')
+    pg.evaluate(KB_FAKE); pg.evaluate("__kb(innerHeight-336)"); pg.wait_for_timeout(200)
+    k = pg.evaluate("""(()=>{const d=document.querySelector('#dock .dockrow').getBoundingClientRect(),m=getComputedStyle(document.getElementById('app'));
+      return {bot:d.bottom,kb:getComputedStyle(document.documentElement).getPropertyValue('--pk-kb').trim(),pad:parseFloat(m.paddingBottom),top:innerHeight-336}})()""")
+    ok(abs(k['bot'] - (k['top'] - 8)) < 1 and k['kb'] not in ('', '0px') and k['pad'] > 118 + float(k['kb'][:-2]) - 1,
+       f'Songs: with the keyboard up, the field sits 8 pt above it and the list gets that much more room ({k})')
+    pg.evaluate("scrollTo(0,document.body.scrollHeight)"); pg.wait_for_timeout(200)
+    ok(pg.evaluate("(()=>{const r=[...document.querySelectorAll('#slist .row,#slist .rowc')].pop();if(!r)return true;return r.getBoundingClientRect().bottom<=document.querySelector('#dock .pk-search-field').getBoundingClientRect().top+1})()"),
+       'Songs: scrolled to the bottom, the last song clears the lifted field')
+    pg.evaluate("__kb(innerHeight)"); pg.wait_for_timeout(200)
+    pg.evaluate("delete window.visualViewport;dispatchEvent(new Event('resize'))"); pg.evaluate("scrollTo(0,0)")
+    pg.locator('#fq').press_sequentially('kit', delay=30); pg.wait_for_timeout(100)
+    ok(pg.evaluate("U.sq") == 'kit' and pg.evaluate("document.activeElement.id") == 'fq', 'Songs: typing filters the list and keeps the field (and the keyboard)')
+    pg.click('#dock [data-a=findClose]')
+    ok(until(pg, "!document.querySelector('#dock .pk-searching')&&+getComputedStyle(document.querySelector('#dock .pk-tabbar')).opacity===1"),
+       'Songs: ✕ closes the field and the tab bar comes back')
+    ok(not pg.evaluate("U.sFocus") and not pg.evaluate("U.sq") and pg.evaluate("U.tab") == 'songs'
+       and abs(pg.evaluate("document.querySelector('#dock .dockrow').getBoundingClientRect().bottom") - rest) < 1, 'Songs: the whole list shows again, still on Songs')
+    pg.context.close()
+
+
+PARTS = ['circle', 'groups', 'recents', 'opening', 'wide', 'window_clear', 'sizes', 'songs_dock']
 
 
 def run(b, t):

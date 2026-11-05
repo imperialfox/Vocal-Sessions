@@ -98,6 +98,7 @@ def register(b, t):
     nopart = []
     for s in S:
         for p in s['parts'] + ([] if s is not S[0] else R['shared'] + R['actions']):
+            if p.get('status', 'Live') != 'Live': continue  # a retired part's button has left the code (Q51: sgQCancel)
             for a in re.findall(r'data-a="([A-Za-z]+)"', p['sel']):
                 if not re.search(r'data-a=\\?"' + a + r'\\?"|\'' + a + r'\'', allsrc): nopart.append(s['id'] + ' › ' + p['name'])
             for i in re.findall(r'#([A-Za-z]+)', p['sel']):

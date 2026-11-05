@@ -354,7 +354,6 @@ html.glass-solid {
 }
 .circ,
 .pill,
-.tabbar,
 .cta {
   position: relative;
 }
@@ -1266,63 +1265,6 @@ html.motion-reduced .tl-item.now .tl-node::after {
   max-width: 430px;
   margin: 0 auto;
   pointer-events: auto;
-}
-.tabbar {
-  display: flex;
-  gap: 2px;
-  padding: 5px;
-  border-radius: 999px;
-  max-width: 380px;
-  margin: 0 auto;
-}
-.tabbar {
-  width: max-content;
-  max-width: 100%;
-  transition: padding 0.45s cubic-bezier(0.3, 1.3, 0.5, 1);
-}
-.tabbar button {
-  width: 80px;
-  max-width: 80px;
-  height: 54px;
-  border-radius: 999px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: var(--t-caption2);
-  font-weight: 500;
-  color: var(--fg);
-  gap: 3px;
-  text-align: center;
-  overflow: hidden;
-  transition:
-    transform 0.5s var(--ease-pop),
-    max-width 0.45s cubic-bezier(0.3, 1.25, 0.5, 1),
-    opacity 0.25s,
-    background var(--dur-fade),
-    height 0.35s;
-}
-.tabbar button.on {
-  color: var(--accent);
-  background: var(--fill);
-}
-/* the Songs search's circle (.sgbar): a tab bar showing only Songs, as a circle */
-.sgbar .tabbar.min {
-  gap: 0;
-}
-.sgbar .tabbar.min button {
-  height: 48px;
-}
-.sgbar .tabbar.min button:not(.on) {
-  max-width: 0;
-  opacity: 0;
-  pointer-events: none;
-}
-.sgbar .tabbar.min button.on {
-  width: 48px;
-  max-width: 48px;
-  font-size: 0;
-  gap: 0;
 }
 .sw {
   overflow: hidden;
@@ -3060,30 +3002,6 @@ body.land .scirc {
   text-align: left;
   color: var(--fg2);
   cursor: pointer;
-}
-/* iPhone search: the tab bar shrinks to a circle and the field sits beside it */
-.sgbar {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: calc(var(--dockb) + var(--kb, 0px));
-  z-index: 30;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  max-width: 430px;
-  margin: 0 auto;
-  padding: 0 var(--dockr) 0 var(--dockl);
-}
-.sgbar[hidden] {
-  display: none;
-}
-.sgbar .tabbar {
-  margin: 0;
-  flex-shrink: 0;
-}
-body.land .sgbar {
-  max-width: 860px;
 }
 .sfield {
   position: relative;
@@ -7216,7 +7134,7 @@ body.tg-away .tgrad i {
   position: fixed;
   z-index: 34;
   left: 50%;
-  bottom: max(var(--dockb), var(--kb, 0px));
+  bottom: var(--dockb);
   transform: translateX(-50%);
 }
 .mksheet {

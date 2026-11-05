@@ -79,7 +79,7 @@ INV=r"""(()=>{const p=[];const L=document.getElementById('layer');
  if(document.querySelector('#dock .pk-tabbar')&&!document.querySelector('#dock [data-a=findOpen]'))p.push('tab bar without the search circle');
  if(U.tab==='find'&&!U.view&&!document.getElementById('fq'))p.push('Search without its field');
  if(U.tab==='find'&&!U.view&&!document.querySelector('[data-a=findOpen].on,[data-a=findOpen][aria-current=page],#dock .pk-dock.pk-searching')&&document.querySelector('[data-a=findOpen]'))p.push('Search open but neither its field nor its door selected');
- if(document.querySelector('#dock .pk-dock.pk-searching')&&!(U.tab==='find'&&!U.view))p.push('the search field open off Search');
+ if(document.querySelector('#dock .pk-dock.pk-searching')&&!(U.tab==='find'&&!U.view)&&!(U.tab==='songs'&&!U.view&&U.sFocus))p.push('the search field open off Search or the Songs search');
  {const c=document.querySelector('#dock .scirc');if(FW.shown&&c&&!FW.drag&&!FW.stopSpring&&!fw.getAnimations().length&&!c.getAnimations().length){const a=fw.getBoundingClientRect(),q=c.getBoundingClientRect();if(!(a.right<=q.left||q.right<=a.left||a.bottom<=q.top||q.bottom<=a.top))p.push('floating window over the search circle')}}
  if(document.querySelector('#dock .pk-folded'))p.push('the tab bar folded (it never should: D01)');
  if(document.querySelector('.zm.push')&&!ZOOM.busy())p.push('a push layer left behind');

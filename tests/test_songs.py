@@ -35,6 +35,8 @@ Let the river know my name12Embed"""
 ADD = """([t,a,l])=>{U.sDraft={step:1,title:t,artist:a,text:l};U.sDraft.blocks=splitBlocks(l);U.sDraft.step=2;sgSaveDraft();return U.songId}"""
 
 
+U_TAB = lambda pg: pg.evaluate('U.tab')
+
 def run(b, t):
     ok = t.ok
     pg = t.page(b, touch=True, data=with_song_practice())
@@ -245,21 +247,30 @@ def run(b, t):
 
     # search
     pg.click('[data-a=sgSearch]'); pg.wait_for_timeout(250)
-    ok(pg.evaluate("document.activeElement.id") == 'sgqb' and pg.locator('#sgbar').is_visible() and pg.locator('#dock .pk-tabbar').count() == 0,
-       'search opens at the bottom, with the tab bar shrunk to a circle')
+    sd = pg.evaluate("(()=>{const d=document.querySelector('#dock .pk-dock'),i=document.querySelector('#fq');return {s:d.classList.contains('pk-searching'),bar:d.querySelector('.pk-tabbar').inert,f:!i.closest('.pk-search-field').inert,ph:i.placeholder,old:document.querySelectorAll('#sgbar,#sgqb,.tabbar').length}})()")
+    ok(pg.evaluate("document.activeElement.id") == 'fq' and sd['s'] and sd['bar'] and sd['f'] and sd['ph'] == 'Search songs' and not sd['old'] and U_TAB(pg) == 'songs',
+       f'(Q51) search opens the kit\'s field in the dock in the tab bar\'s place, with the keyboard, still on Songs ({sd})')
     for q, want in [('carry further', 'River Song'), ('KITCHEN', 'Kitchen Radio'), ('elmwood', 'River Song'), ('candls', 'River Song'),
                     ('carry dress', None), ('lanterns sing', 'Paper Lanterns'), ('example', 'River Song')]:
-        pg.fill('#sgqb', q); pg.wait_for_timeout(150)
+        pg.fill('#fq', q); pg.wait_for_timeout(150)
         got = pg.evaluate("[...document.querySelectorAll('#slist .rowc b')].map(x=>x.textContent)")
         ok((want in got) if want else not got, f'search "{q}" finds {want or "nothing"} ({got})')
-    pg.fill('#sgqb', 'elmwood'); pg.keyboard.press('Enter'); pg.wait_for_timeout(200)
+    pg.fill('#fq', 'elmwood'); pg.keyboard.press('Enter'); pg.wait_for_timeout(200)
     ok(pg.locator('.hitline mark').count() >= 1, 'a lyric match shows the line with the words highlighted')
     pg.click('#slist .rowc >> nth=0'); pg.wait_for_timeout(300); pg.click('[data-a=sgBack]'); pg.wait_for_timeout(300)
-    ok(pg.evaluate("U.sFocus") and pg.input_value('#sgqb') == 'elmwood', 'back from a result returns to the results')
-    pg.click('[data-a=sgQClear]'); pg.wait_for_timeout(200)
+    ok(pg.evaluate("U.sFocus") and pg.input_value('#fq') == 'elmwood' and pg.evaluate("document.querySelector('#dock .pk-dock').classList.contains('pk-searching')"),
+       'back from a result returns to the results, in the dock\'s field')
+    pg.click('#dock [data-a=findClear]'); pg.wait_for_timeout(200)
     ok('elmwood' in pg.inner_text('main'), 'recent searches are listed')
     pg.mouse.click(200, 500); pg.wait_for_timeout(250)
     ok(not pg.evaluate("U.sFocus") and pg.locator('#dock .pk-tabbar').count() == 1, 'tapping empty space ends an empty search')
+    # Q51 ✕ closes the Songs search: the whole list and the tab bar come back
+    pg.click('[data-a=sgSearch]'); pg.wait_for_timeout(250); pg.fill('#fq', 'kitchen'); pg.wait_for_timeout(150)
+    few = pg.locator('#slist [data-a=sgOpen]').count()
+    pg.click('#dock [data-a=findClose]'); pg.wait_for_timeout(300)
+    cl = pg.evaluate("(()=>{const d=document.querySelector('#dock .pk-dock');return {s:d.classList.contains('pk-searching'),bar:d.querySelector('.pk-tabbar').inert,v:document.querySelector('#fq').value,ph:document.querySelector('#fq').placeholder,q:U.sq,f:U.sFocus,tab:U.tab}})()")
+    ok(not cl['s'] and not cl['bar'] and not cl['v'] and not cl['q'] and not cl['f'] and cl['tab'] == 'songs' and cl['ph'] == 'Search'
+       and pg.locator('#slist [data-a=sgOpen]').count() > few, f'(Q51) ✕ closes the field and the whole list shows again ({cl})')
 
     # Today's pinned songs
     pg.click('[data-a=tab][data-v=today]'); pg.wait_for_timeout(250)

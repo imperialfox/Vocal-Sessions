@@ -4,7 +4,7 @@ Every named part in the app: its name, where it is named, how the app finds it, 
 
 A note points at a part as `VS-009 › song-row`; a shared or by-action part is named the same on every screen it shows on.
 
-**35 shared parts, 377 names by action, 206 parts named on their screens.**
+**35 shared parts, 377 names by action, 207 parts named on their screens.**
 
 ## Shared
 
@@ -26,7 +26,7 @@ Named wherever they show: the tab bar, Back, Close, the standard roles, fields a
 | `grabber` | `.pk-grabber` | `pk-grabber` | In use |
 | `undo-button` | `.pk-toast-undo` | `pk-toast-undo` | In use |
 | `search-field` | `#fq` |  | In use |
-| `song-search-field` | `#sgqi, #sgqb` |  | In use |
+| `song-search-field` | `#sgqi` |  | In use |
 | `note-field` | `.notebox .field` |  | In use |
 | `minutes-field` | `#longMins, #edMins` |  | In use |
 | `date-field` | `#edDate` |  | In use |
@@ -289,7 +289,7 @@ Wherever the action shows, its button gets this name. A screen's own parts and t
 | `pin-selected-button` | `[data-a="sgLPin"]` | In use |
 | `select-all-button` | `[data-a="sgSelAll"]` | In use |
 | `done-button` | `[data-a="sgListDone"]` | In use |
-| `cancel-button` | `[data-a="sgQCancel"]` | In use |
+| `cancel-button` | `[data-a="sgQCancel"]` | Retired · 3.64 |
 | `clear-song-search-button` | `[data-a="sgQClear"]` | In use |
 | `recent-song-search-row` | `[data-a="sgRecent"]` | In use |
 | `remove-song-recent-button` | `[data-a="sgRmRecent"]` | In use |
@@ -588,6 +588,7 @@ Wherever the action shows, its button gets this name. A screen's own parts and t
 | `edit-button` | `[data-a="sgListEdit"]` |  | In use |  |
 | `new-song-button` | `[data-a="sgNew"]` |  | In use |  |
 | `song-search-field` | `[data-a="sgSearch"]` |  | In use | search-field |
+| `close-search-button` | `.pk-search-close[data-a="findClose"]` | `pk-search-close` | In use |  |
 | `sort-menu` | `[data-a="sgSortMenu"]` |  | In use |  |
 | `song-row` | `[data-a="sgOpen"]` |  | In use |  |
 | `play-button` | `[data-a="sgRowPlay"]` |  | In use |  |

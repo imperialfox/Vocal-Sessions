@@ -35,7 +35,7 @@ const SCREENS = {
     { name: 'undo-button', sel: '.pk-toast-undo' },
     // Q48 fields and links, by their id: named wherever they show
     { name: 'search-field', sel: '#fq' },
-    { name: 'song-search-field', sel: '#sgqi, #sgqb' },
+    { name: 'song-search-field', sel: '#sgqi' }, // Q51 iPad and Mac; on the iPhone the dock's search-field filters the list
     { name: 'note-field', sel: '.notebox .field' },
     { name: 'minutes-field', sel: '#longMins, #edMins' },
     { name: 'date-field', sel: '#edDate' },
@@ -273,7 +273,7 @@ const SCREENS = {
     { name: 'pin-selected-button', sel: '[data-a="sgLPin"]' },
     { name: 'select-all-button', sel: '[data-a="sgSelAll"]' },
     { name: 'done-button', sel: '[data-a="sgListDone"]' },
-    { name: 'cancel-button', sel: '[data-a="sgQCancel"]' },
+    { name: 'cancel-button', sel: '[data-a="sgQCancel"]', status: 'Retired in 3.64' }, // Q51 the old Songs search bar's Cancel: ✕ in the dock
     { name: 'clear-song-search-button', sel: '[data-a="sgQClear"]' },
     { name: 'recent-song-search-row', sel: '[data-a="sgRecent"]' },
     { name: 'remove-song-recent-button', sel: '[data-a="sgRmRecent"]' },
@@ -598,6 +598,7 @@ const SCREENS = {
         { name: 'edit-button', sel: '[data-a="sgListEdit"]' },
         { name: 'new-song-button', sel: '[data-a="sgNew"]' },
         { name: 'song-search-field', sel: '[data-a="sgSearch"]', was: ['search-field'] }, // Q48 renamed: the bar's search is search-field
+        { name: 'close-search-button', sel: '.pk-search-close[data-a="findClose"]' }, // Q51 ✕ beside the dock's field while searching songs (iPhone): kit part 6, reused
         { name: 'sort-menu', sel: '[data-a="sgSortMenu"]' },
         { name: 'song-row', sel: '[data-a="sgOpen"]' },
         { name: 'play-button', sel: '[data-a="sgRowPlay"]' },

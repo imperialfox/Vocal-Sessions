@@ -333,7 +333,7 @@ document.addEventListener('scroll', hintHide, { passive: true, capture: true });
 const PRESS = (() => {
   const GROW =
     '.glass:is(.circ, .shbtn, .txtbtn, .cta, .trkpad, .trkpill, .ppill, .prep, .mktp), #timer[data-a="clock"]';
-  const ON_BAR = '.tabbar button, .toptabs button, .trkb, .trkpp, .fwbtn, .pstep button';
+  const ON_BAR = '.toptabs button, .trkb, .trkpp, .fwbtn, .pstep button';
   const SEL = GROW + ', ' + ON_BAR;
   const GROW_PT = 17,
     LIFT_IN = 150,

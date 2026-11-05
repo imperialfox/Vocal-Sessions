@@ -343,6 +343,8 @@ const FIND = (() => {
     if (b) b.classList.toggle('on', has || document.activeElement === $('fq'));
   }
   const shown = () => U.tab === 'find' && !U.view;
+  // Q51 the Songs list's own search (iPhone) borrows the same field in the dock: it filters the list (U.sq), not Search
+  const songs = () => U.tab === 'songs' && !U.view && !!U.sFocus && !split() && D.songs.length > 0;
   function after() {
     if (!shown() || !U.fFocus) return;
     U.fFocus = false;
@@ -379,19 +381,27 @@ const FIND = (() => {
     '</button>';
   // the tab the tab bar keeps marked: on Search, the one you came from (hidden while searching, so ✕ needs no change)
   const dockTab = () => (U.tab === 'find' && !U.view ? U.fFrom || 'today' : U.tab);
-  // after the dock is drawn or kept: searching on Search only, the hidden parts out of reach, the field showing what's typed
+  // after the dock is drawn or kept: searching on Search, or (Q51) on the Songs list while it's being searched; the hidden
+  // parts out of reach; the field showing what's typed there. Its wording is set here, not in the markup, so the dock
+  // isn't drawn again and the kit's spring plays
   function dock(row) {
     if (!row || !row.classList.contains('pk-dock')) return;
-    const on = shown(),
+    const sg = !shown() && songs(),
+      on = shown() || sg,
       i = row.querySelector('#fq');
     row.classList.toggle('pk-searching', on);
     row.querySelectorAll(':scope > .pk-tabbar, :scope > .pk-search-circle').forEach((x) => (x.inert = on));
     row.querySelectorAll(':scope > .pk-search-field, :scope > .pk-search-close').forEach((x) => (x.inert = !on));
     if (!i) return;
-    const want = on ? U.fq || '' : '';
+    const want = on ? (sg ? U.sq : U.fq) || '' : '',
+      ph = sg ? 'Search songs' : 'Search';
     if (i.value !== want) i.value = want;
+    if (i.placeholder !== ph) {
+      i.placeholder = ph;
+      i.setAttribute('aria-label', ph);
+    }
     const c = i.parentElement.querySelector('.sclear');
-    if (c) c.hidden = !(on && (U.fq || '').trim());
+    if (c) c.hidden = !want.trim();
     if (!on && document.activeElement === i) i.blur();
   }
   const capsuleBtn = () =>
@@ -479,6 +489,7 @@ const FIND = (() => {
       open();
     },
     findClear() {
+      if (songs()) return SG_ACT.sgQClear(); // Q51
       U.fq = '';
       U.fAll = [];
       const i = $('fq');
@@ -491,6 +502,7 @@ const FIND = (() => {
     // Q45 ✕ beside the field at the bottom: closes Search, back to the tab you came from (the kit has already cleared
     // the field, which empties U.fq through the input event)
     findClose() {
+      if (songs()) return endSearch(); // Q51 ✕ ends the Songs search: the whole list and the tab bar come back
       U.fq = '';
       U.fAll = [];
       go(() => {
@@ -543,12 +555,27 @@ const FIND = (() => {
   document.addEventListener('input', (e) => {
     if (e.target.id !== 'fq') return;
     const v = e.target.value;
+    if (songs()) {
+      // Q51 typing filters the Songs list; only the list is drawn again
+      U.sq = v;
+      updateSongList();
+      return;
+    }
     if (v.trim() !== (U.fq || '').trim()) U.fAll = [];
     U.fq = v;
     update();
   });
   document.addEventListener('keydown', (e) => {
     if (e.target.id !== 'fq') return;
+    if (songs()) {
+      // Q51 Enter keeps the Songs search as a recent one; Escape is the Songs keyboard's (it ends the search)
+      if (KEYS.enter(e)) {
+        e.preventDefault();
+        addRecent(U.sq);
+        e.target.blur();
+      }
+      return;
+    }
     if (KEYS.enter(e)) {
       e.preventDefault();
       remember(U.fq);
@@ -560,11 +587,11 @@ const FIND = (() => {
     }
   });
   document.addEventListener('focusin', (e) => {
-    if (e.target.id === 'fq') update();
+    if (e.target.id === 'fq' && !songs()) update();
   });
   document.addEventListener('focusout', (e) => {
     if (e.target.id !== 'fq') return;
-    setTimeout(update, 0);
+    if (!songs()) setTimeout(update, 0);
     // the keyboard is away: a floating window can come back straight away (window.js also checks a moment later)
     if (document.activeElement !== e.target && typeof fwUpdate === 'function') fwUpdate();
   });
@@ -589,6 +616,7 @@ const FIND = (() => {
     sideRow,
     open,
     shown,
+    songs,
     // tests
     find: (q) => {
       const R = find(q);

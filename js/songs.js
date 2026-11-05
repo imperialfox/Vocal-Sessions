@@ -906,8 +906,10 @@ function updateSongList() {
     const c = i.parentNode.querySelector('.sclear');
     if (c) c.hidden = !(U.sq || '').trim();
   });
-  const b = $('sgbar');
-  if (b) b.classList.toggle('hasq', !!(U.sq || '').trim());
+  // Q51 the dock's field (iPhone) shows its clear button while there's something typed
+  const f = typeof FIND !== 'undefined' && FIND.songs() && $('fq'),
+    c = f && f.parentElement.querySelector('.sclear');
+  if (c) c.hidden = !(U.sq || '').trim();
 }
 
 /* ===== Songs: Today's pinned songs ===== */
@@ -2048,14 +2050,10 @@ async function deleteSongs(ids) {
   rerender();
   toast(ids.length > 1 ? ids.length + ' songs deleted' : 'Song deleted');
 }
+// Q51 the dock lets go of the field (FIND.dock: empties it, blurs it, the tab bar comes back on the kit's spring)
 function endSearch() {
   U.sFocus = false;
   U.sq = '';
-  const i = $('sgqb');
-  if (i) {
-    i.value = '';
-    i.blur();
-  }
   rerender();
 }
 function startSearch() {
@@ -2064,24 +2062,21 @@ function startSearch() {
     if (i) i.focus();
     return;
   }
+  // Q51 the field under the title is the door: the kit's search field opens in the dock in the tab bar's place, on its
+  // pill spring (FIND.dock adds .pk-searching as the dock is kept), and takes the keyboard straight away, inside the tap
   U.sFocus = true;
   SG.ctx = null;
   SG.sortMenu = false;
   render();
   window.scrollTo(0, 0);
-  const i = $('sgqb');
-  if (i) i.focus();
+  const i = $('fq');
+  if (i) i.focus({ preventScroll: true });
 }
-// the Songs circle beside the search field brings the tab bar back
+// a tab chosen while searching songs (a Cmd + number shortcut: the tab bar is out of reach) ends the search first
 function sgTabTap(v) {
   if (U.sFocus && !split()) {
     U.sFocus = false;
     U.sq = '';
-    const i = $('sgqb');
-    if (i) {
-      i.value = '';
-      i.blur();
-    }
     if (v === 'songs') {
       rerender();
       return true;
@@ -2241,15 +2236,12 @@ const SG_ACT = {
     U.sq = '';
     document.querySelectorAll('.sgq').forEach((i) => (i.value = ''));
     updateSongList();
-    const i = split() ? $('sgqi') : $('sgqb');
+    const i = split() ? $('sgqi') : $('fq');
     if (i) i.focus();
-  },
-  sgQCancel() {
-    endSearch();
   },
   sgRecent(el, v) {
     U.sq = v;
-    const i = $('sgqb');
+    const i = split() ? $('sgqi') : $('fq');
     if (i) {
       i.value = v;
       i.blur();
@@ -2770,33 +2762,12 @@ const SG_ACT = {
 };
 
 /* ===== Songs: after drawing ===== */
+// Q51 the old Songs search bar (#sgbar, its shrunk tab bar and the --kb lift) is retired: the dock's field took its place
 function sgEnsure() {
   if ($('slayer')) return;
   const l = document.createElement('div');
   l.id = 'slayer';
   document.body.appendChild(l);
-  const b = document.createElement('div');
-  b.id = 'sgbar';
-  b.className = 'sgbar';
-  b.hidden = true;
-  b.innerHTML =
-    '<nav class="tabbar glass min" aria-label="Tabs"><button class="on" data-a="tab" data-v="songs" aria-label="Show tabs">' +
-    SGI.music +
-    'Songs</button></nav><label class="sfield pk-search glass">' +
-    SGI.search +
-    '<input id="sgqb" class="sgq" type="search" placeholder="Search songs" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="search" aria-label="Search songs"><button class="sclear" data-a="sgQClear" aria-label="Clear search" hidden>' +
-    SGI.xc +
-    '</button></label><button class="scancel" data-a="sgQCancel">Cancel</button>';
-  document.body.appendChild(b);
-  const vv = () => {
-    const v = window.visualViewport;
-    if (!v) return;
-    document.documentElement.style.setProperty('--kb', Math.max(0, window.innerHeight - v.height - v.offsetTop) + 'px');
-  };
-  if (window.visualViewport) {
-    visualViewport.addEventListener('resize', vv);
-    visualViewport.addEventListener('scroll', vv);
-  }
 }
 function mkCapHTML() {
   return (
@@ -3056,15 +3027,6 @@ function songsAfter() {
   }
   if (SG.ctx && !(U.tab === 'songs' && !U.view)) SG.ctx = null;
   if ((SG.rMenu || SG.hMenu) && !recallOn()) SG.rMenu = SG.hMenu = false;
-  const bar = $('sgbar'),
-    show = U.tab === 'songs' && !U.view && !split() && U.sFocus && !U.sheet && D.songs.length > 0;
-  bar.hidden = !show;
-  bar.classList.toggle('hasq', !!(U.sq || '').trim());
-  const qb = $('sgqb');
-  if (qb && qb.value !== (U.sq || '')) qb.value = U.sq || '';
-  if (!show && document.activeElement === qb) qb.blur();
-  bar.querySelector('.sclear').hidden = !(U.sq || '').trim();
-  document.body.classList.toggle('sgsearch', show);
   $('slayer').innerHTML = slayerHTML();
   if (songShown()) {
     sgFit();
@@ -3481,10 +3443,10 @@ document.addEventListener(
       return;
     }
     // iPhone search: tapping empty space ends an empty search, or just puts the keyboard away
-    if (!el && U.sFocus && !split() && U.tab === 'songs' && !U.view && !e.target.closest('#sgbar')) {
+    if (!el && U.sFocus && !split() && U.tab === 'songs' && !U.view && !e.target.closest('#dock')) {
       if (!(U.sq || '').trim()) endSearch();
       else {
-        const i = $('sgqb');
+        const i = $('fq');
         if (i) i.blur();
       }
       return;
@@ -3609,12 +3571,6 @@ document.addEventListener('keydown', (e) => {
     e.preventDefault();
     addRecent(U.sq);
     e.target.blur();
-  }
-});
-document.addEventListener('focusin', (e) => {
-  if (e.target.id === 'sgqb' && !U.sFocus) {
-    U.sFocus = true;
-    rerender();
   }
 });
 // paste plain text into the lyrics editor

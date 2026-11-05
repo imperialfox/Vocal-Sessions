@@ -9,6 +9,25 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.64 · 5 Nov 2026
+*One search bar for Songs and Search (Q51)*
+<!-- area: songs -->
+
+From the UI consistency audit of 3.62. Searching inside Songs now uses the same search bar as Search, so there's one search bar that looks and moves one way.
+
+**Searching your songs on iPhone**
+- Tap the search field under the Songs title. The search bar opens at the bottom in the tab bar's place, with the same spring as Search, and the keyboard comes up.
+- What you type filters the Songs list as before. It stays a Songs search, not a search of the whole app.
+- The bar rides just above the keyboard, and the list gets room at the bottom so the last song isn't hidden behind it.
+- ✕ closes the search: the whole list and the tab bar come back.
+
+**Gone**
+- The old Songs search bar, with its tab bar shrunk to a Songs circle and its Cancel button. ✕ does that job now.
+
+On iPad and Mac the field stays at the top of the Songs list, as before.
+
+Screens: VS-008
+
 ## 3.63 · 5 Nov 2026
 *Every door moves the same way (Q50)*
 <!-- area: fixes -->
