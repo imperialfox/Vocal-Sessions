@@ -4,6 +4,7 @@ What each Build cost, logged at its end (the receipt), so the effort guessed at 
 
 | Date | Item | Version | Guess | Real | Steps | Written | Re-read | Full test runs | Biggest share |
 |---|---|---|---|---|---|---|---|---|---|
+| 5 Nov 2026 | Q50 (includes the audit, Blueprint and Render) | 3.63 | Light | Medium | 178 | 154k | 72.2M | 1 | Instructions |
 | 5 Nov 2026 | Q49 (shared, includes Recon) | 3.62 | Light to medium | Medium | 242 | 196k | 111.1M | 2 | Instructions |
 | 5 Nov 2026 | Q48 (shared, includes Recon and Blueprint) | 3.61 | Medium | Medium | 242 | 196k | 111.1M | 2 | Instructions |
 | 5 Nov 2026 | Q47 (includes earlier work) | 3.60 | Medium to heavy | Medium | 132 | 104k | 45.9M | 1 | Instructions |
