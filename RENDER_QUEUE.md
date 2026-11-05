@@ -247,7 +247,7 @@ Each idea has its priority, the date it was added and a *Why* line. New ideas go
 
 ### Priority 2 · Helps
 
-- **Today widgets (2 Nov 2026).** Patterns and Song practice as widget cards on Today, with an "Edit Today" step to choose which show. Reuses the shared pattern player from Q32 · Exercises: Redesign.
+- **Today widgets (2 Nov 2026).** Patterns and Song practice as widget cards on Today, with an "Edit Today" step to choose which show. Reuses the shared pattern player from Q32 · Exercises: Redesign. Also, 5 Nov 2026: GitHub's run of 3.63 failed seed 11 with "nothing tappable on screen" after Check timing's pick sheet and a turn to 852 × 393; it fails on plain 3.62 too (MAINTAINING › Known test issues).
   *Why:* more doors to practice, and fewer taps to start singing.
 - **Reusing Chorus 1's timing for Chorus 2.** *Why:* less setting up before you can practise a song.
 - **"Shift all timings" when a re-imported track is a different length.** *Why:* saves redoing timings by hand.
