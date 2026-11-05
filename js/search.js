@@ -311,8 +311,10 @@ const FIND = (() => {
         '”</b>Check the spelling or try fewer words.</div>'
     );
   }
+  // Q45 on the iPhone the field is at the bottom, in the dock (field()); iPad and Mac keep theirs at the top
   function page() {
     const q = U.fq || '';
+    if (!MQ.reg.matches) return '<h1>Search</h1><div id="flist">' + listHTML() + '</div>';
     return (
       '<h1>Search</h1><div class="fbar' +
       (q.trim() ? ' on' : '') +
@@ -333,8 +335,9 @@ const FIND = (() => {
   function update() {
     const l = $('flist');
     if (l) l.innerHTML = listHTML();
-    const has = !!(U.fq || '').trim(),
-      c = document.querySelector('.ffield .sclear'),
+    const i = $('fq'),
+      has = !!(U.fq || '').trim(),
+      c = i && i.parentElement.querySelector('.sclear'),
       b = document.querySelector('.fbar');
     if (c) c.hidden = !has;
     if (b) b.classList.toggle('on', has || document.activeElement === $('fq'));
@@ -345,20 +348,52 @@ const FIND = (() => {
     U.fFocus = false;
     const i = $('fq');
     if (i && !U.sheet) {
-      i.focus();
+      i.focus({ preventScroll: true });
       if (i.value) i.setSelectionRange(i.value.length, i.value.length);
     }
   }
 
   /* ----- the circle and the other doors ----- */
+  // Q45 on Search itself the circle has opened into the field (the kit's part 6), so it's marked only on a page opened
+  // from the results, where the tab bar shows again
   const circle = () =>
     '<button class="pk-btn pk-circle pk-glass pk-press pk-search-circle scirc' + // Q41 the parts kit's search circle (D02)
-    (U.tab === 'find' ? ' on' : '') +
+    (U.tab === 'find' && U.view ? ' on' : '') +
     '" data-a="findOpen" aria-label="Search" aria-current="' +
-    (U.tab === 'find' ? 'page' : 'false') +
+    (U.tab === 'find' && U.view ? 'page' : 'false') +
     '"><span class="ring" aria-hidden="true"></span>' +
     SGI.search +
     '</button>';
+  /* Q45 the parts kit's search field in the dock (part 6): always there beside the circle, so tapping the circle opens
+     it in the tab bar's place on the kit's pill spring (the kit toggles .pk-searching on the tap; dock() keeps it in
+     step with the page). ✕ closes it and goes back to the tab you came from. The kit lifts the dock above the iPhone
+     keyboard (1.2) and publishes the lift as --pk-kb, which main's bottom room adds. What's typed isn't part of the
+     markup, so typing never makes the dock draw again (the field and the keyboard stay) */
+  const field = () =>
+    '<label class="pk-search-field pk-glass">' +
+    SGI.search +
+    '<input id="fq" type="search" placeholder="Search" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="search" aria-label="Search"><button class="sclear" data-a="findClear" aria-label="Clear search" hidden>' +
+    SGI.xc +
+    '</button></label><button class="pk-btn pk-circle pk-glass pk-press pk-search-close" data-a="findClose" aria-label="Close search">' +
+    SGI.x +
+    '</button>';
+  // the tab the tab bar keeps marked: on Search, the one you came from (hidden while searching, so ✕ needs no change)
+  const dockTab = () => (U.tab === 'find' && !U.view ? U.fFrom || 'today' : U.tab);
+  // after the dock is drawn or kept: searching on Search only, the hidden parts out of reach, the field showing what's typed
+  function dock(row) {
+    if (!row || !row.classList.contains('pk-dock')) return;
+    const on = shown(),
+      i = row.querySelector('#fq');
+    row.classList.toggle('pk-searching', on);
+    row.querySelectorAll(':scope > .pk-tabbar, :scope > .pk-search-circle').forEach((x) => (x.inert = on));
+    row.querySelectorAll(':scope > .pk-search-field, :scope > .pk-search-close').forEach((x) => (x.inert = !on));
+    if (!i) return;
+    const want = on ? U.fq || '' : '';
+    if (i.value !== want) i.value = want;
+    const c = i.parentElement.querySelector('.sclear');
+    if (c) c.hidden = !(on && (U.fq || '').trim());
+    if (!on && document.activeElement === i) i.blur();
+  }
   const capsuleBtn = () =>
     '<button class="tsr' +
     (U.tab === 'find' ? ' on' : '') +
@@ -384,10 +419,11 @@ const FIND = (() => {
     }
     if (shown()) {
       const i = $('fq');
-      if (i) i.focus();
+      if (i) i.focus({ preventScroll: true });
       return;
     }
     go(() => {
+      if (U.tab !== 'find') U.fFrom = U.tab;
       U.tab = 'find';
       U.view = null;
       U.fFocus = true;
@@ -451,6 +487,16 @@ const FIND = (() => {
         i.focus();
       }
       update();
+    },
+    // Q45 ✕ beside the field at the bottom: closes Search, back to the tab you came from (the kit has already cleared
+    // the field, which empties U.fq through the input event)
+    findClose() {
+      U.fq = '';
+      U.fAll = [];
+      go(() => {
+        U.tab = U.fFrom || 'today';
+        U.view = null;
+      });
     },
     findCancel() {
       U.fq = '';
@@ -536,6 +582,9 @@ const FIND = (() => {
     page,
     after,
     circle,
+    field,
+    dockTab,
+    dock,
     capsuleBtn,
     sideRow,
     open,

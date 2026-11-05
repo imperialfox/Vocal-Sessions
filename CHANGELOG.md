@@ -9,6 +9,31 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.59 · 5 Nov 2026
+*The top bar, Today's title and search from the parts kit (Q45)*
+<!-- area: look -->
+
+The top bar, Today's title and search now follow the parts kit, so the bar's buttons are never blurred, Today's header has Apple's spacing, and on the iPhone search lives at the bottom.
+
+**Top bar**
+- The soft fade at the top of a scrolled page is now part of the top bar, behind its buttons, so the gear and the other buttons stay sharp, with a sheet open or not.
+- It's the page colour fading out, with no blur. It fades in once you scroll a little, as before, and shrinks with the page under a sheet.
+- The buttons stay exactly where they were.
+
+**Today**
+- The date sits on its own line above "Today", in regular weight, and "Today" sits a little lower than the other tabs' titles, as in Apple's apps.
+- The chevron is grey and closer to the word. The date, the word and the chevron still open the calendar.
+
+**Search on the iPhone**
+- The search circle opens the search field at the bottom, in the tab bar's place, and the tab bar shrinks away. ✕ closes it and takes you back to the tab you were on.
+- The field rides just above the keyboard, so you can see what you type. The results get room at the bottom, so the last one scrolls clear of the field.
+- The field and Cancel at the top of Search are gone: the results and recent searches fill the page. iPad and Mac keep their field at the top.
+
+**Also**
+- Parts kit 1.2.0.
+
+Screens: VS-001, VS-002, VS-003, VS-004, VS-005, VS-006, VS-007, VS-008, VS-009, VS-010, VS-011, VS-012, VS-013, VS-014, VS-015, VS-016, VS-017, VS-018, VS-019, VS-020, VS-021, VS-022, VS-023, VS-024, VS-025, VS-026, VS-027, VS-028, VS-029, VS-030, VS-097
+
 ## 3.58 · 4 Nov 2026
 *Smoother page changes, with no jump at the end (Q44)*
 <!-- area: look -->

@@ -106,26 +106,57 @@ def layout(b, t):
 
 
 # ---------------------------------------------------------------------------------------------------------------------
+# Q45 what paints over a bar button's centre, top first, counting layers that let taps through (pointer-events: none)
+# too, leaving out the overlay layer (#layer, the sheet's own): the button (or its icon) must come before the edge
+STACK = """(sel)=>{const btn=document.querySelector(sel);if(!btn)return null;const r=btn.getBoundingClientRect();
+  const st=document.createElement('style');st.textContent='*{pointer-events:auto!important}';document.head.appendChild(st);
+  const l=document.elementsFromPoint(r.left+r.width/2,r.top+r.height/2).filter(e=>!e.closest('#layer'));st.remove();
+  const edge=document.querySelector('#bar > .pk-edge');
+  return {btn:l.findIndex(e=>btn.contains(e)),edge:l.indexOf(edge),top:l.slice(0,3).map(e=>(e.id?'#'+e.id:'')+'.'+[...e.classList].join('.'))}}"""
+
+
 def edge(b, t):
-    """2 · The soft edge: no rounded card when scrolled, a full-width blur from the top of the screen that fades out."""
+    """2 · The soft edge (Q45: the parts kit's parts 2 and 51): inside the top bar, behind its buttons, the page colour
+    fading out from the very top of the screen, after 36 pt of scrolling; the buttons always draw over it."""
     ok = t.ok
     for sc in ('light', 'dark'):
         pg = t.page(b, 390, 844, sc, data=data())
         pg.evaluate(IPHONE)
         for tab in ('exercises', 'history', 'songs'):
             pg.evaluate("v=>go(()=>{U.tab=v;U.view=null})", tab); pg.wait_for_timeout(100)
-            pg.mouse.move(200, 500); pg.mouse.wheel(0, 300); pg.wait_for_timeout(350)
-            bar = pg.evaluate("(()=>{const s=getComputedStyle(document.getElementById('bar'));return {sc:document.getElementById('bar').classList.contains('scrolled'),bg:s.backgroundColor,sh:s.boxShadow,bf:s.backdropFilter||s.webkitBackdropFilter,before:getComputedStyle(document.getElementById('bar'),'::before').display}})()")
-            ok(bar['sc'] and bar['bg'] in ('rgba(0, 0, 0, 0)', 'transparent') and bar['sh'] == 'none' and bar['bf'] in ('none', '') and bar['before'] == 'none',
-               f'{sc} {tab}: scrolled, the top bar is no longer a rounded glass card ({bar})')
-            e = pg.evaluate("(()=>{const e=document.querySelector('.edge'),r=e.getBoundingClientRect(),s=getComputedStyle(e);return {l:r.left,t:r.top,w:r.width,h:r.height,o:+s.opacity,bf:s.backdropFilter||s.webkitBackdropFilter,mask:s.maskImage||s.webkitMaskImage}})()")
-            ok(e['l'] == 0 and e['t'] == 0 and e['w'] == pg.evaluate("innerWidth") and e['o'] == 1, f'{sc} {tab}: the blur layer spans the full width and starts at the very top ({e["l"]},{e["t"]} {e["w"]}×{e["h"]})')
-            ok('blur' in (e['bf'] or '') and 'gradient' in (e['mask'] or '') and e['h'] >= 62 + 56, f'{sc} {tab}: a backdrop blur that fades out at its lower edge, reaching past the bar')
-            ok(pg.evaluate("document.querySelectorAll('#bar .circ.glass').length") >= 0, f'{sc} {tab}: circles stay glass')
+            pg.mouse.move(200, 500); pg.mouse.wheel(0, 300)
+            ok(until(pg, "document.getElementById('bar').classList.contains('pk-scrolled')"), f'{sc} {tab}: scrolled, the bar takes the kit’s scrolled state')
+            bar = pg.evaluate("(()=>{const b=document.getElementById('bar'),s=getComputedStyle(b);return {kit:b.classList.contains('pk-topbar'),bg:s.backgroundColor,bf:s.backdropFilter||s.webkitBackdropFilter,first:b.firstElementChild.className}})()")
+            ok(bar['kit'] and bar['bg'] in ('rgba(0, 0, 0, 0)', 'transparent') and bar['bf'] in ('none', '') and bar['first'] == 'pk-edge',
+               f'{sc} {tab}: the top bar is the kit’s, with no card of its own, its soft edge first, behind the buttons ({bar})')
+            until(pg, "+getComputedStyle(document.querySelector('#bar > .pk-edge')).opacity===1", 3000)
+            e = pg.evaluate("(()=>{const e=document.querySelector('#bar > .pk-edge'),r=e.getBoundingClientRect(),s=getComputedStyle(e);return {l:r.left,t:r.top,w:r.width,h:r.height,o:+s.opacity,bf:s.backdropFilter||s.webkitBackdropFilter,mask:s.maskImage||s.webkitMaskImage,bg:s.backgroundColor,page:getComputedStyle(document.body).backgroundColor}})()")
+            ok(e['l'] == 0 and e['t'] == 0 and e['w'] == pg.evaluate("innerWidth") and e['o'] == 1, f'{sc} {tab}: the edge spans the full width and starts at the very top ({e["l"]},{e["t"]} {e["w"]}×{e["h"]})')
+            ok(e['bf'] in ('none', '') and 'gradient' in (e['mask'] or '') and e['bg'] == e['page'] and abs(e['h'] - (62 + 46)) < 0.6,
+               f'{sc} {tab}: the page colour fading out, no blur, the top area + 46 pt tall ({e["bg"]}, {e["h"]})')
+            st = pg.evaluate(STACK, '#bar .circ')
+            if st:
+                ok(st['btn'] == 0 and st['edge'] > 0, f'{sc} {tab}: the bar’s button draws over the edge ({st})')
             if tab == 'exercises': t.shot(pg, f'edge-{sc}')
             pg.evaluate("scrollTo(0,0)")
             # wait for the fade to finish rather than a fixed time (failed on GitHub with 3.54 while it was still fading)
-            ok(until(pg, "+getComputedStyle(document.querySelector('.edge')).opacity===0", 3000), f'{sc} {tab}: back at the top, the edge goes')
+            ok(until(pg, "+getComputedStyle(document.querySelector('#bar > .pk-edge')).opacity===0", 3000), f'{sc} {tab}: back at the top, the edge goes')
+        # Q45 the gear on Today, scrolled, with a sheet open: the page shrinks behind the sheet, and the edge with it,
+        # so the gear still draws over the edge (it used to be blurred under it)
+        for scrolled in (False, True):
+            pg.evaluate("go(()=>{U.tab='today';U.view=null})"); pg.wait_for_timeout(150)
+            if scrolled:
+                pg.mouse.move(200, 500); pg.mouse.wheel(0, 300); until(pg, "document.getElementById('bar').classList.contains('pk-scrolled')")
+            pg.evaluate("U.calMonth=new Date(new Date().getFullYear(),new Date().getMonth(),1);U.calDay=null;U.sheet='calendar';U.sd={};render()")
+            until(pg, "document.body.classList.contains('sheet-open')")
+            pg.wait_for_timeout(100)
+            st = pg.evaluate(STACK, '#barR [data-a=openSettings]')
+            ok(st and st['btn'] == 0 and st['edge'] > 0, f'{sc} Today{" scrolled" if scrolled else ""}, sheet open: the gear draws over the edge ({st})')
+            if scrolled:
+                er = pg.evaluate("(()=>{const e=document.querySelector('#bar > .pk-edge').getBoundingClientRect(),w=document.querySelector('.wrap').getBoundingClientRect();return {et:e.top,wt:w.top,el:e.left,wl:w.left,ew:e.width,ww:w.width}})()")
+                ok(er['el'] < er['wl'] - 10 and er['ew'] > er['ww'], f'{sc}: under a sheet the edge reaches wider than the shrunk page ({er})')
+                t.shot(pg, f'edge-sheet-{sc}')
+            pg.evaluate("U.sheet=null;render()"); pg.evaluate("scrollTo(0,0)"); pg.wait_for_timeout(150)
         pg.context.close()
 
 
@@ -410,7 +441,7 @@ def collapse(b, t):
 
 
 UNDER = """(sat)=>{const bad=[];for(const e of document.querySelectorAll('body *')){
-  if(e.closest('.tgrad,.edge,#splash'))continue;
+  if(e.closest('.tgrad,.pk-edge,#splash'))continue;
   const own=[...e.childNodes].some(n=>n.nodeType==3&&n.textContent.trim())||['BUTTON','INPUT','IMG','svg','CANVAS','VIDEO'].includes(e.tagName);
   if(!own)continue;const r=e.getBoundingClientRect();if(!r.width||!r.height||r.bottom<=0||r.top>=sat-0.5)continue;
   let a=e,seen=true;while(a&&a!==document.body){const c=getComputedStyle(a);if(+c.opacity==0||c.visibility=='hidden'){seen=false;break}a=a.parentElement}

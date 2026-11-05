@@ -366,33 +366,6 @@ html.glass-solid {
     background: var(--accent);
   }
 }
-/* 3.23 (Q08) the soft edge: once a page scrolls, a full-width blur starts behind the status bar and fades out at its
-   lower edge, with no line, and the page scrolls under it. The bar itself stays clear; its circles are glass.
-   WebKit has no progressive blur, so it's one backdrop blur masked from solid at the top to clear at the bottom,
-   with a light wash of the page colour so the circles and the title read over busy content */
-.edge {
-  position: fixed;
-  left: 0;
-  right: 0;
-  top: 0;
-  height: calc(var(--sat) + 96px);
-  z-index: 15;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.25s;
-  background: linear-gradient(
-    color-mix(in srgb, var(--bg) 72%, transparent),
-    color-mix(in srgb, var(--bg) 50%, transparent) calc(var(--sat) + 46px),
-    transparent
-  );
-  -webkit-backdrop-filter: blur(12px) saturate(170%);
-  backdrop-filter: blur(12px) saturate(170%);
-  -webkit-mask-image: linear-gradient(#000 calc(var(--sat) + 40px), transparent);
-  mask-image: linear-gradient(#000 calc(var(--sat) + 40px), transparent);
-}
-body.scrolled .edge {
-  opacity: 1;
-}
 .wrap {
   /* Q44: the corner isn't animated any more (.wrap has no background or clipping, so it never showed, but cost a
      repaint every frame) */
@@ -403,54 +376,49 @@ body.sheet-open .wrap {
   border-radius: 28px;
 }
 
+/* Q45 the top bar is the parts kit's (parts 2 and 51): #bar is a .pk-topbar holding its soft edge (.pk-edge: the page
+   colour fading out, no blur), its button slots (#barL, #barR, .pk-bar-slot) and its small title (#barT). The edge is
+   the bar's first child, behind the slots, so the buttons always draw over it, sheet open or not, in any browser. The
+   app scrolls the page, not a .pk-scroll box, so gestures.js sets the kit's .pk-scrolled after 36 pt.
+   The bar stays sticky in .wrap, so it shrinks with the page under a sheet. It starts at the top of the screen and is
+   the top area + 46 pt tall (the kit's 100 on its 54 pt frame); it takes the same room in the page as the 56 pt bar did,
+   so every page's content stays where it was. pointer-events: only the slots and what's in the title take taps */
 .bar {
+  /* D19 the buttons sit where Q08 measured them (the circles centred 84 pt from the top on a 62 pt status bar), not at
+     the kit's 54 pt, which is for its demo frame */
+  --pk-bar-top: calc(var(--sat) - var(--barup) + 6px);
   position: sticky;
-  top: calc(var(--sat) - var(--barup));
+  top: 0;
   z-index: 20;
-  height: 56px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin: calc(-1 * var(--barup)) -8px 0;
-  padding: 0 8px;
+  height: calc(var(--pk-bar-top) + 46px);
+  margin: calc(-1 * var(--sat)) -16px 4px;
 }
-/* 3.23 (Q08): no rounded card any more when scrolled; the soft edge (.edge) sits behind the bar instead */
-.bar.glass,
-.bar.glass.scrolled {
-  background: transparent;
-  box-shadow: none;
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
+/* under a sheet the page shrinks: the edge reaches about 40 pt higher and 120% wide, so the shrunk page's top stays
+   covered */
+body.sheet-open .bar > .pk-edge {
+  top: -40px;
+  left: -10%;
+  right: -10%;
 }
-.bar.glass::before,
-.bar.glass::after {
-  display: none;
+/* iPad and Mac: the page is narrower than the window, so the edge spans the window (the sidebar sits above it) */
+body.reg .bar > .pk-edge {
+  left: -100vw;
+  right: -100vw;
 }
+/* the small title is centred between the slots, kept clear of the wider side (renderBar0 sets --bar-in) */
 .bar .mt {
-  flex: 1;
-  min-width: 0;
-  text-align: center;
+  left: var(--bar-in, 70px);
+  right: var(--bar-in, 70px);
   font-size: var(--t-body);
-  font-weight: 600;
-  opacity: 0;
-  transition: opacity var(--dur-fade);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
-.bar.scrolled .mt,
+.bar .mt > * {
+  pointer-events: auto;
+}
 .bar.always .mt {
   opacity: 1;
 }
-.side {
-  min-width: 44px;
-  display: flex;
-  gap: 6px;
+.bar > .pk-bar-slot {
   align-items: center;
-}
-.side.r {
-  justify-content: flex-end;
 }
 .circ {
   width: 44px;
@@ -1285,9 +1253,6 @@ html.motion-reduced .tl-item.now .tl-node::after {
   margin-top: 4px;
 }
 
-main {
-  padding-bottom: calc(118px + var(--dockb));
-}
 .dock {
   position: fixed;
   left: 0;
@@ -1422,56 +1387,36 @@ main {
 .grp.tiled > * + *::before {
   left: 62px;
 }
-/* 3.17: Today's title sits exactly where every other main page's title sits (no line of its own for the date above).
-   The date shares the title's row and baseline, then is lifted by the title's cap height plus a small gap, so it sits
-   just above the letters at any size and with any font. The chevron is in the title's line, centred on its capital
-   letters (cap height) rather than the line box */
+/* Q45 Today's title is the parts kit's large title (part 3): the date (.pk-date-line, 13 pt regular) on its own line,
+   then "Today" (.pk-large-title, 34 pt bold, line height 1.2), so "Today" sits 17 pt lower than the other tabs'
+   titles. The chevron is grey, 22 pt and 6 pt from the word, centred on the title's line, pointing down: it opens the
+   calendar, as the date and the word do */
 .titlerow {
-  display: grid;
-  justify-items: start;
-  align-items: baseline;
-}
-.titlerow > * {
-  grid-area: 1 / 1;
-}
-.titlerow h1 {
-  margin-bottom: 6px;
+  margin: 0 4px;
 }
 .dateline {
-  font-size: var(--t-footnote);
-  font-weight: 600;
-  color: var(--fg2);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  line-height: 13px;
-  margin: 0 4px;
-  position: relative;
-  /* 34 / 13: the title's cap height, worked out in the date's own font */
-  top: calc(-1cap * 34 / 13 - 3px);
-  z-index: 1;
+  display: block;
 }
-/* the date reaches a few pixels into the top bar's space: while the bar is clear, the date takes the tap */
-.bar:not(.scrolled) ~ #app .dateline {
-  z-index: 21;
+.titlerow h1 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 .calbtn {
   display: inline-block;
   position: relative;
   font: inherit;
   line-height: 0;
-  margin-left: 12px;
-  color: var(--accent);
-  /* its bottom (the svg's) would sit on the title's baseline: lift it so its middle is half the cap height up */
-  vertical-align: calc(0.5cap - 12px);
+  color: var(--fg3);
 }
 .calbtn::after {
   content: '';
   position: absolute;
-  inset: -10px; /* a 44 px target around the 24 px chevron */
+  inset: -11px; /* a 44 px target around the 22 px chevron */
 }
 .calbtn svg.i {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   stroke-width: 2.6;
 }
 .calhead {
@@ -2385,16 +2330,6 @@ body.reg main.narrow {
   max-width: 640px;
   margin: 0 auto;
 }
-body.reg .bar.tabsmode {
-  background: transparent;
-  box-shadow: none;
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-}
-body.reg .bar.tabsmode::before,
-body.reg .bar.tabsmode::after {
-  display: none;
-}
 .bar .mt.tabs {
   overflow: visible;
   opacity: 1;
@@ -2965,6 +2900,45 @@ html.motion-reduced *::after {
   width: 64px;
   height: 64px;
   flex: none;
+}
+/* Q45 the search field and ✕ in the dock (the parts kit's part 6, FIND.field): the kit places them and runs their
+   spring; the app gives the icons their size, the field the app's clear button, and keeps the field's text at 17 pt */
+.pk-search-field svg.i,
+.pk-search-close svg.i {
+  width: 18px;
+  height: 18px;
+}
+.pk-search-field {
+  padding-right: 6px;
+  cursor: text;
+}
+.pk-search-field input {
+  height: 100%;
+  padding: 0;
+  -webkit-appearance: none;
+  appearance: none;
+}
+.pk-search-field input:focus-visible {
+  outline: none;
+}
+.pk-search-field input::-webkit-search-cancel-button {
+  display: none;
+}
+.pk-search-field input::placeholder {
+  color: var(--fg2);
+}
+.pk-search-close {
+  display: grid;
+  place-items: center;
+  color: var(--fg);
+}
+body.land .dockrow :is(.pk-search-field, .pk-search-close) {
+  top: 0;
+}
+/* Q45 the kit lifts the searching dock above the iPhone keyboard and publishes the lift as --pk-kb (0 otherwise), so a
+   page's last row still scrolls clear of the field */
+main {
+  padding-bottom: calc(118px + var(--dockb) + var(--pk-kb, 0px));
 }
 /* Q27 iPhone on its side: the dock is 430 pt wide, so each tab is a row (icon, then label) in a shorter bar; the tabs
    stay equal, as the kit's highlight needs, and each label shows in full */
@@ -4315,10 +4289,6 @@ textarea.field.sglyr {
 .zm .wrap {
   transition: none !important;
 }
-.zm-edge {
-  opacity: 1 !important;
-  transition: none !important;
-}
 .zm-title {
   position: absolute;
   margin: 0 !important;
@@ -5197,7 +5167,7 @@ textarea.field.sglyr {
   color: var(--fg2);
   pointer-events: none;
 }
-body.ckplay .edge {
+body.ckplay .bar > .pk-edge {
   opacity: 0;
 }
 html.ckplay,

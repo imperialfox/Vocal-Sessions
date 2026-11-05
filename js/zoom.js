@@ -178,8 +178,7 @@ const ZOOM = (() => {
     const b = document.createElement('div');
     b.className = 'zm-shot';
     b.appendChild(c);
-    const edge = document.querySelector('.edge');
-    if (edge && document.body.classList.contains('scrolled')) b.appendChild(scrub(edge.cloneNode(true))).classList.add('zm-edge');
+    // Q45 the soft edge is inside the top bar (the parts kit's .pk-edge), so the bar's copy brings it, behind its buttons
     return { box: b, place: here() };
   }
   // the page title, copied with its own look, so it can stay visible while the rest of the page fades
@@ -191,7 +190,10 @@ const ZOOM = (() => {
     const cs = getComputedStyle(h),
       c = scrub(h.cloneNode(true));
     c.className = 'zm-title';
-    ['fontSize', 'fontWeight', 'lineHeight', 'letterSpacing', 'color', 'fontFamily'].forEach((p) => (c.style[p] = cs[p]));
+    // Q45 and its layout, so Today's large title keeps its chevron 6 pt from the word, centred on its line
+    ['fontSize', 'fontWeight', 'lineHeight', 'letterSpacing', 'color', 'fontFamily', 'display', 'alignItems', 'gap'].forEach(
+      (p) => (c.style[p] = cs[p])
+    );
     c.style.left = r.l + 'px';
     c.style.top = r.t + 'px';
     c.style.width = r.w + 'px';

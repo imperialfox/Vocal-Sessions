@@ -13,6 +13,8 @@ OPEN = "FIND.open()"
 GROUPS = "[...document.querySelectorAll('#flist [data-fg]')].map(g=>g.dataset.fg)"
 ROWS = "g=>[...document.querySelectorAll('#flist [data-fg=\"'+g+'\"] .frow')].map(r=>r.innerText.replace(/\\s+/g,' ').trim())"
 # what's on screen overlapping: two rectangles
+# a stand-in for the iPhone keyboard (as the parts kit's own check does): the visible area ends at h
+KB_FAKE = """window.__kb=(h)=>{Object.defineProperty(window,'visualViewport',{configurable:true,value:{width:innerWidth,height:h,offsetTop:0,offsetLeft:0,scale:1,addEventListener(){},removeEventListener(){}}});dispatchEvent(new Event('resize'))}"""
 HIT = """([a,b])=>{const x=document.querySelector(a),y=document.querySelector(b);if(!x||!y)return null;const r=x.getBoundingClientRect(),s=y.getBoundingClientRect();
  return !(r.right<=s.left||s.right<=r.left||r.bottom<=s.top||s.bottom<=r.top)}"""
 
@@ -63,26 +65,51 @@ def circle(b, t):
     ok(abs(g['gap'] - 8) < 1 and g['h'] < 1, f'the search circle sits 8 pt from the tab bar, the same height ({g})')
     pg.evaluate("scrollTo(0,0)"); pg.wait_for_timeout(200)
     pg.evaluate(TODAY); pg.wait_for_timeout(150)
-    # opening
-    pg.click('#dock .scirc'); pg.wait_for_timeout(300)
-    ok(pg.evaluate("U.tab") == 'find' and pg.evaluate("U.view") is None, 'tapping the circle opens Search')
-    ok(pg.evaluate("document.activeElement.id") == 'fq', 'with its field focused')
-    ok(pg.locator('#dock .scirc.on').count() == 1 and pg.locator('#dock .pk-tab[aria-current=page]').count() == 0
-       and pg.evaluate("+getComputedStyle(document.querySelector('#dock .pk-tab-ind')).opacity") == 0
-       and pg.evaluate("document.querySelector('#dock .scirc').getAttribute('aria-current')") == 'page',
-       'the circle is tinted as selected, and no tab is')
-    ok(pg.evaluate("getComputedStyle(document.querySelector('#dock .scirc')).color") != pg.evaluate("getComputedStyle(document.querySelector('#dock .pk-tab:not(.on)')).color"),
-       'its icon takes the accent colour')
+    # opening: Q45 the parts kit's part 6, the circle opens the field at the bottom in the tab bar's place
+    rest = pg.evaluate("document.querySelector('#dock .pk-tabbar').getBoundingClientRect().bottom")
+    pg.click('#dock .scirc')
+    ok(until(pg, "U.tab==='find'&&!U.view"), 'tapping the circle opens Search')
+    ok(until(pg, "document.activeElement&&document.activeElement.id==='fq'"), 'with its field focused')
+    ok(until(pg, "+getComputedStyle(document.querySelector('#dock .pk-search-field')).opacity===1&&+getComputedStyle(document.querySelector('#dock .pk-tabbar')).opacity===0"),
+       'the field opens in the tab bar’s place, and the tab bar shrinks away')
+    st = pg.evaluate("""(()=>{const d=document.querySelector('#dock .dockrow'),f=d.querySelector('.pk-search-field').getBoundingClientRect(),x=d.querySelector('.pk-search-close').getBoundingClientRect();
+      return {s:d.classList.contains('pk-searching'),bar:d.querySelector('.pk-tabbar').inert,circ:d.querySelector('.scirc').inert,fb:f.bottom,fl:f.left,xr:x.right,top:document.querySelectorAll('#app #fq,#app [data-a=findCancel]').length,w:innerWidth}})()""")
+    ok(st['s'] and st['bar'] and st['circ'] and abs(st['fb'] - rest) < 8 and st['top'] == 0 and st['xr'] <= st['w'],
+       f'at the bottom, with ✕ beside it: no field or Cancel at the top, and the hidden tab bar and circle out of reach ({st})')
+    ok(pg.locator('#app h1').inner_text() == 'Search', 'the page above keeps its title')
     pg.evaluate("scrollTo(0,600)"); pg.wait_for_timeout(300)
     ok(pg.locator('#dock .pk-folded').count() == 0, 'on Search the tab bar never shrinks')
     pg.evaluate("scrollTo(0,0)")
     t.shot(pg, 'empty')
-    # a tab takes you away; the circle brings you back with what you typed
+    # ✕ closes it and goes back to the tab you came from
     typed(pg, 'river')
-    pg.click('#dock .pk-tabbar [data-v=exercises]'); pg.wait_for_timeout(250)
-    ok(pg.evaluate("U.tab") == 'exercises', 'a tab leaves Search')
-    pg.click('#dock .scirc'); pg.wait_for_timeout(250)
-    ok(pg.input_value('#fq') == 'river' and 'River Song' in pg.inner_text('#flist'), 'and the circle comes back to the same search')
+    ok('River Song' in pg.inner_text('#flist'), 'typing at the bottom searches')
+    pg.click('#dock .pk-search-close')
+    ok(until(pg, "U.tab==='today'&&!U.view"), '✕ goes back to the tab you came from (Today)')
+    ok(until(pg, "!document.querySelector('#dock .pk-searching')&&+getComputedStyle(document.querySelector('#dock .pk-tabbar')).opacity===1"),
+       'and the tab bar comes back')
+    ok(pg.evaluate("U.fq") == '' and pg.input_value('#fq') == '' and pg.evaluate("document.activeElement.id") != 'fq'
+       and pg.locator('#dock .pk-tab.on[data-v=today]').count() == 1, 'the search is cleared, the keyboard put away and Today marked')
+    pg.evaluate("go(()=>{U.tab='songs';U.view=null})"); pg.wait_for_timeout(150)
+    pg.click('#dock .scirc'); until(pg, "U.tab==='find'")
+    pg.click('#dock .pk-search-close')
+    ok(until(pg, "U.tab==='songs'&&!U.view"), '✕ from Search opened on Songs goes back to Songs')
+    # the keyboard (parts kit 1.2): the field rides 8 pt above it, and the results get room at their bottom
+    pg.click('#dock .scirc'); until(pg, "document.activeElement&&document.activeElement.id==='fq'")
+    typed(pg, 'e')
+    pg.evaluate(KB_FAKE); pg.evaluate("__kb(innerHeight-336)"); pg.wait_for_timeout(150)
+    k = pg.evaluate("""(()=>{const d=document.querySelector('#dock .dockrow').getBoundingClientRect(),m=getComputedStyle(document.getElementById('app'));
+      return {bot:d.bottom,kb:getComputedStyle(document.documentElement).getPropertyValue('--pk-kb').trim(),pad:parseFloat(m.paddingBottom),top:innerHeight-336}})()""")
+    ok(abs(k['bot'] - (k['top'] - 8)) < 1 and k['kb'] not in ('', '0px') and k['pad'] > 118 + float(k['kb'][:-2]) - 1,
+       f'with the keyboard up, the field sits 8 pt above it and the results get that much more room ({k})')
+    pg.evaluate("scrollTo(0,document.body.scrollHeight)"); pg.wait_for_timeout(200)
+    ok(pg.evaluate("(()=>{const r=[...document.querySelectorAll('#flist .frow,#flist .row')].pop();if(!r)return true;return r.getBoundingClientRect().bottom<=document.querySelector('#dock .pk-search-field').getBoundingClientRect().top+1})()"),
+       'scrolled to the bottom, the last result clears the lifted field')
+    pg.evaluate("__kb(innerHeight)"); pg.wait_for_timeout(150)
+    ok(abs(pg.evaluate("document.querySelector('#dock .dockrow').getBoundingClientRect().bottom") - rest) < 1 and pg.evaluate("U.tab") == 'find',
+       'the keyboard going brings the field back down, with Search still open')
+    pg.evaluate("delete window.visualViewport;dispatchEvent(new Event('resize'))")
+    pg.evaluate("scrollTo(0,0)")
     # Cmd/Ctrl+F
     pg.evaluate(TODAY); pg.wait_for_timeout(200)
     pg.evaluate("document.activeElement&&document.activeElement.blur()"); pg.keyboard.press('Meta+f'); pg.wait_for_timeout(250)
@@ -183,12 +210,11 @@ def recents(b, t):
     ok(pg.evaluate("FIND.recents()") == [] and pg.locator('#flist .recent').count() == 0, 'Clear removes them all')
     pg.evaluate("D.songs.forEach(s=>s.pinned=false);save();rerender()"); pg.wait_for_timeout(150)
     ok('Search your songs, lyrics, exercises and sessions.' in pg.inner_text('#flist'), 'with nothing to show yet, a line says what it searches')
-    # Cancel and Escape
+    # the clear button and Escape (Q45: the field's at the bottom, with no Cancel; iPad and Mac keep theirs, in wide)
     pg.click('#fq'); typed(pg, 'river')
-    ok(pg.locator('.fbar .scancel').is_visible(), 'Cancel shows while searching')
-    pg.click('.fbar .scancel'); pg.wait_for_timeout(150)
-    ok(pg.input_value('#fq') == '' and pg.evaluate("document.activeElement.id") != 'fq' and pg.evaluate("U.tab") == 'find',
-       'Cancel clears the search and puts the keyboard away')
+    ok(pg.locator('#dock .pk-search-field .sclear').is_visible(), 'the clear button shows while there’s a search')
+    pg.click('#dock .pk-search-field .sclear'); pg.wait_for_timeout(150)
+    ok(pg.input_value('#fq') == '' and pg.evaluate("U.tab") == 'find', 'it clears the search, and Search stays open')
     pg.click('#fq'); typed(pg, 'river'); pg.keyboard.press('Escape'); pg.wait_for_timeout(100)
     ok(pg.input_value('#fq') == '', 'Escape clears it too')
     pg.reload(); from harness import ready; ready(pg)
@@ -282,6 +308,8 @@ def wide(b, t):
         ok(pg.evaluate("U.tab") == 'find' and pg.evaluate("document.activeElement.id") == 'fq', f'{name}: it opens Search with the field focused')
         sel = '#barT .toptabs .tsr.on' if name == 'ipad' else '#side .sbi.on[data-a=findOpen]'
         ok(pg.locator(sel).count() == 1, f'{name}: shown as selected')
+        ok(pg.locator('#app .fbar #fq').count() == 1 and pg.locator('#app .fbar [data-a=findCancel]').count() == 1
+           and pg.locator('#dock .pk-search-field').count() == 0, f'{name}: the field and Cancel stay at the top (Q45 moves only the iPhone’s)')
         typed(pg, 'river')
         pg.click('#flist [data-fg=songs] .frow >> nth=0'); pg.wait_for_timeout(350)
         ok(pg.evaluate("U.tab") == 'songs' and pg.evaluate("U.songId") == rid, f'{name}: a song opens beside the Songs list')
@@ -328,8 +356,8 @@ def sizes(b, t):
             ok(pg.evaluate("document.documentElement.scrollWidth<=innerWidth"), f'{name} {sc}: results fit, nothing sideways')
             ok(pg.evaluate("[...document.querySelectorAll('#flist .frow')].every(r=>r.getBoundingClientRect().right<=innerWidth+0.5)"), f'{name} {sc}: every row inside the screen')
             if name in ('375', '390', 'land'):
-                ok(pg.evaluate("(()=>{const c=document.querySelector('#dock .scirc').getBoundingClientRect();return c.left>=0&&c.right<=innerWidth&&c.bottom<=innerHeight})()"),
-                   f'{name} {sc}: the circle is on screen')
+                ok(pg.evaluate("(()=>{const c=document.querySelector('#dock .pk-search-field').getBoundingClientRect(),x=document.querySelector('#dock .pk-search-close').getBoundingClientRect();return c.left>=0&&x.right<=innerWidth&&c.bottom<=innerHeight&&c.right<=x.left})()"),
+                   f'{name} {sc}: the field and ✕ are on screen, side by side')
                 # scrolled to the bottom, the last result clears the tab bar and the circle
                 pg.evaluate("scrollTo(0,document.body.scrollHeight)"); pg.wait_for_timeout(250)
                 ok(pg.evaluate("(()=>{const r=[...document.querySelectorAll('#flist .frow')].pop().getBoundingClientRect(),d=document.querySelector('#dock').firstElementChild.getBoundingClientRect();return r.bottom<=d.top+1})()"),

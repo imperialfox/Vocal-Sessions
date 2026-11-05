@@ -66,12 +66,12 @@ function scrToday() {
   const sw2 = songWeek(),
     songLive = isSong() && !!X.start;
   return (
-    // 3.17: "Today" sits where every other main page's title sits; the date shares its row, tucked just above the
-    // letters, and the chevron sits in the title's line, centred on its capital letters
+    // Q45 the parts kit's large title (part 3): the date on its own line above "Today", which sits 17 pt lower than
+    // the other tabs' titles (replaces 3.17's shared row); the chevron grey, 6 pt from the word, opening the calendar
     SET.wash() + // 3.23 (Q08): the soft gradient behind the date and title (Settings › Appearance)
-    '<div class="titlerow"><button class="dateline" data-rise data-a="openCal">' +
+    '<div class="titlerow"><button class="dateline pk-date-line" data-rise data-a="openCal">' +
     dl +
-    '</button><h1 data-rise><button class="tbtn" data-a="openCal">Today</button><button class="calbtn" data-a="openCal" aria-label="Open practice calendar">' +
+    '</button><h1 class="pk-large-title" data-rise><button class="tbtn" data-a="openCal">Today</button><button class="calbtn" data-a="openCal" aria-label="Open practice calendar">' +
     ICON.down +
     '</button></h1></div>' +
     backupNudge() +

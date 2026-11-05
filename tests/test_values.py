@@ -288,7 +288,6 @@ KNOWN = [
     'ease · .pdraw .prip · animation · ease-out',
     'ease · .pvowel b.swap · animation · cubic-bezier(0.3, 1.4, 0.5, 1)',
     'ease · .pt · transition · cubic-bezier(0.3, 1.5, 0.5, 1)',
-    'duration · .edge · transition · 0.25s',
     'duration · .wrap · transition · 0.45s',
     'duration · #lgchart .ar · transition · 0.25s',
     'duration · .tl-card · transition · 0.4s',

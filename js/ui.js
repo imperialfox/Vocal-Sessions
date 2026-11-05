@@ -43,7 +43,14 @@ function renderBar() {
     });
   });
 }
+// Q45 the small title is centred, kept clear of the wider side's buttons (the kit's 70 pt at the least)
 function renderBar0() {
+  renderBar1();
+  const bar = $('bar'),
+    w = Math.max($('barL').offsetWidth, $('barR').offsetWidth);
+  bar.style.setProperty('--bar-in', Math.max(70, 16 + w + 10) + 'px');
+}
+function renderBar1() {
   const bar = $('bar');
   bar.classList.remove('tabsmode', 'always');
   $('barT').classList.remove('tabs');
@@ -251,12 +258,13 @@ function renderDock() {
   }
   const d = $('dock'),
     row = d.querySelector('.dockrow');
-  if (html === dockKey && row) return;
+  if (html === dockKey && row) return FIND.dock(row); // Q45 search opens and closes in place
   dockKey = html;
   // the highlight moves from the tab it was on to the new one (the bar is drawn again, so it starts where it was)
   const old = d.querySelector('.pk-tabbar'),
     from = old ? old.style.getPropertyValue('--pk-i') : '';
   d.innerHTML = html;
+  FIND.dock(d.querySelector('.dockrow'));
   const bar = d.querySelector('.pk-tabbar');
   if (!bar || from === '') return;
   const its = [...bar.querySelectorAll(':scope > .pk-tab')],
@@ -340,7 +348,7 @@ function renderDock1() {
     $('dock').innerHTML = '';
     return null;
   }
-  const cur = tabOf(U.tab);
+  const cur = tabOf(FIND.dockTab());
   // Q41 (D01, D02) the parts kit's tab bar: its highlight slides on a spring and can be dragged; it never folds, and
   // the search circle sits 8 pt from it (tabBar.searchGap)
   const nav =
@@ -362,9 +370,18 @@ function renderDock1() {
       )
       .join('') +
     '</nav>';
-  // 3.22 Search: its own circle beside the tab bar, on every screen that has the tab bar
-  // on Search no tab is the page: the kit always keeps one tab marked, so its highlight steps back (app.css)
-  return '<div class="dockrow pk-dock pk-inline' + (cur === 'find' ? ' vs-notab' : '') + '">' + nav + FIND.circle() + '</div>';
+  // 3.22 Search: its own circle beside the tab bar, on every screen that has the tab bar; Q45 with the kit's search
+  // field and ✕ beside it, shown in the bar's place on Search (FIND.field, FIND.dock)
+  // on a page opened from Search no tab is the page: the kit always keeps one tab marked, so its highlight steps back
+  return (
+    '<div class="dockrow pk-dock pk-inline' +
+    (cur === 'find' ? ' vs-notab' : '') +
+    '">' +
+    nav +
+    FIND.circle() +
+    FIND.field() +
+    '</div>'
+  );
 }
 // Q41 kind: 'alert' (confirmSheet) or 'choices' (choiceSheet) shows the sheet as the parts kit's alert or action sheet
 function sheetWrap(title, body, label, tools, kind) {

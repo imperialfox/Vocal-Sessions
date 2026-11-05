@@ -78,7 +78,8 @@ INV=r"""(()=>{const p=[];const L=document.getElementById('layer');
  if(U.view==='trk'&&!U.sheet&&TRACK.has(U.songId)&&tk.loaded&&tk.id===U.songId&&!document.querySelector('#dock .trktr, #dock .trkmd'))p.push('track player without its transport');
  if(document.querySelector('#dock .pk-tabbar')&&!document.querySelector('#dock [data-a=findOpen]'))p.push('tab bar without the search circle');
  if(U.tab==='find'&&!U.view&&!document.getElementById('fq'))p.push('Search without its field');
- if(U.tab==='find'&&!U.view&&!document.querySelector('[data-a=findOpen].on,[data-a=findOpen][aria-current=page]')&&document.querySelector('[data-a=findOpen]'))p.push('Search open but its circle not selected');
+ if(U.tab==='find'&&!U.view&&!document.querySelector('[data-a=findOpen].on,[data-a=findOpen][aria-current=page],#dock .pk-dock.pk-searching')&&document.querySelector('[data-a=findOpen]'))p.push('Search open but neither its field nor its door selected');
+ if(document.querySelector('#dock .pk-dock.pk-searching')&&!(U.tab==='find'&&!U.view))p.push('the search field open off Search');
  {const c=document.querySelector('#dock .scirc');if(FW.shown&&c&&!FW.drag&&!FW.stopSpring&&!fw.getAnimations().length&&!c.getAnimations().length){const a=fw.getBoundingClientRect(),q=c.getBoundingClientRect();if(!(a.right<=q.left||q.right<=a.left||a.bottom<=q.top||q.bottom<=a.top))p.push('floating window over the search circle')}}
  if(document.querySelector('#dock .pk-folded'))p.push('the tab bar folded (it never should: D01)');
  if(document.querySelector('.zm.push')&&!ZOOM.busy())p.push('a push layer left behind');
@@ -113,7 +114,7 @@ HEAVY = ('sgOpen','sgSec','sgTakes','playTake','star','sgMode','sgHint','sgHMenu
          'sgRowPlay','fwX','fwVTap','fwSkip','fwLv','fwTab','tkOpenAll','tkTab','tkTap','tkPlay','tkSkip','tkStar','tkCollapse','tkRename','tkNameDone','tkPost','tkStamp','tkNudge','tkCJump','tkDel','tkReview',
          'sgAddMode','sgAddLen','sgLenUnlinkYes','sgLenRelinkYes','ckRelink','trkMkAdd','trkChip','trkChipLoop','trkEndHere','trkMkMove','trkMkDel',
          # 3.22 Search
-         'findOpen','findMore','findLyr','findTake','findRecent','findRmRecent','findClear','findCancel',
+         'findOpen','findMore','findLyr','findTake','findRecent','findRmRecent','findClear','findCancel','findClose',
          # Q04 the Marks guide
          'gdOpen','gdBack','gdKey','gdKeyRow','gdPeekClose','gdPeekMore')
 

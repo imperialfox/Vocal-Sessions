@@ -222,7 +222,9 @@ setInterval(() => {
   if (t) t.textContent = pillText();
   SCLOCK.tick(); // Q22: the session clock's ring and numbers, in place
 }, 1000);
-/* Q41 (D01) the tab bar never folds away (the parts kit's tabBar.fold is off): scrolling only brings the soft edge */
+/* Q41 (D01) the tab bar never folds away (the parts kit's tabBar.fold is off): scrolling only brings the soft edge.
+   Q45 the app scrolls the page, not a .pk-scroll box, so the kit's .pk-scrolled (its soft edge and small title, after
+   36 pt) is set here */
 // Q44 Today rests: its background shapes (.tgrad) hold still while the page scrolls (body.scrolling, until no scroll
 // has come for SCROLL_REST ms, or scrollend) and while they're scrolled out of view (body.tg-away). app.css pauses them
 const SCROLL_REST = 150;
@@ -237,6 +239,7 @@ window.addEventListener(
     closeSwipes();
     const sc = window.scrollY > 36;
     $('bar').classList.toggle('scrolled', sc);
+    $('bar').classList.toggle('pk-scrolled', sc);
     document.body.classList.toggle('scrolled', sc);
     document.body.classList.add('scrolling');
     clearTimeout(scrollRest);

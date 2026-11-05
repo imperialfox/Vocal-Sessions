@@ -21,7 +21,7 @@ DIFFERENCES = {
     'setting sheet.fullScreen': 'D10',  # the Marks key is a full-screen cover
 }
 
-DECISIONS = ['D01', 'D02', 'D03', 'D04', 'D05', 'D06', 'D07', 'D08', 'D09', 'D10', 'D11', 'D12', 'D13', 'D14', 'D15', 'D16', 'D18']
+DECISIONS = ['D01', 'D02', 'D03', 'D04', 'D05', 'D06', 'D07', 'D08', 'D09', 'D10', 'D11', 'D12', 'D13', 'D14', 'D15', 'D16', 'D18', 'D19']
 
 
 def want(part):
@@ -148,6 +148,13 @@ def diff(b, t):
     ok(not extra, f'every way the app differs from the kit is on the list with its decision ID ({extra})')
     ok(not stale, f'every line on the list still differs (take off any that no longer do: {stale})')
     ok(all(re.fullmatch(r'D\d\d', v) for v in DIFFERENCES.values()), 'each listed difference has a decision ID')
+    # Q45 (D19) the one size the app sets differently: the top bar's buttons at its own top area, not the kit's 54 pt.
+    # Parts.differences() lists settings, springs and timings, not sizes, so it's checked here, with its settings line
+    pg.evaluate("document.documentElement.style.setProperty('--sat','62px');go(()=>{U.tab='today';U.view=null;U.sheet=null})")
+    pg.wait_for_timeout(120)
+    bt = pg.evaluate("(()=>{const r=document.querySelector('#barR .circ').getBoundingClientRect();return {kit:getComputedStyle(document.documentElement).getPropertyValue('--pk-bar-top').trim(),mid:r.top+r.height/2,phone:document.body.classList.contains('phone')}})()")
+    ok(bt['kit'] == '54px' and bt['phone'] and abs(bt['mid'] - 84) < 0.6 and 'D19' in src('js/parts.settings.js') and '--pk-bar-top' in src('css/app.css'),
+       f'the top bar’s buttons sit at the app’s own top area (D19), the kit’s 54 pt left as it is for everything else ({bt})')
 
 
 def touch_drag(pg, x, y0, y1, steps=6, ms=16):

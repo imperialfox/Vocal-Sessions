@@ -1,5 +1,5 @@
 /* Vocal Sessions · parts.settings.js (Q41)
-   The parts kit's settings for this app: one line per decision in Ivan's register (D01–D18), with its ID in a
+   The parts kit's settings for this app: one line per decision in Ivan's register (D01–D19), with its ID in a
    comment, so searching a decision's ID finds its line. The kit itself (js/parts-kit.js, css/parts-kit.css) is a
    pinned copy of imperialfox/parts-kit, never edited here (tools/parts-kit/, MAINTAINING › Parts kit).
    The kit leads (D18): its springs, speed and Reduce Motion are the app's. Where the app differs from the kit, the
@@ -31,5 +31,6 @@ Parts.settings({
   own: {
     pattern: { speedControl: 'slider' }, // D03 the pattern player's speed control is the standard slider
     datePicker: 'calendar', // D05 the practice calendar sheet stays (the app's own part)
+    topBar: { barTop: 'safe area' }, // D19 the top bar's buttons at the app's own top area (--pk-bar-top in css/app.css's .bar), where Q08 measured them, not the kit's 54 pt
   },
 });

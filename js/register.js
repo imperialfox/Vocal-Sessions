@@ -297,8 +297,9 @@ const SCREENS = {
       docs: 'MAINTAINING.md#search',
       status: 'Live',
       parts: [
-        { name: 'search-field', sel: '#fq' },
-        { name: 'cancel-button', sel: '[data-a="findCancel"]' },
+        { name: 'search-field', sel: '#fq' }, // Q45 on the iPhone, in the dock in the tab bar's place
+        { name: 'cancel-button', sel: '[data-a="findCancel"]' }, // iPad and Mac only since Q45
+        { name: 'close-search-button', sel: '[data-a="findClose"]' }, // Q45 ✕ beside the bottom field (iPhone)
       ],
     },
     {
