@@ -328,12 +328,13 @@ const songTile =
   '<span class="tile" style="background:var(--coral)">' +
   GL('<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>') +
   '</span>';
+// Q53: picking chips are the kit's (part 18); .pk-static, since the app's own action decides what's picked
 const chipsHTML = (list, sel, key) =>
-  '<div class="chips">' +
+  '<div class="chips pk-chips pk-static">' +
   list
     .map(
       (w) =>
-        '<button class="chip' +
+        '<button class="chip pk-chip' +
         (sel.includes(w) ? ' on' : '') +
         '" data-a="wTog" data-v="' +
         esc(w) +

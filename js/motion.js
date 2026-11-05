@@ -1,8 +1,8 @@
 /* ===== Motion: the app's shared helpers on the parts kit's springs (3.11; the kit runs the motion since Q41, D18) =====
    Everything that moves uses these, so the whole app feels made by the same hand.
    - Springs come from the parts kit (Parts.motion, js/parts-kit.js): gentle (rows, capsules, sheets, fades), nav (card
-     zoom, swiping back), ripple (peeks, small pops), press and release (the glass press, gestures.js PRESS) and the
-     kit's own (snap, sheet, menu-open …). The kit publishes them on <html> as --ease-<name> / --dur-<name>, and only
+     zoom, swiping back), ripple (peeks, small pops), press and release (the kit's button press; since Q53 gestures.js
+     KITPRESS only gives each button its kind) and the kit's own (snap, sheet, menu-open …). The kit publishes them on <html> as --ease-<name> / --dur-<name>, and only
      the kit writes those, .motion-off and .motion-reduced. An app spring that differs from the kit's is a line in
      js/parts.settings.js (springs: {…}) with its decision ID; there are none today.
    - Stagger: words 30 ms apart, rows 45 ms, chart bars 30 ms.

@@ -9,6 +9,32 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.67 · 5 Nov 2026
+*Every button presses the kit's way (Q53)*
+<!-- area: look -->
+
+From the UI consistency audit of 3.62. Every button now presses through the parts kit, so buttons feel the same everywhere, and new buttons get the right press without extra work. Nothing looks different at rest.
+
+**Glass buttons**
+- Circles and capsules on glass still grow as you press them and light up under the icon, now through the kit's own press.
+
+**Solid buttons**
+- Solid buttons (Start session, the calendar, the track's play pad, the coach video's buttons, the ladder's notes and others) shrink as you press them and come back on the same soft spring as the glass ones. Before, they came back with a slower bounce of their own.
+- A tile in Song Clock's controls shrinks as one, label and all.
+
+**Buttons on a bar**
+- The track's transport, the floating window's buttons and the pattern player's steps only light up, as before.
+
+**Chips**
+- The word chips (How did it go?, the session's cues, Add exercise's focus) are the kit's chips: the colour fades in as you pick one, and they no longer shrink. "+ Your own" still shrinks, since it opens something.
+
+**Note steppers**
+- Settings › Your voice and Find your bridge show the note, then the kit's − | + stepper beside it, as on iOS. Each half lights up when pressed. The notes move exactly as before.
+
+Rows still highlight when pressed, as since 3.55.
+
+Screens: VS-001, VS-002, VS-003, VS-004, VS-005, VS-006, VS-007, VS-008, VS-009, VS-010, VS-011, VS-012, VS-013, VS-014, VS-015, VS-016, VS-017, VS-018, VS-019, VS-020, VS-021, VS-022, VS-023, VS-024, VS-025, VS-026, VS-027, VS-028, VS-029, VS-030, VS-031, VS-032, VS-033, VS-034, VS-035, VS-036, VS-037, VS-038, VS-039, VS-040, VS-041, VS-042, VS-043, VS-044, VS-045, VS-046, VS-047, VS-048, VS-049, VS-050, VS-051, VS-052, VS-053, VS-054, VS-055, VS-056, VS-057, VS-058, VS-059, VS-060, VS-061, VS-062, VS-063, VS-064, VS-065, VS-066, VS-067, VS-068, VS-069, VS-070, VS-071, VS-072, VS-073, VS-074, VS-075, VS-076, VS-077, VS-078, VS-079, VS-080, VS-081, VS-082, VS-083, VS-084, VS-085, VS-086, VS-087, VS-088, VS-089, VS-090, VS-091, VS-092, VS-093, VS-094, VS-095, VS-096, VS-097, VS-098, VS-099, VS-100, VS-101, VS-102, VS-103, VS-104, VS-105, VS-106, VS-107, VS-108
+
 ## 3.66 · 5 Nov 2026
 *Sheet music from UG's own PDF download (Q57)*
 <!-- area: songs -->

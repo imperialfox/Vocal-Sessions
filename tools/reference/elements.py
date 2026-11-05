@@ -3,9 +3,11 @@
     python3 tools/reference/elements.py           write reference/elements.md
     python3 tools/reference/elements.py --check   exit 1 if reference/elements.md is out of date (the tests run this)
 
-Reads js/register.js only (no browser): the shared parts, the names by action and each screen's own parts, with the
-screen's ID and name, how the part is found, the parts kit part it is (its pk- class) and its status. Values (sizes,
-springs, corners) come later, with the element sheet's own plan. See MAINTAINING › Screen IDs › Naming rules.
+Reads js/register.js (no browser): the shared parts, the names by action and each screen's own parts, with the
+screen's ID and name, how the part is found, the parts kit part it is (its pk- class) and its status. Since Q53 it also
+reads js/gestures.js › KITPRESS for the Presses section: which buttons take which kit press, each reused from the kit,
+with the app's own press it replaced kept as Retired. Values (sizes, springs, corners) come later, with the element
+sheet's own plan. See MAINTAINING › Screen IDs › Naming rules.
 """
 import os
 import re
@@ -13,6 +15,7 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 REG = os.path.join(ROOT, 'js', 'register.js')
+GEST = os.path.join(ROOT, 'js', 'gestures.js')
 OUT = os.path.join(ROOT, 'reference', 'elements.md')
 PART = re.compile(r"\{ name: '([a-z0-9-]+)', sel: '((?:[^'\\]|\\.)*)'(?:, was: \[([^\]]*)\])?(?:, status: '([^']+)')? \}")
 
@@ -37,6 +40,34 @@ def rows(text):
             was = ', '.join(re.findall(r"'([a-z0-9-]+)'", m.group(3) or ''))
             out.append((area, m.group(1), m.group(2).replace('\\', ''), was, status(m.group(4))))
     return out
+
+
+def presses():
+    """Q53 the Presses section: KITPRESS's three kinds, read from js/gestures.js, plus the kit's chips and stepper."""
+    src = open(GEST, encoding='utf-8').read()
+    kp = src[src.index('const KITPRESS = '):]
+
+    def sel(name):
+        m = re.search(r'const ' + name + r' =\s*((?:\s*\+?\s*\'[^\']*\')+);', kp)
+        return ''.join(re.findall(r"'([^']*)'", m.group(1))) if m else ''
+    esc = lambda s: s.replace('|', '\\|')
+    rows = [('Glass button', '12 · `.pk-press`', sel('GLASS'), 'Grows 17 pt on its longest side, lights up'),
+            ('Button on a glass bar', '15 · `.pk-press-bar`', sel('BAR'), 'Lights up, same size'),
+            ('Solid button', '14 · `.pk-press-solid`', sel('SOLID'), 'Shrinks to `--press` (0.93), back on `release`'),
+            ('Picking chip', '18 · `.pk-chip` in `.pk-chips.pk-static`', '.chip.pk-chip', 'No press; the colour fades as it\'s picked'),
+            ('Note stepper', '24 · `.pk-stepper.pk-glass`', '.pvstep .pk-stepper', 'Its halves are buttons on a glass bar (15)')]
+    L = ['## Presses', '',
+         'How each kind of button presses (Q53, 3.67). `KITPRESS` in `js/gestures.js` gives a button its kit class by what it is, '
+         'so a new button with one of these classes gets the press for free. Every press is the kit\'s own: reused, none new. '
+         'Rows highlight instead (D06, `row.press`).', '',
+         '| Kind | Kit part | Buttons | Press | Animation | Status |', '|---|---|---|---|---|---|']
+    L += ['| %s | %s | `%s` | %s | Reused (the kit\'s) | In use |' % (k, p, esc(s), d) for k, p, s, d in rows]
+    L += ['', '<details><summary>Retired (1)</summary>', '',
+          '| Kind | Was | Replaced by | Status |', '|---|---|---|---|',
+          '| The app\'s own press | `PRESS` in `js/gestures.js` (Q33): glass grew on `press`, settled on `release`, lit up with a registered `--lift`; '
+          'solid buttons shrank on `:active` with a 0.5 s `--ease-pop` release | The kit\'s parts 12, 14, 15 (`tools/parts-kit/REPLACED.md`) | Retired · 3.67 |',
+          '', '</details>', '']
+    return L
 
 
 def build():
@@ -75,7 +106,8 @@ def build():
             area = r[0]
             L += ['', '### ' + area, '', '| Name | Found by | Status |', '|---|---|---|']
         L.append('| `%s` | `%s` | %s |' % (r[1], esc(r[2]), r[4]))
-    L += ['', '## On their screens', ''] + body
+    L += [''] + presses()
+    L += ['## On their screens', ''] + body
     return '\n'.join(L).rstrip() + '\n'
 
 

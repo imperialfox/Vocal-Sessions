@@ -319,125 +319,72 @@ document.addEventListener('pointerout', (e) => {
 ['pointerdown', 'keydown', 'wheel'].forEach((k) => document.addEventListener(k, hintHide, { passive: true, capture: true }));
 document.addEventListener('scroll', hintHide, { passive: true, capture: true });
 
-/* ===== Q33 Glass press, as on iOS 27 =====
-   One shared rule for every glass button, measured when it's pressed, so new glass buttons follow it automatically.
-   - Glass buttons (GROW) grow by GROW_PT (17 pt) along their longest side: scale = 1 + 17 ÷ longest side (a 44 pt
-     circle ×1.39, the 64 pt search circle ×1.27), from the centre, on MOTION's `press` spring, and are lifted above
-     their neighbours until they've settled back on `release` (one small dip, no wobble). It uses the `scale`
-     property, so it adds to any transform the button already has (the collapsed tab pill's).
-   - Buttons that sit on a glass bar (ON_BAR: the tabs, the track transport, the floating window's play/pause, the
-     pattern player's steps) don't change size: the bar is the glass. They only light up.
-   - Both light up: a white layer under the icon (--lift-max: 30% light, 14% dark), in over LIFT_IN, out over LIFT_OUT.
-   - Reduce Motion: no growth, the light-up still fades. Motion off (the tests): everything is instant.
-   Solid and other non-glass buttons keep their own :active shrink in app.css. */
-const PRESS = (() => {
-  const GROW =
+/* ===== Q53 Kit buttons: every button presses through the parts kit =====
+   The press itself is the kit's (parts-kit.js › PRESS, css/parts-kit.css › the press). This gives each button its kit
+   press class by what the button is, so a new button gets the press for free by having one of these classes:
+   - GLASS (part 12, .pk-press): glass buttons grow 17 pt along their longest side (a 44 pt circle ×1.39) and light up.
+   - BAR (part 15, .pk-press-bar): buttons on a glass bar (the iPad's top tabs, the track transport, the floating
+     window's buttons, the pattern player's steps, the steppers' halves) only light up: the bar is the glass.
+   - SOLID (part 14, .pk-press-solid): solid buttons shrink to --press (0.93) and come back on the release spring.
+   - A chip that picks (part 18, .pk-chip) has no press, as in the kit; a chip that only acts (+ Your own) is SOLID.
+   - Rows highlight (D06, row.press 'highlight') and aren't here.
+   kind(el) says which one a button takes. A button gets its class as a finger first lands on it (capture, before the
+   kit's own pointerdown) and keeps it; a redrawn button gets it again, and a button whose class was rewritten (the
+   one-page session's main button) is put right. Not as it's drawn: a class added after a button's first style would
+   start a scale transition from none to 1 on every button of every redraw. When the class changes, the style is read
+   first, so the kit's press still eases in from rest.
+   It replaces Q33's PRESS (retired in 3.67): tools/parts-kit/REPLACED.md. */
+const KITPRESS = (() => {
+  const GLASS =
     '.glass:is(.circ, .shbtn, .txtbtn, .cta, .trkpad, .trkpill, .ppill, .prep, .mktp), #timer[data-a="clock"]';
-  const ON_BAR = '.toptabs button, .trkb, .trkpp, .fwbtn, .pstep button';
-  const SEL = GROW + ', ' + ON_BAR;
-  const GROW_PT = 17,
-    LIFT_IN = 150,
-    LIFT_OUT = 60;
-  let cur = null; // {el, grow, s, keep: {position, zIndex}, sa, la}
-  const live = new WeakMap(); // el → its press, still pressed or settling
-  const ok = !!(document.documentElement.animate && 'scale' in document.documentElement.style);
-  try {
-    if (window.CSS && CSS.registerProperty)
-      CSS.registerProperty({ name: '--lift', syntax: '<color>', inherits: false, initialValue: 'transparent' });
-  } catch (e) {}
+  const BAR = '.toptabs button, .trkb, .trkpp, .fwbtn, .pstep button, .pvstep .pk-stepper > button';
+  const SOLID =
+    '.cta, .circ, .shbtn, .txtbtn, .trkpad, .trkpill, .ppill, .prep, .pplay, .chip.add, .calbtn, .cal button, ' +
+    '.nudge, .ckpi, .cktile, .sgplay, .sgtkb, .tkb, .tkbig, .cvpp, .cvpill, .ladnote, .ladrpt';
+  const ALL = GLASS + ', ' + BAR + ', ' + SOLID;
+  const KINDS = ['pk-press', 'pk-press-bar', 'pk-press-solid'];
+  const ours = new WeakSet(); // the buttons this gave a class to (the kit's own markup keeps its own)
 
-  const scaleFor = (el) => 1 + GROW_PT / Math.max(el.offsetWidth, el.offsetHeight, 1);
-  const nowScale = (el) => {
-    const v = getComputedStyle(el).scale;
-    return v && v !== 'none' ? parseFloat(v) || 1 : 1;
-  };
-  const nowLift = (el) => getComputedStyle(el).getPropertyValue('--lift').trim() || 'transparent';
-  const liftMax = () => getComputedStyle(document.documentElement).getPropertyValue('--lift-max').trim() || 'rgba(255,255,255,.3)';
-  const ms = (n) => n * MOTION.speed();
-
-  function target(e) {
-    const t = e.target && e.target.closest ? e.target : null;
-    const el = t && t.closest(SEL);
-    if (!el || el.disabled || el.getAttribute('aria-disabled') === 'true') return null;
-    return el;
-  }
-  function down(e) {
-    if (!ok || (e.pointerType === 'mouse' && e.button !== 0)) return;
-    const el = target(e);
-    if (!el) return;
-    if (cur && cur.el !== el) settle(cur, true);
-    // pressed again while settling: carry on from where it is, keeping what it had before the first press
-    const prev = live.get(el);
-    let keep = { position: el.style.position, zIndex: el.style.zIndex };
-    if (prev && !prev.done) {
-      prev.done = true;
-      keep = prev.keep;
-      el.style.position = keep.position;
-      el.style.zIndex = keep.zIndex;
-    }
-    const grow = el.matches(GROW) && !MOTION.reduced();
-    const cs = getComputedStyle(el);
-    const from = nowScale(el),
-      lift = nowLift(el);
-    if (prev) [prev.sa, prev.la].forEach((a) => a && a.cancel());
-    const c = { el, grow, s: grow ? scaleFor(el) : 1, keep };
-    cur = c;
-    live.set(el, c);
-    // lift it above its neighbours while it's bigger
-    if (cs.position === 'static') el.style.position = 'relative';
-    el.style.zIndex = cs.zIndex === 'auto' ? '10' : String(Math.max(10, (parseInt(cs.zIndex, 10) || 0) + 1));
-    el.classList.add('pressing');
-    if (grow)
-      c.sa = el.animate([{ scale: String(from) }, { scale: String(c.s) }], {
-        duration: MOTION.dur('press'),
-        easing: MOTION.ease('press'),
-        fill: 'forwards',
-      });
-    c.la = el.animate([{ '--lift': lift }, { '--lift': liftMax() }], {
-      duration: ms(LIFT_IN),
-      easing: 'ease-out',
-      fill: 'forwards',
+  const kind = (el) =>
+    el.matches(GLASS) ? 'pk-press' : el.matches(BAR) ? 'pk-press-bar' : el.matches(SOLID) ? 'pk-press-solid' : null;
+  // give el its kit press (or take ours away if it's no longer a button of these kinds); true when the class changed
+  function tag(el) {
+    const k = el.matches(ALL) ? kind(el) : null;
+    if (!k && !ours.has(el)) return false;
+    let changed = false;
+    KINDS.forEach((c) => {
+      if (c !== k && el.classList.contains(c)) {
+        el.classList.remove(c);
+        changed = true;
+      }
     });
+    if (k && !el.classList.contains(k)) {
+      el.classList.add(k);
+      changed = true;
+    }
+    if (k) ours.add(el);
+    else ours.delete(el);
+    return changed;
   }
-  function up() {
-    if (cur) settle(cur, false);
+  function tagIn(root) {
+    if (root.nodeType !== 1) return;
+    if (root.matches(ALL)) tag(root);
+    root.querySelectorAll(ALL).forEach(tag);
   }
-  // let go: back to rest on `release`, then put everything back. now: straight away (a new press, the app hidden)
-  function settle(c, now) {
-    if (cur === c) cur = null;
-    const el = c.el;
-    const done = () => {
-      if (c.done) return;
-      c.done = true;
-      if (live.get(el) === c) live.delete(el);
-      if (c.sa) c.sa.cancel();
-      if (c.la) c.la.cancel();
-      el.classList.remove('pressing');
-      el.style.position = c.keep.position;
-      el.style.zIndex = c.keep.zIndex;
-      if (!el.getAttribute('style')) el.removeAttribute('style');
-    };
-    if (c.done) return;
-    if (now || !el.isConnected) return done();
-    const from = c.grow ? nowScale(el) : 1,
-      lift = nowLift(el);
-    if (c.sa) c.sa.cancel();
-    if (c.la) c.la.cancel();
-    const rd = c.grow ? MOTION.dur('release') : 0,
-      ld = ms(LIFT_OUT);
-    c.sa = c.grow
-      ? el.animate([{ scale: String(from) }, { scale: '1' }], { duration: rd, easing: MOTION.ease('release'), fill: 'forwards' })
-      : null;
-    c.la = el.animate([{ '--lift': lift }, { '--lift': 'transparent' }], { duration: ld, easing: 'ease-in', fill: 'forwards' });
-    const last = rd >= ld && c.sa ? c.sa : c.la;
-    last.onfinish = done;
-    last.oncancel = done;
-  }
+  // as a finger lands, before the kit's own press (capture, on the way down): the right class, read from rest
+  document.addEventListener(
+    'pointerdown',
+    (e) => {
+      const t = e.target && e.target.closest ? e.target : null;
+      if (!t) return;
+      const el = t.closest(ALL + ', .pk-press, .pk-press-bar, .pk-press-solid');
+      if (el && tag(el)) {
+        getComputedStyle(el).scale;
+        getComputedStyle(el, '::after').opacity;
+      }
+    },
+    { passive: true, capture: true }
+  );
 
-  document.addEventListener('pointerdown', down, { passive: true, capture: true });
-  ['pointerup', 'pointercancel'].forEach((k) => window.addEventListener(k, up, { passive: true, capture: true }));
-  window.addEventListener('blur', () => cur && settle(cur, true));
-  document.addEventListener('visibilitychange', () => document.hidden && cur && settle(cur, true));
-
-  return { GROW, ON_BAR, SEL, GROW_PT, LIFT_IN, LIFT_OUT, scaleFor, pressed: () => (cur ? cur.el : null) };
+  return { GLASS, BAR, SOLID, ALL, kind, tag, tagIn };
 })();

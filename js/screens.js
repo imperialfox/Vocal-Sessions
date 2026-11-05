@@ -1391,11 +1391,11 @@ function cueHTML(s, id) {
   return (
     '<p class="cueq">' +
     (v === 3 ? 'How did it feel?' : 'What kept it at level ' + v + '?') +
-    '</p><div class="chips cues">' +
+    '</p><div class="chips cues pk-chips pk-static">' +
     cueWords(id, v)
       .map(
         (w) =>
-          '<button class="chip' +
+          '<button class="chip pk-chip' +
           (n.w.includes(w) ? ' on' : '') +
           '" data-a="rcue" data-k="' +
           esc(id) +

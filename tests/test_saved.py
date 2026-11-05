@@ -14,8 +14,9 @@ REDUCE_ON = "try{localStorage.setItem('vocalMotion','1');localStorage.setItem('v
 WIDE = "document.documentElement.scrollWidth<=innerWidth+1"
 QUIET = "!document.getAnimations().some(a=>(a.playState==='running'||a.playState==='pending')&&a.effect.getTiming().iterations!==Infinity)"
 # animations on matching elements: their properties (minus the offset and easing) and their delay
-# (Q33: not a press's light-up, which fades a colour under a button's icon and moves nothing)
-ANIM = """sel=>[...document.querySelectorAll(sel)].flatMap(el=>el.getAnimations().filter(a=>a.effect.getTiming().iterations!==Infinity&&!('--lift' in a.effect.getKeyframes()[0]))
+# (Q53: not a button's own press, the kit's scale and translate transitions, which the button that was tapped is
+# still settling from)
+ANIM = """sel=>[...document.querySelectorAll(sel)].flatMap(el=>el.getAnimations().filter(a=>a.effect.getTiming().iterations!==Infinity&&!(a.transitionProperty==='scale'||a.transitionProperty==='translate'))
   .map(a=>({d:a.effect.getTiming().delay,k:Object.keys(a.effect.getKeyframes()[0]).filter(x=>!['offset','easing','composite','computedOffset'].includes(x)).join()})))"""
 RECT = "sel=>{const e=document.querySelector(sel);if(!e)return null;const r=e.getBoundingClientRect();return {l:r.left,t:r.top,w:r.width,h:r.height,b:r.bottom}}"
 PIECES = {'arc': '#app .arch', 'week': '#app .week', 'streak': '#app .streak', 'btn': '#app [data-zk=start]'}

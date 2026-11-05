@@ -53,6 +53,23 @@ Every value and part Vocal Sessions dropped when it moved onto Parts kit 1.1.0, 
 | `.apsing:active`, `.apsoft:active`, `.apstop:active` scale 0.96 | `css/app.css` | Darker while pressed (`brightness(0.9)`) | D06 |
 | `.rowc:active` `color-mix(--surface 92%, --fg)` | `css/app.css` | `--pk-row-press` | D06 |
 
+## Buttons (Q53, 3.67)
+
+Every button presses through the kit. `KITPRESS` in `js/gestures.js` only gives each button its kit class (parts 12, 14, 15); the press is the kit's.
+
+| Old value or part | Where it was | Replaced by | Decision |
+|---|---|---|---|
+| `PRESS` (Q33): glass buttons grew 17 pt on `MOTION`'s `press` spring and settled on `release` (WAAPI on `scale`), with an inline `position` and `z-index` 10 while pressed | `js/gestures.js` | The kit's glass press, `.pk-press` (part 12): the same 17 pt, the kit's `press` and `release`, `z-index` 20 while pressed | Q53 |
+| The light-up: `.pressing` painting a registered `--lift` colour as a background image, in 150 ms, out 60 ms | `js/gestures.js`, `css/app.css` › `.pressing` | The kit's `::after` layer at `--lift-max` (parts 12 and 15), on its own lift timings | Q53 |
+| `PRESS.ON_BAR`: the iPad's top tabs, `.trkb`, `.trkpp`, `.fwbtn`, `.pstep button` only lighting up | `js/gestures.js` | `.pk-press-bar` (part 15) | Q53 |
+| The solid shrink: `transform: scale(var(--press))` on `:active` for `.cta`, `.circ`, `.chip`, `.calbtn`, `.cal button`, `.nudge`, `.shbtn`, `.txtbtn`, `.cvpp`, `.cvpill`, `.ckpi`, `.cktile .ckc`, `.trkpad`, `.trkpill`, `.sgplay`, `.sgtkb`, `.tkb`, `.tkbig`, `.pplay`, `.prep`, `.ppill`, `.ladnote`, `.ladrpt` | `css/app.css` | `.pk-press-solid` (part 14): to `--press` (0.93) over `--dur-quick`, back on `release`. The clock's tiles shrink as one (`.cktile`), not just their circle | Q53 |
+| Their release: `transition: transform 0.5s var(--ease-pop)` (and `transform var(--dur-quick)` on the ladder's notes) | `css/app.css` (23 rules) | The kit's `release` spring | Q53 |
+| The same 0.5 s transition left on rows and row-like cards (`.row`, `.arch`, `.setfoot`, `.osum`, `.apsing`, `.apsoft`, `.apstop`), and `.svd-arch:active` `transform: none` | `css/app.css` | Nothing: they highlight (D06) | D06, Q53 |
+| `.glass::after { content: none }` (the old shine's leftover) | `css/app.css` | Nothing: the kit's light-up layer uses `::after` | Q53 |
+| Picking chips (`.chip`, toggled by the app): their own shrink | `js/helpers.js`, `js/screens.js`, `js/ui.js`, `css/app.css` | The kit's chips (part 18) in `.pk-chips.pk-static`, no press; `+ Your own` only acts, so it keeps its look and takes `.pk-press-solid` | Q53 (default) |
+| The note steppers (Your voice, Find your bridge): two 40 × 36 `--fill` squares either side of the note | `js/patterns.js`, `css/app.css` › `.pvstep button` | The kit's stepper (part 24) beside the note, its halves lighting up (part 15), keeping `patNudge` / `bfStep` and their names | Q53 |
+| `.sgsplit .sgcol:has(.pressing)` | `css/app.css` | `:has(.pk-pressed)` | Q53 |
+
 ## Values the value test no longer lists
 
-`tests/test_values.py` › `KNOWN` lost every stray above (corners, presses, curves and durations of the parts that moved), and Q40's two glass fixes (`.phbar`, `.pmenu`) went with their parts.
+`tests/test_values.py` › `KNOWN` lost every stray above (corners, presses, curves and durations of the parts that moved), and Q40's two glass fixes (`.phbar`, `.pmenu`) went with their parts. Q53 took 23 more (the 0.5 s presses) and Q40's six solid press fixes (`PRESS_FIX`).

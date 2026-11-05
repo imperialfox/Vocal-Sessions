@@ -1199,22 +1199,29 @@ const PAT = (() => {
     FB.phase = 'done';
     rerender();
   }
-  const fbStepper = (k, l) =>
-    '<div class="row pvrow"><span class="lbl">' +
-    l +
-    '</span><span class="pvstep"><button data-a="bfStep" data-v="' +
+  /* Q53 a note stepper (Your voice, Find your bridge): the kit's stepper (part 24), its halves lighting up (part 15),
+     with the note beside it, as on iOS. The app's own action moves the note (the kit's stepper counts plain numbers
+     and these show note names), so the halves carry data-a, not the kit's data-step. */
+  const noteStepper = (a, k, l, id, note) =>
+    '<span class="pvstep"><b id="' +
+    id +
+    '">' +
+    note +
+    '</b><span class="pk-stepper pk-glass"><button data-a="' +
+    a +
+    '" data-v="' +
     k +
     '" data-k="-1" aria-label="' +
     l +
-    ' lower">−</button><b id="bf_' +
-    k +
-    '">' +
-    nameOf(FB[k]) +
-    '</b><button data-a="bfStep" data-v="' +
+    ' lower">−</button><span class="pk-stepper-div"></span><button data-a="' +
+    a +
+    '" data-v="' +
     k +
     '" data-k="1" aria-label="' +
     l +
-    ' higher">+</button></span></div>';
+    ' higher">+</button></span></span>';
+  const fbStepper = (k, l) =>
+    '<div class="row pvrow"><span class="lbl">' + l + '</span>' + noteStepper('bfStep', k, l, 'bf_' + k, nameOf(FB[k])) + '</div>';
   function fbResult() {
     const j = FB.jump,
       heardAny = FB.pts.length > 0;
@@ -2395,19 +2402,9 @@ const PAT = (() => {
           ([k, l]) =>
             '<div class="row pvrow"><span class="lbl">' +
             l +
-            '</span><span class="pvstep"><button data-a="patNudge" data-v="' +
-            k +
-            '" data-k="-1" aria-label="' +
-            l +
-            ' lower">−</button><b id="pv_' +
-            k +
-            '">' +
-            nameOf(v[k]) +
-            '</b><button data-a="patNudge" data-v="' +
-            k +
-            '" data-k="1" aria-label="' +
-            l +
-            ' higher">+</button></span></div>'
+            '</span>' +
+            noteStepper('patNudge', k, l, 'pv_' + k, nameOf(v[k])) +
+            '</div>'
         )
         .join('') +
       '</div><p class="foot">Changing a note makes your voice type Custom. Falsetto voice, Squeaky hinge, Upper to lower voice and the Flips patterns are checked against your falsetto top; everything else against your highest comfortable note.</p>' +

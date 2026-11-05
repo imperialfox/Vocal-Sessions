@@ -344,10 +344,6 @@ html.glass-solid {
   -webkit-mask-composite: xor;
   mask-composite: exclude;
 }
-/* Q33: iOS 27 glass has no shine of its own (the rim light in --glass-rim stands in for it) */
-.glass::after {
-  content: none;
-}
 .glass.tinted {
   background: var(--tint);
   color: #fff;
@@ -1064,7 +1060,6 @@ html.motion-reduced .tl-item.now .tl-node::after {
   text-align: center;
   cursor: pointer;
   border-radius: 24px;
-  transition: transform 0.5s var(--ease-pop);
 }
 .arch:active {
   background-color: var(--pk-row-press); /* Q41 (D06) row-like cards highlight while pressed, no shrink */
@@ -1155,9 +1150,6 @@ html.motion-reduced .tl-item.now .tl-node::after {
 .svd-arch {
   cursor: default;
 }
-.svd-arch:active {
-  transform: none;
-}
 .svd-arch .svd-was {
   opacity: 0.4;
 }
@@ -1220,27 +1212,7 @@ html.motion-reduced .tl-item.now .tl-node::after {
 .cta.red {
   background: var(--danger);
 }
-.cta,
-.circ,
-.row,
-.chip,
-.calbtn,
-.cal button {
-  transition: transform 0.5s var(--ease-pop);
-}
-/* Q33: glass buttons grow and buttons on a glass bar light up instead (PRESS in gestures.js); solid ones still shrink */
-.cta:not(.glass):active,
-.circ:not(.glass):active,
-.chip:active,
-.calbtn:active,
-.cal button:active {
-  transform: scale(var(--press));
-  transition-duration: var(--dur-quick);
-}
-/* Q33 the press's light-up: a white layer under the icon while PRESS animates --lift (registered in gestures.js) */
-.pressing {
-  background-image: linear-gradient(var(--lift, transparent), var(--lift, transparent)) !important;
-}
+/* Q53: every button presses through the parts kit (KITPRESS in gestures.js gives each its kind: parts 12, 14, 15) */
 .row:active {
   background-color: var(--pk-row-press); /* Q41 (D06) rows highlight while pressed (the parts kit's row press), no shrink */
   transition-duration: 0s;
@@ -1666,7 +1638,6 @@ main::after {
   place-items: center;
   background: var(--fill);
   color: var(--accent);
-  transition: transform 0.5s var(--ease-pop);
 }
 .fw .fwbtn svg.i {
   width: 22px;
@@ -1811,11 +1782,6 @@ main::after {
   font-size: var(--t-subhead);
   margin: 12px 0 0;
   text-align: left;
-  transition: transform 0.5s var(--ease-pop);
-}
-.nudge:active {
-  transform: scale(var(--press));
-  transition-duration: var(--dur-quick);
 }
 .nudge b {
   font-weight: 600;
@@ -1911,11 +1877,6 @@ main::after {
   display: grid;
   place-items: center;
   color: var(--fg);
-  transition: transform 0.5s var(--ease-pop);
-}
-.shbtn:not(.glass):active {
-  transform: scale(var(--press));
-  transition-duration: var(--dur-quick);
 }
 .shbtn.ok {
   background: var(--fg);
@@ -2816,11 +2777,6 @@ html.motion-reduced *::after {
   white-space: nowrap;
   color: var(--fg);
   flex-shrink: 0;
-  transition: transform 0.5s var(--ease-pop);
-}
-.txtbtn:not(.glass):active {
-  transform: scale(var(--press));
-  transition-duration: var(--dur-quick);
 }
 .txtbtn.tinted {
   color: #fff;
@@ -3776,8 +3732,8 @@ textarea.field.sglyr {
   padding: 9px 11px 32px;
   margin: -9px -9px 0;
 }
-/* Q33: while one of its buttons is pressed, the column is lifted over the top bar, so the iPad's tabs don't cover it */
-.sgsplit .sgcol:has(.pressing) {
+/* Q33 (Q53: the kit's .pk-pressed): while one of its buttons is pressed, the column is lifted over the top bar, so the iPad's tabs don't cover it */
+.sgsplit .sgcol:has(.pk-pressed) {
   z-index: 21;
 }
 .sgsplit .sgcol > .sgph:first-child {
@@ -4406,11 +4362,6 @@ textarea.field.sglyr {
   place-items: center;
   background: var(--fg);
   color: var(--bg);
-  transition: transform 0.5s var(--ease-pop);
-}
-.cvpp:active {
-  transform: scale(var(--press));
-  transition-duration: var(--dur-quick);
 }
 .cvpp svg.i {
   width: 26px;
@@ -4441,11 +4392,6 @@ textarea.field.sglyr {
   font-weight: 500;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
-  transition: transform 0.5s var(--ease-pop);
-}
-.cvpill:active {
-  transform: scale(var(--press));
-  transition-duration: var(--dur-quick);
 }
 .cvpill svg.i {
   width: 16px;
@@ -4828,16 +4774,11 @@ textarea.field.sglyr {
   place-items: center;
   background: var(--fill);
   color: var(--fg2);
-  transition: transform 0.5s var(--ease-pop);
 }
 .ckpi::after {
   content: '';
   position: absolute;
   inset: -6px;
-}
-.ckpi:active {
-  transform: scale(var(--press));
-  transition-duration: var(--dur-quick);
 }
 .ckpi svg.i {
   width: 18px;
@@ -4917,17 +4858,12 @@ textarea.field.sglyr {
   background: var(--fill);
   color: var(--fg2);
   transition:
-    transform 0.5s var(--ease-pop),
     background var(--dur-fade),
     color var(--dur-fade);
 }
 .ckc svg.i {
   width: 24px;
   height: 24px;
-}
-.cktile:active .ckc {
-  transform: scale(var(--press));
-  transition-duration: var(--dur-quick);
 }
 .cktile.on .ckc {
   background: var(--accent);
@@ -5835,7 +5771,6 @@ body.reg .trkroll {
   background: var(--fill);
   color: var(--fg);
   transition:
-    transform 0.5s var(--ease-pop),
     background var(--dur-fade),
     color var(--dur-fade);
 }
@@ -5855,7 +5790,6 @@ body.reg .trkroll {
   place-items: center;
   background: var(--fg);
   color: var(--bg);
-  transition: transform 0.5s var(--ease-pop);
 }
 .trkpp svg.i {
   width: 24px;
@@ -5897,8 +5831,10 @@ body.reg .trkroll {
   color: var(--fg2);
   font-size: var(--t-subhead);
   font-weight: 500;
+  /* Q53: with the kit press's own release (parts 12 and 14), which this rule would otherwise hide */
   transition:
-    transform 0.5s var(--ease-pop),
+    scale var(--dur-release) var(--ease-release),
+    translate var(--dur-release) var(--ease-release),
     background var(--dur-fade),
     color var(--dur-fade);
 }
@@ -5927,7 +5863,6 @@ body.reg .trkroll {
   display: grid;
   place-items: center;
   color: var(--fg);
-  transition: transform 0.5s var(--ease-pop);
 }
 .trkpad svg.i {
   width: 26px;
@@ -5947,11 +5882,6 @@ body.reg .trkroll {
 }
 .trkpadpp[data-on='false'] svg.i {
   margin-left: 4px;
-}
-.trkpad:not(.glass):active,
-.trkpill:not(.glass):active {
-  transform: scale(var(--press));
-  transition-duration: var(--dur-quick);
 }
 /* the page clears the taller dock */
 body:has(#dock .trkmd) main {
@@ -6007,7 +5937,6 @@ body:has(#dock .trkmd) main {
   place-items: center;
   background: var(--fill);
   color: var(--accent);
-  transition: transform 0.5s var(--ease-pop);
 }
 .sgplay svg.i {
   width: 16px;
@@ -6024,10 +5953,6 @@ body:has(#dock .trkmd) main {
   color: var(--fg3);
   background: var(--fill);
   opacity: 0.7;
-}
-.sgplay:active {
-  transform: scale(var(--press));
-  transition-duration: var(--dur-quick);
 }
 .row.sgtprow {
   cursor: pointer;
@@ -6163,15 +6088,10 @@ button.lnk.off {
   font-size: var(--t-subhead);
   font-weight: 500;
   white-space: nowrap;
-  transition: transform 0.5s var(--ease-pop);
 }
 .sgtkb svg.i {
   width: 16px;
   height: 16px;
-}
-.sgtkb:active {
-  transform: scale(var(--press));
-  transition-duration: var(--dur-quick);
 }
 .sgph .sgtkb {
   margin-left: auto;
@@ -6492,7 +6412,6 @@ button.lnk.off {
   place-items: center;
   background: var(--fg);
   color: var(--bg);
-  transition: transform 0.5s var(--ease-pop);
 }
 .tkbig svg.i {
   width: 22px;
@@ -6501,11 +6420,6 @@ button.lnk.off {
 }
 .tkbig[data-on='false'] svg.i {
   margin-left: 3px;
-}
-.tkbig:active,
-.tkb:active {
-  transform: scale(var(--press));
-  transition-duration: var(--dur-quick);
 }
 .tkcf {
   display: flex;
@@ -6848,7 +6762,6 @@ html.motion-reduced .notebox {
   color: var(--fg2);
   font-size: var(--t-footnote);
   font-variant-numeric: tabular-nums;
-  transition: transform 0.5s var(--ease-pop);
 }
 .setfoot:active {
   background-color: var(--pk-row-press); /* Q41 (D06) */
@@ -7823,7 +7736,6 @@ button.ckr {
   border-radius: var(--r-card);
   background: var(--surface);
   text-align: left;
-  transition: transform 0.5s var(--ease-pop);
 }
 .osum:active {
   background-color: var(--pk-row-press); /* Q41 (D06) */
@@ -8224,7 +8136,6 @@ body:has(#dock .ophint) .dock .in {
   color: #fff;
   font-size: var(--t-body);
   font-weight: 600;
-  transition: transform 0.5s var(--ease-pop);
 }
 .apsing .dot {
   background: #fff;
@@ -8265,7 +8176,6 @@ body:has(#dock .ophint) .dock .in {
   background: var(--fill);
   font-size: var(--t-callout);
   font-weight: 600;
-  transition: transform 0.5s var(--ease-pop);
 }
 /* the takes: the newest on a fill, the older ones plain */
 .apcard .tkgrp {
@@ -8447,7 +8357,6 @@ body:has(#dock .ophint) .dock .in {
   background: var(--fill);
   font-size: var(--t-body);
   font-weight: 600;
-  transition: transform 0.5s var(--ease-pop);
 }
 .apstop span {
   width: 16px;
@@ -8721,14 +8630,12 @@ body.apprec #dock {
   font-size: var(--t-body);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+  /* Q53: with the kit press's own release (part 14), which this rule would otherwise hide */
   transition:
-    transform var(--dur-quick),
+    scale var(--dur-release) var(--ease-release),
+    translate var(--dur-release) var(--ease-release),
     background-color var(--dur-fade),
     color var(--dur-fade);
-}
-.ladnote:active,
-.ladrpt:active {
-  transform: scale(var(--press));
 }
 .ladnote.on {
   background: var(--accent);
@@ -9516,13 +9423,6 @@ body.patdock main {
   align-items: center;
   justify-content: center;
   box-shadow: 0 10px 26px var(--glass-shadow);
-  transition: transform 0.5s var(--ease-pop);
-}
-.pplay:active,
-.prep:not(.glass):active,
-.ppill:not(.glass):active {
-  transform: scale(var(--press));
-  transition-duration: var(--dur-quick);
 }
 .pplay svg {
   width: 28px;
@@ -9950,18 +9850,14 @@ body.patdock main {
   }
 }
 /* Settings › Your voice and Pattern player */
+/* Q53: the note, then the kit's stepper (part 24; js/patterns.js › noteStepper) */
 .pvstep {
   display: flex;
   align-items: center;
   gap: 4px;
 }
-.pvstep button {
-  width: 40px;
-  height: 36px;
-  border-radius: var(--r-small);
-  background: var(--fill);
+.pvstep .pk-stepper > button {
   font-size: var(--t-title3);
-  color: var(--fg);
 }
 .pvstep b {
   min-width: 46px;

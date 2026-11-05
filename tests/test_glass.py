@@ -1,5 +1,6 @@
 """Q33 Glass native tuning: the glass material in light and dark (tokens, rim, shadow, sheets keeping their strength),
-the shared press (glass buttons grow by 17 pt along their longest side, buttons on a glass bar only light up), the
+the press (since Q53 the parts kit's: glass buttons grow by 17 pt along their longest side, part 12; buttons on a glass
+bar only light up, part 15; solid buttons shrink to 0.93, part 14; KITPRESS in gestures.js gives each its kind), the
 springs with motion on, Reduce Motion, Reduce transparency (the switch, kept after a reload, never in a backup, and the
 browser's own setting), and no grown button cut off or covered at 375, 390 and 402 wide and on iPad.
 
@@ -11,20 +12,21 @@ import test_track
 
 PARTS = [p for p in os.environ.get('VS_GLASS', '').split(',') if p]
 
-# press an element with a synthetic touch (no click follows), read what it looks like, then let go (pointercancel)
+# press an element with a synthetic touch (no click follows), read what it looks like, then let go (pointercancel).
+# The kit's light-up is its ::after layer (--lift-max), shown while .pk-pressed.
 PRESS = """sel=>{const el=typeof sel==='string'?document.querySelector(sel):sel;if(!el)return null;
- const keep=el.getAttribute('style');
  el.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,cancelable:true,pointerType:'touch',isPrimary:true,button:0}));
- const cs=getComputedStyle(el),r=el.getBoundingClientRect();
+ const cs=getComputedStyle(el),af=getComputedStyle(el,'::after'),r=el.getBoundingClientRect();
  const o={sel:typeof sel==='string'?sel:el.className,cls:el.className,w:el.offsetWidth,h:el.offsetHeight,
   want:1+17/Math.max(el.offsetWidth,el.offsetHeight),scale:cs.scale==='none'?1:parseFloat(cs.scale),
-  z:cs.zIndex,pos:cs.position,lift:cs.getPropertyValue('--lift').trim(),bgi:cs.backgroundImage,
+  z:cs.zIndex,pos:cs.position,lift:af.opacity,liftBg:af.backgroundColor,layer:af.content,
   max:getComputedStyle(document.documentElement).getPropertyValue('--lift-max').trim(),
-  grows:el.matches(PRESS.GROW),bar:el.matches(PRESS.ON_BAR)};
+  kind:KITPRESS.kind(el),has:el.classList.contains(KITPRESS.kind(el)),pressed:el.classList.contains('pk-pressed')};
  el.dispatchEvent(new PointerEvent('pointercancel',{bubbles:true,pointerType:'touch'}));
- o.after=getComputedStyle(el).scale;o.afterCls=el.classList.contains('pressing');o.keep=keep;
+ o.after=getComputedStyle(el).scale;o.afterCls=el.classList.contains('pk-pressed');
  return o}"""
-SETTLED = """sel=>{const el=document.querySelector(sel);return !!el&&!el.classList.contains('pressing')&&getComputedStyle(el).scale==='none'}"""
+SETTLED = """sel=>{const el=document.querySelector(sel);if(!el)return false;const s=getComputedStyle(el).scale;
+ return !el.classList.contains('pk-pressed')&&(s==='none'||s==='1')&&getComputedStyle(el,'::after').opacity==='0'}"""
 
 # what clips or covers a pressed element: every ancestor that cuts off its overflow, the screen, and whatever is on top
 # at points just inside its grown edges
@@ -62,7 +64,7 @@ CLIP = """sel=>{const els=[...document.querySelectorAll(sel)].filter(e=>{const r
     const dx=Math.max(0,Math.abs(x-cx)-rx),dy=Math.max(0,Math.abs(y-cy)-ry);
     if(Math.hypot(dx,dy)<=br-1)bad.push('covered by .'+[...h.classList].join('.'))}}
   el.dispatchEvent(new PointerEvent('pointercancel',{bubbles:true,pointerType:'touch'}));
-  out.push({cls:el.className.replace(' pressing',''),label:el.getAttribute('aria-label')||el.innerText.trim().slice(0,20),scale:+sc.toFixed(3),bad})}
+  out.push({cls:el.className.replace(' pk-pressed',''),label:el.getAttribute('aria-label')||el.innerText.trim().slice(0,20),scale:+sc.toFixed(3),bad})}
  return out}"""
 
 GO = "js=>go(()=>{U.sheet=null;U.view=null;eval(js)})"
@@ -97,7 +99,7 @@ def markers(pg):
 def material(b, t):
     ok = t.ok
     G = """sel=>{const e=document.querySelector(sel);if(!e)return null;const c=getComputedStyle(e),be=getComputedStyle(e,'::before');
-      return {bg:c.backgroundColor,bf:c.backdropFilter||c.webkitBackdropFilter,sh:c.boxShadow,pad:be.padding,rim:be.backgroundImage,after:getComputedStyle(e,'::after').content}}"""
+      return {bg:c.backgroundColor,bf:c.backdropFilter||c.webkitBackdropFilter,sh:c.boxShadow,pad:be.padding,rim:be.backgroundImage,after:getComputedStyle(e,'::after').content,op:getComputedStyle(e,'::after').opacity}}"""
     for sc in ('light', 'dark'):
         pg = t.page(b, sc=sc)
         g = pg.evaluate(G, '#bar .circ.glass')
@@ -117,7 +119,9 @@ def material(b, t):
                'dark: no shadow')
             ok(g['sh'].startswith('rgba(255, 255, 255, 0.23) 0px -1px 0.5px 0px inset'), 'dark: the rim light is at the bottom')
             ok(g['rim'].startswith('linear-gradient(rgba(0, 0, 0, 0)'), 'dark: the hairline fades out at the ends')
-        ok(g['pad'] == '0.5px' and g['after'] == 'none', f'{sc}: a 0.5 pt hairline, and no shine layer')
+        # Q53: its only ::after is the kit's light-up layer, which shows only while pressed
+        ok(g['pad'] == '0.5px' and (g['after'] in ('none', 'normal') or (g['after'] == '""' and g['op'] == '0')),
+           f'{sc}: a 0.5 pt hairline, and no shine layer ({g["after"]}, {g["op"]})')
         ok(bar and bar['bg'] == g['bg'], f'{sc}: the tab bar (the parts kit\'s, Q41) takes the same glass tint ({bar and bar["bf"]})')
         # sheets keep their strength and blur; they take the rim, the shadow and dark mode's saturation
         pg.evaluate(GO, "U.tab='today'"); pg.locator('#app [data-a="openCal"]').first.click(); pg.wait_for_timeout(250)
@@ -149,15 +153,16 @@ def press(b, t, seed, sid):
         if not o:
             ok(False, f'{sel}: on screen to press'); return
         if kind == 'grow':
-            ok(o['grows'] and abs(o['scale'] - o['want']) <= 0.01,
-               f'{sel} ({o["w"]}×{o["h"]}) grows to ×{o["want"]:.3f} (1 + 17 ÷ {max(o["w"], o["h"])}): ×{o["scale"]:.3f}')
+            ok(o['kind'] == 'pk-press' and o['has'] and abs(o['scale'] - o['want']) <= 0.01,
+               f'{sel} ({o["w"]}×{o["h"]}) grows through the kit (part 12) to ×{o["want"]:.3f} (1 + 17 ÷ {max(o["w"], o["h"])}): ×{o["scale"]:.3f}')
         else:
-            ok(o['bar'] and not o['grows'] and o['scale'] == 1, f'{sel} sits on a glass bar: it doesn’t change size ({o["scale"]})')
-        ok(o['lift'] == o['max'] and o['max'] in o['bgi'], f'{sel} lights up with a white layer under its icon ({o["lift"]})')
+            ok(o['kind'] == 'pk-press-bar' and o['has'] and o['scale'] == 1,
+               f'{sel} sits on a glass bar: through the kit (part 15) it doesn’t change size ({o["scale"]})')
+        ok(o['pressed'] and o['lift'] == '1' and o['liftBg'].replace(' ', '') == o['max'].replace(' ', ''),
+           f'{sel} lights up with a white layer under its icon ({o["lift"]}, {o["liftBg"]})')
         ok(o['pos'] != 'static' and int(o['z']) >= 10, f'{sel} is lifted above its neighbours while pressed (z {o["z"]})')
         back = harness.until(pg, SETTLED, 2000, sel)
-        ok(back and pg.evaluate("s=>document.querySelector(s).getAttribute('style')", sel) == o['keep'],
-           f'{sel}: let go, it’s back to rest with nothing left behind')
+        ok(back, f'{sel}: let go, it’s back to rest')
 
     pg = t.page(b, data=seed)
     # Today: the top bar's circle, the search circle, the tabs
@@ -225,23 +230,56 @@ def press(b, t, seed, sid):
 
 
 def solid(b, t):
-    """Not glass, so not part of this: they keep their own shrink."""
+    """Q53: solid buttons press through the kit too (part 14, down to --press); rows highlight instead (D06); no app
+    press code or :active shrink is left."""
     ok = t.ok
     pg = t.page(b)
-    o = pg.evaluate("""()=>{const q=s=>document.querySelector(s);const m=(e)=>!!e&&e.matches(PRESS.SEL);
-      const act=[];for(const sh of document.styleSheets)for(const r of sh.cssRules){if(r.selectorText&&r.selectorText.includes(':active')&&/scale\\((0\\.9|var\\(--press\\))/.test(r.style.transform||''))act.push(r.selectorText)}
-      return {ink:m(q('#app .cta.ink')),row:m(q('#app .row')),act:act.join(' || ')}}""")
-    ok(not o['ink'] and '.cta:not(.glass):active' in o['act'], 'Start session (solid) isn’t part of the glass press and still shrinks')
-    ok(not o['row'], 'nor are list rows')
+    o = pg.evaluate(PRESS, '#app .cta.ink')
+    ok(o and o['kind'] == 'pk-press-solid' and o['has'] and abs(o['scale'] - 0.93) < 0.005 and o['layer'] == 'none',
+       f'Start session (solid) shrinks to 0.93 through the kit, with no light-up ({o and o["scale"]})')
+    ok(o and o['after'] in ('1', 'none'), f'and comes back when let go ({o and o["after"]})')
+    ok(pg.evaluate("KITPRESS.kind(document.querySelector('#app .row'))") is None and
+       not pg.evaluate("document.querySelector('#app .row').matches('.pk-press, .pk-press-bar, .pk-press-solid')"),
+       'list rows aren’t pressed buttons: they highlight (D06)')
+    ok(pg.evaluate("typeof PRESS") == 'undefined', 'the app’s own PRESS is gone')
+    act = pg.evaluate("""()=>{const out=[];for(const sh of document.styleSheets){if(!(sh.href||'').includes('app.css'))continue;
+      for(const r of sh.cssRules){if(r.selectorText&&r.selectorText.includes(':active')&&/scale|transform/.test(r.style.transform+r.style.scale)&&r.style.transform!=='none')out.push(r.selectorText)}}return out}""")
+    ok(not act, f'no :active shrink is left in app.css ({act})')
     pg.evaluate(GO, "U.tab='today'"); pg.locator('#app [data-a="openCal"]').first.click(); pg.wait_for_timeout(250)
-    ok(not pg.evaluate("document.querySelector('.calhead .circ').matches(PRESS.SEL)"), 'the calendar’s month arrows (not glass) keep their own press')
-    # no shrink rule left on any glass button or button on a glass bar
-    left = pg.evaluate("""()=>{const out=[];const els=[...document.querySelectorAll(PRESS.SEL)];
-      for(const sh of document.styleSheets)for(const r of sh.cssRules){if(!r.selectorText||!r.selectorText.includes(':active'))continue;
-       const m=(r.style.transform||'').match(/scale\\(([\\d.]+)/);if(!m||+m[1]>=1)continue;
-       for(const s of r.selectorText.split(',')){if(!s.includes(':active'))continue;const base=s.replace(/:active/g,'').trim();
-        for(const e of els){try{if(e.matches(base))out.push(base)}catch(x){}}}}return [...new Set(out)]}""")
-    ok(not left, f'no glass button on screen still has a shrink rule ({left})')
+    o = pg.evaluate(PRESS, '.calhead .circ')
+    ok(o and o['kind'] == 'pk-press-solid' and abs(o['scale'] - 0.93) < 0.005, f'the calendar’s month arrows are solid buttons through the kit ({o and o["scale"]})')
+    pg.evaluate("closeSheet()"); pg.wait_for_timeout(100)
+    # a new button gets its kind as a finger first lands on it (never as it's drawn: no transitions on a redraw), and
+    # a class rewritten later is put right the same way
+    o = pg.evaluate("""()=>new Promise(res=>{const d=document.createElement('div');d.innerHTML='<button class="cta" id="q53a">A</button><button class="circ glass" id="q53b">B</button>';
+      document.body.appendChild(d);setTimeout(()=>{const a=document.getElementById('q53a'),b=document.getElementById('q53b');const r={rest:a.className,anim:a.getAnimations().length};
+      const down=e=>{e.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerType:'touch',isPrimary:true,button:0}));window.dispatchEvent(new PointerEvent('pointercancel'))};
+      down(a);down(b);r.a=a.className;r.b=b.className;b.className='cta';down(b);r.b2=b.className;d.remove();res(r)},0)})""")
+    ok(o['rest'] == 'cta' and o['anim'] == 0, f'a newly drawn button isn’t touched until it’s pressed ({o})')
+    ok('pk-press-solid' in o['a'] and 'pk-press' in o['b'].split(), 'a new button gets its kit press as a finger lands')
+    ok('pk-press-solid' in o['b2'] and 'pk-press' not in o['b2'].split(), 'and a button whose class changes is put right the same way')
+    # chips (part 18): picking chips are the kit's, with no press; + Your own only acts, so it's solid
+    pg.evaluate(GO, "U.sheet='addEx';U.sd={}"); pg.wait_for_timeout(250)
+    ch = pg.evaluate("""()=>{const c=document.querySelector('#focusChips .chip');return c&&{kit:c.matches('.pk-chips.pk-static > .pk-chip'),kind:KITPRESS.kind(c)}}""")
+    ok(ch and ch['kit'] and ch['kind'] is None, f'the focus chips are the kit’s chips, the app deciding the pick ({ch})')
+    pg.locator('#focusChips .chip >> nth=1').click(); pg.wait_for_timeout(100)
+    ok(pg.evaluate("[...document.querySelectorAll('#focusChips .chip')].map(c=>c.classList.contains('on'))") [:2] == [False, True],
+       'tapping one picks it, as before')
+    pg.evaluate("closeSheet()"); pg.wait_for_timeout(100)
+    ok(pg.evaluate("""()=>{const d=document.createElement('div');d.innerHTML=chipsHTML(['A'],[],'k');document.body.appendChild(d);
+      const add=d.querySelector('.chip.add'),c=d.querySelector('.pk-chip');KITPRESS.tagIn(d);const r=add.classList.contains('pk-press-solid')&&!add.classList.contains('pk-chip')&&!!c;d.remove();return r}"""),
+       '+ Your own only acts: it keeps its look and shrinks (part 14)')
+    # the Your voice steppers are the kit's (part 24), their halves only lighting up (part 15)
+    pg.evaluate(GO, "U.tab='settings';U.view='set';U.setPg='voice'"); pg.wait_for_timeout(250)
+    st = pg.evaluate("""()=>{const s=document.querySelector('.pvstep .pk-stepper.pk-glass');if(!s)return null;const h=[...s.querySelectorAll(':scope > button')];
+      return {n:h.length,div:!!s.querySelector('.pk-stepper-div'),bar:h.every(b=>KITPRESS.kind(b)==='pk-press-bar'),acts:h.map(b=>b.dataset.a+':'+b.dataset.k)}}""")
+    ok(st and st['n'] == 2 and st['div'] and st['bar'] and st['acts'] == ['patNudge:-1', 'patNudge:1'],
+       f'Your voice’s steppers are the kit’s stepper, keeping their actions ({st})')
+    o = pg.evaluate(PRESS, '.pvstep .pk-stepper > button')
+    ok(o and o['scale'] == 1 and o['lift'] == '1', 'a stepper’s half lights up and doesn’t change size')
+    before = pg.inner_text('#pv_hi')
+    pg.locator('[data-a=patNudge][data-v=hi][data-k="1"]').click(); pg.wait_for_timeout(100)
+    ok(pg.inner_text('#pv_hi') != before, f'and + still moves the note ({before} → {pg.inner_text("#pv_hi")})')
     pg.context.close()
 
 
@@ -251,9 +289,9 @@ def motion(b, t):
     o = pg.evaluate("""()=>new Promise(res=>{const el=document.querySelector('#bar .circ.glass');const want=1+17/Math.max(el.offsetWidth,el.offsetHeight);
       const sam=[],t0=performance.now();let phase='press';
       el.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerType:'touch',isPrimary:true,button:0}));
-      const tick=()=>{const t=performance.now()-t0,s=getComputedStyle(el).scale;sam.push([Math.round(t),phase,s==='none'?1:parseFloat(s),getComputedStyle(el).getPropertyValue('--lift').trim()]);
+      const tick=()=>{const t=performance.now()-t0,s=getComputedStyle(el).scale;sam.push([Math.round(t),phase,s==='none'?1:parseFloat(s),getComputedStyle(el,'::after').opacity]);
         if(phase==='press'&&t>450){phase='release';window.dispatchEvent(new PointerEvent('pointerup',{pointerType:'touch'}))}
-        if(t<1500)requestAnimationFrame(tick);else res({want,sam,cls:el.classList.contains('pressing'),style:el.getAttribute('style')})};
+        if(t<1500)requestAnimationFrame(tick);else res({want,sam,cls:el.classList.contains('pk-pressed')})};
       requestAnimationFrame(tick)})""")
     pr = [s for s in o['sam'] if s[1] == 'press']
     rl = [s for s in o['sam'] if s[1] == 'release']
@@ -267,9 +305,23 @@ def motion(b, t):
     back = next((k for k in range(i, len(rl)) if rl[k][2] >= 0.995), len(rl))
     wob = max([abs(v[2] - 1) for v in rl[back:]] or [0])
     ok(wob <= 0.01, f'and no second wobble (at most {wob:.3f} from rest after the dip)')
-    ok(not o['cls'] and o['style'] in (None, ''), 'then everything is put back')
+    ok(not o['cls'], 'then it’s at rest again')
     lifts = [s[3] for s in pr if s[0] > 250]
-    ok(lifts and lifts[-1] == 'rgba(255, 255, 255, 0.3)', f'it lights up within about 150 ms ({lifts[-1:]})')
+    ok(lifts and lifts[-1] == '1', f'it lights up within about 150 ms ({lifts[-1:]})')
+    ok(any(0 < float(s[3]) < 1 for s in pr if s[0] < 200), 'and the light-up fades in rather than snapping')
+    # Q53 a solid button (part 14): down to --press quickly, back on the release spring
+    o = pg.evaluate("""()=>new Promise(res=>{const el=document.querySelector('#app .cta.ink');el.scrollIntoView({block:'center'});
+      const sam=[],t0=performance.now();let phase='press';
+      el.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerType:'touch',isPrimary:true,button:0}));
+      const tick=()=>{const t=performance.now()-t0,s=getComputedStyle(el).scale;sam.push([Math.round(t),phase,s==='none'?1:parseFloat(s)]);
+        if(phase==='press'&&t>400){phase='release';window.dispatchEvent(new PointerEvent('pointerup',{pointerType:'touch'}))}
+        if(t<1400)requestAnimationFrame(tick);else res(sam)};requestAnimationFrame(tick)})""")
+    pr = [s for s in o if s[1] == 'press']
+    rl = [s for s in o if s[1] == 'release']
+    ok(any(0.93 < s[2] < 0.995 for s in pr if s[0] < 120) and abs(pr[-1][2] - 0.93) < 0.005,
+       f'a solid button eases down to ×0.93 ({[s[2] for s in pr[:4]]} … {pr[-1][2]:.3f})')
+    ok(any(0.935 < s[2] < 0.995 for s in rl[:20]) and abs(rl[-1][2] - 1) < 0.003,
+       f'and comes back to rest on the release spring, not at once ({[round(s[2], 3) for s in rl[:5]]})')
     pg.context.close()
 
 
@@ -278,12 +330,12 @@ def reduced(b, t):
     pg = t.page(b, init="try{localStorage.setItem('vocalMotion','1');localStorage.setItem('vocalReduce','on')}catch(e){}")
     o = pg.evaluate("""()=>new Promise(res=>{const el=document.querySelector('#bar .circ.glass');const sam=[],t0=performance.now();
       el.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerType:'touch',isPrimary:true,button:0}));
-      const tick=()=>{const t=performance.now()-t0;sam.push([t,getComputedStyle(el).scale,getComputedStyle(el).getPropertyValue('--lift').trim()]);
+      const tick=()=>{const t=performance.now()-t0;sam.push([t,getComputedStyle(el).scale,getComputedStyle(el,'::after').opacity]);
         if(t<320)requestAnimationFrame(tick);else{window.dispatchEvent(new PointerEvent('pointerup',{pointerType:'touch'}));res(sam)}};requestAnimationFrame(tick)})""")
     ok(all(s[1] == 'none' for s in o), 'Reduce Motion: no growth')
-    ok(any(s[2] not in ('rgba(255, 255, 255, 0.3)', 'rgba(0, 0, 0, 0)', 'transparent') for s in o) and o[-1][2] == 'rgba(255, 255, 255, 0.3)',
-       'the light-up still fades in')
-    ok(harness.until(pg, "!document.querySelector('.dockrow .scirc').classList.contains('pressing')", 2000), 'and fades out when let go')
+    ok(any(s[2] not in ('0', '1') for s in o) and o[-1][2] == '1', 'the light-up still fades in')
+    ok(harness.until(pg, "!document.querySelector('#bar .circ.glass').classList.contains('pk-pressed')&&getComputedStyle(document.querySelector('#bar .circ.glass'),'::after').opacity==='0'", 2000),
+       'and fades out when let go')
     pg.context.close()
 
 

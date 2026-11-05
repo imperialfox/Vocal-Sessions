@@ -565,10 +565,10 @@ function renderSheet() {
   else if (s === 'addEx')
     h = sheetWrap(
       'Add exercise',
-      '<input class="field" id="exName" maxlength="40" placeholder="Siren on ng" autocomplete="off"><div class="err" id="exErr" hidden></div><div class="hdr">Focus</div><div class="chips" id="focusChips">' +
+      '<input class="field" id="exName" maxlength="40" placeholder="Siren on ng" autocomplete="off"><div class="err" id="exErr" hidden></div><div class="hdr">Focus</div><div class="chips pk-chips pk-static" id="focusChips">' +
         FOCI.map(
           (f, i) =>
-            '<button class="chip' + (i === 0 ? ' on' : '') + '" data-a="focus" data-v="' + f + '">' + f + '</button>'
+            '<button class="chip pk-chip' + (i === 0 ? ' on' : '') + '" data-a="focus" data-v="' + f + '">' + f + '</button>'
         ).join('') +
         '</div><div class="hdr">What it is (optional)</div><textarea class="field" id="exWhat" maxlength="400" placeholder="Slide up and down on ng, keeping it light"></textarea><div style="margin-top:14px"><button class="cta" data-a="saveEx">Add exercise</button></div><button class="ghost" data-a="close" data-v="cancel">Cancel</button>'
     );
