@@ -787,7 +787,7 @@
       if (B.repeat) f.push('repeat');
       const silent = B.ev.filter(e => e.kind === 'misread').length; if (silent) f.push('silent');
       if (!f.some(c => c === 'sum' || c === 'empty' || c === 'multi')) ok++;
-      const bar = { tick: Math.round(tick), len: Math.round(len * E), n: pickup ? 0 : n, ln: B.line, x0: Math.round(B.x0), x1: Math.round(B.x1) };
+      const bar = { tick: Math.round(tick), len: Math.round(len * E), n: pickup ? 0 : n, ln: B.line, pi: lns[B.line] ? lns[B.line].index : undefined, x0: Math.round(B.x0), x1: Math.round(B.x1) };
       if (f.length) bar.f = f;
       if (f.includes('sum') || f.includes('empty')) bar.exp = Math.round(target * E);
       if (multi && count > 1) bar.bars = count;
@@ -886,7 +886,25 @@
     return r;
   }
 
-  root.MELREAD = { READER, LIMITS, Stop, catchNotes, fromRGB, readSystem, readSong, readPictures, picturesFromPdf, ugOf, REST_LEN, PDF_OPTS };
+  // Q47 the sheet view: a line picture at half size (2 × 2 averaged), and whether it holds notation and tab
+  function half(P) {
+    const w = P.w >> 1, h = P.h >> 1, g = new Uint8Array(w * h), W = P.w, s = P.g;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const i = 2 * y * W + 2 * x;
+      g[y * w + x] = (s[i] + s[i + 1] + s[i + W] + s[i + W + 1]) >> 2;
+    }
+    return { w, h, g };
+  }
+  // every full-width line picture in a print, at half size, in order: [{i, w, h, g, both}] (H42: cut again each time
+  // the sheet view opens; nothing kept here)
+  async function cutLines(pdfjs, data) {
+    const out = []; let k = 0;
+    await picturesFromPdf(pdfjs, data, async (p, n, got) => {
+      for (const P of got || []) { const kd = kinds(P), hh = half(P); out.push(Object.assign(hh, { i: k++, both: !!(kd.note && kd.tab) })); }
+    });
+    return out;
+  }
+  root.MELREAD = { READER, LIMITS, Stop, catchNotes, fromRGB, readSystem, readSong, readPictures, picturesFromPdf, ugOf, REST_LEN, PDF_OPTS, half, cutLines };
 
   // ---------- as a Worker ----------
   if (typeof WorkerGlobalScope !== 'undefined' && root instanceof WorkerGlobalScope) {
@@ -931,6 +949,14 @@
       if (m.type === 'answer') { const w = waiting; waiting = null; if (w) w(!!m.yes); return; }
       if (m.type === 'page' && fed) { fed.pics = fed.pics.concat(m.pics || []); if (m.text) fed.text = m.text; return; }
       if (m.type === 'pages' && fed) { const f = fed; fed = null; f.res({ pics: f.pics, text: f.text || '', fail: m.fail }); return; }
+      if (m.type === 'cut') {
+        // Q47 the sheet view's line pictures, at half size
+        const l = m.nopdf ? null : await pdf();
+        if (!l) return post({ type: 'nopdf' });
+        try { const lines = await cutLines(l, new Uint8Array(m.data)); post({ type: 'cut', lines }, lines.map(x => x.g.buffer)); }
+        catch (err) { post({ type: 'cutfail' }); }
+        return;
+      }
       if (m.type !== 'read') return;
       try {
         const r = await read(m);

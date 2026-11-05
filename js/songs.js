@@ -629,6 +629,9 @@ function sgp() {
     'trkLvV',
     'mkLayer',
     'singOver', // Q20 Application's Sing over the track (false when switched off)
+    'melView', // Q47 the Sheet music page: dots or sheet, bars a line, the guide's speed (checked in melodyplay.js)
+    'melBars',
+    'melSpeed',
   ].forEach((k) => {
     if (k in o) SGP[k] = o[k];
   });

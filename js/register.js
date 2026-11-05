@@ -1441,6 +1441,28 @@ const SCREENS = {
         { name: 'cancel-button', sel: '.pk-alert-btn[data-a="no"]' },
       ],
     },
+    {
+      id: 'VS-108',
+      name: 'Sheet music page',
+      area: 'Songs',
+      kind: 'Screen',
+      key: 'view:mel',
+      aliases: ['Screen:mel'],
+      docs: 'MAINTAINING.md#the-sheet-music-page-360-q47',
+      status: 'Live',
+      parts: [
+        { name: 'sheet-settings-button', sel: '[data-a="melInfo"]' },
+        { name: 'view-picker', sel: '.mpview' },
+        { name: 'speed-stepper', sel: '.mpspd' },
+        { name: 'bars-stepper', sel: '.mpzoom' },
+        { name: 'loop-strip', sel: '.mploop' },
+        { name: 'dots-view', sel: '.mpdots' },
+        { name: 'sheet-view', sel: '.mpsheet' },
+        { name: 'my-note-button', sel: '[data-a="mpMy"]' },
+        { name: 'play-button', sel: '[data-a="mpPP"]' },
+        { name: 'loop-button', sel: '[data-a="mpLoop"]' },
+      ],
+    },
   ],
   flows: [
     {

@@ -249,8 +249,11 @@ ROOTS = [
     dict(id='sheet-music-read', title='Sheet music read', area='Songs', kind='Sheet', key='Sheet:melRead',
          steps=SONG_PAGE + [('tap', '#app [data-a="melAdd"]'), UNTIL("['melRead','melTitle'].includes(U.sheet)", 'the print wasn’t read', 20000)],
          setup=['pdf-next']),
-    dict(id='sheet-music', title='Sheet music', area='Songs', kind='Sheet', key='Sheet:melSheet',
+    # Q47: the row opens VS-108 · Sheet music page; its top bar circle opens VS-099
+    dict(id='sheet-music-page', title='Sheet music page', area='Songs', kind='Screen', key='Screen:mel',
          steps=SONG_PAGE + [('tap', '#app [data-a="melOpen"]')], setup=['sheet']),
+    dict(id='sheet-music', title='Sheet music', area='Songs', kind='Sheet', key='Sheet:melSheet',
+         steps=SONG_PAGE + [('tap', '#app [data-a="melOpen"]'), ('tap', '#barR [data-a="melInfo"]')], setup=['sheet']),
     dict(id='sheet-prints-delete', title='Remove the prints?', area='Settings', kind='Sheet', key='Sheet:melPrintsDel',
          steps=[('tap', '[data-a="openSettings"]'), ('tap', '#app [data-a="setPg"][data-v="storage"]'), ('tap', '#app [data-v="melPrintsDel"]')], setup=['sheet']),
 ]
@@ -302,7 +305,7 @@ CAPTIONS = {
     'VS-099': 'A song’s sheet music: key, bars, range, tempo, to check', 'VS-100': 'A print just read: check it, set the octave and tempo, save',
     'VS-101': 'This print is on another song: open it, or add it here', 'VS-102': 'A print with another title: this song, a new one, or cancel',
     'VS-103': 'Replace the sheet music? The old score is kept 30 days', 'VS-104': 'A big or long PDF: read it anyway?',
-    'VS-105': 'Remove the prints and keep every score?', 'VS-106': 'Reading a print, line by line, with Cancel',
+    'VS-108': 'Notes as dots or the print, played with loop and speed', 'VS-105': 'Remove the prints and keep every score?', 'VS-106': 'Reading a print, line by line, with Cancel',
     'VS-107': 'Delete sheet music whose song has gone?',
 }
 

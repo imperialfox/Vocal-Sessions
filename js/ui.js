@@ -110,6 +110,12 @@ function renderBar1() {
     $('barT').innerHTML = b.t;
     $('barR').innerHTML = b.r;
     bar.classList.add('always');
+  } else if (U.view === 'mel') {
+    // Q47 the Sheet music page: Back, its title, and the score's settings (VS-099)
+    const b = MELPLAY.bar();
+    $('barL').innerHTML = b.l;
+    $('barT').innerHTML = b.t;
+    $('barR').innerHTML = b.r;
   } else if (U.view === 'saved') {
     // Q21 the Session saved screen: no buttons, only Done on the page
     $('barT').textContent = 'Session saved';
@@ -301,6 +307,11 @@ function renderDock1() {
   const tk = TRACK.dock();
   if (tk) {
     $('dock').innerHTML = tk;
+    return null;
+  }
+  // Q47 the Sheet music page's transport
+  if (U.view === 'mel') {
+    $('dock').innerHTML = MELPLAY.dock();
     return null;
   }
   // Recall: the hint capsule takes the place of the tab bar
@@ -1203,6 +1214,8 @@ function render(keepScroll) {
               ? SAVED.page() // Q21 the Session saved screen (saved.js)
             : v === 'trk'
               ? TRACK.page()
+            : v === 'mel'
+              ? MELPLAY.page() // Q47 the Sheet music page (melodyplay.js)
             : v
               ? v === 'song'
                 ? scrSong()
@@ -1226,6 +1239,7 @@ function render(keepScroll) {
     v === 'coach' ||
     v === 'ckCheck' ||
     v === 'trk' ||
+    v === 'mel' ||
     v === 'saved' ||
     v === 'pat' ||
     v === 'keyp' ||
@@ -1245,6 +1259,7 @@ function render(keepScroll) {
   CLOCK.after(); // 3.18 Song Clock: the play-along view, the current line when paused, the wake lock
   TRACK.after(); // 3.19 the track player: its waveform, and letting go of a deleted song's track
   MELODY.after(); // Q42: a big or long PDF's question closed without Read it anyway stops the read
+  MELPLAY.after(); // Q47 the guide stops when its page goes; the playhead and the sheet view's pictures put back
   TAKE.after(); // 3.20 the takes sheet: the expanded take's waveform and the field being typed in
   FIND.after(); // 3.22 Search: the field focused when the page is opened from its circle
   MKG.after(); // Q04 the peek card goes with its marks sheet

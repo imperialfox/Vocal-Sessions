@@ -10117,3 +10117,166 @@ html.motion-reduced .pt.held {
   text-align: center;
   margin: 0;
 }
+/* ===== Q47 the Sheet music page (VS-108): the view picker, speed and bars steppers, the loop strip, the dots view (one
+   PITCH.svg a line), the sheet view (the print's lines with a button per bar) and the playhead. The transport in the
+   dock is the track player's (.trktr), reused. ===== */
+.mp {
+  padding-bottom: 8px;
+}
+.mpsub {
+  margin: 0 4px 12px;
+  overflow-wrap: anywhere;
+}
+.mpview {
+  margin: 0 0 12px;
+}
+.mpctl {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: center;
+  margin: 0 4px 12px;
+}
+.mpstep {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.mptitle {
+  overflow-wrap: anywhere;
+}
+.mpstep .lbl {
+  font-size: var(--t-subhead);
+  color: var(--fg2);
+}
+.mpstep .shbtn {
+  width: 32px;
+  height: 32px;
+}
+.mpstep .shbtn[disabled] {
+  opacity: 0.35;
+}
+.mpval {
+  min-width: 34px;
+  text-align: center;
+  font-size: var(--t-subhead);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.mploop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 0 12px;
+  padding: 6px 6px 6px 14px;
+  border-radius: var(--r-medium);
+  background: var(--fill);
+  font-size: var(--t-subhead);
+  color: var(--fg2);
+}
+.mploop.on {
+  color: var(--fg);
+}
+.mploop.picking {
+  color: var(--trk-loop);
+  font-weight: 600;
+}
+.mpchip {
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  color: var(--accent);
+  font-size: var(--t-subhead);
+  font-weight: 600;
+}
+.mpbody {
+  position: relative;
+}
+.mpln {
+  margin: 0 0 6px;
+}
+.mpsvg .mpbarbg {
+  fill: transparent;
+  cursor: pointer;
+}
+.mpsvg .mpbarbg.flag {
+  fill: var(--sys-yellow);
+  fill-opacity: 0.16;
+}
+.mpsvg .mpbarbg.loop {
+  fill: var(--trk-loop);
+  fill-opacity: 0.12;
+}
+.mpsvg .mpbarbg.picked {
+  fill: var(--trk-loop);
+  fill-opacity: 0.28;
+}
+.mpsvg .mpbl {
+  stroke: var(--fg3);
+  stroke-width: 1;
+}
+.mpsvg .mphit {
+  fill: transparent;
+  cursor: pointer;
+}
+.mpsvg .mpn {
+  fill: var(--accent);
+}
+.mpsvg .mpn.unsure {
+  fill-opacity: 0.55;
+  stroke: var(--accent);
+  stroke-width: 1;
+  stroke-dasharray: 2 2;
+}
+.mpsvg .mpn.muted {
+  fill: none;
+  stroke: var(--fg3);
+  stroke-width: 1.2;
+}
+.mphead {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 2px;
+  margin-left: -1px;
+  border-radius: 1px;
+  background: var(--fg);
+  opacity: 0;
+  pointer-events: none;
+}
+.mpsheet .mpimg {
+  position: relative;
+  margin: 0 0 8px;
+  background: #fff;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.mpsheet img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.mpsheet img {
+  -webkit-user-select: none;
+  user-select: none;
+}
+.mpbar {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: transparent;
+}
+.mpbar.flag {
+  background: color-mix(in srgb, var(--sys-yellow) 18%, transparent);
+}
+.mpbar.loop {
+  background: color-mix(in srgb, var(--trk-loop) 14%, transparent);
+}
+.mpbar.picked {
+  background: color-mix(in srgb, var(--trk-loop) 30%, transparent);
+}
+.mpmsg {
+  padding: 40px 12px;
+  text-align: center;
+}

@@ -9,6 +9,30 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.60 · 5 Nov 2026
+*Sheet music you can hear: dots, the print and a guide (Q47)*
+<!-- area: songs -->
+
+A song's sheet music now has its own page. See the notes as dots or the print's own lines, hear the vocal line played back, loop a few bars and slow them down.
+
+**The Sheet music page**
+- Tap the Sheet music row on a song's page to open it. The circle at the top has the score's settings (octave, tempo, key, what to check, replace the print).
+- **Dots** shows each note as a dot at its pitch, a couple of bars a line on an iPhone and four on an iPad. Bars and + or − change how many bars a line. Bars with something to check are shaded. Notes the reader muted are hollow, and unsure ones are dashed.
+- **Sheet** shows the lines of your own print, with the bar being sung outlined as it plays. The print is cut into lines again each time you open it, so nothing extra is stored. With no print on this device the dots still play.
+
+**The guide**
+- Play sounds the vocal line in the pattern player's sound (the recorded piano unless you've chosen another). Muted notes stay silent.
+- Tap a bar to play from there. Tap a dot to hear its note, or to jump there while it plays.
+- The note button gives you your starting note: the next note from where the playhead is.
+- Speed − and + step from 0.5× to 2×, the same steps as the pattern player. It's kept on this device.
+- Loop repeats the bars of the line you're on. Change lets you tap the first and last bar of the loop. Tap Loop again to turn it off; the bars are kept for next time. The track player's own loop isn't changed.
+- It stops when you leave the page, lock the phone or play something else, and carries on from the same place.
+
+**Also**
+- New prints remember which line each bar is on, so the sheet view finds its lines straight away.
+
+Screens: VS-108, VS-009, VS-099
+
 ## 3.59.1 · 5 Nov 2026
 *A fix for 3.59's top bar (Q45)*
 <!-- area: fixes -->

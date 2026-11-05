@@ -934,6 +934,38 @@ const PAT = (() => {
   }
   document.addEventListener('visibilitychange', () => document.hidden && toneStop());
 
+  /* ===== The sheet music guide's sounds (Q47) =====
+     The guide (MELPLAY, melodyplay.js) borrows only the player's sounds and output, so the app keeps one set of sounds
+     (H2). It makes its own bus, schedules its own notes and keeps its own state under NOW kind 'melody'; nothing here
+     knows it's playing, so the pattern player's page rules never stop it. */
+  function guideBus() {
+    if (!AC) return null;
+    const b = AC.createGain();
+    b.connect(master);
+    b.send = AC.createGain();
+    b.send.connect(room);
+    return b;
+  }
+  function guideFade(b, tc) {
+    if (!AC || !b) return;
+    b.gain.setTargetAtTime(0, AC.currentTime, tc || 0.04);
+    if (b.send) b.send.gain.setTargetAtTime(0, AC.currentTime, tc || 0.04);
+    setTimeout(() => {
+      try {
+        b.disconnect();
+        if (b.send) b.send.disconnect();
+      } catch (e) {}
+    }, 900);
+  }
+  const GUIDE = {
+    audio: () => audio(),
+    ctx: () => AC,
+    bus: guideBus,
+    fade: guideFade,
+    note: (m, t, d, b, v) => note(m, t, d, b, opt('sound'), v || 1, b && b.send),
+    sound: () => soundOf(opt('sound')).name,
+  };
+
   /* ===== Listening (Q38): the microphone, for Find your bridge and Listen while I sing =====
      Through the shared audio service (AUDIO.listen, its own context, which only ever hears the microphone) and the
      pitch listener (PITCH.live on one 2048 analyser, on the shared frame clock). The pattern's sound stays on this
@@ -2828,6 +2860,7 @@ const PAT = (() => {
     guest,
     tone,
     toneStop,
+    guide: GUIDE,
     toneState: () => (toneNow ? { m: toneNow.m, repeat: toneNow.repeat, strikes: toneNow.strikes || 0 } : null),
     // Q38
     bridge,

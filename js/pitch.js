@@ -420,8 +420,14 @@ const PITCH = (() => {
       }
     }
     const step = dur > 30 ? 10 : dur > 12 ? 5 : dur > 6 ? 2 : 1;
-    for (let t = 0; t <= dur + 0.001 && x(t) <= W - R - 10; t += step)
-      g += '<text class="pt" x="' + x(t).toFixed(1) + '" y="' + (H - 3) + '" text-anchor="middle">' + t + 's</text>';
+    // Q47 axis: [{t, label}] in place of the seconds (the sheet music page's bar numbers, t in its own units)
+    if (o.axis) o.axis.forEach((a) => (g += '<text class="pt" x="' + x(a.t).toFixed(1) + '" y="' + (H - 3) + '" text-anchor="start">' + esc(String(a.label)) + '</text>'));
+    else
+      for (let t = 0; t <= dur + 0.001 && x(t) <= W - R - 10; t += step)
+        g += '<text class="pt" x="' + x(t).toFixed(1) + '" y="' + (H - 3) + '" text-anchor="middle">' + t + 's</text>';
+    // Q47 under / over: extra drawing behind or in front of the lines, given x(t), y(m) and the box
+    const box = { L, R, T, B, W, H, lo: rg.lo, hi: rg.hi };
+    if (o.under) g += o.under(x, y, box);
     shown.forEach((l) => {
       g +=
         '<path d="' +
@@ -438,6 +444,7 @@ const PITCH = (() => {
     (o.dots || []).forEach((d) => {
       g += '<circle class="pj" cx="' + x(d.t).toFixed(1) + '" cy="' + y(d.m).toFixed(1) + '" r="4.5"/>';
     });
+    if (o.over) g += o.over(x, y, box);
     if (o.marker) {
       const xx = x(o.marker.t).toFixed(1);
       g +=
@@ -445,7 +452,7 @@ const PITCH = (() => {
         '<circle class="pmd" cx="' + xx + '" cy="' + (T + 4) + '" r="4"/>';
     }
     return (
-      '<svg class="pchart' + (ln.length ? ' laned' : '') + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' +
+      '<svg class="pchart' + (ln.length ? ' laned' : '') + (o.cls ? ' ' + o.cls : '') + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' +
       esc((o.label || 'Pitch lines') + (ln.length ? ', with scale lanes' : '')) + '">' + g + '</svg>'
     );
   }

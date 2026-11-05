@@ -425,14 +425,15 @@ def part_screens(b, t, ok):
         txt = pg.inner_text('#app [data-name="sheet-music-row"]')
         ok('Sheet music' in txt and '18 bars' in txt and 'sits' in txt, f'{tag}: the row shows the key, bars, range and where the song sits ({txt.splitlines()[-2] if len(txt.splitlines()) > 1 else txt})')
         t.shot(pg, 'row-' + tag)
-        row.click(); pg.wait_for_timeout(300)
-        ok(pg.locator('[data-screen="VS-099"]').count() == 1 and pg.evaluate("U.sheet") == 'melSheet', f'{tag}: tapping it opens Sheet music (VS-099) with the to-check list')
+        row.click(); until(pg, "U.view==='mel'")  # Q47: the row opens the Sheet music page (VS-108); its top bar circle opens VS-099
+        pg.click('#barR [data-a="melInfo"]'); pg.wait_for_timeout(300)
+        ok(pg.locator('[data-screen="VS-099"]').count() == 1 and pg.evaluate("U.sheet") == 'melSheet', f'{tag}: the Sheet music page\'s circle opens Sheet music (VS-099) with the to-check list')
         ok(pg.evaluate("MELODY.get('g_1').octave") == 1 and pg.evaluate("MELODY.get('g_1').tempo") == 184, f'{tag}: the octave and tempo were saved')
         pg.click('#layer [data-a="melOct"][data-v="0"]'); until(pg, "MELODY.get('g_1').octave===0")
         ok(True, f'{tag}: the octave changes from VS-099 too')
         t.shot(pg, 'sheet-' + tag, full_page=True)
         ok(pg.evaluate("document.documentElement.scrollWidth<=innerWidth"), f'{tag}: VS-099 fits')
-        pg.evaluate("U.sheet=null;rerender()")
+        pg.evaluate("go(()=>{U.view='lyr';U.songId='g_1';U.sheet=null;U.sd={}})"); until(pg, "U.view==='lyr'")
         if w == 375 and sc == 'light':
             # the row with no print on this device, and with a note but no score
             pg.evaluate("songById('g_1').ext.melody={ug:'1',at:1};save()")

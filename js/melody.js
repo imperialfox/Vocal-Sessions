@@ -32,6 +32,53 @@ const MELODY = (() => {
     testOpt = null;
   const q = (sel) => document.querySelector(sel);
 
+  /* ----- Q47 the sheet view's lines: cut again from the kept print each time it opens (decision 22, H42) -----
+     In the reader's Worker; if pdf.js won't load there, on the page. Resolves [{i, w, h, g, both}] at half size, or null
+     when there's no print on this device or it can't be read. Nothing is stored. */
+  let cutOpt = null; // tests: {nopdf: true}
+  async function cut(id) {
+    const rec = await MDB.tx('prints', 'readonly', (st) => st.get(id)).catch(() => null);
+    if (!rec || !rec.blob) return null;
+    let data;
+    try {
+      data = await rec.blob.arrayBuffer();
+    } catch (e) {
+      return null;
+    }
+    const src = (q('link[href^="js/melodyread.js"]') || { getAttribute: () => 'js/melodyread.js' }).getAttribute('href');
+    const got = await new Promise((res) => {
+      let w;
+      try {
+        w = new Worker(src);
+      } catch (e) {
+        return res('nopdf');
+      }
+      const done = (v) => {
+        try {
+          w.terminate();
+        } catch (e) {}
+        res(v);
+      };
+      w.onmessage = (e) => {
+        const m = e.data;
+        if (!m || !m.mine) return;
+        if (m.type === 'cut') done(m.lines);
+        else if (m.type === 'nopdf') done('nopdf');
+        else if (m.type === 'cutfail') done(null);
+      };
+      w.onerror = () => done('nopdf');
+      const d = data.slice(0);
+      w.postMessage(Object.assign({ vs: 1, type: 'cut', data: d }, cutOpt || {}), [d]);
+    });
+    if (got !== 'nopdf') return got;
+    try {
+      const lib = await libHere();
+      return await MELREAD.cutLines(lib, new Uint8Array(data));
+    } catch (e) {
+      return null;
+    }
+  }
+
   /* ----- checking a saved score (load, restore, import) ----- */
   const int = (v) => typeof v === 'number' && isFinite(v) && Math.round(v) === v;
   const clamp = (v, a, b, d) => (typeof v === 'number' && isFinite(v) ? Math.min(b, Math.max(a, Math.round(v))) : d);
@@ -351,6 +398,31 @@ const MELODY = (() => {
       b = to == null ? Infinity : to;
     return sounding(s).filter((n) => n.tick + n.len > a && n.tick < b).map((n) => ({ tick: n.tick, len: n.len, midi: n.midi }));
   }
+  // Q47 every note to draw between two ticks, muted ones too (drawn hollow), as sung: [{tick, len, midi, flag, i}]
+  function drawn(s, from, to) {
+    if (!s) return [];
+    const a = from == null ? 0 : from,
+      b = to == null ? Infinity : to,
+      up = 12 * (s.octave || 0) + (s.shift || 0);
+    const out = [];
+    s.notes.forEach((n, i) => {
+      if (n.tick + n.len > a && n.tick < b) out.push({ tick: n.tick, len: n.len, midi: n.midi + up, flag: n.flag || null, i });
+    });
+    return out;
+  }
+  // H35 the written line as points, one every 10 ms inside each note (seconds at the score's tempo and speed sp), so a
+  // pitch line drawn or compared from it reads no gaps inside a note. Worked out when needed, never saved
+  function points(s, from, to, sp) {
+    if (!s) return [];
+    const tps = (TPB * (s.tempo || 100)) / 60 * (sp || 1),
+      out = [];
+    line(s, from, to).forEach((n) => {
+      const a = n.tick / tps,
+        b = (n.tick + n.len) / tps;
+      for (let t = a; t < b - 0.0001; t += 0.01) out.push({ t, m: n.midi });
+    });
+    return out;
+  }
   function range(s) {
     const ns = sounding(s);
     if (!ns.length) return null;
@@ -553,24 +625,30 @@ const MELODY = (() => {
   }
   // the fallback when pdf.js won't load inside the Worker: read the pictures here, a page at a time, and hand them over
   let pdfHere = null;
+  function libHere() {
+    if (!pdfHere)
+      pdfHere = (async () => {
+        if (!window.MELREAD)
+          await new Promise((res, rej) => {
+            const s = document.createElement('script');
+            s.src = (q('link[href^="js/melodyread.js"]') || {}).getAttribute('href');
+            s.onload = res;
+            s.onerror = rej;
+            document.head.appendChild(s);
+          });
+        const base = new URL('js/vendor/pdfjs-4.10.38/', location.href).href;
+        const lib = await import(base + 'pdf.min.js');
+        window.pdfjsWorker = await import(base + 'pdf.worker.min.js');
+        return lib;
+      })().catch((e) => {
+        pdfHere = null;
+        throw e;
+      });
+    return pdfHere;
+  }
   async function pagesHere(j) {
     try {
-      if (!pdfHere)
-        pdfHere = (async () => {
-          if (!window.MELREAD)
-            await new Promise((res, rej) => {
-              const s = document.createElement('script');
-              s.src = (q('link[href^="js/melodyread.js"]') || {}).getAttribute('href');
-              s.onload = res;
-              s.onerror = rej;
-              document.head.appendChild(s);
-            });
-          const base = new URL('js/vendor/pdfjs-4.10.38/', location.href).href;
-          const lib = await import(base + 'pdf.min.js');
-          window.pdfjsWorker = await import(base + 'pdf.worker.min.js');
-          return lib;
-        })();
-      const lib = await pdfHere,
+      const lib = await libHere(),
         data = new Uint8Array(await j.file.arrayBuffer());
       await MELREAD.picturesFromPdf(lib, data, async (p, n, pics, text) => {
         if (job !== j) throw new Error('stopped');
@@ -853,7 +931,7 @@ const MELODY = (() => {
       if (st) bits.push(st);
       if (n) bits.push(n + ' to check');
       return (
-        '<button class="row" data-a="melOpen" data-k="' + sg.id + '">' + TILE +
+        '<button class="row" data-zk="mel:' + sg.id + '" data-a="melOpen" data-k="' + sg.id + '">' + TILE +
         '<span class="lbl">Sheet music<small>' + esc(bits.join(' · ')) + '</small></span>' + chev + '</button>'
       );
     }
@@ -1037,9 +1115,11 @@ const MELODY = (() => {
       if (job && job.target.id === k) return;
       pick({ id: k });
     },
-    melOpen: (el, v, k) => {
+    melOpen: (el, v, k) => MELPLAY.open(k), // Q47 the Sheet music page (melodyplay.js)
+    melInfo: (el, v, k) => {
+      // Q47 VS-099, from the page's top bar
       U.sheet = 'melSheet';
-      U.sd = { k };
+      U.sd = { k: k || U.songId };
       rerender();
     },
     melAll: () => {
@@ -1179,6 +1259,10 @@ const MELODY = (() => {
     hasPrint: (id) => prints.has(id),
     print: (id) => (prints.has(id) ? Object.assign({}, prints.get(id)) : null),
     line,
+    drawn,
+    points,
+    cut,
+    _cutOpt: (o) => (cutOpt = o || null),
     range,
     sits,
     suggest,
