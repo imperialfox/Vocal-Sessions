@@ -1033,7 +1033,7 @@ const MELODY = (() => {
         '<p class="note">This print is already on ' + esc(o.name) + '.</p>' +
           '<button class="row" data-a="melSameOpen" data-k="' + o.id + '"><span class="lbl">Open ' + esc(o.name) + '</span></button>' +
           '<button class="row" data-a="melSameGo"><span class="lbl">Add it here too</span></button>' +
-          '<button class="row" data-a="melDrop"><span class="lbl">Cancel</span></button>'
+          '<button class="row" data-a="melDrop" data-role="cancel"><span class="lbl">Cancel</span></button>'
       );
     }
     if (s === 'melTitle' && held) {
@@ -1046,7 +1046,7 @@ const MELODY = (() => {
         '<p class="note">This print is ' + esc(u.title || 'another song') + (u.artist ? ' by ' + esc(u.artist) : '') + '.</p>' +
           '<button class="row" data-a="melTitleHere"><span class="lbl">Add it to ' + esc(sg.name) + '</span></button>' +
           '<button class="row" data-a="melTitleNew"><span class="lbl">Make a new song</span></button>' +
-          '<button class="row" data-a="melDrop"><span class="lbl">Cancel</span></button>'
+          '<button class="row" data-a="melDrop" data-role="cancel"><span class="lbl">Cancel</span></button>'
       );
     }
     if (s === 'melReplace')

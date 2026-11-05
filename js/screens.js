@@ -34,7 +34,7 @@ function weekSpans(w, now) {
         '<span class="' +
         cls +
         '" aria-label="' +
-        d.toLocaleDateString('en-GB', { weekday: 'long' }) +
+        fmtDate(d, { weekday: 'long' }) +
         (w.days.has(t) ? ', practised' : '') +
         '">' +
         l +
@@ -62,7 +62,7 @@ function scrToday() {
     st = 'Start a new streak';
     sub = left + ' min this week starts one';
   }
-  const dl = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
+  const dl = fmtDate(new Date(), { weekday: 'long', day: 'numeric', month: 'long' });
   const sw2 = songWeek(),
     songLive = isSong() && !!X.start;
   return (
@@ -172,7 +172,7 @@ const padd = (d, n, u) => {
   else x.setFullYear(x.getFullYear() + n);
   return x;
 };
-const pfmt = (d, o) => d.toLocaleDateString('en-GB', o);
+const pfmt = (d, o) => fmtDate(d, o);
 function hmBig(m) {
   m = Math.round(m);
   const h = Math.floor(m / 60),
@@ -672,7 +672,7 @@ function sessionHistory(selId) {
     if (k !== cur) {
       if (cur) h += '</div>';
       cur = k;
-      const lab = new Date(s.date).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+      const lab = fmtDate(new Date(s.date), { month: 'long', year: 'numeric' });
       h +=
         '<div class="hdr">' +
         lab +
@@ -725,7 +725,7 @@ function songHistory(selId) {
     if (k !== cur) {
       if (cur) h += '</div>';
       cur = k;
-      const lab = new Date(s.date).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+      const lab = fmtDate(new Date(s.date), { month: 'long', year: 'numeric' });
       h +=
         '<div class="hdr">' +
         lab +

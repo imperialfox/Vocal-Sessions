@@ -481,11 +481,22 @@ function fwPickAndDraw() {
     fwPlace();
     fwTabShow(true);
   } else if (!was && !snap) fwShow();
+  else if (was === k.id && !snap) fwPlaceSoon();
   else {
     if (!was) fwUnhide();
     fwPlace();
     if (snap) fwSwap(snap);
   }
+}
+// Q49 a draw that keeps the same window places it once on the next frame, not inside the draw: fwBounds reads the
+// page's layout, which inside a draw made the browser lay out the new page early
+let fwPlaceRaf = 0;
+function fwPlaceSoon() {
+  if (fwPlaceRaf) return;
+  fwPlaceRaf = requestAnimationFrame(() => {
+    fwPlaceRaf = 0;
+    fwPlace();
+  });
 }
 const FW_SWAP_GAP = 400; // ms
 // the clock and the take's progress, without rebuilding anything

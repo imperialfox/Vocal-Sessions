@@ -9,6 +9,27 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.62 · 5 Nov 2026
+*Quicker screens and one Cancel (Q49)*
+<!-- area: fixes -->
+
+From a check of what made screens slow, and a long run of random taps.
+
+**Quicker**
+- Every screen draws with less work: the top bar no longer measures its buttons each time a screen draws, only when they change size. That was a quarter to a third of the work of every draw.
+- With the floating window showing, it's placed once just after a screen draws, instead of during it.
+- Dates are written out with one reusable format each, instead of a new one every time (Progress and Today draw the most dates). They read exactly as before.
+- A screen at the top of its page no longer scrolls back to the top after it redraws (it's already there).
+- Together, drawing a screen takes about a third less work.
+
+**One Cancel**
+- Already on another song and A different song? (after adding sheet music) showed two Cancel buttons. Now there's one, and it drops the print you just added as the old one did.
+
+**Menus**
+- An open menu (a sound, a sort, a song's) closes when you turn the phone, as iOS's do. It stayed where it was placed for the old width, so it could end up off the screen, and the next tap anywhere was lost closing it.
+
+Screens: VS-101, VS-102, VS-003, VS-004, VS-008, VS-009, VS-014, VS-016
+
 ## 3.61 · 5 Nov 2026
 *Every button has a name (Q48)*
 <!-- area: fixes -->

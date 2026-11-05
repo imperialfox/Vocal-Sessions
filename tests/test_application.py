@@ -90,6 +90,12 @@ def carry_on(b, t):
     ok(pg.locator('.opmenu [data-a=apSortPick]').count() == 2, 'the sort menu: Recently practised and A–Z')
     pg.click('.opmenu [data-v=az]'); pg.wait_for_timeout(100)
     ok('A–Z' in pg.inner_text('#app [data-a=apSort]') and pg.locator('.opmenu').count() == 0, 'A–Z picked, the menu closes')
+    # Q49 the screen changes width with the menu open (the phone turns): it closes, dim and all, so nothing is left
+    # off the screen catching taps
+    pg.click('#app [data-a=apSort]'); pg.wait_for_timeout(150)
+    pg.set_viewport_size({'width': 844, 'height': 390}); pg.wait_for_timeout(500)
+    ok(pg.locator('.opmenu').count() == 0 and pg.locator('#layer .pk-dim.pk-on').count() == 0 and not pg.evaluate("KMENU.isOpen('opmenu')"),
+       'turning the phone closes an open menu and its dim')
     pg.context.close()
 
     # a song whose carried-on section has gone, and a session's "practised, not recorded" song

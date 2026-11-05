@@ -21,11 +21,20 @@ const hm = (m) => {
 };
 const monthKey = (d = new Date()) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
 const monthMins = () => D.months[monthKey()] || 0;
+// Q49 one formatter per date format, made once and kept: toLocaleDateString built a new one on every call (up to a
+// sixth of a draw on Progress and Today). Same text; a date that can't be read still says Invalid Date
+const DTF = {};
+function fmtDate(d, o) {
+  const t = d instanceof Date ? d : new Date(d);
+  if (isNaN(t)) return 'Invalid Date';
+  const k = JSON.stringify(o || {});
+  return (DTF[k] || (DTF[k] = new Intl.DateTimeFormat('en-GB', o))).format(t);
+}
 const dayLabel = (iso) =>
-  new Date(iso).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
-const shortDate = (d) => new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-const fileDate = (d) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-const timeOf = (d) => new Date(d).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  fmtDate(new Date(iso), { weekday: 'short', day: 'numeric', month: 'short' });
+const shortDate = (d) => fmtDate(new Date(d), { day: 'numeric', month: 'short' });
+const fileDate = (d) => fmtDate(d, { day: 'numeric', month: 'short', year: 'numeric' });
+const timeOf = (d) => fmtDate(new Date(d), { hour: '2-digit', minute: '2-digit' });
 const allRot = () => ROT.concat(D.custom.map((c) => Object.assign({ custom: true }, c)));
 const exById = (id) => FOUND.concat(allRot()).find((e) => e.id === id);
 const sessEnd = (s) => s.end || s.date;

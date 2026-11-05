@@ -36,7 +36,7 @@ const SAVED = (() => {
       pa,
       pb,
       reached: goal && w.mins >= WEEK_TARGET,
-      weekday: new Date(ss.date).toLocaleDateString('en-GB', { weekday: 'long' }),
+      weekday: fmtDate(new Date(ss.date), { weekday: 'long' }),
     };
   }
   const ok = () => !!info();

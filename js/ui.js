@@ -45,11 +45,22 @@ function renderBar() {
 }
 // Q45 the small title is centred, kept 10 pt clear of the wider side's buttons (the kit's 70 pt with one circle); with
 // no buttons it takes the bar's width, so a long title such as the recording label isn't cut short on a small iPhone
+// Q49 measured when the side buttons change size (a ResizeObserver runs after layout), never inside a draw: reading
+// their width there made the browser lay out the whole new page early, a quarter to a third of every draw
+let barW = '';
+function barIn() {
+  const v = 16 + Math.max($('barL').offsetWidth, $('barR').offsetWidth) + 10 + 'px';
+  if (v !== barW) $('bar').style.setProperty('--bar-in', (barW = v));
+}
+const BAR_RO = typeof ResizeObserver === 'function' ? new ResizeObserver(barIn) : null;
 function renderBar0() {
   renderBar1();
-  const bar = $('bar'),
-    w = Math.max($('barL').offsetWidth, $('barR').offsetWidth);
-  bar.style.setProperty('--bar-in', 16 + w + 10 + 'px');
+  if (!BAR_RO) return barIn();
+  if (!BAR_RO.on) {
+    BAR_RO.on = true;
+    BAR_RO.observe($('barL'));
+    BAR_RO.observe($('barR'));
+  }
 }
 function renderBar1() {
   const bar = $('bar');
@@ -860,7 +871,7 @@ function calendarSheet() {
           '" aria-label="' +
           d +
           ' ' +
-          m.toLocaleDateString('en-GB', { month: 'long' }) +
+          fmtDate(m, { month: 'long' }) +
           ', ' +
           parts.join(' and ') +
           '">' +
@@ -876,7 +887,7 @@ function calendarSheet() {
     '<div class="calhead"><button class="circ" data-a="calMove" data-v="-1" aria-label="Previous month">' +
     ICON.back +
     '</button><b>' +
-    m.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }) +
+    fmtDate(m, { month: 'long', year: 'numeric' }) +
     '</b><button class="circ" data-a="calMove" data-v="1" aria-label="Next month">' +
     ICON.fwd +
     '</button></div><div class="cal">' +
@@ -886,7 +897,7 @@ function calendarSheet() {
   if (sel) {
     b +=
       '<div class="calday" data-zday><div class="hdr">' +
-      new Date(y, mo, U.calDay).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }) +
+      fmtDate(new Date(y, mo, U.calDay), { weekday: 'long', day: 'numeric', month: 'long' }) +
       '</div><div class="grp">' +
       (byDay[U.calDay] || [])
         .map((s) => {
@@ -1251,7 +1262,8 @@ function render(keepScroll) {
   const dk = DET.dockKids();
   renderDock();
   renderSide();
-  if (keepScroll) window.scrollTo(0, y);
+  // Q49 at the top there's nothing to put back (and scrolling there would make the browser lay out the new page early)
+  if (keepScroll && y) window.scrollTo(0, y);
   edgeFades();
   if (HINT.on && !HINT.on.isConnected) hintHide(); // Q10 a hover hint never outlives its button
   logReveal();
@@ -1523,13 +1535,17 @@ const HOST = (() => {
   // document's click listener); a choice that leaves this sheet open closes it after
   function openChoices(sh, key) {
     const id = ++seq,
-      btns = [...sh.querySelectorAll('button[data-a]')].filter((b) => b.dataset.a !== 'close'),
+      all = [...sh.querySelectorAll('button[data-a]')].filter((b) => b.dataset.a !== 'close'),
+      // Q49 a row marked as the sheet's Cancel becomes the kit's own Cancel (one Cancel, doing what the row did)
+      cancelB = all.find((b) => b.dataset.role === 'cancel'),
+      btns = all.filter((b) => b !== cancelB),
       note = sh.querySelector('.note');
     cur = { key, kind: 'choices', id, k: U.sheet };
     Parts.choices({
       title: titleOf(sh) + (note ? ' · ' + text(note) : ''),
       actions: btns.map((b, i) => ({ label: label(b), red: !!b.querySelector('.dng') || b.classList.contains('dng'), value: i })),
       name: sh.getAttribute('aria-label') || titleOf(sh),
+      cancel: cancelB ? label(cancelB) : undefined,
     }).then(() =>
       // after the tap's own action (the document's click listener runs after this promise settles)
       setTimeout(() => {
@@ -1545,12 +1561,16 @@ const HOST = (() => {
         const src = btns[+b.dataset.i];
         if (src) [...src.attributes].forEach((a) => /^data-/.test(a.name) && a.name !== 'data-i' && b.setAttribute(a.name, a.value));
       });
+    const kc = el && cancelB && el.querySelector('.pk-action.pk-cancel');
+    if (kc) [...cancelB.attributes].forEach((a) => /^data-/.test(a.name) && a.name !== 'data-role' && kc.setAttribute(a.name, a.value));
   }
   // an alert or action sheet the app no longer wants: its Cancel
   function cancelOverlay() {
     const el = [...document.querySelectorAll('#layer .pk-alert:not(.pk-leaving), #layer .pk-actions:not(.pk-leaving)')].pop();
     if (!el) return;
     const b = el.querySelector('[data-a=no], .pk-cancel');
+    // Q49 a Cancel that carries the sheet's own Cancel action only closes here: the app moved on, so nothing is dropped
+    if (b && b.classList.contains('pk-cancel')) b.removeAttribute('data-a');
     if (b) b.click();
     // with motion off nothing moves, so it goes at once
     if (!Parts.motion.speed()) {
@@ -1710,6 +1730,7 @@ const switchHTML = (on) =>
    app's action as before) and the same id. Closing it without a pick (the dim, Escape) runs the menu's close action. */
 const KMENU = (() => {
   const open = {}; // id → { ctl, picked, app }
+  const made = new Set(); // Q49 every menu open now, from sync() or opened directly
   // the app's menu markup as the kit's items: each button[data-a] a row (its text, its icon, red with .dng), and a
   // heading (.pmh) starting a group of the rows after it
   function items(html) {
@@ -1774,11 +1795,13 @@ const KMENU = (() => {
     const onClose = (e) => {
       if (e.target !== anchor) return;
       anchor.removeEventListener('pk:close', onClose);
+      made.delete(o);
       if (open[m.id] === o) delete open[m.id];
       if (!o.picked && !o.app && m.close) HOST.fire(closer(m.close));
       if (m.onClose) m.onClose(o.picked);
     };
     anchor.addEventListener('pk:close', onClose);
+    made.add(o);
     // take it away (no close action): the app closed it
     o.shut = () => {
       o.app = true;
@@ -1792,6 +1815,15 @@ const KMENU = (() => {
     b.dataset.a = a;
     return b;
   };
+  // Q49 the screen changes width (the phone turns, a window is resized): an open menu closes, as iOS's do, with its
+  // close action. It was placed for the old width, so it could end up off the screen with its dim still catching
+  // every tap (found by the random taps)
+  let wNow = window.innerWidth;
+  window.addEventListener('resize', () => {
+    if (window.innerWidth === wNow) return;
+    wNow = window.innerWidth;
+    [...made].forEach((o) => o.ctl.close());
+  });
   return { sync, open: make, isOpen: (id) => !!open[id], items };
 })();
 
