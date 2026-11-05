@@ -13,9 +13,15 @@ away is noticed);
 5 Q40's two fixes: the pattern player's speed bar and menu use the glass tokens, and the listed solid presses use
 var(--press).
 
+Q54 (3.68) widened it: shadows (the parts kit's three names, or known), hex colours in rules (tokens, or known), and
+in js/ times (ms: and duration: with a number of 10 or more) and keyword easings (easing: 'ease-out' …), each named
+(MOTION.dur, MOTION.ms, MOTION.reducedMs, MOTION.CUE, ZOOM and LAUNCH, MOTION.EASE, a spring) or on a known list
+that only shrinks. Every value left on a list carries a one-line reason.
+
 Exempt: graphic corners of 6 px and under (bars, ticks, meters, waveform bits follow the drawing), capsules (999px)
 and circles (50%); slow ambient loops (1 s and over: Today's drifting gradient, pulses); delays; spring names from
-MOTION (gentle, nav, ripple, press, release). Shadows are counted in the report only.
+MOTION (gentle, nav, ripple, press, release); shadows that only draw a ring or a stroke (inset, or no offset and no
+blur); masks' colours; proportions in code (d * 0.3); the named tables in js/motion.js.
 How to add a value on purpose, and why the list only shrinks: MAINTAINING.md › Value set (Q40).
 VS_VALUES=named,css,js,guard,fixes runs only those parts."""
 import os, re, glob, collections
@@ -173,21 +179,113 @@ def key(it):
     return ' · '.join(it[:4])
 
 
+# ---------------------------------------------------------------- reading the look values (Q54)
+
+def _ring(layer):
+    """A shadow layer that draws a ring or a stroke (inset, or no offset and no blur), not a shadow."""
+    t = split_top(layer, ' ')
+    if t and t[0] == 'inset':
+        return True
+    nums = [x for x in t if re.fullmatch(r'-?\d*\.?\d+(px)?', x)]
+    return len(nums) >= 3 and all(float(n.replace('px', '')) == 0 for n in nums[:3])
+
+
+def shadows(css):
+    """Hand-written shadows, as (selector, value, line): not var(), not none, not only rings and strokes."""
+    out = []
+    for sel, line, p, v, _, _ in declarations(css):
+        if p != 'box-shadow':
+            continue
+        v = re.sub(r'\s*!important$', '', v)
+        if v in ('none', 'inherit', 'initial'):
+            continue
+        if any(not l.startswith('var(') and not _ring(l) for l in split_top(v, ',')):
+            out.append((sel, v, line))
+    return out
+
+
+def colours(css):
+    """Hex colours written in rules, as 'selector · property · #hex' with their line. Custom properties are where
+    colours are named; masks are exempt (only their alpha counts)."""
+    out = []
+    for sel, line, p, v, _, _ in declarations(css):
+        if p.startswith('--') or 'mask' in p:
+            continue
+        out += [(f'{sel} · {p} · {h.lower()}', line) for h in re.findall(r'#[0-9a-fA-F]{3,8}\b', v)]
+    return out
+
+
 # ---------------------------------------------------------------- reading the code
+
+# the pinned libraries aren't the app's code; the parts kit's copy is checked by the kit's own value rule
+# (tools/values.py in its repo), not here (Q41)
+LIBS = ('pitchy.js', 'tonal.js', 'musictheory.js')
+# Q54 the named tables in js/motion.js: the one place the code's own timings and easings are written as numbers
+TABLES = ('EASE', 'CUE', 'ZOOM', 'LAUNCH')
+
+
+def _js_files():
+    return [(os.path.basename(x), open(x, encoding='utf-8').read()) for x in sorted(glob.glob(os.path.join(JSDIR, '*.js')))
+            if not os.path.basename(x).startswith('parts-kit') and os.path.basename(x) not in LIBS]
+
+
+def _code(name, src):
+    """The code without comments, and motion.js without its named tables (returned apart)."""
+    src = re.sub(r'/\*.*?\*/', lambda m: re.sub(r'[^\n]', '', m.group(0)), src, flags=re.S)
+    src = re.sub(r'(^|[\s;{}(,])//[^\n]*', r'\1', src)
+    tables = {}
+    if name == 'motion.js':
+        for t in TABLES:
+            m = re.search(r'const ' + t + r' = \{.*?\};', src, re.S)
+            if m:
+                tables[t] = m.group(0)
+                src = src[:m.start()] + src[m.end():]
+    return src, tables
+
 
 def js_curves(files=None):
     """cubic-bezier( in js/, as 'file · curve'. MOTION.EASE's own (the names, for code) are returned apart."""
     found, names = [], {}
-    # the parts kit's pinned copy is checked by the kit's own value rule (tools/values.py in its repo), not here (Q41)
-    for f in files or sorted(x for x in glob.glob(os.path.join(JSDIR, '*.js')) if not os.path.basename(x).startswith('parts-kit')):
-        src = open(f, encoding='utf-8').read() if isinstance(f, str) and os.path.exists(f) else f[1]
-        name = os.path.basename(f) if isinstance(f, str) else f[0]
-        ease = re.search(r'const EASE = \{(.*?)\};', src, re.S) if name == 'motion.js' else None
-        if ease:
-            names = {k: norm(c) for k, c in re.findall(r"(\w+): '(cubic-bezier\([^)]*\))'", ease.group(1))}
-            src = src[:ease.start()] + src[ease.end():]
+    for name, src in files or _js_files():
+        src, tables = _code(name, src)
+        if 'EASE' in tables:
+            names = {k: norm(c) for k, c in re.findall(r"(\w+): '(cubic-bezier\([^)]*\))'", tables['EASE'])}
         found += [f'{name} · {norm(c)}' for c in re.findall(r'cubic-bezier\([^)]*\)', src)]
     return found, names
+
+
+def _value(src, i):
+    """The expression from i to the next top-level , or closing bracket."""
+    d, j = 0, i
+    while j < len(src):
+        c = src[j]
+        if c in '([{':
+            d += 1
+        elif c in ')]}':
+            if d == 0:
+                break
+            d -= 1
+        elif c == ',' and d == 0:
+            break
+        j += 1
+    return src[i:j]
+
+
+def js_times(files=None):
+    """Q54 times and keyword easings written in code: 'file · ms: 300' for every number of 10 or more in an ms: or
+    duration: value (smaller numbers are proportions, d * 0.3), and 'file · ease-out' for every keyword easing: value."""
+    times, eases = [], []
+    for name, src in files or _js_files():
+        src, _ = _code(name, src)
+        for m in re.finditer(r'(?<![.\w$])(ms|duration)\s*:\s*', src):
+            for n in re.findall(r'(?<![\w.])(\d+(?:\.\d+)?)(?![\w.])', _value(src, m.end())):
+                if float(n) >= 10:
+                    times.append(f'{name} · {m.group(1)}: {n}')
+        for m in re.finditer(r'(?<![.\w$])easing\s*:\s*([\'"`])([^\'"`]*)\1', src):
+            e = m.group(2).strip()
+            if e in KEYWORD_EASE or e.startswith('steps('):
+                eases.append(f'{name} · {e}')
+    return times, eases
 
 
 def compare(found, known):
@@ -201,139 +299,110 @@ def same_curve(a, b):
     return nums(a) == nums(b)
 
 
-# ---------------------------------------------------------------- the known list (it may only get shorter)
-# Every value here was in the app at Q40 (3.51) and doesn't match a name. They leave as their parts move onto the
-# parts kit, so nothing is tidied twice. Remove a line when its value goes; never add one without a reason
-# (MAINTAINING.md › Value set (Q40) says how to add a value on purpose).
-# Rows and row-like cards lost their 0.98 / 0.96 shrink at Q41: decision D06 turned it into a highlight.
+# ---------------------------------------------------------------- the known lists (they may only get shorter)
+# Every value here doesn't match a name, each with its reason (Q54 gave every line one). Remove a line when its value
+# goes; never add one without a reason (MAINTAINING.md › Value set says how to add a value on purpose).
+# Q40 (3.51) started the list with 114 values; Q54 (3.68) named all but these.
 
 KNOWN = [
-    'corner · body.sheet-open .wrap · border-radius · 28px',
-    'corner · .lgcard · border-radius · 22px',
-    'corner · .bkstat · border-radius · 16px',
-    'corner · .arch · border-radius · 24px',
-    'corner · .tile.big · border-radius · 18px',
-    'corner · .fw · border-radius · 22px',
-    'corner · .fw .fwopen · border-radius · 17px',
-    'corner · .nudge · border-radius · 16px',
-    'corner · .addnote · border-radius · 16px',
-    'corner · .sckrows · border-radius · 18px',
-    'corner · .sbi · border-radius · 12px',
-    'corner · body.reg .shead · border-radius · 28px',
-    'corner · body.reg .shead · border-radius · 28px',
-    'corner · .pcard · border-radius · 22px',
-    'corner · .sfield.inl · border-radius · 12px',
-    'corner · .sgwarn · border-radius · 12px',
-    'corner · .blk · border-radius · 16px',
-    'corner · .rl · border-radius · 8px',
-    'corner · .zm-shade · border-radius · 22px',
-    'corner · .cv-slot · border-radius · 16px',
-    'corner · .cvthumb · border-radius · 8px',
-    'corner · .cvthumb.big · border-radius · 9px',
-    "corner · .fw[data-kind='video'][data-size='m'] · border-radius · 15px",
-    "corner · .fw[data-kind='video'][data-size='l'] · border-radius · 16px",
-    'corner · .fwtabin · border-radius · 16px',
-    'corner · .fwtabin · border-radius · 16px',
-    'corner · .fwtab.r .fwtabin · border-radius · 16px',
-    'corner · .fwtab.r .fwtabin · border-radius · 16px',
-    'corner · .cklen.ed · border-radius · 8px',
-    'corner · .sgl.ckcur · border-radius · 8px',
-    'corner · .ckpop · border-radius · 22px',
-    'corner · .ckband · border-radius · 9px',
-    'corner · .ckwcol:focus-visible · border-radius · 9px',
-    'corner · body.reg .trkroll · border-radius · 12px',
-    'corner · .trksong · border-radius · 18px',
-    'corner · .trktl · border-radius · 18px',
-    'corner · .trkpad · border-radius · 24px',
-    'corner · .sglenv · border-radius · 12px',
-    'corner · .setfoot img · border-radius · 13.5px',
-    'corner · .hint · border-radius · 7px',
-    'corner · .mksheet · border-radius · 28px',
-    'corner · .sgl.mknow · border-radius · 8px',
-    'corner · .mkpeek · border-radius · 24px',
-    'corner · .rgi.big .tile · border-radius · 12px',
-    'corner · .aphead .tile · border-radius · 12px',
-    'corner · .prange.bad · border-radius · 12px',
-    'corner · .extip · border-radius · 16px',
-    'corner · .pstep · border-radius · 24px',
-    'corner · .prep · border-radius · 24px',
-    'corner · .pplay · border-radius · 24px',
-    'corner · .pwin · border-radius · 22px',
-    'corner · .preset · border-radius · 16px',
-    'ease · .tl-in.seen · transition · ease',
-    'ease · .sw .fg · transition · ease',
-    'ease · .notebox · animation · ease',
-    'ease · #ptr.go .spin · animation · steps(8)',
-    'ease · main.ptr-snap · transition · cubic-bezier(0.25, 0.8, 0.3, 1)',
-    'ease · #splash · transition · ease',
-    'ease · #splash .sp-icon · transition · cubic-bezier(0.3, 0.9, 0.4, 1)',
-    'ease · html.motion-reduced *, html.motion-reduced *::before, html.motion-reduced *::after · transition-timing-function · ease-out',
-    'ease · .rowc · transition · cubic-bezier(0.3, 1.2, 0.5, 1)',
-    'ease · .w.pulse · animation · ease-out',
-    'ease · .crow · transition · cubic-bezier(0.3, 1.2, 0.5, 1)',
-    'ease · .hx · transition · ease',
-    'ease · .hx::after · transition · ease',
-    'ease · .hxin .hx · animation · ease',
-    'ease · .hxin .hx::after · animation · ease',
-    'ease · .fw .fwvc · transition · linear',
-    'ease · .tkfg · transition · cubic-bezier(0.3, 1.2, 0.5, 1)',
-    'ease · [data-edge-fade] · transition · ease-out',
-    'ease · [data-edge-fade] · transition · ease-out',
-    'ease · .hint · transition · ease-out',
-    'ease · html.motion-reduced .mksheet · animation · ease',
-    'ease · .pdraw .pnt · transition · cubic-bezier(0.3, 1.6, 0.5, 1)',
-    'ease · .pdraw .prip · animation · ease-out',
-    'ease · .pvowel b.swap · animation · cubic-bezier(0.3, 1.4, 0.5, 1)',
-    'ease · .pt · transition · cubic-bezier(0.3, 1.5, 0.5, 1)',
-    'duration · #lgchart .ar · transition · 0.25s',
-    'duration · .tl-card · transition · 0.4s',
-    'duration · .tl-more svg.i · transition · 0.3s',
-    'duration · .tl-in.seen · transition · 0.5s',
-    'duration · .tl-in.seen · transition · 0.6s',
-    'duration · .sw .fg · transition · 0.22s',
-    'duration · .notebox · animation · 0.3s',
-    'duration · .spin i · transition · 0.08s',
-    'duration · #ptr.go .spin · animation · 0.8s',
-    'duration · main.ptr-snap · transition · 0.42s',
-    'duration · .sbi · transition · 0.15s',
-    'duration · #splash · transition · 0.35s',
-    'duration · #splash .sp-icon · transition · 0.45s',
-    'duration · .rowc · transition · 0.35s',
-    'duration · .w.pulse · animation · 0.9s',
-    'duration · .crow · transition · 0.25s',
-    'duration · .meter i · transition · 0.1s',
-    'duration · .hx · transition · 0.35s',
-    'duration · .hx::after · transition · 0.35s',
-    'duration · .hxin .hx · animation · 0.25s',
-    'duration · .hxin .hx::after · animation · 0.25s',
-    'duration · .rl.peeking .hx · transition-duration · 0.22s',
-    'duration · .rl.peeking .hx::after · transition-duration · 0.22s',
-    'duration · .tkfg · transition · 0.35s',
-    'duration · [data-edge-fade] · transition · 0.25s',
-    'duration · [data-edge-fade] · transition · 0.25s',
-    'duration · .hint.show · transition-duration · 0.18s',
-    'duration · .ring .arc · transition · 0.3s',
-    'duration · .cuebox · transition · 0.3s',
-    'duration · .pdraw .pnt · transition · 0.25s',
-    'duration · .pdraw .prip · animation · 0.6s',
-    'duration · .pvowel b.swap · animation · 0.45s',
-    'duration · .pt · transition · 0.35s',
-    'duration · .pt · transition · 0.35s',
-    'duration · .pt .pst > span · transition · 0.25s',
-    'duration · #pHud .phscrim · transition · 0.3s',
-    'duration · .phbub · transition · 0.45s',
+    # the floating window: Q26's 58 pt capsule with 22 pt corners (test_pip checks it), the video's own corners by size,
+    # and its parts sitting concentric inside it
+    ('corner · .fw · border-radius · 22px', 'Q26: the floating capsule is 58 pt with 22 pt corners'),
+    ('corner · .fw .fwopen · border-radius · 17px', 'concentric inside the 22 pt capsule (22 − 5 pt)'),
+    ("corner · .fw[data-kind='video'][data-size='m'] · border-radius · 15px", 'the video window keeps its own corner by size'),
+    ("corner · .fw[data-kind='video'][data-size='l'] · border-radius · 16px", 'the video window keeps its own corner by size'),
+    ('corner · .fwtabin · border-radius · 16px', 'the tucked window’s tab, its half capsule at the edge'),
+    ('corner · .fwtabin · border-radius · 16px', 'the same tab’s other corner'),
+    ('corner · .fwtab.r .fwtabin · border-radius · 16px', 'the tab tucked at the right edge'),
+    ('corner · .fwtab.r .fwtabin · border-radius · 16px', 'the same tab’s other corner'),
+    ('corner · .hint · border-radius · 7px', 'the pointer hint is a Mac-style tooltip (no name within 2 pt)'),
+    ('duration · #lgchart .ar · transition · 0.25s', 'the Changelog chart (kept by the audit): bars dimming while picking'),
+    ('duration · .spin i · transition · 0.08s', 'pull to refresh: each tick appears as the finger pulls, near instant'),
+    ('duration · .sbi · transition · 0.15s', 'the iPad and Mac side bar row’s hover highlight'),
+    ('duration · .w.pulse · animation · 0.9s', 'Song Clock’s own word pulse, on the beat (the audit: keep)'),
+    ('ease · .w.pulse · animation · ease-out', 'the same pulse’s own easing'),
+    ('duration · .meter i · transition · 0.1s', 'the microphone meter follows the level, near instant'),
+    ('duration · .ring .arc · transition · 0.3s', 'the session ring turning green at its peak (a colour cue)'),
+    ('duration · .cuebox · transition · 0.3s', 'the cue under a row fading in after it unfolds'),
+    ('duration · .pt · transition · 0.35s', 'a pattern step’s own length (its curve is the knob’s, Q54)'),
+    ('duration · .pt · transition · 0.35s', 'the step lifting (its shadow is the kit’s lifted one, Q54)'),
 ]
 
 KNOWN_JS = [
-    'details.js · cubic-bezier(.4, 0, .6, 1)',
-    'details.js · cubic-bezier(.3, .7, .3, 1)',
-    'launch.js · cubic-bezier(.3, .7, .4, 1)',
-    'launch.js · cubic-bezier(.3, .7, .4, 1)',
+    ('details.js · cubic-bezier(.4, 0, .6, 1)', 'list edits: a removed row leaving (the audit’s change row, not yet built)'),
+    ('details.js · cubic-bezier(.3, .7, .3, 1)', 'the Progress chart’s line drawing in'),
+]
+
+# Q54 times and keyword easings in code (ms: and duration: with a number, and easing: 'ease-out' and the like). Named:
+# MOTION.dur(spring), MOTION.ms('fade'), MOTION.reducedMs(), MOTION.CUE, ZOOM and LAUNCH, MOTION.EASE, a spring. Numbers
+# under 10 are proportions (d * 0.3), not times.
+KNOWN_JS_TIMES = [
+    ('application.js · ms: 24', 'not a time: the ladder’s notes list (ms is their key)'),
+    ('details.js · ms: 620', 'the Progress chart’s line drawing in'),
+    ('details.js · ms: 220', 'a sheet whose content changes in place: its content fading over'),
+    ('details.js · ms: 500', '“Last backed up” changing colour softly'),
+    ('onepage.js · ms: 1350', 'the step-done flash: blue to green, then gone (a cue)'),
+    ('onepage.js · duration: 1400', 'the pull-past-the-bottom message: shown, then faded (a cue)'),
+    ('onepage.js · duration: 300', 'the same message when the pull is short'),
+    ('track.js · ms: 460', 'the track’s line box giving a small pulse as the line changes'),
+    ('ui.js · ms: 4500', 'not a motion: how long a toast with a button stays'),
+]
+KNOWN_JS_EASE = [
+    ('application.js · ease-out', 'Application’s Reduce Motion flash (Q52 cue): a keyframed flash'),
+    ('application.js · ease-out', 'Application’s step-done flash: a keyframed flash'),
+    ('details.js · ease-out', 'a sheet whose content changes in place: its content fading over'),
+    ('details.js · ease-out', '“Last backed up” changing colour softly'),
+    ('onepage.js · ease-out', 'the one-page session’s Reduce Motion flash (Q52 cue): a keyframed flash'),
+    ('onepage.js · ease-out', 'the step-done flash: a keyframed flash'),
+    ('onepage.js · ease-out', 'the pull-past-the-bottom message: a keyframed fade'),
+    ('track.js · ease-out', 'the track’s line box pulse: a keyframed pulse'),
+]
+
+# Q54 shadows. Rings and strokes drawn with a shadow (inset, or no offset and no blur) are exempt, like small graphic
+# corners. The parts kit's three (--shadow-lifted, --shadow-floating, --shadow-glow) are the names.
+KNOWN_SHADOW = [
+    ('.cta', 'the capsule’s own glass depth: rim light, hairline and its drop'),
+    ('.cta.ink', 'the black or white capsule’s drop, as the glass ones'),
+    ('.fw.dragging', 'the floating window lifted by a finger: its glass layers (Q26)'),
+    ('.sckknob', 'the session clock’s knob, as an iOS slider knob'),
+    ('#splash .sp-icon', 'the app icon’s red glow on the launch screen (the app’s signature)'),
+    ('#splash i', 'the icon’s sound-wave bars, drawn as on the icon'),
+    ('.zm-shade', 'the card zoom’s lifted page (the app’s own zoom)'),
+    ('.zm-page', 'the card zoom’s page while it moves'),
+    ('.cvthumb2', 'the coach video scrubber’s frame preview, over video'),
+    ('.trklv .pk-seg-ind', 'the track level control’s loop ring and its knob’s drop'),
+    ('.trkpadpp', 'the track pad’s play button over the waveform'),
+    ('.tkplay', 'a take’s small play button over its row'),
+    ('.pplay', 'the pattern player’s play button, as the track pad’s'),
+]
+
+# Q54 colours written as hex in rules (masks are exempt: only their alpha counts). #fff on a coloured fill is
+# var(--on-accent), the slider knob var(--pk-knob).
+KNOWN_COLOUR = [
+    ('.fw .fwvblack · background · #000', 'video: black whatever the mode'),
+    ('.zm-dim · background · #000', 'the push dim is black in both modes (kit part 10’s 10%)'),
+    ('#cv · background · #000', 'video: black whatever the mode'),
+    ('.cv-slot · background · #000', 'video: black whatever the mode'),
+    ('.cv-still · background · #000', 'video: black whatever the mode'),
+    ('.cvfs · color · #fff', 'over video: white whatever the mode'),
+    ('.cvthumb2 · background · #fff', 'the scrubber’s frame preview edge, over video'),
+    ('.cvthumb · color · #fff', 'over a video thumbnail: white whatever the mode'),
+    ('.cvthumb · background · #48484a', 'an empty video thumbnail’s dark gradient'),
+    ('.cvthumb · background · #1c1c1e', 'the same gradient’s end'),
+    (".fw[data-kind='video'] · background · #000", 'video: black whatever the mode'),
+    ('.fw .fwvc button · color · #fff', 'over video: white whatever the mode'),
+    ('.fw .fwvc .fwbtn · color · #fff', 'over video: white whatever the mode'),
+    ('.fw .fwvlv button.on · color · #000', 'the video level picker: black on its white pill, over video'),
+    ('.fw .fwvlv button.on::before · background · #fff', 'the same white pill'),
+    (".fw[data-kind='rectrack'] · background · #d70015", 'the recording window’s own red (Q16)'),
+    ('.mpsheet .mpimg · background · #fff', 'a sheet music page stays paper white in dark mode'),
 ]
 
 # Q40's two fixes
 GLASS_FIX = []  # Q40's two glass fixes (.phbar, .pmenu) left with their parts at Q41: the parts kit's slider and menus
 PRESS_FIX = []  # Q40's six solid presses left with their :active rules at Q53: every button presses through the kit
+
+keys = lambda lst: [k for k, _ in lst]
 
 
 # ---------------------------------------------------------------- the checks
@@ -358,22 +427,26 @@ def named(b, t):
     used = set(re.findall(r'var\(--((?:r|ease|dur)-[a-z0-9-]+|press)\b', css))
     ok(used <= defined, f'every named value used is defined, in app.css, as a parts kit spring or a kit timing ({used - defined})')
     _, names = js_curves()
-    ok(set(names) == {'pop', 'knob', 'out'} and all(same_curve(names[k], NAMED['ease-' + k]) for k in names),
-       f'MOTION.EASE holds the same three easings for code ({names})')
+    kaccel = re.search(r'--ease-accel:\s*([^;]+);', kcss).group(1)
+    ok(set(names) == {'pop', 'knob', 'out', 'accel'} and all(same_curve(names[k], NAMED['ease-' + k]) for k in ('pop', 'knob', 'out'))
+       and same_curve(names['accel'], kaccel), f'MOTION.EASE holds the same three easings for code, and the kit’s accel (Q54) ({names})')
     pg = t.page(b)
     vals = pg.evaluate("ks=>ks.map(k=>getComputedStyle(document.documentElement).getPropertyValue('--'+k).trim())", list(NAMED))
     ok(dict(zip(NAMED, vals)) == NAMED, f'the names resolve in the page ({dict(zip(NAMED, vals))})')
     ok(pg.evaluate("MOTION.EASE.out") == "cubic-bezier(.2,.8,.2,1)", 'MOTION.EASE.out is reachable from code')
+    # Q54 MOTION.ms reads the named fixed timings from the page, so code and stylesheet can't drift apart
+    got = pg.evaluate("['quick','fade','appear','leave','close'].map(n=>MOTION.ms(n))")
+    ok(got == [120, 200, 250, 350, 170], f'MOTION.ms gives the named timings: quick, fade, appear, leave, close ({got})')
     pg.context.close()
 
 
 def css_strays(b, t):
     ok = t.ok
     css = open(CSS, encoding='utf-8').read()
-    its, shadows = items(css)
-    shadow_vals = collections.Counter(shadows)
+    its, shadows_all = items(css)
+    shadow_vals = collections.Counter(shadows_all)
     stray = [i for i in its if not i[5]]
-    new, gone = compare([key(i) for i in stray], KNOWN)
+    new, gone = compare([key(i) for i in stray], keys(KNOWN))
     lines = collections.defaultdict(list)
     for i in stray:
         lines[key(i)].append(i[4])
@@ -381,32 +454,60 @@ def css_strays(b, t):
        + '; '.join(f'line {lines[k][0]}: {k}' for k in new[:8]) + (f' … and {len(new) - 8} more' if len(new) > 8 else '')))
     ok(not gone, 'every known stray is still in app.css' + ('' if not gone else ': the list can shrink, so take these off KNOWN in '
        'tests/test_values.py: ' + '; '.join(gone[:8]) + (f' … and {len(gone) - 8} more' if len(gone) > 8 else '')))
+    ok(all(r.strip() for _, r in KNOWN + KNOWN_SHADOW + KNOWN_COLOUR), 'every value left has its reason')
+    # Q54 shadows: the kit's three names, rings and strokes, or a known one with its reason
+    sh = shadows(css)
+    new, gone = compare([x[0] for x in sh], keys(KNOWN_SHADOW))
+    at = {x[0]: x[2] for x in sh}
+    ok(not new, 'no new shadows written out in app.css' + ('' if not new else ': use the kit’s --shadow-lifted, '
+       '--shadow-floating or --shadow-glow: ' + '; '.join(f'line {at[k]}: {k}' for k in new[:8])))
+    ok(not gone, 'every known shadow is still in app.css' + ('' if not gone else ': the list can shrink, so take these off '
+       'KNOWN_SHADOW in tests/test_values.py: ' + '; '.join(gone[:8])))
+    # Q54 hex colours in rules: tokens (--on-accent, --pk-knob, --fg …), or a known one with its reason
+    cl = colours(css)
+    new, gone = compare([x[0] for x in cl], keys(KNOWN_COLOUR))
+    at = {x[0]: x[1] for x in cl}
+    ok(not new, 'no new hex colours in app.css rules' + ('' if not new else ': use a colour token: '
+       + '; '.join(f'line {at[k]}: {k}' for k in new[:8])))
+    ok(not gone, 'every known hex colour is still in app.css' + ('' if not gone else ': the list can shrink, so take these '
+       'off KNOWN_COLOUR in tests/test_values.py: ' + '; '.join(gone[:8])))
     use = collections.Counter(i[0] for i in its if i[5])
-    left = collections.Counter(k.split(' · ')[0] for k in KNOWN)
+    left = collections.Counter(k.split(' · ')[0] for k in keys(KNOWN))
     print(f'  ····  named uses: corners {use["corner"]}, presses {use["press"]}, easings {use["ease"]}, '
           f'durations {use["duration"]}')
     print(f'  ····  known strays: corners {left["corner"]}, presses {left["press"]}, easings {left["ease"]}, '
-          f'durations {left["duration"]}, curves in code {len(KNOWN_JS)}')
-    print(f'  ····  shadows written out by hand (not enforced): {len(shadows)}, {len(shadow_vals)} different, '
-          f'{sum(1 for v in shadow_vals.values() if v == 1)} used once')
+          f'durations {left["duration"]}, shadows {len(KNOWN_SHADOW)}, hex colours {len(KNOWN_COLOUR)}, curves in code '
+          f'{len(KNOWN_JS)}, times in code {len(KNOWN_JS_TIMES)}, easings in code {len(KNOWN_JS_EASE)}')
+    print(f'  ····  shadows written out (rings and strokes included): {len(shadows_all)}, {len(shadow_vals)} different')
 
 
 def js_strays(b, t):
     ok = t.ok
     found, _ = js_curves()
-    new, gone = compare(found, KNOWN_JS)
+    new, gone = compare(found, keys(KNOWN_JS))
     ok(not new, 'no new hand-written curves in js/' + (f': use a MOTION spring or MOTION.EASE ({new})' if new else ''))
     ok(not gone, 'every known curve in code is still there' + (f': the list can shrink, so take these off KNOWN_JS in tests/test_values.py ({gone})' if gone else ''))
+    # Q54 times and keyword easings in code
+    times, eases = js_times()
+    new, gone = compare(times, keys(KNOWN_JS_TIMES))
+    ok(not new, 'no new hand-set times in js/' + (f": use a MOTION spring, MOTION.ms('fade') and the like, MOTION.reducedMs(), "
+       f'or a named table in js/motion.js ({new})' if new else ''))
+    ok(not gone, 'every known time in code is still there' + (f': the list can shrink, so take these off KNOWN_JS_TIMES ({gone})' if gone else ''))
+    new, gone = compare(eases, keys(KNOWN_JS_EASE))
+    ok(not new, 'no new keyword easings in js/' + (f': use MOTION.EASE or a spring ({new})' if new else ''))
+    ok(not gone, 'every known keyword easing in code is still there' + (f': the list can shrink, so take these off KNOWN_JS_EASE ({gone})' if gone else ''))
+    ok(all(r.strip() for _, r in KNOWN_JS + KNOWN_JS_TIMES + KNOWN_JS_EASE), 'every value left in code has its reason')
 
 
 def guard(b, t):
     """The guard catches what it should, on copies (the real files aren't touched)."""
     ok = t.ok
     css = open(CSS, encoding='utf-8').read()
+    K = keys(KNOWN)
     extra = ('\n.vtest:active { transform: scale(0.91); border-radius: 11px; '
              'transition: opacity 0.3s cubic-bezier(0.1, 0.2, 0.3, 1); }\n')
     its, _ = items(css + extra)
-    new, gone = compare([key(i) for i in its if not i[5]], KNOWN)
+    new, gone = compare([key(i) for i in its if not i[5]], K)
     kinds = sorted(k.split(' · ')[0] for k in new)
     ok(kinds == ['corner', 'duration', 'ease', 'press'] and not gone,
        f'a new corner, press, curve and duration are each caught ({new})')
@@ -414,23 +515,44 @@ def guard(b, t):
                    'transition: opacity var(--dur-fade) var(--ease-out), transform 2s ease-in-out infinite; '
                    'border-radius: 4px 999px 50%; }\n')
     its, _ = items(css + named_extra)
-    new, _ = compare([key(i) for i in its if not i[5]], KNOWN)
+    new, _ = compare([key(i) for i in its if not i[5]], K)
     ok(not new, f'named values, small graphic corners, capsules, circles and slow loops pass ({new})')
-    if KNOWN:
-        k = KNOWN[0].split(' · ')
+    if K:
+        k = K[0].split(' · ')
         its, _ = items(css)
-        line = next(i[4] for i in its if key(i) == KNOWN[0])
+        line = next(i[4] for i in its if key(i) == K[0])
         src = css.splitlines(True)
         src[line - 1] = src[line - 1].replace(k[3], 'var(--r-card)' if k[0] == 'corner' else 'var(--press)' if k[0] == 'press'
                                               else 'var(--ease-out)' if k[0] == 'ease' else 'var(--dur-fade)', 1)
         its, _ = items(''.join(src))
-        new, gone = compare([key(i) for i in its if not i[5]], KNOWN)
-        ok(gone == [KNOWN[0]] and not new, f'a stray taken away is noticed, so the list must shrink ({gone})')
-    found, _ = js_curves([(os.path.basename(f), open(f, encoding='utf-8').read()) for f in glob.glob(os.path.join(JSDIR, '*.js'))
-                          if not os.path.basename(f).startswith('parts-kit')]
-                         + [('new.js', "el.animate(f, {easing: 'cubic-bezier(.1,.2,.3,1)'})")])
-    new, _ = compare(found, KNOWN_JS)
+        new, gone = compare([key(i) for i in its if not i[5]], K)
+        ok(gone == [K[0]] and not new, f'a stray taken away is noticed, so the list must shrink ({gone})')
+    # Q54 shadows and colours
+    look = ('\n.vtest { box-shadow: 0 5px 9px rgba(0, 0, 0, 0.2); color: #fff; }\n'
+            '.vtest2 { box-shadow: var(--shadow-lifted), inset 0 0 0 1px var(--sep), 0 0 0 2px var(--accent); '
+            'color: var(--on-accent); mask-image: linear-gradient(#000, transparent); }\n')
+    new, _ = compare([x[0] for x in shadows(css + look)], keys(KNOWN_SHADOW))
+    ok(new == ['.vtest'], f'a new shadow is caught; the kit’s names, rings and strokes pass ({new})')
+    new, _ = compare([x[0] for x in colours(css + look)], keys(KNOWN_COLOUR))
+    ok(new == ['.vtest · color · #fff'], f'a new hex colour is caught; tokens and masks pass ({new})')
+    # code: a new curve, time and keyword easing; named ones pass
+    files = _js_files()
+    found, _ = js_curves(files + [('new.js', "el.animate(f, {easing: 'cubic-bezier(.1,.2,.3,1)'})")])
+    new, _ = compare(found, keys(KNOWN_JS))
     ok(new == ['new.js · cubic-bezier(.1, .2, .3, 1)'], f'a new curve in code is caught ({new})')
+    code = ("MOTION.animate(el, f, { ms: 300, easing: 'ease-out' }); el.animate(f, { duration: 180 * S, easing: 'linear' });\n"
+            "MOTION.animate(el, f, { ms: MOTION.ms('fade'), delay: 90, easing: MOTION.EASE.out }); MOTION.animate(el, f, { ms: d * 0.3 });\n"
+            "el.animate(f, { duration: MOTION.reducedMs() * MOTION.speed() }); x = a.duration ? a.duration : 300; // { ms: 999 }\n")
+    times, eases = js_times(files + [('new.js', code)])
+    new, _ = compare(times, keys(KNOWN_JS_TIMES))
+    ok(sorted(new) == ['new.js · duration: 180', 'new.js · ms: 300'], f'a new time in code is caught; named ones, delays, '
+       f'proportions, a media length and comments pass ({new})')
+    new, _ = compare(eases, keys(KNOWN_JS_EASE))
+    ok(sorted(new) == ['new.js · ease-out', 'new.js · linear'], f'a new keyword easing in code is caught ({new})')
+    src = dict(files)['zoom.js'].replace("{ ms: MOTION.ZOOM.hand }", "{ ms: 150 }", 1)
+    times, _ = js_times([(n, src if n == 'zoom.js' else c) for n, c in files])
+    new, _ = compare(times, keys(KNOWN_JS_TIMES))
+    ok(new == ['zoom.js · ms: 150'], f'a named time written back as a number is caught ({new})')
 
 
 def fixes(b, t):

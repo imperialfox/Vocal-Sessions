@@ -18,11 +18,45 @@ const MOTION = (() => {
   const SPRINGS = PM.springs();
   // Q40 the named easings, the same three as app.css's --ease-pop, --ease-knob and --ease-out (test_values checks
   // they match): for code that needs a fixed-length move rather than a spring
-  const EASE = { pop: 'cubic-bezier(.3,1.7,.45,1)', knob: 'cubic-bezier(.3,1.35,.5,1)', out: 'cubic-bezier(.2,.8,.2,1)' };
+  // Q54 adds the kit's --ease-accel (accel: something leaving, speeding up as it goes) for code that fades out
+  const EASE = { pop: 'cubic-bezier(.3,1.7,.45,1)', knob: 'cubic-bezier(.3,1.35,.5,1)', out: 'cubic-bezier(.2,.8,.2,1)', accel: 'cubic-bezier(.32,0,.67,0)' };
   const STAGGER = { word: 30, row: 45, bar: 30 };
   // Q52 (D20) cues: a flash that tells you something happened (the session's green flash when a step is done), not a
   // transition, so under Reduce Motion it keeps a visible length rather than the kit's 100 ms fade. Times the speed.
   const CUE = { flash: 650 };
+  // Q54 the card zoom's own fades (ms at normal speed). The zoom is the app's own (no kit part): its window and copies
+  // move on the nav spring, and these fades hand the card over to the page and back. 120 and 200 are MOTION.ms('quick')
+  // and MOTION.ms('fade'); these are the zoom's own, named once here
+  const ZOOM = {
+    colour: 320, // a card's colour leaving as the page grows (after 60 ms)
+    capsuleColour: 180, // a black or white capsule's colour leaving
+    capsulePage: 160, // a capsule's page coming straight in
+    hand: 150, // the card's label handing over to the page title (and back), the page leaving, the card's copy
+    handBack: 140, // closing: the page title handing back to the card's label
+    page: 240, // the rest of the page arriving
+    away: 240, // no card to go back into: the page fades and shrinks a little
+    awayPush: 220, // a pushed page with nowhere to slide back to: it fades
+  };
+  // Q54 the launch ripple's own timings (the app's signature, no kit part), named once here; js/launch.js reads them.
+  // Each bar pulses for 520 ms, 70 ms after the one before; the launch screen fades with a slight zoom; Today starts
+  // rising 100 ms into the fade, from 16 px down; after an import the launch screen comes back over 180 ms
+  const LAUNCH = {
+    bar: { start: 120, gap: 70, length: 520, peak: 1.5, ease: 'ease-in-out' },
+    fade: { at: 860, length: 300, zoom: 1.08, ease: 'cubic-bezier(.3,.7,.4,1)' },
+    rise: { after: 100, from: 16 },
+    back: 180,
+  };
+  // Q54 the named fixed timings for code, in ms at normal speed, read once from the page so they always match the
+  // stylesheet: the app's quick (120) and fade (200), and the kit's appear (250), leave (350) and close (170)
+  const FIXED = {};
+  function ms(name) {
+    if (!(name in FIXED)) {
+      const m = /^([\d.]+)(ms|s)$/.exec(getComputedStyle(document.documentElement).getPropertyValue('--dur-' + name).trim());
+      if (!m) return 0;
+      FIXED[name] = +m[1] * (m[2] === 's' ? 1000 : 1);
+    }
+    return FIXED[name];
+  }
   const BLUR_MAX = 1.5; // px. Ivan chose 1.5 over 2 so far lyrics stay recognisable
   const KEY = 'vocalMotion',
     RKEY = 'vocalReduce';
@@ -79,7 +113,7 @@ const MOTION = (() => {
     if (!el || !el.animate) return null;
     if (!on()) {
       if (reduced() && o.fade && speed() > 0)
-        return el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: reducedMs() * speed(), easing: 'ease-out' });
+        return el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: reducedMs() * speed(), easing: EASE.out });
       return null;
     }
     const name = o.spring || 'gentle';
@@ -142,6 +176,9 @@ const MOTION = (() => {
     EASE,
     STAGGER,
     CUE,
+    ZOOM,
+    LAUNCH,
+    ms,
     BLUR_MAX,
     curve,
     on,

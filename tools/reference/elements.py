@@ -6,8 +6,8 @@
 Reads js/register.js (no browser): the shared parts, the names by action and each screen's own parts, with the
 screen's ID and name, how the part is found, the parts kit part it is (its pk- class) and its status. Since Q53 it also
 reads js/gestures.js › KITPRESS for the Presses section: which buttons take which kit press, each reused from the kit,
-with the app's own press it replaced kept as Retired. Values (sizes, springs, corners) come later, with the element
-sheet's own plan. See MAINTAINING › Screen IDs › Naming rules.
+with the app's own press it replaced kept as Retired. Since Q54 a Named motion section lists the animations that took a
+named value or spring, each reused, and the leftovers it retired. Values per part (sizes, springs, corners) come with Q55. See MAINTAINING › Screen IDs › Naming rules.
 """
 import os
 import re
@@ -70,6 +70,42 @@ def presses():
     return L
 
 
+def motion():
+    """Q54 (3.68): the app's own animations that took a named value or a kit spring. Each is reused, none new. Q55
+    brings every part's values from the code; until then this is Q54's record, last checked 5 Nov 2026."""
+    rows = [
+        ('Row moves', '`.rowc`, `.crow`, `.tkfg`, `.sw .fg`', 'own bounce, 0.22 to 0.35 s', '`gentle` spring'),
+        ('Pattern dots and vowel swap', '`.pdraw .pnt`, `.pdraw .prip`, `.pvowel b.swap`', '0.25 to 0.6 s, own bounces', '`ripple` spring'),
+        ('Pattern steps', '`.pt`', 'own bounce', '`--ease-knob`'),
+        ('Pattern player bubble and dim', '`.phbub`, `#pHud .phscrim`, `.pt .pst > span`', '0.25 to 0.45 s', '`gentle`, `--dur-fade`'),
+        ('Pull to refresh', '`#ptr.go .spin`, `main.ptr-snap`', '0.8 s spin, 0.42 s snap', 'kit spinner (`--dur-spin`, `--ease-steps`), `gentle`'),
+        ('Launch screen (motion off)', '`#splash`, `#splash .sp-icon`', '0.35 s, 0.45 s', '`--dur-leave`, `--ease-accel`'),
+        ('Launch ripple', '`MOTION.LAUNCH` (js/launch.js)', 'numbers in launch.js', 'its own timings, named once in `MOTION.LAUNCH`'),
+        ('Card zoom fades', '`MOTION.ZOOM` (js/zoom.js)', '24 numbers in zoom.js', '`MOTION.ms(\'quick\')`, `(\'fade\')` and its own, named in `MOTION.ZOOM`'),
+        ('Session clock', '`#layer .sck`, `.clockscrim`', '140 to 300 ms', 'kit part 50: `appear` 250, `leave` 350; Reduce Motion `--dur-reduced`'),
+        ('Recall\'s hidden words', '`.hx`, `.hxin .hx`, `.rl.peeking .hx`', '0.22 to 0.35 s', '`--dur-fade`, `--ease-out`'),
+        ('Sideways scroll fade, pointer hint', '`[data-edge-fade]`, `.hint`', '0.18 s, 0.25 s', '`--dur-fade`, `--ease-out`'),
+        ('Note box', '`.notebox`', '0.3 s', '`--dur-appear`'),
+        ('Takes closing', '`VS-054`', '140 ms', '`MOTION.ms(\'close\')`, `MOTION.EASE.accel`'),
+        ('Changelog timeline', '`.tl-card`, `.tl-in.seen`, `.tl-more svg.i`', '0.3 to 0.6 s', '`gentle`'),
+        ('Changelog now dot', '`.tl-item.now .tl-node::after`', 'pulsed forever', 'three pulses, then rests (as the exercise glow)'),
+        ('Rung nudge', '`.rgi.rneed > .rgrow`', '1.1 s', 'the same 1.2 s as `.rgi.rnudge`'),
+    ]
+    L = ['## Named motion', '',
+         'Animations that took a named value or a kit spring in Q54 (3.68), so the app keeps one feel. Every one is reused, '
+         'none new. What\'s left written by hand, with its reason, is in `tests/test_values.py`. Last checked 5 Nov 2026.', '',
+         '| Animation | Parts | Was | Now | Animation | Status |', '|---|---|---|---|---|---|']
+    L += ['| %s | %s | %s | %s | Reused | In use |' % r for r in rows]
+    L += ['', '<details><summary>Retired (4)</summary>', '',
+          '| Animation | Was | Status |', '|---|---|---|',
+          '| `pop` keyframes | unused since the parts kit | Retired · 3.68 |',
+          '| `up` keyframes | unused | Retired · 3.68 |',
+          '| `pmIn` keyframes | the old pull-up menu, unused since the parts kit\'s menus | Retired · 3.68 |',
+          '| The Changelog now dot\'s endless pulse | `lgpulse` infinite | Retired · 3.68 |',
+          '', '</details>', '']
+    return L
+
+
 def build():
     src = open(REG, encoding='utf-8').read()
     shared = src[src.index('  shared: ['):src.index('  actions: [')]
@@ -106,7 +142,7 @@ def build():
             area = r[0]
             L += ['', '### ' + area, '', '| Name | Found by | Status |', '|---|---|---|']
         L.append('| `%s` | `%s` | %s |' % (r[1], esc(r[2]), r[4]))
-    L += [''] + presses()
+    L += [''] + presses() + [''] + motion()
     L += ['## On their screens', ''] + body
     return '\n'.join(L).rstrip() + '\n'
 

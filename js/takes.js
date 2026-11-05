@@ -1196,7 +1196,7 @@ const TAKE = (() => {
       };
       // shutting: the takes fade out quickly first (exits are quicker than entrances), then the list closes up
       const a = leaving
-        ? MOTION.animate(leaving, [{ opacity: 1 }, { opacity: 0 }], { ms: 140, easing: 'ease-in', fill: 'forwards' })
+        ? MOTION.animate(leaving, [{ opacity: 1 }, { opacity: 0 }], { ms: MOTION.ms('close'), easing: MOTION.EASE.accel, fill: 'forwards' })
         : null;
       if (a && a.finished) a.finished.then(go, go);
       else go();

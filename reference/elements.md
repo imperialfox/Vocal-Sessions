@@ -515,6 +515,41 @@ How each kind of button presses (Q53, 3.67). `KITPRESS` in `js/gestures.js` give
 
 </details>
 
+
+## Named motion
+
+Animations that took a named value or a kit spring in Q54 (3.68), so the app keeps one feel. Every one is reused, none new. What's left written by hand, with its reason, is in `tests/test_values.py`. Last checked 5 Nov 2026.
+
+| Animation | Parts | Was | Now | Animation | Status |
+|---|---|---|---|---|---|
+| Row moves | `.rowc`, `.crow`, `.tkfg`, `.sw .fg` | own bounce, 0.22 to 0.35 s | `gentle` spring | Reused | In use |
+| Pattern dots and vowel swap | `.pdraw .pnt`, `.pdraw .prip`, `.pvowel b.swap` | 0.25 to 0.6 s, own bounces | `ripple` spring | Reused | In use |
+| Pattern steps | `.pt` | own bounce | `--ease-knob` | Reused | In use |
+| Pattern player bubble and dim | `.phbub`, `#pHud .phscrim`, `.pt .pst > span` | 0.25 to 0.45 s | `gentle`, `--dur-fade` | Reused | In use |
+| Pull to refresh | `#ptr.go .spin`, `main.ptr-snap` | 0.8 s spin, 0.42 s snap | kit spinner (`--dur-spin`, `--ease-steps`), `gentle` | Reused | In use |
+| Launch screen (motion off) | `#splash`, `#splash .sp-icon` | 0.35 s, 0.45 s | `--dur-leave`, `--ease-accel` | Reused | In use |
+| Launch ripple | `MOTION.LAUNCH` (js/launch.js) | numbers in launch.js | its own timings, named once in `MOTION.LAUNCH` | Reused | In use |
+| Card zoom fades | `MOTION.ZOOM` (js/zoom.js) | 24 numbers in zoom.js | `MOTION.ms('quick')`, `('fade')` and its own, named in `MOTION.ZOOM` | Reused | In use |
+| Session clock | `#layer .sck`, `.clockscrim` | 140 to 300 ms | kit part 50: `appear` 250, `leave` 350; Reduce Motion `--dur-reduced` | Reused | In use |
+| Recall's hidden words | `.hx`, `.hxin .hx`, `.rl.peeking .hx` | 0.22 to 0.35 s | `--dur-fade`, `--ease-out` | Reused | In use |
+| Sideways scroll fade, pointer hint | `[data-edge-fade]`, `.hint` | 0.18 s, 0.25 s | `--dur-fade`, `--ease-out` | Reused | In use |
+| Note box | `.notebox` | 0.3 s | `--dur-appear` | Reused | In use |
+| Takes closing | `VS-054` | 140 ms | `MOTION.ms('close')`, `MOTION.EASE.accel` | Reused | In use |
+| Changelog timeline | `.tl-card`, `.tl-in.seen`, `.tl-more svg.i` | 0.3 to 0.6 s | `gentle` | Reused | In use |
+| Changelog now dot | `.tl-item.now .tl-node::after` | pulsed forever | three pulses, then rests (as the exercise glow) | Reused | In use |
+| Rung nudge | `.rgi.rneed > .rgrow` | 1.1 s | the same 1.2 s as `.rgi.rnudge` | Reused | In use |
+
+<details><summary>Retired (4)</summary>
+
+| Animation | Was | Status |
+|---|---|---|
+| `pop` keyframes | unused since the parts kit | Retired · 3.68 |
+| `up` keyframes | unused | Retired · 3.68 |
+| `pmIn` keyframes | the old pull-up menu, unused since the parts kit's menus | Retired · 3.68 |
+| The Changelog now dot's endless pulse | `lgpulse` infinite | Retired · 3.68 |
+
+</details>
+
 ## On their screens
 
 ### VS-001 · Today

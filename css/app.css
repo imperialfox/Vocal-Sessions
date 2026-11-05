@@ -346,7 +346,7 @@ html.glass-solid {
 }
 .glass.tinted {
   background: var(--tint);
-  color: #fff;
+  color: var(--on-accent);
 }
 .circ,
 .pill,
@@ -370,7 +370,7 @@ html.glass-solid {
 }
 body.sheet-open .wrap {
   transform: scale(0.94);
-  border-radius: 28px;
+  border-radius: var(--r-large);
   transition: transform var(--dur-sheet) var(--ease-sheet);
 }
 
@@ -460,7 +460,7 @@ h1 {
 /* Changelog timeline */
 .lgcard {
   background: var(--surface);
-  border-radius: 22px;
+  border-radius: var(--r-card);
   padding: 16px 16px 12px;
   margin-top: 6px;
 }
@@ -639,7 +639,9 @@ h1 {
   border-radius: 50%;
   border: 2px solid var(--accent);
   opacity: 0.5;
-  animation: lgpulse 2.2s ease-out infinite;
+  /* Q54: three pulses, then it rests on the pulse's own end (faded out, no jump), like the exercise glow; nothing pulses
+     forever */
+  animation: lgpulse 2.2s ease-out 3 forwards;
 }
 @keyframes lgpulse {
   0% {
@@ -655,7 +657,7 @@ h1 {
   background: var(--surface);
   border-radius: var(--r-card);
   padding: 14px 16px 6px;
-  transition: box-shadow 0.4s;
+  transition: box-shadow var(--dur-gentle) var(--ease-gentle);
 }
 .tl-card.flash {
   box-shadow: 0 0 0 3px var(--hl);
@@ -796,7 +798,7 @@ h1 {
 .tl-more svg.i {
   width: 16px;
   height: 16px;
-  transition: transform 0.3s;
+  transition: transform var(--dur-gentle) var(--ease-gentle);
 }
 .tl-more.open svg.i {
   transform: rotate(180deg);
@@ -823,8 +825,8 @@ h1 {
   opacity: 1;
   transform: none;
   transition:
-    opacity 0.5s ease,
-    transform 0.6s var(--ease-out);
+    opacity var(--dur-gentle) var(--ease-gentle),
+    transform var(--dur-gentle) var(--ease-gentle);
 }
 html.motion-reduced .tl-in {
   opacity: 1;
@@ -838,7 +840,7 @@ html.motion-reduced .tl-item.now .tl-node::after {
   display: flex;
   gap: 12px;
   align-items: flex-start;
-  border-radius: 16px;
+  border-radius: var(--r-medium);
   padding: 12px 14px;
   margin: 0 0 4px;
   font-size: var(--t-subhead);
@@ -1059,7 +1061,7 @@ html.motion-reduced .tl-item.now .tl-node::after {
   font: inherit;
   text-align: center;
   cursor: pointer;
-  border-radius: 24px;
+  border-radius: var(--r-large);
 }
 .arch:active {
   background-color: var(--pk-row-press); /* Q41 (D06) row-like cards highlight while pressed, no shrink */
@@ -1248,7 +1250,7 @@ html.motion-reduced .tl-item.now .tl-node::after {
 .sw .fg {
   position: relative;
   z-index: 1;
-  transition: transform 0.22s ease;
+  transition: transform var(--dur-gentle) var(--ease-gentle);
   background: var(--surface);
 }
 .sw.dragging .fg {
@@ -1260,7 +1262,7 @@ html.motion-reduced .tl-item.now .tl-node::after {
   top: 0;
   bottom: 0;
   width: 88px;
-  color: #fff;
+  color: var(--on-accent);
   font-weight: 600;
   font-size: var(--t-subhead);
   text-align: center;
@@ -1278,7 +1280,7 @@ html.motion-reduced .tl-item.now .tl-node::after {
   border-radius: var(--r-small);
   display: grid;
   place-items: center;
-  color: #fff;
+  color: var(--on-accent);
   flex-shrink: 0;
 }
 .tile svg {
@@ -1293,7 +1295,7 @@ html.motion-reduced .tl-item.now .tl-node::after {
 .tile.big {
   width: 64px;
   height: 64px;
-  border-radius: 18px;
+  border-radius: var(--r-card);
   margin: 4px 4px 10px;
 }
 .tile.big svg {
@@ -1383,7 +1385,7 @@ html.motion-reduced .tl-item.now .tl-node::after {
 }
 .cal button.sel {
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
 }
 .cal button:disabled {
   color: var(--fg3);
@@ -1777,7 +1779,7 @@ main::after {
   width: 100%;
   background: var(--warnbg);
   color: var(--warnfg);
-  border-radius: 16px;
+  border-radius: var(--r-medium);
   padding: 12px 14px;
   font-size: var(--t-subhead);
   margin: 12px 0 0;
@@ -1839,7 +1841,7 @@ main::after {
   width: 100%;
   margin-top: 14px;
   padding: 14px 16px;
-  border-radius: 16px;
+  border-radius: var(--r-medium);
   background: var(--surface);
   color: var(--accent);
   font-size: var(--t-callout);
@@ -1850,7 +1852,7 @@ main::after {
 }
 .notebox {
   margin-top: 14px;
-  animation: grow 0.3s ease;
+  animation: grow var(--dur-appear) var(--ease-out);
 }
 @keyframes grow {
   from {
@@ -2024,7 +2026,7 @@ button.pill {
   min-height: 18px;
 }
 .sckrows {
-  border-radius: 18px;
+  border-radius: var(--r-card);
   background: var(--surface);
   overflow: hidden;
 }
@@ -2116,7 +2118,7 @@ button.pill {
   width: 28px;
   height: 28px;
   margin: -14px 0 0 -14px;
-  background: #fff;
+  background: var(--pk-knob);
   box-shadow:
     0 0.5px 4px rgba(0, 0, 0, 0.12),
     0 6px 13px rgba(0, 0, 0, 0.12);
@@ -2189,7 +2191,7 @@ html.motion-off .sck.paused .scksl {
   transition: opacity 0.08s;
 }
 #ptr.go .spin {
-  animation: turn 0.8s steps(8) infinite;
+  animation: turn var(--dur-spin) var(--ease-steps) infinite;
 }
 @keyframes turn {
   to {
@@ -2197,7 +2199,7 @@ html.motion-off .sck.paused .scksl {
   }
 }
 main.ptr-snap {
-  transition: transform 0.42s cubic-bezier(0.25, 0.8, 0.3, 1);
+  transition: transform var(--dur-gentle) var(--ease-gentle);
 }
 
 /* 3.3 responsive: .land = iPhone on its side, .reg = iPad / Mac window, .wide = sidebar */
@@ -2323,12 +2325,6 @@ body.reg.sheet-open .wrap {
   transform: none;
   border-radius: 0;
 }
-@keyframes pop {
-  from {
-    transform: scale(0.93);
-    opacity: 0;
-  }
-}
 /* sidebar (Mac, iPad landscape) */
 body.wide {
   padding-left: calc(278px + env(safe-area-inset-left, 0px));
@@ -2369,7 +2365,7 @@ body.wide .side-nav {
   gap: 10px;
   height: 40px;
   padding: 0 12px;
-  border-radius: 12px;
+  border-radius: var(--r-medium);
   font-size: var(--t-subhead);
   font-weight: 500;
   color: var(--fg);
@@ -2459,7 +2455,7 @@ body.wide .side-nav {
   margin: 0 4px;
 }
 body.reg .shead {
-  border-radius: 28px 28px 0 0;
+  border-radius: var(--r-large) var(--r-large) 0 0;
 }
 /* 3.4 launch screen: app icon on the normal background, fades with a slight zoom once ready */
 #splash {
@@ -2471,7 +2467,7 @@ body.reg .shead {
   height: 100lvh;
   z-index: 200;
   background: var(--bg);
-  transition: opacity 0.35s ease;
+  transition: opacity var(--dur-leave) var(--ease-accel);
   contain: strict;
 }
 /* 3.13: the icon is its plain background (img) with the six sound-wave bars on top as their own elements, placed to
@@ -2486,7 +2482,7 @@ body.reg .shead {
   border-radius: var(--r-large);
   overflow: hidden;
   box-shadow: 0 10px 30px rgba(226, 36, 64, 0.28);
-  transition: transform 0.45s cubic-bezier(0.3, 0.9, 0.4, 1);
+  transition: transform var(--dur-leave) var(--ease-accel);
 }
 #splash img {
   display: block;
@@ -2536,7 +2532,7 @@ body.reg .shead {
 }
 .pcard {
   background: var(--surface);
-  border-radius: 22px;
+  border-radius: var(--r-card);
   padding: 16px 16px 14px;
   margin-top: 12px;
 }
@@ -2724,16 +2720,6 @@ body.reg .p-song {
 body.reg .pgrid > div > .hdr:first-child {
   margin-top: 8px;
 }
-@keyframes up {
-  from {
-    transform: translateY(40px);
-    opacity: 0.4;
-  }
-  to {
-    transform: none;
-    opacity: 1;
-  }
-}
 @keyframes fade {
   from {
     opacity: 0;
@@ -2749,7 +2735,7 @@ html.motion-reduced *::after {
   transition-property: opacity, color, background-color, border-color, box-shadow, fill, stroke !important;
   transition-duration: calc(var(--dur-reduced) * var(--pk-speed)) !important; /* Q52 (D20): the kit's 100 ms */
   transition-delay: 0s !important;
-  transition-timing-function: ease-out !important;
+  transition-timing-function: var(--ease-out) !important;
 }
 /* 3.8 Songs */
 :root {
@@ -2779,7 +2765,7 @@ html.motion-reduced *::after {
   flex-shrink: 0;
 }
 .txtbtn.tinted {
-  color: #fff;
+  color: var(--on-accent);
   font-weight: 600;
 }
 /* Q41 (D01, D02) the dock's tab bar is the parts kit's (.pk-dock.pk-inline: the bar and the search circle, 8 pt apart);
@@ -3025,7 +3011,7 @@ body.land .scirc {
 }
 .sfield.inl {
   height: 40px;
-  border-radius: 12px;
+  border-radius: var(--r-medium);
   background: var(--fill);
   margin: 6px 0 4px;
   padding: 0 4px 0 12px;
@@ -3058,7 +3044,7 @@ body.land .scirc {
   user-select: none;
   -webkit-touch-callout: none;
   transition:
-    transform 0.35s cubic-bezier(0.3, 1.2, 0.5, 1),
+    transform var(--dur-gentle) var(--ease-gentle),
     box-shadow var(--dur-fade);
 }
 .rowc.drag {
@@ -3087,7 +3073,7 @@ body.land .scirc {
   align-items: center;
   justify-content: center;
   gap: 3px;
-  color: #fff;
+  color: var(--on-accent);
   font-size: var(--t-footnote);
   font-weight: 600;
   text-align: center;
@@ -3153,7 +3139,7 @@ mark.sgmk {
 .selc.on {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
 }
 .selc svg.i {
   width: 14px;
@@ -3315,7 +3301,7 @@ body.wide .etool {
 }
 .sgpill.blue {
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
 }
 .sgsub {
   font-size: var(--t-footnote);
@@ -3479,7 +3465,7 @@ body.wide .etool {
 }
 .w.on {
   background: var(--accent) !important;
-  color: #fff;
+  color: var(--on-accent);
 }
 .w.on .v {
   background: var(--surface);
@@ -3494,13 +3480,13 @@ body.wide .etool {
 @keyframes sgpulse {
   0% {
     background: var(--accent);
-    color: #fff;
+    color: var(--on-accent);
   }
 }
 .sgwarn {
   background: var(--warnbg);
   color: var(--warnfg);
-  border-radius: 12px;
+  border-radius: var(--r-medium);
   padding: 8px 10px;
   font-size: var(--t-subhead);
   display: flex;
@@ -3521,7 +3507,7 @@ body.wide .etool {
   height: 20px;
   border-radius: var(--r-small);
   background: var(--star);
-  color: #fff;
+  color: var(--on-accent);
   font-size: var(--t-caption1);
   font-weight: 700;
   display: flex;
@@ -3593,7 +3579,7 @@ body.wide .etool {
   display: flex;
   align-items: center;
   gap: 10px;
-  transition: transform 0.25s cubic-bezier(0.3, 1.2, 0.5, 1);
+  transition: transform var(--dur-gentle) var(--ease-gentle);
   -webkit-user-select: none;
   user-select: none;
 }
@@ -3631,7 +3617,7 @@ body.wide .etool {
   position: relative;
   z-index: 5;
   scale: 1.03;
-  box-shadow: 0 14px 34px var(--glass-shadow);
+  box-shadow: var(--shadow-lifted);
 }
 /* new song */
 .sglab2 {
@@ -3649,7 +3635,7 @@ textarea.field.sglyr {
 }
 .blk {
   background: var(--surface);
-  border-radius: 16px;
+  border-radius: var(--r-medium);
   padding: 10px 12px;
   margin-top: 10px;
 }
@@ -3892,7 +3878,7 @@ textarea.field.sglyr {
 .hx {
   position: relative;
   color: transparent;
-  transition: color 0.35s ease;
+  transition: color var(--dur-fade) var(--ease-out);
 }
 .hx::after {
   content: '';
@@ -3905,18 +3891,18 @@ textarea.field.sglyr {
   border-radius: 999px;
   background: var(--hx);
   pointer-events: none;
-  transition: opacity 0.35s ease;
+  transition: opacity var(--dur-fade) var(--ease-out);
 }
 .w .v .hx::after {
   height: 0.62em;
   transform: translateY(-50%);
 }
 .hxin .hx {
-  animation: hxText 0.25s ease backwards;
+  animation: hxText var(--dur-fade) var(--ease-out) backwards;
   animation-delay: var(--hxd, 0ms);
 }
 .hxin .hx::after {
-  animation: hxIn 0.25s ease backwards;
+  animation: hxIn var(--dur-fade) var(--ease-out) backwards;
   animation-delay: var(--hxd, 0ms);
 }
 @keyframes hxText {
@@ -3931,7 +3917,7 @@ textarea.field.sglyr {
 }
 .rl {
   cursor: pointer;
-  border-radius: 8px;
+  border-radius: var(--r-small);
   -webkit-user-select: none;
   user-select: none;
   -webkit-touch-callout: none;
@@ -3940,14 +3926,12 @@ textarea.field.sglyr {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
-/* peeking shows the line quickly, and it fades back a little slower */
+/* peeking shows the line (Q54: on the same named fade both ways, --dur-fade) */
 .rl.peeking .hx {
   color: inherit;
-  transition-duration: 0.22s;
 }
 .rl.peeking .hx::after {
   opacity: 0;
-  transition-duration: 0.22s;
 }
 .pkseg button {
   min-width: 48px;
@@ -4154,7 +4138,7 @@ textarea.field.sglyr {
   width: 100%;
   height: 100%;
   transform-origin: 0 0;
-  border-radius: 22px;
+  border-radius: var(--r-card);
   box-shadow: 0 0 36px rgba(0, 0, 0, 0.22);
 }
 .zm-c {
@@ -4237,7 +4221,7 @@ textarea.field.sglyr {
 .cv-slot {
   position: relative;
   aspect-ratio: 16 / 9;
-  border-radius: 16px;
+  border-radius: var(--r-medium);
   overflow: hidden;
   background: #000;
   touch-action: manipulation;
@@ -4399,7 +4383,7 @@ textarea.field.sglyr {
 }
 .cvpill.on {
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
 }
 .cvctl .cvlv + .cvpill {
   margin-left: auto;
@@ -4407,7 +4391,7 @@ textarea.field.sglyr {
 .cvthumb {
   width: 54px;
   height: 34px;
-  border-radius: 8px;
+  border-radius: var(--r-small);
   display: grid;
   place-items: center;
   flex-shrink: 0;
@@ -4417,7 +4401,7 @@ textarea.field.sglyr {
 .cvthumb.big {
   width: 80px;
   height: 45px;
-  border-radius: 9px;
+  border-radius: var(--r-small);
 }
 .cvthumb svg.i {
   width: 14px;
@@ -4487,7 +4471,7 @@ textarea.field.sglyr {
   visibility: hidden;
   transition:
     opacity var(--dur-gentle) var(--ease-gentle),
-    visibility 0s linear var(--dur-gentle);
+    visibility 0s var(--ease-linear) var(--dur-gentle);
 }
 .fw.ctl .fwvc {
   opacity: 1;
@@ -4760,7 +4744,7 @@ textarea.field.sglyr {
 .cklen.ed {
   color: var(--accent);
   background: var(--fill);
-  border-radius: 8px;
+  border-radius: var(--r-small);
   padding: 3px 9px;
   flex: none;
 }
@@ -4867,7 +4851,7 @@ textarea.field.sglyr {
 }
 .cktile.on .ckc {
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
 }
 .cktl2 small {
   display: block;
@@ -4906,7 +4890,7 @@ textarea.field.sglyr {
 }
 .ckpb.on {
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   box-shadow: none;
 }
 .ckgedit {
@@ -5034,7 +5018,7 @@ html.ckplay body {
 /* paused: the song page shows where it stopped */
 .sgl.ckcur {
   background: var(--hl);
-  border-radius: 8px;
+  border-radius: var(--r-small);
   box-shadow: 0 0 0 4px var(--hl);
   font-weight: 600;
 }
@@ -5175,7 +5159,7 @@ html.ckplay body {
 .ckpop {
   position: absolute;
   width: 290px;
-  border-radius: 22px;
+  border-radius: var(--r-card);
   padding: 12px 14px 4px;
   background: var(--glass-strong);
 }
@@ -5207,7 +5191,7 @@ html.ckplay body {
   right: 0;
   top: 72px;
   height: 36px;
-  border-radius: 9px;
+  border-radius: var(--r-small);
   background: var(--fill);
   pointer-events: none;
 }
@@ -5233,7 +5217,7 @@ html.ckplay body {
 }
 .ckwcol:focus-visible {
   box-shadow: inset 0 0 0 2px var(--accent);
-  border-radius: 9px;
+  border-radius: var(--r-small);
 }
 .ckwcol div {
   height: 36px;
@@ -5391,7 +5375,7 @@ html.motion-off .trkjog {
 }
 body.reg .trkroll {
   margin: 10px 0 0;
-  border-radius: 12px;
+  border-radius: var(--r-medium);
 }
 .trkrollr {
   position: absolute;
@@ -5489,7 +5473,7 @@ body.reg .trkroll {
 /* Q09 the Song overview card: the whole song's rows, with its heading and the Lyrics pill at the top right */
 .trksong {
   padding: 4px 12px 10px;
-  border-radius: 18px;
+  border-radius: var(--r-card);
   background: var(--surface);
 }
 .trksh {
@@ -5521,7 +5505,7 @@ body.reg .trkroll {
 }
 .trklyt.on {
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
 }
 /* Q02 Markers: a two-column grid of rehearsal tiles, and a tile that adds one */
 .trkgrid {
@@ -5547,7 +5531,7 @@ body.reg .trkroll {
 .trktl {
   position: relative;
   min-height: 108px;
-  border-radius: 18px;
+  border-radius: var(--r-card);
   background: var(--surface);
   box-shadow: inset 0 0 0 2px transparent;
   transition: box-shadow var(--dur-fade);
@@ -5621,7 +5605,7 @@ body.reg .trkroll {
 }
 .trktlo.on {
   background: var(--trk-loop);
-  color: #fff;
+  color: var(--on-accent);
 }
 .trktlo.off {
   opacity: 0.35;
@@ -5780,7 +5764,7 @@ body.reg .trkroll {
 }
 .trkb.on {
   background: var(--trk-loop);
-  color: #fff;
+  color: var(--on-accent);
 }
 .trkpp {
   width: 54px;
@@ -5847,7 +5831,7 @@ body.reg .trkroll {
 }
 .trkpl.on {
   background: var(--trk-loop);
-  color: #fff;
+  color: var(--on-accent);
 }
 .trkpads {
   display: flex;
@@ -5859,7 +5843,7 @@ body.reg .trkroll {
   flex: 95 1 0;
   max-width: 95px;
   height: 72px;
-  border-radius: 24px;
+  border-radius: var(--r-large);
   display: grid;
   place-items: center;
   color: var(--fg);
@@ -5947,7 +5931,7 @@ body:has(#dock .trkmd) main {
 }
 .sgplay.on {
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
 }
 .sgplay.off {
   color: var(--fg3);
@@ -6027,7 +6011,7 @@ body:has(#dock .trkmd) main {
   gap: 6px;
   min-height: 44px;
   padding: 0 14px;
-  border-radius: 12px;
+  border-radius: var(--r-medium);
   background: var(--surface);
   font-size: var(--t-body);
   font-variant-numeric: tabular-nums;
@@ -6151,7 +6135,7 @@ button.lnk.off {
   align-items: center;
   justify-content: center;
   gap: 3px;
-  color: #fff;
+  color: var(--on-accent);
   font-size: var(--t-footnote);
   font-weight: 500;
   visibility: hidden;
@@ -6181,7 +6165,7 @@ button.lnk.off {
 .tkfg {
   position: relative;
   background: var(--surface);
-  transition: transform 0.35s cubic-bezier(0.3, 1.2, 0.5, 1);
+  transition: transform var(--dur-gentle) var(--ease-gentle);
 }
 .tkhead {
   display: flex;
@@ -6252,7 +6236,7 @@ button.lnk.off {
 }
 .tkpp.on {
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
 }
 .tkopen {
   padding: 10px 14px 14px 16px;
@@ -6435,7 +6419,7 @@ button.lnk.off {
   padding: 3px 8px;
   border-radius: 999px;
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   font-size: var(--t-footnote);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
@@ -6542,8 +6526,8 @@ body.reg .trkmk {
   );
   mask-image: linear-gradient(90deg, transparent, #000 var(--fadel), #000 calc(100% - var(--fader)), transparent);
   transition:
-    --fadel 0.25s ease-out,
-    --fader 0.25s ease-out;
+    --fadel var(--dur-fade) var(--ease-out),
+    --fader var(--dur-fade) var(--ease-out);
 }
 [data-edge-fade].fadel {
   --fadel: 32px;
@@ -6639,7 +6623,7 @@ body.reg .trkmk {
 }
 .trkchl.on {
   background: var(--trk-loop);
-  color: #fff;
+  color: var(--on-accent);
 }
 .trkchips {
   flex-wrap: wrap;
@@ -6770,7 +6754,7 @@ html.motion-reduced .notebox {
 .setfoot img {
   width: 60px;
   height: 60px;
-  border-radius: 13.5px;
+  border-radius: var(--r-medium);
   margin-bottom: 8px;
   box-shadow: 0 0 0 0.5px var(--sep);
 }
@@ -6904,20 +6888,18 @@ body.tg-away .tgrad i {
   border-radius: 7px;
   background: var(--bg2);
   color: var(--fg);
-  box-shadow:
-    0 0 0 0.5px var(--sep),
-    0 4px 12px var(--glass-shadow);
+  box-shadow: 0 0 0 0.5px var(--sep), var(--shadow-floating);
   font-size: var(--t-caption1);
   line-height: 1.3;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   opacity: 0;
-  transition: opacity var(--dur-quick) ease-out;
+  transition: opacity var(--dur-quick) var(--ease-out);
 }
 .hint.show {
   opacity: 1;
-  transition-duration: 0.18s;
+  transition-duration: var(--dur-fade);
 }
 @media not ((hover: hover) and (pointer: fine)) {
   .hint {
@@ -6959,7 +6941,7 @@ body.tg-away .tgrad i {
 }
 .mkchip.on {
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
 }
 .mkchip.on i {
   color: rgba(255, 255, 255, 0.75);
@@ -7055,7 +7037,7 @@ body.tg-away .tgrad i {
 }
 .mksheet {
   width: min(430px, calc(100vw - 16px));
-  border-radius: 28px;
+  border-radius: var(--r-large);
   padding: 12px 12px 14px;
   background: var(--glass-strong);
   max-height: 62vh;
@@ -7070,7 +7052,7 @@ body.tg-away .tgrad i {
   }
 }
 html.motion-reduced .mksheet {
-  animation: rmIn var(--dur-fade) ease;
+  animation: rmIn var(--dur-reduced) var(--ease-out); /* Q54: the kit's Reduce Motion fade (D20) */
 }
 .mkcap {
   border-radius: 999px;
@@ -7240,7 +7222,7 @@ body.mkcapon main {
 }
 .mkopt.on {
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
 }
 .mktxt {
   display: flex;
@@ -7279,7 +7261,7 @@ body.mkcapon main {
 }
 .sgl.mknow {
   background: var(--hl);
-  border-radius: 8px;
+  border-radius: var(--r-small);
   box-shadow: 0 0 0 4px var(--hl);
 }
 /* the pencil row's Marks · Lyrics switch (Song Clock's song details) */
@@ -7545,7 +7527,7 @@ button.ckr {
   height: 32px;
 }
 .tile.big.gdbig .m.br {
-  color: #fff;
+  color: var(--on-accent);
   margin: 0;
 }
 .tile.big.gdbig .m.br svg {
@@ -7629,7 +7611,7 @@ button.ckr {
 .mkpeek {
   position: fixed;
   z-index: 36;
-  border-radius: 24px;
+  border-radius: var(--r-large);
   padding: 14px 14px 12px;
   background: var(--glass-strong);
   max-height: calc(100vh - 16px);
@@ -7746,7 +7728,7 @@ button.ckr {
   height: 24px;
   border-radius: 50%;
   background: var(--good);
-  color: #fff;
+  color: var(--on-accent);
   display: grid;
   place-items: center;
   flex-shrink: 0;
@@ -7822,7 +7804,7 @@ button.ckr {
 .rgi.big .tile {
   width: 48px;
   height: 48px;
-  border-radius: 12px;
+  border-radius: var(--r-small);
 }
 .rgi.big .tile svg {
   width: 30px;
@@ -7936,7 +7918,7 @@ html.motion-off .cuebox {
   animation: opnudge 1.2s ease-out 1;
 }
 .rgi.rneed > .rgrow {
-  animation: opnudge 1.1s ease-out 1;
+  animation: opnudge 1.2s ease-out 1;
 }
 @keyframes opnudge {
   30%,
@@ -8081,7 +8063,7 @@ body:has(#dock .ophint) .dock .in {
 .aphead .tile {
   width: 48px;
   height: 48px;
-  border-radius: 12px;
+  border-radius: var(--r-small);
 }
 .aphead .tile svg {
   width: 26px;
@@ -8115,7 +8097,7 @@ body:has(#dock .ophint) .dock .in {
 }
 .appill.on {
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
 }
 .apcard .aptrk {
   min-height: 44px;
@@ -8133,12 +8115,12 @@ body:has(#dock .ophint) .dock .in {
   height: 54px;
   border-radius: 999px;
   background: var(--rec);
-  color: #fff;
+  color: var(--on-accent);
   font-size: var(--t-body);
   font-weight: 600;
 }
 .apsing .dot {
-  background: #fff;
+  background: var(--on-accent);
   border-radius: 50%;
 }
 .apsing:active,
@@ -8775,7 +8757,7 @@ body.apprec #dock {
 .fw[data-kind='rectrack'] {
   padding: 9px 14px 11px;
   background: #d70015;
-  color: #fff;
+  color: var(--on-accent);
 }
 .fw .fwrec {
   position: relative;
@@ -8790,7 +8772,7 @@ body.apprec #dock {
   align-items: center;
   gap: 5px;
   padding-right: 44px;
-  color: #fff;
+  color: var(--on-accent);
   font-size: var(--t-footnote);
   font-weight: 500;
 }
@@ -8809,7 +8791,7 @@ body.apprec #dock {
   right: 0;
   font-size: var(--t-footnote);
   font-variant-numeric: tabular-nums;
-  color: #fff;
+  color: var(--on-accent);
 }
 .fw[data-kind='rectrack'] .fwt {
   font-size: var(--t-subhead);
@@ -8824,7 +8806,7 @@ body.apprec #dock {
   background: rgba(0, 0, 0, 0.25);
 }
 .fw[data-kind='rectrack'] .fwp i {
-  background: #fff;
+  background: var(--on-accent);
 }
 
 /* ===== Q32 Exercises: Redesign =====
@@ -8907,7 +8889,7 @@ body.apprec #dock {
   fill: var(--pat-head);
 }
 .pdraw .pnt {
-  transition: transform 0.25s cubic-bezier(0.3, 1.6, 0.5, 1);
+  transition: transform var(--dur-ripple) var(--ease-ripple);
 }
 .pdraw .pdot.ptempo {
   opacity: 1;
@@ -8917,7 +8899,7 @@ body.apprec #dock {
   stroke-width: 2;
   transform-box: fill-box;
   transform-origin: center;
-  animation: prip 0.6s ease-out forwards;
+  animation: prip var(--dur-ripple) var(--ease-ripple) forwards;
 }
 @keyframes prip {
   from {
@@ -8968,7 +8950,7 @@ body.apprec #dock {
 .prange.bad {
   color: var(--warnfg);
   background: var(--warnbg);
-  border-radius: 12px;
+  border-radius: var(--r-medium);
   padding: 8px 10px;
 }
 .prange svg {
@@ -9128,7 +9110,7 @@ body.apprec #dock {
   color: var(--pc);
 }
 .pvowel b.swap {
-  animation: pvswap 0.45s cubic-bezier(0.3, 1.4, 0.5, 1);
+  animation: pvswap var(--dur-ripple) var(--ease-ripple);
 }
 @keyframes pvswap {
   from {
@@ -9184,7 +9166,7 @@ body.apprec #dock {
   align-items: flex-start;
   background: var(--warnbg);
   color: var(--warnfg);
-  border-radius: 16px;
+  border-radius: var(--r-medium);
   padding: 12px 14px;
   font-size: var(--t-subhead);
   line-height: 1.4;
@@ -9287,7 +9269,7 @@ html.motion-off .exglow {
 .exlvl.on {
   background: var(--c);
   border-color: var(--c);
-  color: #fff;
+  color: var(--on-accent);
 }
 .exlvt {
   font-size: var(--t-callout);
@@ -9365,7 +9347,7 @@ body.patdock main {
 .pstep {
   position: relative;
   height: 64px;
-  border-radius: 24px;
+  border-radius: var(--r-large);
   display: grid;
   grid-template-columns: 40px 1fr 40px;
   align-items: center;
@@ -9400,7 +9382,7 @@ body.patdock main {
 .prep {
   position: relative;
   height: 64px;
-  border-radius: 24px;
+  border-radius: var(--r-large);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -9416,7 +9398,7 @@ body.patdock main {
 }
 .pplay {
   height: 64px;
-  border-radius: 24px;
+  border-radius: var(--r-large);
   background: var(--pat-play);
   color: var(--pat-onplay);
   display: flex;
@@ -9492,7 +9474,7 @@ body.patdock main {
 }
 .pwin {
   background: var(--bg2);
-  border-radius: 22px;
+  border-radius: var(--r-card);
   padding: 12px 12px 4px;
   margin-top: 10px;
 }
@@ -9570,7 +9552,7 @@ body.patdock main {
   display: flex;
   flex-direction: column;
   transition:
-    transform 0.35s cubic-bezier(0.3, 1.5, 0.5, 1),
+    transform 0.35s var(--ease-knob),
     box-shadow 0.35s;
   -webkit-user-select: none;
   user-select: none;
@@ -9581,7 +9563,7 @@ body.patdock main {
 }
 .pt.held {
   transform: translateY(-3px) scale(1.03);
-  box-shadow: 0 10px 24px var(--glass-shadow);
+  box-shadow: var(--shadow-lifted);
 }
 .ptop {
   display: flex;
@@ -9624,7 +9606,7 @@ body.patdock main {
 }
 .pt .pst > span {
   grid-area: 1 / 1;
-  transition: opacity 0.25s;
+  transition: opacity var(--dur-fade);
 }
 .psteps {
   font-variant-numeric: tabular-nums;
@@ -9715,7 +9697,7 @@ body.patdock main {
   width: 100%;
   height: 50px;
   margin-top: 14px;
-  border-radius: 16px;
+  border-radius: var(--r-medium);
   background: var(--bg2);
   font-size: var(--t-callout);
   color: var(--accent);
@@ -9733,7 +9715,7 @@ body.patdock main {
   background: var(--scrim);
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.3s;
+  transition: opacity var(--dur-fade);
 }
 #pHud.on .phscrim {
   opacity: 1;
@@ -9764,7 +9746,7 @@ body.patdock main {
   transform: translateY(10px) scale(0.8);
   transition:
     opacity var(--dur-fade),
-    transform 0.45s var(--ease-knob);
+    transform var(--dur-gentle) var(--ease-gentle);
 }
 .phbub button {
   width: 40px;
@@ -9842,13 +9824,6 @@ body.patdock main {
   color: var(--fg2);
   white-space: nowrap;
 }
-/* the pull-up menu (sound, voice type) */
-@keyframes pmIn {
-  from {
-    opacity: 0;
-    transform: scale(0.6);
-  }
-}
 /* Settings › Your voice and Pattern player */
 /* Q53: the note, then the kit's stepper (part 24; js/patterns.js › noteStepper) */
 .pvstep {
@@ -9869,7 +9844,7 @@ body.patdock main {
   margin: 0 4px;
 }
 html.motion-reduced .pvowel b.swap {
-  animation: rmIn var(--dur-fade) var(--ease-out);
+  animation: rmIn var(--dur-reduced) var(--ease-out); /* Q54: the kit's Reduce Motion fade (D20) */
 }
 html.motion-reduced .phcard,
 html.motion-reduced .phbub,

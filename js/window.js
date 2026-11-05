@@ -522,7 +522,7 @@ function fwShow() {
   const el = FW.el;
   fwUnhide();
   fwPlace(true);
-  if (fwFades()) return el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: FW_FADE, easing: 'ease-out' }); // Q26
+  if (fwFades()) return el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: FW_FADE, easing: MOTION.EASE.out }); // Q26
   const base = el.style.transform;
   MOTION.animate(
     el,
@@ -563,7 +563,7 @@ function fwHide() {
   // shrinks and fades out, quicker than it came in (Q26: with Reduce Motion, a short fade)
   const base = el.style.transform;
   const a = fwFades()
-    ? el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: FW_FADE, easing: 'ease-out', fill: 'forwards' })
+    ? el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: FW_FADE, easing: MOTION.EASE.out, fill: 'forwards' })
     : MOTION.animate(
         el,
         [
@@ -673,8 +673,8 @@ function fwSwap(s) {
   const ms = Math.round(MOTION.dur('gentle') / Math.max(0.01, MOTION.speed())),
     fade = fadeOnly ? FW_FADE : Math.min(220, ms);
   const anims = [
-    s.g.animate([{ opacity: 1 }, { opacity: 0 }], { duration: fade, easing: 'ease-out', fill: 'forwards' }),
-    el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: fade, easing: 'ease-in' }),
+    s.g.animate([{ opacity: 1 }, { opacity: 0 }], { duration: fade, easing: MOTION.EASE.out, fill: 'forwards' }),
+    el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: fade, easing: MOTION.EASE.accel }),
   ];
   if (!fadeOnly && (s.w !== w || s.h !== h || s.pos.x !== to.x || s.pos.y !== to.y)) {
     const sp = { duration: ms, easing: MOTION.ease('gentle') };

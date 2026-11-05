@@ -376,7 +376,7 @@ const ZOOM = (() => {
     if (reduced()) {
       z.win.style.opacity = '0';
       requestAnimationFrame(() => {
-        to(z, z.win, 'opacity', '1', { ms: RM(), easing: 'ease-out' });
+        to(z, z.win, 'opacity', '1', { ms: RM() });
         whenDone(z, done);
       });
       return true;
@@ -397,7 +397,7 @@ const ZOOM = (() => {
         if (Z !== z || z.ended || z.drag || z.closing) return;
         win(z, FULL(), { spring: 'nav' });
         to(z, z.content, 'transform', 'none', { spring: 'nav' });
-        to(z, z.tintEl, 'opacity', '0', strong(a.tint) ? { ms: 180 } : { ms: 320, delay: 60 });
+        to(z, z.tintEl, 'opacity', '0', strong(a.tint) ? { ms: MOTION.ZOOM.capsuleColour } : { ms: MOTION.ZOOM.colour, delay: 60 });
         if (sm) {
           to(z, z.body, 'opacity', '1', { ms: d * 0.3 });
           to(z, z.title, 'opacity', '1', { ms: d * 0.3 });
@@ -405,14 +405,14 @@ const ZOOM = (() => {
           to(z, z.ghost, 'opacity', '0', { ms: d * 0.4 });
         } else if (strong(a.tint)) {
           // a black or white capsule: the page comes straight in as its colour goes
-          to(z, z.title, 'opacity', '1', { ms: 120 });
-          to(z, z.body, 'opacity', '1', { ms: 160 });
-          to(z, z.ghost, 'opacity', '0', { ms: 120 });
+          to(z, z.title, 'opacity', '1', { ms: MOTION.ms('quick') });
+          to(z, z.body, 'opacity', '1', { ms: MOTION.ZOOM.capsulePage });
+          to(z, z.ghost, 'opacity', '0', { ms: MOTION.ms('quick') });
         } else {
           // the card's label hands over to the page title as the window grows, then the rest of the page arrives
-          to(z, z.title, 'opacity', '1', { ms: 150, delay: 30 });
-          to(z, z.body, 'opacity', '1', { ms: 240, delay: 90 });
-          to(z, z.ghost, 'opacity', '0', { ms: 150 });
+          to(z, z.title, 'opacity', '1', { ms: MOTION.ZOOM.hand, delay: 30 });
+          to(z, z.body, 'opacity', '1', { ms: MOTION.ZOOM.page, delay: 90 });
+          to(z, z.ghost, 'opacity', '0', { ms: MOTION.ZOOM.hand });
         }
         whenDone(z, done);
       })
@@ -433,7 +433,7 @@ const ZOOM = (() => {
       onScreen = R && R.w && R.b > 0 && R.t < vh();
     if (!z) {
       if (!ctx.shot) return false;
-      z = build({ page: ctx.shot, title: ctx.title, rad: onScreen ? radiusOf(card, R) : 22, tint: onScreen ? colourOf(card) : null, top: opts && opts.top });
+      z = build({ page: ctx.shot, title: ctx.title, rad: onScreen ? radiusOf(card, R) : 20, tint: onScreen ? colourOf(card) : null, top: opts && opts.top });
       win(z, FULL());
       z.tintEl.style.opacity = '0';
     } else if (z.under) {
@@ -459,7 +459,7 @@ const ZOOM = (() => {
     win(z, R, { spring: 'nav' });
     if (z.shade) to(z, z.shade, 'opacity', '0', { ms: d * 0.5 }); // the lifted shadow settles as the page lands
     to(z, z.win, 'transform', 'none', { spring: 'nav' }); // after a swipe, the page's own shrink eases away too
-    to(z, z.win, 'opacity', '1', { ms: 120 });
+    to(z, z.win, 'opacity', '1', { ms: MOTION.ms('quick') });
     to(z, z.content, 'transform', anchor(R, z.titleR, lb), { spring: 'nav' });
     // the card's colour takes over from the page as the window nears the card's size, so the window is never an
     // empty dark box, and a black or white capsule doesn't fill the screen with its colour on the way
@@ -472,9 +472,9 @@ const ZOOM = (() => {
       to(z, z.title, 'opacity', '0', { ms: d * 0.3, delay: d * 0.4 });
     } else {
       // the page goes first, the title hands back to the card's label as it lands
-      to(z, z.body, 'opacity', '0', { ms: 150, delay: d * (st ? 0.38 : 0.24) });
-      to(z, z.title, 'opacity', '0', { ms: 140, delay: d * 0.45 });
-      to(z, z.ghost, 'opacity', '1', { ms: 150, delay: d * 0.5 });
+      to(z, z.body, 'opacity', '0', { ms: MOTION.ZOOM.hand, delay: d * (st ? 0.38 : 0.24) });
+      to(z, z.title, 'opacity', '0', { ms: MOTION.ZOOM.handBack, delay: d * 0.45 });
+      to(z, z.ghost, 'opacity', '1', { ms: MOTION.ZOOM.hand, delay: d * 0.5 });
     }
     whenDone(z, () => end(z));
     return true;
@@ -488,7 +488,7 @@ const ZOOM = (() => {
       // a pushed page with nowhere to slide back to: it fades
       z.under.remove();
       z.dim.remove();
-      to(z, z.page, 'opacity', '0', { ms: reduced() ? RM() : 220, easing: 'ease-out' });
+      to(z, z.page, 'opacity', '0', { ms: reduced() ? RM() : MOTION.ZOOM.awayPush });
       whenDone(z, () => end(z));
       return true;
     }
@@ -497,8 +497,8 @@ const ZOOM = (() => {
       z.under = null;
     }
     const cur = getComputedStyle(z.win).transform;
-    to(z, z.win, 'opacity', '0', { ms: reduced() ? RM() : 240, easing: 'ease-out' });
-    if (!reduced()) to(z, z.win, 'transform', (cur === 'none' ? '' : cur + ' ') + 'scale(0.94)', { ms: 240, easing: 'ease-out' });
+    to(z, z.win, 'opacity', '0', { ms: reduced() ? RM() : MOTION.ZOOM.away });
+    if (!reduced()) to(z, z.win, 'transform', (cur === 'none' ? '' : cur + ' ') + 'scale(0.94)', { ms: MOTION.ZOOM.away });
     whenDone(z, () => end(z));
     return true;
   }
@@ -551,7 +551,7 @@ const ZOOM = (() => {
     if (reduced()) {
       z.page.style.opacity = '0';
       requestAnimationFrame(() => {
-        to(z, z.page, 'opacity', '1', { ms: RM(), easing: 'ease-out' });
+        to(z, z.page, 'opacity', '1', { ms: RM() });
         whenDone(z, () => end(z));
       });
       return true;
@@ -583,7 +583,7 @@ const ZOOM = (() => {
     if (reduced()) {
       to(z, z.under, 'transform', 'none');
       to(z, z.dim, 'opacity', '0');
-      to(z, z.page, 'opacity', '0', { ms: RM(), easing: 'ease-out' });
+      to(z, z.page, 'opacity', '0', { ms: RM() });
       whenDone(z, () => end(z));
       return true;
     }
@@ -773,7 +773,7 @@ const ZOOM = (() => {
     z.ghost.style.opacity = '0';
     z.layer.appendChild(z.ghost);
     if (reduced()) {
-      to(z, z.win, 'opacity', '0', { ms: RM(), easing: 'ease-out' });
+      to(z, z.win, 'opacity', '0', { ms: RM() });
       whenDone(z, () => end(z));
       return;
     }
@@ -782,9 +782,9 @@ const ZOOM = (() => {
     win(z, R, { spring: 'nav' });
     z.cs.forEach(([a]) => to(z, a, 'borderRadius', rad + 'px', { spring: 'nav' }));
     to(z, z.content, 'transform', T2(R.l - s * sh.R.l, R.t - s * sh.R.t) + ' scale(' + s + ')', { spring: 'nav' });
-    to(z, z.body, 'opacity', '0', { ms: 150 });
-    to(z, z.tintEl, 'opacity', '1', { ms: 200 });
-    to(z, z.ghost, 'opacity', '1', { ms: 150, delay: d * 0.5 });
+    to(z, z.body, 'opacity', '0', { ms: MOTION.ZOOM.hand });
+    to(z, z.tintEl, 'opacity', '1', { ms: MOTION.ms('fade') });
+    to(z, z.ghost, 'opacity', '1', { ms: MOTION.ZOOM.hand, delay: d * 0.5 });
     whenDone(z, () => end(z));
   }
 
@@ -804,7 +804,7 @@ const ZOOM = (() => {
       d = navMs();
     blk.style.transformOrigin = '0 0';
     MOTION.animate(blk, [{ transform: T2(R.l - B.l, R.t - B.t) + ' scale(' + m + ')' }, { transform: 'none' }], { spring: 'nav' });
-    MOTION.animate(blk, [{ opacity: 0 }, { opacity: 1 }], { ms: d * 0.3, easing: 'ease-out' });
+    MOTION.animate(blk, [{ opacity: 0 }, { opacity: 1 }], { ms: d * 0.3 });
     const sh = day && day.closest('.sheet');
     if (!sh) return;
     // the day's tile grows towards the list and fades into it
@@ -816,7 +816,7 @@ const ZOOM = (() => {
     sh.appendChild(g);
     const k = B.w / R.w;
     MOTION.animate(g, [{ transform: 'none' }, { transform: T2(B.l - R.l, B.t - R.t) + ' scale(' + k + ')' }], { spring: 'nav' });
-    const a = MOTION.animate(g, [{ opacity: 1 }, { opacity: 0 }], { ms: d * 0.22, easing: 'ease-out', fill: 'forwards' });
+    const a = MOTION.animate(g, [{ opacity: 1 }, { opacity: 0 }], { ms: d * 0.22, fill: 'forwards' });
     if (a) a.onfinish = () => g.remove();
     setTimeout(() => g.remove(), d * MOTION.speed() + 600);
   }
@@ -902,10 +902,10 @@ const ZOOM = (() => {
     // a zoom caught while it opened finishes opening
     win(z, FULL(), { spring: 'nav' });
     to(z, z.content, 'transform', 'none', { spring: 'nav' });
-    to(z, z.tintEl, 'opacity', '0', { ms: 200 });
-    to(z, z.body, 'opacity', '1', { ms: 150 });
-    if (z.title) to(z, z.title, 'opacity', '1', { ms: 150 });
-    if (z.ghost) to(z, z.ghost, 'opacity', '0', { ms: 120 });
+    to(z, z.tintEl, 'opacity', '0', { ms: MOTION.ms('fade') });
+    to(z, z.body, 'opacity', '1', { ms: MOTION.ZOOM.hand });
+    if (z.title) to(z, z.title, 'opacity', '1', { ms: MOTION.ZOOM.hand });
+    if (z.ghost) to(z, z.ghost, 'opacity', '0', { ms: MOTION.ms('quick') });
     let left = 2;
     const fin = () => {
       if (--left === 0 && Z === z && !z.closing) end(z);

@@ -437,7 +437,7 @@ const OP = (() => {
         secs.forEach((s) => {
           const b = before[s.dataset.sec];
           if (!b || b.st !== stOf(s))
-            s.animate([{ opacity: 0 }, { opacity: getComputedStyle(s).opacity }], { duration: 200, easing: 'ease-out' });
+            s.animate([{ opacity: 0 }, { opacity: getComputedStyle(s).opacity }], { duration: MOTION.reducedMs() * MOTION.speed(), easing: MOTION.EASE.out });
         });
       return;
     }

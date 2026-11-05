@@ -150,7 +150,7 @@ const SAVED = (() => {
           { backgroundColor: 'rgba(0, 0, 0, 0)', borderColor: fg, color: fg },
           { backgroundColor: cs.backgroundColor, borderColor: cs.borderTopColor, color: cs.color },
         ],
-        { ms: 300, easing: 'ease-out', delay: at, fill: 'backwards' }
+        { spring: 'gentle', delay: at, fill: 'backwards' }
       );
       MOTION.animate(dot, [{ transform: 'scale(0.6)' }, { transform: 'none' }], { spring: 'ripple', delay: at, fill: 'backwards' });
     }

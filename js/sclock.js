@@ -367,8 +367,9 @@ const SCLOCK = (() => {
       return;
     }
     MOTION.animate(el, [{ transform: atPill(el), borderRadius: '999px' }, { transform: 'none', borderRadius: '34px' }], { spring: 'nav' });
-    MOTION.animate(el.firstElementChild, [{ opacity: 0 }, { opacity: 1 }], { ms: 220, delay: 70, fill: 'backwards' });
-    if (sc) MOTION.animate(sc, [{ opacity: 0 }, { opacity: 1 }], { ms: 200 });
+    // Q54 its fades are the kit's glass appearing (250 ms) and leaving (350 ms), part 50
+    MOTION.animate(el.firstElementChild, [{ opacity: 0 }, { opacity: 1 }], { ms: MOTION.ms('appear'), delay: 70, fill: 'backwards' });
+    if (sc) MOTION.animate(sc, [{ opacity: 0 }, { opacity: 1 }], { ms: MOTION.ms('appear') });
   }
   // a still copy of the clock (or its dimmed page) on <body>, for it to leave by: nothing on it can be tapped
   function ghost(x) {
@@ -408,21 +409,23 @@ const SCLOCK = (() => {
     rerender();
     if (!g) return;
     const S = MOTION.speed(),
-      rm = gone([g, gs], 320 * S);
-    if (gs) gs.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 200 * S, fill: 'forwards' });
+      leave = MOTION.ms('leave'),
+      rm = gone([g, gs], leave * S);
+    if (gs) gs.animate([{ opacity: 1 }, { opacity: 0 }], { duration: (MOTION.on() ? leave : MOTION.reducedMs()) * S, fill: 'forwards' });
     let a;
-    if (!MOTION.on()) a = g.animate([{ opacity: getComputedStyle(g).opacity }, { opacity: 0 }], { duration: 180 * S, fill: 'forwards' });
+    if (!MOTION.on())
+      a = g.animate([{ opacity: getComputedStyle(g).opacity }, { opacity: 0 }], { duration: MOTION.reducedMs() * S, fill: 'forwards' });
     else {
       // from wherever a swipe left it
       const from = g.style.transform || 'none';
-      MOTION.animate(g.firstElementChild, [{ opacity: getComputedStyle(g.firstElementChild).opacity }, { opacity: 0 }], { ms: 140, fill: 'forwards' });
+      MOTION.animate(g.firstElementChild, [{ opacity: getComputedStyle(g.firstElementChild).opacity }, { opacity: 0 }], { ms: MOTION.ms('quick'), fill: 'forwards' });
       a = MOTION.animate(
         g,
         [
           { transform: from, opacity: 1 },
           { transform: atPill(g), opacity: 0.3, borderRadius: '999px' },
         ],
-        { ms: 300, fill: 'forwards' }
+        { ms: leave, fill: 'forwards' }
       );
     }
     if (a) a.onfinish = rm;
@@ -571,9 +574,10 @@ const SCLOCK = (() => {
     const el = q('#layer .sck');
     if (el && MOTION.speed() > 0) {
       // the clock fades away as the saved screen becomes Today
-      const g = ghost(el),
-        a = g.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 200 * MOTION.speed(), fill: 'forwards' });
-      a.onfinish = gone([g], 200 * MOTION.speed());
+      const t = (MOTION.on() ? MOTION.ms('leave') : MOTION.reducedMs()) * MOTION.speed(),
+        g = ghost(el),
+        a = g.animate([{ opacity: 1 }, { opacity: 0 }], { duration: t, fill: 'forwards' });
+      a.onfinish = gone([g], t);
     }
     fin = null;
     U.clock = false;

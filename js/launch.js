@@ -8,10 +8,9 @@
    - Reduce Motion: no pulses or rises, the launch screen just fades. Motion off (the tests): exactly as before 3.13.
    - While it runs, LAUNCH.busy() is true and the floating window waits, so it appears after Today's rise. */
 const LAUNCH = (() => {
-  const BAR = { start: 120, gap: 70, ms: 520, peak: 1.5 }; // each bar pulses for 520 ms, 70 ms after the one before
-  const FADE = { at: 860, ms: 300, zoom: 1.08 }; // the launch screen fades with a slight zoom
-  const RISE = { after: 100, from: 16 }; // Today starts rising 100 ms into the fade, from 16 px down
-  const SOFT_FADE = 200; // Reduce Motion: just a fade
+  // Q54 its timings are named once in MOTION.LAUNCH (js/motion.js): the bars, the fade, Today's rise, the replay
+  const { bar: BAR, fade: FADE, rise: RISE } = MOTION.LAUNCH;
+  const softFade = () => MOTION.reducedMs(); // Reduce Motion: just a fade, the kit's 100 ms (D20, Q54)
   const MIN = 600; // the launch screen stays up at least this long (from the page opening), as before 3.13
   const CAP = 2500; // and at most about this long while recordings load
 
@@ -35,7 +34,7 @@ const LAUNCH = (() => {
           { transform: 'scaleY(' + BAR.peak + ')', offset: 0.35 },
           { transform: 'scaleY(1)' },
         ],
-        { ms: BAR.ms, delay: BAR.start + k * BAR.gap, easing: 'ease-in-out' }
+        { ms: BAR.length, delay: BAR.start + k * BAR.gap, easing: BAR.ease }
       )
     );
   }
@@ -94,28 +93,28 @@ const LAUNCH = (() => {
     if (!moving()) {
       // Reduce Motion: just a short fade
       const a = sp.animate([{ opacity: 1 }, { opacity: 0 }], {
-        duration: SOFT_FADE * MOTION.speed(),
-        easing: 'ease-out',
+        duration: softFade() * MOTION.speed(),
+        easing: MOTION.EASE.out,
         fill: 'forwards',
       });
       a.onfinish = () => {
         sp.remove();
         done();
       };
-      endT = setTimeout(() => (sp.remove(), done()), SOFT_FADE * MOTION.speed() + 400);
+      endT = setTimeout(() => (sp.remove(), done()), softFade() * MOTION.speed() + 400);
       if (then) then();
       return;
     }
     state = 'rising';
     const fade = MOTION.animate(sp, [{ opacity: 1 }, { opacity: 0 }], {
-      ms: FADE.ms,
-      easing: 'cubic-bezier(.3,.7,.4,1)',
+      ms: FADE.length,
+      easing: FADE.ease,
       fill: 'forwards',
     });
     MOTION.animate(
       sp.querySelector('.sp-icon'),
       [{ transform: 'scale(1)' }, { transform: 'scale(' + FADE.zoom + ')' }],
-      { ms: FADE.ms, easing: 'cubic-bezier(.3,.7,.4,1)', fill: 'forwards' }
+      { ms: FADE.length, easing: FADE.ease, fill: 'forwards' }
     );
     if (fade) fade.onfinish = () => sp.remove();
     const els = blocks();
@@ -130,7 +129,7 @@ const LAUNCH = (() => {
       )
     );
     const total = Math.max(
-      FADE.ms,
+      FADE.length,
       RISE.after + MOTION.stagger(Math.max(0, els.length - 1), 'row') + MOTION.dur('gentle') / MOTION.speed()
     );
     endT = setTimeout(
@@ -154,10 +153,11 @@ const LAUNCH = (() => {
     after = then || null;
     state = 'showing';
     if (typeof fwUpdate === 'function') fwUpdate();
-    MOTION.animate(sp, [{ opacity: 0 }, { opacity: 1 }], { ms: 180, easing: 'ease-out' });
-    t0 = performance.now() + 180 * MOTION.speed();
-    setTimeout(() => pulse(sp), 180 * MOTION.speed());
-    setTimeout(finish, 180 * MOTION.speed() + FADE.at * MOTION.speed());
+    const back = MOTION.LAUNCH.back;
+    MOTION.animate(sp, [{ opacity: 0 }, { opacity: 1 }], { ms: back });
+    t0 = performance.now() + back * MOTION.speed();
+    setTimeout(() => pulse(sp), back * MOTION.speed());
+    setTimeout(finish, back * MOTION.speed() + FADE.at * MOTION.speed());
   }
 
   return { start, finish, replay, minWait, capWait, busy, BAR, FADE, RISE };

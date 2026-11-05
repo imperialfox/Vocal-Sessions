@@ -9,6 +9,35 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.68 · 5 Nov 2026
+*The app's hand-written values take their names (Q54)*
+<!-- area: look -->
+
+From the UI consistency audit of 3.62. The motion, corners, shadows and colours still written by hand now use the app's and the kit's named values, and the value check also guards the code, so later features keep one feel. Nothing moves on screen: every part of the main screens sits exactly where it did.
+
+**Motion**
+- Rows that move (song rows, take rows, check rows, a swiped row) settle on the gentle spring, as the rest of the app does, instead of their own small bounce.
+- The pattern player's dots and vowel change pop on the ripple spring; its steps settle on the segmented control's curve; the speed bubble moves on the gentle spring.
+- Pull to refresh spins at the kit's pace (one turn a second) and springs back on the gentle spring.
+- The session clock's fades are the kit's glass appearing (250 ms) and leaving (350 ms).
+- With Reduce Motion, the session clock, the launch screen, the marks sheet, the vowel change and the session's sections fade on the kit's 100 ms, like everything else since 3.65.
+- Recall's hidden words, the pointer hint, the sideways scroll fade and the pattern player's dimming fade on the app's one named fade (200 ms).
+- How did it go?'s note box opens on the kit's appearing time. Closing the takes uses the kit's close time.
+- The Changelog's cards and timeline settle on the gentle spring. Its "now" dot pulses three times, then rests.
+- A missing step in the session nudges for the same length as the other nudge (1.2 s).
+- The card zoom's and the launch's own timings keep their lengths, now named in one place.
+
+**Look**
+- Corners within 2 pt of a named size take it (cards 20, large blocks 26, inner boxes 14, small tiles and highlights 10). The floating window keeps its 22 pt capsule.
+- A row or pattern step lifted by a finger has the kit's lifted shadow; the pointer hint has its floating shadow.
+- White on a coloured fill is the app's on-accent colour; the session clock's knob is the kit's knob colour. Video stays black and white.
+
+**Behind the scenes**
+- The value check now also checks shadows and colours, and in the code every hand-set time and easing. Each value left has a one-line reason.
+- Three unused animations are gone.
+
+Screens: VS-001, VS-002, VS-003, VS-004, VS-005, VS-006, VS-007, VS-008, VS-009, VS-010, VS-011, VS-012, VS-013, VS-014, VS-015, VS-016, VS-017, VS-018, VS-019, VS-020, VS-021, VS-022, VS-023, VS-024, VS-025, VS-026, VS-027, VS-028, VS-029, VS-030, VS-031, VS-032, VS-033, VS-034, VS-035, VS-036, VS-037, VS-038, VS-039, VS-040, VS-041, VS-042, VS-043, VS-044, VS-045, VS-046, VS-047, VS-048, VS-049, VS-050, VS-051, VS-052, VS-053, VS-054, VS-055, VS-056, VS-057, VS-058, VS-059, VS-060, VS-061, VS-062, VS-063, VS-064, VS-065, VS-066, VS-067, VS-068, VS-069, VS-070, VS-071, VS-072, VS-073, VS-074, VS-075, VS-076, VS-077, VS-078, VS-079, VS-080, VS-081, VS-082, VS-083, VS-084, VS-085, VS-086, VS-087, VS-088, VS-089, VS-090, VS-091, VS-092, VS-093, VS-094, VS-095, VS-096, VS-097, VS-098, VS-099, VS-100, VS-101, VS-102, VS-103, VS-104, VS-105, VS-106, VS-107, VS-108
+
 ## 3.67 · 5 Nov 2026
 *Every button presses the kit's way (Q53)*
 <!-- area: look -->

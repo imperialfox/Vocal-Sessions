@@ -903,7 +903,7 @@ const APPL = (() => {
           { opacity: 1, background: 'var(--rg-green-s)', offset: 0.3 },
           { opacity: 1, background: 'var(--rg-green)' },
         ],
-        { ms: 650, easing: 'ease-out', fill: 'forwards' }
+        { ms: MOTION.CUE.flash, easing: 'ease-out', fill: 'forwards' }
       );
     }, G * 0.62);
     later(fin, G * 0.62 + 700);

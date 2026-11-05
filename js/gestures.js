@@ -93,7 +93,7 @@ function ptrEnd() {
     $('ptr').classList.remove('go');
     PTR.busy = false;
     ptrPaint(0);
-    setTimeout(() => a.classList.remove('ptr-snap'), 450);
+    setTimeout(() => a.classList.remove('ptr-snap'), MOTION.dur('gentle') + 50); // Q54 it snaps back on the gentle spring
   });
 }
 document.addEventListener('touchend', ptrEnd);
