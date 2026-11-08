@@ -9,6 +9,23 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.69 · 9 Nov 2026
+*The element sheet shows each part's kit part and values (Q55)*
+<!-- area: fixes -->
+
+From the UI consistency audit of 3.62. Nothing changes on screen. The element sheet (`reference/elements.md`) now says, for every named part, which parts kit part it is and the values it really uses, so there's one place to look before changing something.
+
+**The element sheet**
+- New columns for each part: Kit part (its number in the kit's gallery), Press, Corner, Motion and Reason.
+- The values are read from the app itself, in a hidden browser with the tests' sample data, and named the way the code names them (`--r-card`, `gentle`, part 12), so the sheet can't drift from the app.
+- An app's own part, with no kit part, says why (for example the app's own text fields and plain text buttons).
+- Parts the sample data doesn't show (a recording in progress, the floating window and the like) keep a dash and are listed at the end. 240 of 618 parts in use are read from the app.
+
+**Checks**
+- A new test fails when the sheet is out of date with the app or the register, or when a part has neither a kit part nor a reason.
+
+Screens: none
+
 ## 3.68 · 5 Nov 2026
 *The app's hand-written values take their names (Q54)*
 <!-- area: look -->

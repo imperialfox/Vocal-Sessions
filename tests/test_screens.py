@@ -350,9 +350,6 @@ def coverage(b, t):
         clash += [s['id'] + ' › ' + w for w in old if w in names]
         clash += [s['id'] + ' › ' + p['name'] for p in s['parts'] if not live(p) and p['name'] in names]
     ok(not clash, f'an old or retired name is never reused for another part on its screen ({clash})')
-    import subprocess
-    chk = subprocess.run([sys.executable, os.path.join(ROOT, 'tools', 'reference', 'elements.py'), '--check'], capture_output=True, text=True)
-    ok(chk.returncode == 0, 'reference/elements.md is up to date with the register (python3 tools/reference/elements.py writes it)')
     pg.context.close()
     # on screen: every visible control on every screen and sheet the sample data reaches carries a name
     pg = t.page(b)
@@ -387,9 +384,37 @@ def coverage(b, t):
     pg.context.close()
 
 
+def reference(b, t):
+    """Q55 the element sheet (reference/elements.md): built from the register and from the app, so it must match what
+    the app gives now; every part the sample data reaches has a kit part or a reason; and the check itself catches a
+    part with neither, a part missing from the sheet and a value that changed."""
+    ok = t.ok
+    sys.path.insert(0, os.path.join(ROOT, 'tools', 'reference'))
+    import elements as EL
+    text, vals = EL.sheet(b)
+    have = open(EL.OUT, encoding='utf-8').read()
+    diff = [l for l in text.splitlines() if l not in set(have.splitlines())][:3]
+    ok(text == have, f'reference/elements.md is up to date with the register and the app (python3 tools/reference/elements.py writes it; new or changed lines: {diff})')
+    bad = EL.problems(vals)
+    ok(not bad, f'every named part the sample data reaches has a kit part or a reason (REASONS in tools/reference/elements.py) ({bad})')
+    reached = sum(1 for p in EL.register() if (p[0], p[1], p[2]) in vals)
+    ok(reached >= 200, f'the sheet reads at least 200 parts from the app ({reached})')
+    ok(all(v['corner'] and v['press'] and v['motion'] for v in vals.values()), 'every part read has a press, a corner and a motion, even if "none"')
+    # the check itself, on copies
+    reg = EL.register()
+    fake = ('VS-001', 'test-only-button', '[data-a="testOnly"]', 'In use', '', reg[[p[0] for p in reg].index('VS-001')][5])
+    v2 = dict(vals); v2[fake[:3]] = {'kit': '', 'press': 'none', 'corner': 'none', 'motion': 'none', 'reason': ''}
+    ok(EL.problems(v2, reg + [fake]) == ['VS-001 › test-only-button'], 'a part with no kit part and no reason is caught')
+    ok(EL.build(vals, reg + [fake]) != have, 'a part added to the register and missing from the sheet makes it out of date')
+    k = next(k for k, v in vals.items() if v['corner'] == 'capsule')
+    v3 = dict(vals); v3[k] = dict(vals[k], corner='`--r-card`')
+    ok(EL.build(v3) != have, f'a value that changes in the app makes the sheet out of date ({k[0]} › {k[1]})')
+
+
 def run(b, t):
     register(b, t)
     coverage(b, t)
+    reference(b, t)
     on_page(b, t)
     overlays(b, t)
     missing_entry(b, t)
