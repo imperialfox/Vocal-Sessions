@@ -102,7 +102,7 @@ Every item also follows [MAINTAINING.md](MAINTAINING.md): its [tests](MAINTAININ
 
 Build top to bottom; each still needs its own **Build**. One line per item: `N. Q## — reason`, with "needs Q##" for anything that must ship first. Names live in the table above. The paragraph under Order below is the history behind it.
 
-1. Q56 — Reset all data as a three-button alert (D23); needs Parts kit 1.3.0 and Q55 (shipped in 3.69); after Q59 (shipped in 3.70) (Ivan, 5 Nov 2026)
+1. Q56 — Reset all data as a three-button alert (D23); needs Parts kit 1.3.0 - shipped and Q55 (shipped in 3.69); after Q59 (shipped in 3.70) (Ivan, 5 Nov 2026)
 2. Q58 — the tab bar's Liquid Glass bubble, tuned on the prototype; needs Parts kit 1.4.0 (built on 1.3.0) and Q56 (Ivan, 5 Nov 2026)
 
 ### Any time
@@ -123,7 +123,7 @@ Build top to bottom; each still needs its own **Build**. One line per item: `N. 
   2. VS-082's kind becomes Alert; part names stay.
   3. The app moves to Parts kit 1.3.0 (unmodified copy, checksums).
 - **Out of scope:** Reset this month; backups themselves.
-- **Needs:** Parts kit 1.3.0 (`imperialfox/parts-kit`, its handoff in Ivan's project notes), Q55 (shipped in 3.69).
+- **Needs:** Parts kit 1.3.0 (`imperialfox/parts-kit`, shipped 9 Nov 2026 in `862a21d`; its handoff in the kit's `HANDOFF.md`), Q55 (shipped in 3.69).
 - **Done when:** the three-button alert opens and each button works; the kit copy is 1.3.0 and its checksums pass.
 
 ## Q58 · Interface: Liquid Glass Tab Bar
