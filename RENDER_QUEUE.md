@@ -106,7 +106,7 @@ Nothing is waiting for an app version right now.
 
 ### Any time
 
-- Q46 — needs Atlas kit 1.2.0 (Q48 shipped in 3.61); tooling, no app version: a state for every screen so a rescan takes every picture quickly (Ivan, 4 Nov 2026)
+- Q46 — ready: Atlas kit 1.2.0 shipped on 12 Nov 2026 (Q48 shipped in 3.61); tooling, no app version: a state for every screen so a rescan takes every picture quickly (Ivan, 4 Nov 2026)
 
 ## Order (3 Nov 2026)
 
@@ -114,7 +114,7 @@ Nothing is waiting for an app version right now.
 
 ## Q46 · Atlas: Screen States
 
-**Status:** Approved — awaiting Build, held. **Render:** 4 Nov 2026, 21:29 ("render for now but delay until app plans to name the buttons first"), for piece B of the "Atlas screen states and fast pictures" Blueprint, every *Default if unanswered* taken, with Atlas kit 1.2.0 (piece A) in the same instruction. Ivan held both until the app names its buttons. **Build:** awaiting Ivan's instruction, after the button-naming idea ships. The build handoff is in Ivan's project notes as `q46_atlas_screen_states_handoff.md`; the plan is `atlas_screen_states_blueprint.md`.
+**Status:** Approved — awaiting Build, no longer held. **Render:** 4 Nov 2026, 21:29 ("render for now but delay until app plans to name the buttons first"), for piece B of the "Atlas screen states and fast pictures" Blueprint, every *Default if unanswered* taken, with Atlas kit 1.2.0 (piece A) in the same instruction. Ivan held both until the app names its buttons. **Build:** given on 11 Nov 2026, 21:49 ("Vocal Sessions Q46 Build", in a fresh chat), which waited for Atlas kit 1.2.0; the kit shipped on 12 Nov 2026 (`imperialfox/atlas-kit` `d89cce5`), so Q46 can now be built. The build handoff is in Ivan's project notes as `q46_atlas_screen_states_handoff.md`; the plan is `atlas_screen_states_blueprint.md`.
 
 - **Goal:** every Live screen has a state (its sample data and the real taps that reach it), so "rescan the Atlas" takes every picture quickly, through real buttons.
 - **Scope, tooling, no app version:**
@@ -128,7 +128,7 @@ Nothing is waiting for an app version right now.
   8. **Rescan rules** (`tools/atlas/README.md`, MAINTAINING › Visual App Atlas): "rescan the Atlas" runs the pictures-only scan; "full rescan" runs everything; an app build that changes screens runs the pictures pass for the IDs on its changelog Screens line and fixes any state it broke in the same push.
   9. The Q30 rule stays: screens are reached through real buttons; shortcuts are for set-up only.
 - **Out of scope:** any app file (`js/`, `css/`, `index.html`); naming parts (the button-naming idea); per-screen button tests that rerun only what changed, the real iPhone pass and a screen list in Settings (layers 3 to 5 of the capture Recon); any kit change beyond moving to 1.2.0.
-- **Needs:** Q48 · Interface: Name Every Button (shipped in 3.61); then Atlas kit 1.2.0 (`imperialfox/atlas-kit`, its handoff `atlas_kit_1_2_handoff.md` in Ivan's project notes).
+- **Needs:** Q48 · Interface: Name Every Button (shipped in 3.61); then Atlas kit 1.2.0 (`imperialfox/atlas-kit`, shipped on 12 Nov 2026; its record is the kit's `HANDOFF.md` › Kit 1.2).
 - **Done when:** every Live screen is captured through its state or shows its written reason; the found-in-code-only count drops to those with a reason; a pictures-only scan of every state takes under 3 minutes in Claude's workspace (timed in the Debrief, with the full scan's time beside it); unchanged screens look the same as in the full scan; the coverage test passes, and fails when a state is taken out.
 - **Build order:** the kit copy, then the draft states, then checking each one, then the coverage test and docs. Atlas tests while building, one pictures-only and one full scan before pushing; no app suite (no app file changes). One receipt.
 
