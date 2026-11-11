@@ -9,6 +9,26 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.72 · 11 Nov 2026
+*The tab bar's Liquid Glass bubble (Q58)*
+<!-- area: look -->
+
+The tab bar now moves like the one in Apple Music on iOS 27, as tuned on the prototype.
+
+**The tab bar**
+- Touch a tab and a separate glass bubble rises out of it and follows your finger. Let go and it lands on the nearest tab. A tap sends it across to the tab you tapped.
+- The part of an icon under the bubble turns blue. The icons never bend or grow; only the bubble's rim bends what's under it.
+- The bar swells a little while you touch it. Dragging up raises its top edge while the bottom barely moves. A fast drag squashes the bubble flat and wide, and it bounces back taller and narrower.
+- Dark mode has the same shape and motion with the dark glass colours.
+- With Reduce Motion on, the bubble appears and moves with a short fade, with no jiggle or stretch. With Reduce transparency on, it's solid.
+- The old press (the highlight swelling and the icon growing under your finger) is gone.
+
+**Behind the scenes**
+- The app now uses Parts kit 1.4.0. The copy is the kit's release, unchanged, and its checksums match. Every bubble value is the kit's own.
+- Changing tabs keeps the same bar instead of drawing it again, so the bubble carries on to the tab. A tap while the bubble is still up opens the tab under your finger.
+
+Screens: VS-001, VS-006, VS-008, VS-013
+
 ## 3.71 · 11 Nov 2026
 *Reset all data asks with an alert, like every other delete (Q56)*
 <!-- area: look -->

@@ -306,15 +306,19 @@ def presses():
             ('Button on a glass bar', '15 · `.pk-press-bar`', sel('BAR'), 'Lights up, same size'),
             ('Solid button', '14 · `.pk-press-solid`', sel('SOLID'), 'Shrinks to `--press` (0.93), back on `release`'),
             ('Picking chip', '18 · `.pk-chip` in `.pk-chips.pk-static`', '.chip.pk-chip', 'No press; the colour fades as it\'s picked'),
-            ('Note stepper', '24 · `.pk-stepper.pk-glass`', '.pvstep .pk-stepper', 'Its halves are buttons on a glass bar (15)')]
+            ('Note stepper', '24 · `.pk-stepper.pk-glass`', '.pvstep .pk-stepper', 'Its halves are buttons on a glass bar (15)'),
+            ('Tab bar bubble', '4 · `.pk-tabbar` (Parts kit 1.4)', '#dock .pk-tabbar > .pk-tab',
+             'Touched, a separate Liquid Glass bubble rises out of the tab and follows the finger; the icons under it turn the accent colour, the bar swells (Q58, 3.72)')]
     L = ['## Presses', '',
          'How each kind of button presses (Q53, 3.67). `KITPRESS` in `js/gestures.js` gives a button its kit class by what it is, '
          'so a new button with one of these classes gets the press for free. Every press is the kit\'s own: reused, none new. '
          'Rows highlight instead (D06, `row.press`).', '',
          '| Kind | Kit part | Buttons | Press | Animation | Status |', '|---|---|---|---|---|---|']
     L += ['| %s | %s | `%s` | %s | Reused (the kit\'s) | In use |' % (k, p, esc(s), d) for k, p, s, d in rows]
-    L += ['', '<details><summary>Retired (1)</summary>', '',
+    L += ['', '<details><summary>Retired (2)</summary>', '',
           '| Kind | Was | Replaced by | Status |', '|---|---|---|---|',
+          '| The old tab press | Parts kit 1.3\'s tab bar (part 4): the picked tab\'s highlight swelled 12 × 8 pt into clear glass and the icon under the finger grew to ×1.15 | '
+          'The kit\'s Liquid Glass bubble (part 4, Parts kit 1.4.0, `tabBar.bubble`) | Retired · 3.72 |',
           '| The app\'s own press | `PRESS` in `js/gestures.js` (Q33): glass grew on `press`, settled on `release`, lit up with a registered `--lift`; '
           'solid buttons shrank on `:active` with a 0.5 s `--ease-pop` release | The kit\'s parts 12, 14, 15 (`tools/parts-kit/REPLACED.md`) | Retired · 3.67 |',
           '', '</details>', '']

@@ -267,6 +267,23 @@ def controls(b, t):
     ok(abs(g - 8) < 0.6, f'the search circle sits 8 pt from it (D02: {g:.1f})')
     pg.click('#dock .pk-tab[data-v=songs]'); pg.wait_for_timeout(300)
     ok(pg.evaluate("U.tab") == 'songs' and pg.evaluate("document.querySelector('#dock .pk-tabbar').style.getPropertyValue('--pk-i')") == '2', 'a tab opens its page and the highlight moves to it')
+    # Q58 the kit's Liquid Glass bubble (Parts kit 1.4): a tap travels on the same bar, and a tap while it's up opens its tab
+    ok(pg.evaluate("Parts.current.tabBar.bubble.on") is True, "the tab bar's Liquid Glass bubble is on (Q58, the kit's default)")
+    BAR = "document.querySelector('#dock .pk-tabbar')"
+
+    def tap_tab(v):
+        r = pg.locator(f'#dock .pk-tab[data-v={v}]').bounding_box()
+        pg.mouse.move(r['x'] + r['width'] / 2, r['y'] + r['height'] / 2); pg.mouse.down(); pg.wait_for_timeout(60); pg.mouse.up()
+    h = pg.evaluate_handle(BAR)
+    tap_tab('exercises')
+    ok(until(pg, "U.tab==='exercises'") and pg.evaluate(f"(o)=>{BAR}===o", h) and pg.evaluate(f"Parts.bubble.state({BAR}).up"),
+       "a tap opens its tab and the bubble carries on travelling on the same bar (it isn't drawn again)")
+    pg.evaluate(f"Parts.bubble.hold({BAR},true)")
+    until(pg, f"{BAR}.classList.contains('pk-bubbling')", 3000)
+    tap_tab('today')
+    ok(until(pg, "U.tab==='today'"), 'a tap while the bubble is up (its tabs hidden, so the tap lands on the bar) opens the tab under the finger')
+    pg.evaluate(f"Parts.bubble.hold({BAR},false)")
+    ok(until(pg, f"!Parts.bubble.state({BAR}).up", 5000), 'the bubble goes once nothing holds it')
     # the speed slider
     pg.evaluate("go(()=>{U.tab='exercises';U.view='ex';U.exId='humming';U.exTab='summary'})"); pg.wait_for_timeout(300)
     if pg.locator('#pSpd').count():

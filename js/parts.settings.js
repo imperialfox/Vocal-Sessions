@@ -12,7 +12,7 @@ Parts.settings({
   root: '#layer', // the kit's overlays go in #layer, above the app (the sheet host, ui.js)
   motion: 'kit', // D18 the kit runs the motion: its springs, speed and Reduce Motion
   springs: {}, // D18 the app's own springs, one line each with its ID (none today)
-  tabBar: { fold: false, searchGap: 8 }, // D01 never folds · D02 search circle 8 pt from the bar
+  tabBar: { fold: false, searchGap: 8, bubble: true }, // D01 never folds · D02 search circle 8 pt from the bar · Q58 the kit's Liquid Glass bubble (its default, every value the kit's)
   segmented: { style: 'gallery' }, // D04 the gallery's knob: 350 ms spring, swells to glass, draggable
   row: { press: 'highlight' }, // D06 rows highlight while pressed, no shrink
   choices: 'actionSheet', // D07 choices are action sheets

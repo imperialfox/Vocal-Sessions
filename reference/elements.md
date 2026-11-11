@@ -508,11 +508,13 @@ How each kind of button presses (Q53, 3.67). `KITPRESS` in `js/gestures.js` give
 | Solid button | 14 · `.pk-press-solid` | `.cta, .circ, .shbtn, .txtbtn, .trkpad, .trkpill, .ppill, .prep, .pplay, .chip.add, .calbtn, .cal button, .nudge, .ckpi, .cktile, .sgplay, .sgtkb, .tkb, .tkbig, .cvpp, .cvpill, .ladnote, .ladrpt` | Shrinks to `--press` (0.93), back on `release` | Reused (the kit's) | In use |
 | Picking chip | 18 · `.pk-chip` in `.pk-chips.pk-static` | `.chip.pk-chip` | No press; the colour fades as it's picked | Reused (the kit's) | In use |
 | Note stepper | 24 · `.pk-stepper.pk-glass` | `.pvstep .pk-stepper` | Its halves are buttons on a glass bar (15) | Reused (the kit's) | In use |
+| Tab bar bubble | 4 · `.pk-tabbar` (Parts kit 1.4) | `#dock .pk-tabbar > .pk-tab` | Touched, a separate Liquid Glass bubble rises out of the tab and follows the finger; the icons under it turn the accent colour, the bar swells (Q58, 3.72) | Reused (the kit's) | In use |
 
-<details><summary>Retired (1)</summary>
+<details><summary>Retired (2)</summary>
 
 | Kind | Was | Replaced by | Status |
 |---|---|---|---|
+| The old tab press | Parts kit 1.3's tab bar (part 4): the picked tab's highlight swelled 12 × 8 pt into clear glass and the icon under the finger grew to ×1.15 | The kit's Liquid Glass bubble (part 4, Parts kit 1.4.0, `tabBar.bubble`) | Retired · 3.72 |
 | The app's own press | `PRESS` in `js/gestures.js` (Q33): glass grew on `press`, settled on `release`, lit up with a registered `--lift`; solid buttons shrank on `:active` with a 0.5 s `--ease-pop` release | The kit's parts 12, 14, 15 (`tools/parts-kit/REPLACED.md`) | Retired · 3.67 |
 
 </details>

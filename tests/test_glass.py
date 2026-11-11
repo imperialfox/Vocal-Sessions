@@ -167,8 +167,8 @@ def press(b, t, seed, sid):
     pg = t.page(b, data=seed)
     # Today: the top bar's circle, the search circle, the tabs
     check(pg, '#bar .circ.glass', 'grow')
-    # Q41 the search circle and the tabs are the parts kit's: the circle grows and a pressed tab's highlight swells
-    # to glass (the kit's own press, checked in its repo)
+    # Q41 the search circle and the tabs are the parts kit's: the circle grows and (Q58, kit 1.4) a pressed tab raises
+    # the Liquid Glass bubble (the kit's own, checked in its repo; 1.3's swelling highlight is Retired)
     box = pg.locator('.dockrow .scirc').bounding_box()
     pg.mouse.move(box['x'] + box['width'] / 2, box['y'] + box['height'] / 2); pg.mouse.down(); pg.wait_for_timeout(250)
     ok(pg.evaluate("document.querySelector('.dockrow .scirc').matches('.pk-btn.pk-glass.pk-press')") and
@@ -177,7 +177,8 @@ def press(b, t, seed, sid):
     pg.evaluate("go(()=>{U.tab='today';U.view=null})"); pg.wait_for_timeout(100)
     box = pg.locator('.dockrow .pk-tab:not(.on) >> nth=0').bounding_box()
     pg.mouse.move(box['x'] + box['width'] / 2, box['y'] + box['height'] / 2); pg.mouse.down(); pg.wait_for_timeout(120)
-    ok(pg.locator('.dockrow .pk-tab-ind.pk-live').count() == 1, 'a pressed tab\'s highlight swells into glass')
+    ok(pg.evaluate("Parts.bubble.state(document.querySelector('.dockrow .pk-tabbar')).up") and pg.locator('.dockrow .pk-tab-ind.pk-live').count() == 0,
+       'a pressed tab raises the Liquid Glass bubble, not the old swelling highlight (Q58)')
     pg.evaluate("window.dispatchEvent(new PointerEvent('pointercancel'))"); pg.mouse.up(); pg.wait_for_timeout(200)
     pg.evaluate("go(()=>{U.tab='today';U.view=null})"); pg.wait_for_timeout(100)
     # a real press with the mouse goes through the same rule

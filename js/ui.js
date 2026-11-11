@@ -277,6 +277,23 @@ function renderDock() {
   const d = $('dock'),
     row = d.querySelector('.dockrow');
   if (html === dockKey && row) return FIND.dock(row); // Q45 search opens and closes in place
+  // Q58 when only the picked tab changed, the bar stays and the pick moves on it, so the kit's Liquid Glass bubble
+  // carries on travelling to the tab (a new bar would drop it half way)
+  const unpick = (h) => h.replace(/ on" data-a="tab"/g, '" data-a="tab"').replace(/ aria-current="(page|false)"/g, '');
+  const kept = row && dockKey !== null && unpick(html) === unpick(dockKey) && row.querySelector(':scope > .pk-tabbar');
+  if (kept) {
+    const t = document.createElement('template');
+    t.innerHTML = html;
+    const nu = [...t.content.querySelectorAll('.pk-tabbar > .pk-tab')],
+      its = [...kept.querySelectorAll(':scope > .pk-tab')],
+      i = nu.findIndex((b) => b.classList.contains('on'));
+    if (i >= 0 && nu.length === its.length) {
+      dockKey = html;
+      its.forEach((b, j) => b.setAttribute('aria-current', nu[j].getAttribute('aria-current')));
+      Parts.select(kept, i);
+      return FIND.dock(row);
+    }
+  }
   dockKey = html;
   // the highlight moves from the tab it was on to the new one (the bar is drawn again, so it starts where it was)
   const old = d.querySelector('.pk-tabbar'),
@@ -1925,7 +1942,10 @@ function segPick(el) {
     setTimeout(() => {
       if (down === d) down = null;
       if (d.clicked) return;
-      const b = d.moved ? d.bar.querySelector(':scope > button.on') : d.b;
+      // Q58 while the tab bar's Liquid Glass bubble is up its tabs are hidden, so a tap lands on the bar: the kit has
+      // moved the pick to the tab under the finger, and that tab is clicked
+      const bub = !d.b && d.bar.classList.contains('pk-tabbar');
+      const b = d.moved || bub ? d.bar.querySelector(':scope > button.on') : d.b;
       if (b && b.isConnected && !b.disabled) b.click();
     }, 0);
   };
