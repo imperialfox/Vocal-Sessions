@@ -9,6 +9,22 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.70 · 11 Nov 2026
+*The song length picker closes when the phone turns, and the random taps stop failing on seed 11 (Q59)*
+<!-- area: fixes -->
+
+From the random taps seed 11 Recon of 3.69. The song length picker opens on the Song page, Check timing and Add song.
+
+**The song length picker**
+- Turning the phone (or resizing the window) with the song length picker open now closes it, the same as menus. Before, it stayed where it opened, so on a phone turned sideways Set could sit below the screen. Nothing you picked is saved when it closes this way.
+- A height change alone, such as the keyboard showing, leaves it open.
+
+**Checks**
+- The random taps clear their old tap labels before tagging the buttons on screen. With the length picker open, the page's own buttons still had the same numbers as the picker's Cancel and Set, so the test tapped the page's button and the picker's dim caught every tap. Seeds 11 to 14 now pass when run on their own.
+- A new check: a new width closes the picker, a new height alone doesn't.
+
+Screens: VS-009, VS-011, VS-045
+
 ## 3.69 · 9 Nov 2026
 *The element sheet shows each part's kit part and values (Q55)*
 <!-- area: fixes -->

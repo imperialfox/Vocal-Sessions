@@ -165,6 +165,15 @@ def run(b, t):
     ok(pg.locator('#ckpk').count() == 1 and pg.inner_text('#ckpOut') == '3:58', 'tapping the length opens the picker on it')
     pg.keyboard.press('Escape'); pg.wait_for_timeout(150)
     ok(pg.locator('#ckpk').count() == 0, 'Escape closes the picker')
+    # Q59: a turn of the phone (a new width) closes it, as menus do; a new height alone (the keyboard) doesn't
+    pg.click('.ckart [data-a=ckLen]'); until(pg, "!!document.getElementById('ckpk')")
+    vs = pg.viewport_size
+    pg.set_viewport_size({'width': vs['width'], 'height': vs['height'] - 120}); pg.wait_for_timeout(150)
+    ok(pg.locator('#ckpk').count() == 1, 'a new height alone keeps the picker open')
+    pg.set_viewport_size({'width': 852, 'height': 393})
+    ok(until(pg, "!document.getElementById('ckpk')") and pg.evaluate("CK.pk") is None, 'a new width closes the picker')
+    ok(tl(pg)['len'] == 238, 'closing it on a turn changes nothing')
+    pg.set_viewport_size(vs); pg.wait_for_timeout(300)
     pg.click('#barR [data-a=ckPencil]'); pg.wait_for_timeout(250); pg.click('[data-a=ckHeadLyrics]'); pg.wait_for_timeout(400)
     ok(pg.evaluate("U.sEdit") == 'lyrics', 'Edit lyrics opens the lyrics editor')
     pg.click('[data-a=sgDone]'); pg.wait_for_timeout(300)

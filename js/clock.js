@@ -1801,7 +1801,14 @@ function ckPlace(el) {
   el.style.width = r.width + 'px';
   el.style.top = Math.round(top) + 'px';
 }
+// Q59 the screen changes width (the phone turns, a window is resized): the length picker closes, as menus do (Q49).
+// It's placed once when it opens, so after a turn Set and Cancel could sit off the screen under its dim
+let ckPkW = window.innerWidth;
 window.addEventListener('resize', () => {
+  if (window.innerWidth !== ckPkW) {
+    ckPkW = window.innerWidth;
+    if (CK.pk) ckPickClose();
+  }
   const el = $('ckpa');
   if (el && !el.hidden) {
     ckPlace(el);

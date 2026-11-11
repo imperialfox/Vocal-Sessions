@@ -95,7 +95,9 @@ INV=r"""(()=>{const p=[];const L=document.getElementById('layer');
  const sumOk=Object.keys(D.months).length>=0;
  return p;})()"""
 # with a sheet open, only the sheet is in reach, and the length picker when it pops over the sheet (it lives on <body>)
-VIS=r"""(()=>{const L=document.getElementById('layer');const pk=document.getElementById('ckpk');const root=pk||(L.querySelector('.pk-layer>:not(.pk-dim):not(.pk-toast):not(.pk-leaving),.clock')?L:document);
+# Q59: old tags are cleared first, so a number points at one button only (the page's own buttons kept theirs
+# behind the length picker, and the tap went to the page's button under the picker's dim)
+VIS=r"""(()=>{document.querySelectorAll('[data-fz]').forEach(e=>e.removeAttribute('data-fz'));const L=document.getElementById('layer');const pk=document.getElementById('ckpk');const root=pk||(L.querySelector('.pk-layer>:not(.pk-dim):not(.pk-toast):not(.pk-leaving),.clock')?L:document);
  const els=[...root.querySelectorAll('[data-a],input:not([type=file]),textarea')].filter(e=>{const r=e.getBoundingClientRect();if(r.width<2||r.height<2)return false;if(r.bottom<0||r.top>innerHeight||r.right<0||r.left>innerWidth)return false;
    const cx=Math.min(innerWidth-1,Math.max(0,r.left+r.width/2)),cy=Math.min(innerHeight-1,Math.max(0,r.top+r.height/2));const t=document.elementFromPoint(cx,cy);return t&&(t===e||e.contains(t)||t.closest('[data-a]')===e);});
  return els.map((e,i)=>{e.setAttribute('data-fz',i);return {i,a:e.dataset.a||e.tagName.toLowerCase(),v:e.dataset.v||'',k:e.dataset.k||'',id:e.id||'',type:e.type||''};});})()"""
