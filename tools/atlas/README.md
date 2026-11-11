@@ -6,20 +6,27 @@ Every screen and sheet of Vocal Sessions as saved screenshots, with where each b
 
 It runs on the **Atlas kit** (`imperialfox/atlas-kit`), one Atlas for any app: this folder holds only what's particular to Vocal Sessions, plus a pinned copy of the kit.
 
-**Atlas kit version: 1.1.0** (3 Nov 2026) · [its changelog](kit/CHANGELOG.md) · [its README](kit/README.md)
+**Atlas kit version: 1.2.0** (12 Nov 2026) · [its changelog](kit/CHANGELOG.md) · [its README](kit/README.md)
 
 ## Use
 
 ```
-python3 tools/atlas/atlas.py             # scan, then open the Atlas in your browser (about 5–10 minutes)
+python3 tools/atlas/atlas.py --pictures  # pictures only: every state's picture, buttons from the last full scan (about 2–3 minutes)
+python3 tools/atlas/atlas.py             # full scan: every state, then every button tapped (about 13 minutes), then open the Atlas
 python3 tools/atlas/atlas.py --view      # open the last scan again, without scanning
 python3 tools/atlas/atlas.py --no-open   # scan only
 python3 tools/atlas/test_atlas.py        # the Atlas's own tests (about two minutes)
 ```
 
-Needs the tests' Playwright and Pillow, once: `pip install playwright==1.56.0 pillow` then `python3 -m playwright install chromium`. Run from anywhere; on the Mac, Ctrl+C stops the viewer. Every option of the kit's `atlas.py` works here (`--quick`, `--only`, `--proposed`, `--baselines`; see [kit/README › Use](kit/README.md#use)).
+Needs the tests' Playwright and Pillow, once: `pip install playwright==1.56.0 pillow` then `python3 -m playwright install chromium`. Run from anywhere; on the Mac, Ctrl+C stops the viewer. Every option of the kit's `atlas.py` works here (`--quick`, `--only`, `--proposed`, `--baselines`, `--fresh-pages`; see [kit/README › Use](kit/README.md#use)).
 
-From a Claude chat, say **"rescan the Atlas"**: Claude runs the scan in its own workspace and updates the private Atlas page on claude.ai. Say **"check my notes"** and Claude reads the notes you left on that page (and on any prototype listed there).
+**Rescan rules (Q46):**
+- **"rescan the Atlas"** in a chat: Claude runs the pictures-only scan (`--pictures`) and updates the private Atlas page on claude.ai. Buttons, links, doors and the map come from the last full scan, labelled "Buttons last checked <date>"; a screen whose picture changed since then is marked "Changed since buttons were checked".
+- **"full rescan"**: everything, every button tapped (`atlas.py` with no option).
+- **An app build that changes screens** runs the pictures pass for the IDs on its changelog Screens line (`--pictures --only <their state ids>`, seconds, not minutes), and fixes any state it broke in the same push.
+- **The Q30 rule stays:** screens are reached through their real buttons. Shortcuts are for set-up only.
+
+Say **"check my notes"** and Claude reads the notes you left on the Atlas page (and on any prototype listed there).
 
 ## The Atlas page and notes
 
@@ -32,8 +39,9 @@ From a Claude chat, say **"rescan the Atlas"**: Claude runs the scan in its own 
 | File | What it is |
 |---|---|
 | `atlas.py` | The command: the kit's `atlas.py` with this folder's settings. Scans into `data/scans/<date-time>/`, puts the viewer beside it and opens it |
-| `screens.py` | Vocal Sessions' settings for the kit: how to open the app with sample data, where the scan starts, how to tell screens apart and put the app back after a tap, the code's list of screens, areas, names, doc sections, the screen register and the buttons never tapped |
-| `test_atlas.py` | Tests for the settings, the kit copy, a scan of a copy of the app, and the viewer with notes |
+| `states.py` | Q46: a state for every Live screen, by its screen ID (the set-up it needs and the real taps that reach it, by part name), and `NO_STATE`, the screens that can't be held on screen with sample data, each with its reason |
+| `screens.py` | Vocal Sessions' settings for the kit: how to open the app with sample data, the tabs (the states come from `states.py`), how to tell screens apart and put the app back after a tap, the code's list of screens, areas, names, doc sections, the screen register and the buttons never tapped |
+| `test_atlas.py` | Tests for the settings, the kit copy, a scan of a copy of the app, the viewer with notes, and (Q46, no browser) a state or a reason for every Live screen |
 | `kit/` | The Atlas kit, **a pinned, unmodified copy** (no submodule). Never edit it here: change the kit in its own repo, release it, then copy the release in |
 | `kit.sha256` | The copy's files and their checksums, so the tests can tell it's unmodified |
 | `data/` | Scans. **Git-ignored**: screenshots never go into the repo, which is public |
@@ -57,9 +65,37 @@ From a Claude chat, say **"rescan the Atlas"**: Claude runs the scan in its own 
 - Link statuses: **Seen working** · **Changes this screen** · **Not tested** (with the reason) · **Broken** (tapping threw an error).
 - The same screen in another state (first launch, session running, dark) shares its screen's entry for links. Other exercises and guide pages point to the captured one as "same page layout".
 
+## Screen states (Q46)
+
+Every Live screen in the register has a **state** in [`states.py`](states.py): the sample data it needs (`setup`, named in `screens.py`'s `load()` and `SETUP_JS`) and the real taps that reach it. 92 screens have a state; 16 have a written reason instead (`NO_STATE`), shown in the Atlas as "No state · <reason>". The tabs and Today's variants stay in `screens.py`; the Q35 starting states moved into `states.py` with their ids, titles and code keys, so notes and the map stay put.
+
+- **Taps by part name:** `T('VS-009 › takes-button[data-k="{song}"]')`, or `T('› settings-button')` for a shared part. `[data-k="…"]` picks a row by its key, `:has-text("…")` by what it says, never by its place. `{song}` is the sample song's id. A part with no name keeps its selector and is listed below.
+- **The screen check:** after its steps the kit reads the screen's ID off the page. A state that lands anywhere else is Failed, "opened VS-0xx instead of VS-0yy".
+- **Waits, holds and swipes:** `UNTIL` waits for the app, `HOLD` holds a real button for 0.7 s, `SWIPE` drags a real row left (touches and pointers, as the app's rows listen for one or the other). None opens a screen itself.
+- **Set-ups added in Q46:** a song practice from yesterday (`song-session`), three songs pinned (`pins-full`), the song's length unlinked from its track (`unlinked`), a comment on a take (`take-comment`), a session 100 minutes long (`long-session`), a print kept after its song was deleted (`orphan-sheet`), and files over the size limits (`big-pdf`, `big-track`: sparse files, size only). `own-page:<id>` sets up nothing; it gives a state a page of its own: the compare state (two takes in a row), and every state that holds or swipes, since the app ignores a tap just after a hold or a swipe, by the clock, and the kit sets the clock back for each state on a reused page.
+- **Page reuse:** the kit reuses one page for states with the same set-up. `RESET` puts it back: saved data, settings and the session as they were, takes recorded since set-up deleted, and the parts kit's menus, lifted rows and toasts closed. The settle check also waits for the tab bar's Liquid Glass bubble to come down.
+- **A new screen** gets its state (or a reason) in the build that adds it: `test_atlas.py coverage` fails without one. A full scan writes a draft for every screen it found by tapping into its folder's `suggested_states.py`.
+
+**Reasons** (one plain line each, in `NO_STATE`): VS-035 · Were you away?, VS-036 · Session finished and VS-046 · Delete song (no button opens them in 3.72), VS-069 · Section start and VS-070 · Rename marker (the marker menu's buttons don't take the scan's taps after its made-up hold), VS-083, VS-086, VS-089, VS-090, VS-091 (backup files and restores, never made or run by the scan), VS-092 · Session clock and VS-093 · Floating window (drawn over other screens), VS-094 · Launch screen, VS-097 · Practise in key (needs two ladder rungs sung), VS-103 · Replace the sheet music? (its file picker doesn't open in the scan's browser) and VS-106 · Reading sheet music (a second or two).
+
+## Unnamed parts
+
+Taps that still use a selector, because the part has no name in `js/register.js` yet. Naming them is app work for a later item; `test_atlas.py coverage` fails on a selector tap that isn't listed here.
+
+| Selector | Where | What it is |
+|---|---|---|
+| `#app .w >> nth=1` | VS-009 · Song page (Marks side) | a word of the lyrics |
+| `[data-a="sgCtxPin"]` | VS-008 · Songs (hold a song) | the parts kit's menu row Pin ("Menu row: Pin") |
+| `[data-a="sgCtxRename"]` | VS-008 · Songs (hold a song) | the parts kit's menu row Rename ("Menu row: Rename") |
+| `#layer [data-screen="VS-066"] [data-a="sheet"][data-v="trkMkClear"]` | VS-066 · Track menu | Clear all markers… |
+| `#app [data-a="sheet"][data-v="coachDel"]` | VS-022 · Settings › Coach video | Remove video |
+| `#app [data-a="sheet"][data-v="melOrphanDel"]` | VS-020 · Settings › Storage | a sheet with no song's Delete row |
+
+Holds and swipes take selectors too (they're JavaScript): `#mksheet .mkb[data-v="peak"]` (VS-009's Peak mark button), `#trkGrid .trktlb[data-k="m0"]` (VS-010's first marker), `#layer .tkcm` (a comment on a take in VS-054), `.sw[data-fk="delEx:c0_x"] .fg` (your own exercise's row on VS-013), and the named rows `.rowc[aria-label="River Song"]` (VS-008 › song-row) and VS-054 › take-row.
+
 ## Starting states, flows, captions and doors (Q35)
 
-**Starting states** (the Q35 block at the end of `ROOTS`). The set-up does only what the sample data can't (a file chosen, a made-up microphone, saved data cut off); the screen is then opened through its real buttons, with the same reset before every tap. Two step helpers open nothing themselves: `UNTIL` waits for the app (a recording to start, a take to be saved) and, if it never is, the screen is **Failed** with that reason; `HOLD` presses a real button for about 0.7 s, as a finger does.
+**Starting states** (the Q35 block in `states.py`). The set-up does only what the sample data can't (a file chosen, a made-up microphone, saved data cut off); the screen is then opened through its real buttons, with the same reset before every tap. Two step helpers open nothing themselves: `UNTIL` waits for the app (a recording to start, a take to be saved) and, if it never is, the screen is **Failed** with that reason; `HOLD` presses a real button for about 0.7 s, as a finger does.
 
 | Screen | Set-up | Opened by |
 |---|---|---|

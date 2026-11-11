@@ -141,8 +141,9 @@ def t_rules():
 
 
 def real_step(st):
-    """A tap, a fixed wait, or Q35's UNTIL (waits for the app) and HOLD (presses a real button): none opens a screen itself."""
-    return st[0] in ('tap', 'wait') or (st[0] == 'js' and (st[1].startswith('async()=>{/*until*/') or st[1].startswith('async()=>{/*hold*/')))
+    """A tap, a fixed wait, or Q35's UNTIL (waits for the app), HOLD (presses a real button) and Q46's SWIPE (drags a real
+    row): none opens a screen itself."""
+    return st[0] in ('tap', 'wait') or (st[0] == 'js' and st[1].startswith(('async()=>{/*until*/', 'async()=>{/*hold*/', 'async()=>{/*swipe*/')))
 
 
 # ---------- Q35: starting states, captions, flows and doors (settings only, no browser) ----------
@@ -186,7 +187,7 @@ def t_kit():
     ok(have == set(files), 'and nothing else is in kit/' + (': ' + ', '.join(sorted(have ^ set(files))) if have != set(files) else ''))
     readme = open(os.path.join(HERE, 'README.md'), encoding='utf-8').read()
     ok(f'Atlas kit version: {VERSION}' in readme, f'tools/atlas/README.md notes the kit’s version ({VERSION})')
-    ok(VERSION == '1.1.0' and f'const KIT_VERSION = \'{VERSION}\'' in open(os.path.join(KIT, 'viewer.html'), encoding='utf-8').read(), 'the viewer is the same kit version')
+    ok(VERSION == '1.2.0' and f'const KIT_VERSION = \'{VERSION}\'' in open(os.path.join(KIT, 'viewer.html'), encoding='utf-8').read(), 'the viewer is the same kit version')
     left = [f for f in ('scan.py', 'inventory.py', 'viewer.html') if os.path.exists(os.path.join(HERE, f))]
     ok(not left, 'tools/atlas/ keeps only Vocal Sessions’ own settings (no scanner or viewer of its own)' + (': ' + ', '.join(left) if left else ''))
 
@@ -426,8 +427,44 @@ def t_states():
         v.close()
 
 
+# ---------- Q46: a state or a written reason for every Live screen (no browser) ----------
+def reg_entries():
+    """Each screen in js/register.js as {id, status}, read as text (the register is plain data)."""
+    out = []
+    for blk in re.split(r"\n {6}id: '", REG_JS)[1:]:
+        if not blk.startswith('VS-'): continue
+        st = re.search(r"\n {6}status: '([^']+)'", blk.split('\n    },')[0])
+        out.append({'id': blk[:6], 'status': st.group(1) if st else 'Live'})
+    return out
+
+
+def t_coverage():
+    print('Q46: every Live screen has a state or a written reason (tools/atlas/states.py)')
+    from atlas_kit import coverage
+    reg = reg_entries()
+    ok(len(reg) == len(REG_IDS) and len(reg) >= 108, f'the register read as text ({len(reg)} screens)')
+    c = coverage(ST, register=reg)
+    ok(not c['missing'], f'every Live screen has a state or a written reason ({len(c["states"])} with a state, {len(c["reasons"])} with a reason)'
+       + (': missing ' + ', '.join(c['missing']) if c['missing'] else ''))
+    ok(not c['unknown'], 'every state and reason names a screen in the register' + (': ' + ', '.join(c['unknown']) if c['unknown'] else ''))
+    both = sorted(set(c['states']) & set(c['reasons']))
+    ok(not both, 'no screen has both a state and a reason' + (': ' + ', '.join(both) if both else ''))
+    ok(all(0 < len(r) <= 140 and '\n' not in r for r in S.NO_STATE.values()), 'each reason is one plain line')
+    ok(all(r.get('screen') for r in S.ROOTS), f'every starting screen names its screen ID ({len(S.ROOTS)})')
+    bad = [r['id'] for r in S.ROOTS for st in r['steps'] if st[0] == 'tap' and '›' not in st[1]]
+    unnamed = set(re.findall(r'^\| `([^`]+)` \|', open(os.path.join(HERE, 'README.md'), encoding='utf-8').read().split('## Unnamed parts')[-1], re.M))
+    ok(all(st[1] in unnamed for r in S.ROOTS for st in r['steps'] if st[0] == 'tap' and '›' not in st[1]),
+       'taps name their part; every tap by selector is listed in README › Unnamed parts'
+       + (': ' + ', '.join(sorted({st[1] for r in S.ROOTS for st in r['steps'] if st[0] == 'tap' and '›' not in st[1]} - unnamed)) if bad else ''))
+    # taken out: a screen with no state and no reason is reported missing
+    sid = 'VS-012'
+    st2 = SET.load(SETTINGS)
+    st2.roots = [r for r in st2.roots if r.get('screen') != sid]
+    ok(coverage(st2, register=reg)['missing'] == [sid], f'taking {sid}’s state out makes the check fail for it')
+
+
 PARTS = {'code': t_code, 'docs': t_docs, 'rules': t_rules, 'settings': t_settings, 'kit': t_kit, 'git': t_git, 'scan': t_scan, 'viewer': t_viewer,
-         'states': t_states}
+         'states': t_states, 'coverage': t_coverage}
 if __name__ == '__main__':
     try:
         for n in (sys.argv[1:] or list(PARTS)):
