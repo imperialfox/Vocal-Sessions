@@ -163,8 +163,49 @@ def wide(b, t):
         pg.context.close()
 
 
+def reset_alert(b, t):
+    """Q56 (D23): Reset all data is the kit's alert with Back up first, Delete everything (red) and Cancel, stacked."""
+    ok = t.ok
+    ALERT = '#layer .pk-alert:not(.pk-leaving)'
+    BTNS = "[...document.querySelectorAll('#layer .pk-alert:not(.pk-leaving) .pk-alert-btn')].map(x=>x.textContent.trim()+'|'+x.className)"
+    for sc in ('light', 'dark'):
+        pg = t.page(b, w=375, h=812, sc=sc)
+        pg.evaluate(MAIN); pg.wait_for_timeout(200)
+        n0 = pg.evaluate("D.sessions.length")
+        pg.click('#app [data-a=sheet][data-v=resetAll]'); pg.wait_for_selector(ALERT)
+        btns = pg.evaluate(BTNS)
+        ok([x.split('|')[0] for x in btns] == ['Back up first', 'Delete everything', 'Cancel'],
+           f'{sc}: Reset all data opens the kit\'s alert with Back up first, Delete everything and Cancel, in that order ({btns})')
+        ok('pk-red' in btns[1] and 'pk-blue' in btns[0] and 'pk-red' not in btns[2], f'{sc}: Delete everything is red, Back up first the accent colour, Cancel plain')
+        ok(pg.locator(ALERT + ' .pk-alert-btns.pk-stack').count() == 1, f'{sc}: the three buttons stack')
+        ok(pg.locator('#layer .pk-sheet').count() == 0 and pg.evaluate("U.sheet") == 'resetAll', f'{sc}: as an alert, not a sheet (VS-082)')
+        ok(pg.evaluate("document.documentElement.scrollWidth<=innerWidth"), f'{sc}: nothing scrolls sideways at 375 px')
+        t.shot(pg, 'reset-all-' + sc)
+        # Cancel: nothing deleted, the alert gone
+        pg.click(ALERT + ' .pk-alert-btn[data-a=no]'); pg.wait_for_function("!document.querySelector('#layer .pk-alert:not(.pk-leaving)')")
+        ok(pg.evaluate("U.sheet") is None and pg.evaluate("D.sessions.length") == n0 and n0 > 0, f'{sc}: Cancel closes it and keeps everything')
+        if sc == 'light':
+            # Back up first: the backup starts, as Export backup does (VS-083 Preparing backup, then Backup ready)
+            pg.click('#app [data-a=sheet][data-v=resetAll]'); pg.wait_for_selector(ALERT)
+            pg.click(ALERT + ' .pk-alert-btn[data-a="0"]')
+            pg.wait_for_function("U.sheet==='exportReady'", timeout=8000)
+            ok(pg.evaluate("D.sessions.length") == n0 and pg.locator(ALERT).count() == 0,
+               'Back up first starts the backup (Backup ready) and deletes nothing')
+            pg.evaluate("closeSheet()"); pg.wait_for_timeout(200)
+            # Escape answers Cancel
+            pg.click('#app [data-a=sheet][data-v=resetAll]'); pg.wait_for_selector(ALERT)
+            pg.keyboard.press('Escape'); pg.wait_for_function("!document.querySelector('#layer .pk-alert:not(.pk-leaving)')")
+            ok(pg.evaluate("U.sheet") is None and pg.evaluate("D.sessions.length") == n0, 'Escape is Cancel: nothing deleted')
+            # Delete everything
+            pg.click('#app [data-a=sheet][data-v=resetAll]'); pg.wait_for_selector(ALERT)
+            pg.click(ALERT + ' .pk-alert-btn.pk-red'); pg.wait_for_function("!D.sessions.length&&!D.songs.length", timeout=5000)
+            ok(pg.evaluate("U.sheet") is None and pg.locator(ALERT).count() == 0, 'Delete everything deletes the data and closes the alert')
+        pg.context.close()
+
+
 def run(b, t):
     main_list(b, t)
+    reset_alert(b, t)
     pages(b, t)
     accessibility(b, t)
     coach_link(b, t)

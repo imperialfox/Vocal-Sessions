@@ -679,10 +679,14 @@ function renderSheet() {
       'Reset minutes',
       'resetMonth'
     );
+  // Q56 (D23) the kit's alert with three buttons: Back up first, Delete everything (red), Cancel
   else if (s === 'resetAll')
     h = sheetWrap(
       'Reset all data?',
-      '<p class="note">Deletes your history, minutes, streak, custom exercises, songs, song practice and recordings on this phone. This can’t be undone.</p><button class="cta" data-a="exportPrep" style="margin-bottom:10px">Export a backup first</button><button class="cta red" data-a="resetAll">Delete everything</button><button class="ghost" data-a="close" data-v="cancel">Cancel</button>'
+      '<p class="note">Deletes your history, minutes, streak, custom exercises, songs, song practice and recordings on this phone. This can’t be undone.</p><button class="cta" data-a="exportPrep">Back up first</button><button class="cta red" data-a="resetAll">Delete everything</button><button class="ghost" data-a="close" data-v="cancel">Cancel</button>',
+      '',
+      '',
+      'alert'
     );
   else if (s === 'discard')
     h = isSong()
@@ -1511,22 +1515,27 @@ const HOST = (() => {
     cur = null;
     if (why !== 'app' && U.sheet && U.sheet === c.k) closeSheet();
   }
+  // Q56 an alert with more than one .cta shows them all (parts kit 1.3's actions), in order, red with .red, Cancel last
   function openAlert(sh, key) {
     const id = ++seq,
-      act = sh.querySelector('.cta.red'),
+      acts = [...sh.querySelectorAll('button.cta[data-a]')],
+      many = acts.length > 1,
+      act = many ? null : sh.querySelector('.cta.red'),
       no = sh.querySelector('button.ghost[data-a=close]');
     cur = { key, kind: 'alert', id, k: U.sheet };
-    Parts.confirm({
+    const o = {
       title: titleOf(sh),
       message: text(sh.querySelector('.note')),
-      action: text(act),
       cancel: no ? text(no) : 'Cancel',
-      red: true,
       name: sh.getAttribute('aria-label') || titleOf(sh),
-    }).then((yes) => {
+    };
+    if (many) o.actions = acts.map((b, i) => ({ label: text(b), red: b.classList.contains('red'), value: i }));
+    else Object.assign(o, { action: text(act), red: true });
+    Parts.confirm(o).then((ans) => {
       if (!cur || cur.id !== id || cur.resolved) return;
       cur.resolved = true;
-      if (yes && act) fire(act);
+      const b = many ? (typeof ans === 'number' ? acts[ans] : null) : ans ? act : null;
+      if (b) fire(b);
       else if (U.sheet === cur.k) closeSheet();
       if (cur && cur.id === id && U.sheet !== cur.k) cur = null;
     });

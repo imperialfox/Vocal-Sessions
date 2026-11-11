@@ -387,7 +387,7 @@ def data(b, t):
     ok(pg.evaluate("id=>JSON.stringify(songById(id).loop)", sid) == '{"start":4,"end":7.5,"on":true}', 'and the loop comes back with the song')
     pg.evaluate("go(()=>{U.tab='settings';U.view=null})"); pg.wait_for_timeout(200)
     pg.click('[data-a=sheet][data-v=resetAll]'); pg.wait_for_timeout(250)
-    pg.click('.sheet [data-a=resetAll]'); pg.wait_for_function("!D.songs.length", timeout=5000); pg.wait_for_timeout(300)
+    pg.click('.pk-alert-btn.pk-red'); pg.wait_for_function("!D.songs.length", timeout=5000); pg.wait_for_timeout(300)
     ok(pg.evaluate(NIDB) == [1, 1], 'Reset all data leaves vocalTracks alone too')
     ok(not pg.evaluate("TRACK.state().loaded"), 'and the player lets go of the deleted song’s audio')
     pg.context.close()

@@ -6,7 +6,7 @@ A note points at a part as `VS-009 › song-row`; a shared or by-action part is 
 
 **How to read the values.** Kit part: the gallery number in `tools/parts-kit/README.md` › Parts. Press: how it presses (the Presses section below). Corner: a named corner (`--r-card` …), `capsule`, `circle` or `none`. Motion: the springs and named timings its own transitions use (`gentle`, `--ease-out` …), `none` when it doesn't move at rest; a press's own motion is in Presses. A part that shows in more than one place lists each value it has (`a · b`). A dash: the sample data doesn't reach it ([Not reached](#not-reached)).
 
-**35 shared parts, 377 names by action, 207 parts named on their screens. 240 of 618 in use read from the app.**
+**35 shared parts, 377 names by action, 208 parts named on their screens. 241 of 619 in use read from the app.**
 
 ## Shared
 
@@ -88,7 +88,7 @@ Wherever the action shows, its button gets this name. A screen's own parts and t
 | `coach-video-row` | `[data-a="coachSettings"]` |  | — | — | — |  | In use |
 | `level-button` | `[data-a="exLevel"]` |  | none | circle | none | The exercise page's level buttons, the coach video's levels; the kit has no level picker | In use |
 | `more-button` | `[data-a="exMore"]` |  | none | none | none | A small text link on the page; the kit has no text link | In use |
-| `back-up-button` | `[data-a="exportPrep"]` | 14 Solid press | Solid, shrinks · none | capsule · none | none |  | In use |
+| `back-up-button` | `[data-a="exportPrep"]` |  | none | none | none | A plain text button; the kit has no plain text button | In use |
 | `page-picker` | `[data-a="exTab"]` | 23 Segmented control | none | capsule | `--ease-out` |  | In use |
 | `cancel-button` | `[data-a="findCancel"]` |  | — | — | — |  | In use |
 | `close-search-button` | `[data-a="findClose"]` | 1 Glass, 6 Tab bar search, 12 Glass button | Glass, grows | circle | `--ease-out`, `pill` |  | In use |
@@ -968,8 +968,9 @@ Animations that took a named value or a kit spring in Q54 (3.68), so the app kee
 
 | Name | Found by | Kit part | Press | Corner | Motion | Reason | Status | Was |
 |---|---|---|---|---|---|---|---|---|
-| `confirm-button` | `[data-a="resetAll"]` | 14 Solid press | Solid, shrinks | capsule | none |  | In use |  |
-| `cancel-button` | `.ghost[data-a="close"]` |  | none | none | none | A plain text button; the kit has no plain text button | In use |  |
+| `back-up-button` | `.pk-alert-btn[data-a="0"]` | 1 Glass, 48 Alert | none | capsule | none |  | In use |  |
+| `confirm-button` | `.pk-alert-btn.pk-red` | 1 Glass, 48 Alert | none | capsule | none |  | In use |  |
+| `cancel-button` | `.pk-alert-btn[data-a="no"]` | 1 Glass, 48 Alert | none | capsule | none |  | In use |  |
 
 ### VS-092 · Session clock
 

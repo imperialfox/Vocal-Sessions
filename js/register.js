@@ -1531,14 +1531,15 @@ const SCREENS = {
       id: 'VS-082',
       name: 'Reset all data',
       area: 'Settings',
-      kind: 'Sheet',
+      kind: 'Alert',
       key: 'sheet:resetAll',
       aliases: ['Sheet:resetAll'],
       docs: 'MAINTAINING.md#settings',
       status: 'Live',
       parts: [
-        { name: 'confirm-button', sel: '[data-a="resetAll"]' },
-        { name: 'cancel-button', sel: '.ghost[data-a="close"]' },
+        { name: 'back-up-button', sel: '.pk-alert-btn[data-a="0"]' },
+        { name: 'confirm-button', sel: '.pk-alert-btn.pk-red' },
+        { name: 'cancel-button', sel: '.pk-alert-btn[data-a="no"]' },
       ],
     },
     {

@@ -135,7 +135,7 @@ def run(b, t):
 
     pick(pg, 'importPick', bk); pg.click('[data-a=importYes]'); pg.wait_for_function("U.sheet===null", timeout=10000)
     pg.evaluate("U.tab='settings';U.view=null;U.sheet=null;render()"); pg.wait_for_timeout(200)
-    pg.click('[data-v=resetAll]'); pg.wait_for_timeout(300); pg.click('[data-a=resetAll]'); pg.wait_for_timeout(800)
+    pg.click('[data-v=resetAll]'); pg.wait_for_timeout(300); pg.click('.pk-alert-btn.pk-red'); pg.wait_for_timeout(800)
     ok(pg.evaluate("UNDO") is None and pg.evaluate("loadLog().length") == 0, 'Reset all data clears the undo copy and Backup history')
     pg.evaluate("U.tab='settings';U.view='set';U.setPg='backup';U.sheet=null;render()"); pg.wait_for_timeout(300)
     pick(pg, 'importPick', bk); ok('has no practice saved yet' in pg.inner_text('.sheet'), 'an empty device says so')

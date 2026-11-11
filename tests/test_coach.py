@@ -135,7 +135,7 @@ def backups(b, t):
     ok(pg.evaluate("COACH.has()&&COACH.chapters()"), 'restoring a backup leaves the stored video alone')
     pg.evaluate("go(()=>{U.tab='settings';U.view=null})"); pg.wait_for_timeout(200)  # the resets are on the main list
     pg.click('[data-a=sheet][data-v=resetAll]'); pg.wait_for_timeout(250)
-    pg.click('.sheet [data-a=resetAll]'); pg.wait_for_function("!D.sessions.length", timeout=5000); pg.wait_for_timeout(300)
+    pg.click('.pk-alert-btn.pk-red'); pg.wait_for_function("!D.sessions.length", timeout=5000); pg.wait_for_timeout(300)
     ok(pg.evaluate("COACH.has()"), 'Reset all data leaves the coach video (only Remove removes it)')
     pg.reload(); t_ready(pg)
     ok(pg.evaluate("COACH.has()"), 'and it’s still there after a reload')

@@ -9,6 +9,22 @@ Version numbers follow **major.minor.patch**:
 
 ---
 
+## 3.71 · 11 Nov 2026
+*Reset all data asks with an alert, like every other delete (Q56)*
+<!-- area: look -->
+
+From the UI consistency audit of 3.62 (decision D23).
+
+**Reset all data**
+- Settings › Reset all data now asks with an alert, like every other delete, instead of a sheet. It has three buttons, stacked: Back up first, Delete everything (in red) and Cancel.
+- Back up first makes a backup, the same as Export backup, and deletes nothing. Delete everything deletes the same things as before. Cancel, or Escape on a keyboard, keeps everything.
+- Reset this month stays as it was.
+
+**Behind the scenes**
+- The app now uses Parts kit 1.3.0, which lets an alert offer more than one action. The copy is the kit's release, unchanged, and its checksums match.
+
+Screens: VS-082
+
 ## 3.70 · 11 Nov 2026
 *The song length picker closes when the phone turns, and the random taps stop failing on seed 11 (Q59)*
 <!-- area: fixes -->
